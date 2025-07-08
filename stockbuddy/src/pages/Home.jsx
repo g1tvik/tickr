@@ -375,7 +375,13 @@ export default function Home({ onLogin }) {
   };
 
   const handleGetStarted = () => {
-    onLogin();
+    // Check if user is logged in by looking for token in localStorage
+    const token = localStorage.getItem('token');
+    if (token) {
+      navigate('/dashboard');
+    } else {
+      navigate('/signup');
+    }
   };
 
   const handleLearnMore = () => {
@@ -386,7 +392,13 @@ export default function Home({ onLogin }) {
 
   // Update tab links to trigger login instead of navigation
   const handleTabLink = () => {
-    navigate(activeTabData.link);
+    // Check if user is logged in by looking for token in localStorage
+    const token = localStorage.getItem('token');
+    if (token) {
+      navigate(activeTabData.link);
+    } else {
+      navigate('/signup');
+    }
   };
 
   return (

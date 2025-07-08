@@ -165,58 +165,62 @@ const NavBar = ({ onLogout, isLoggedIn }) => {
         StockBuddy
       </Link>
       <NavLinks>
-        <button 
-          onClick={() => handleNavClick('/dashboard')} 
-          style={{ 
-            color: location.pathname === '/dashboard' ? '#00c805' : '#fff', 
-            fontWeight: 600, 
-            background: 'none', 
-            border: 'none', 
-            cursor: 'pointer',
-            fontSize: '1rem'
-          }}
-        >
-          Dashboard
-        </button>
-        <button 
-          onClick={() => handleNavClick('/learn')} 
-          style={{ 
-            color: location.pathname === '/learn' ? '#00c805' : '#fff', 
-            fontWeight: 600, 
-            background: 'none', 
-            border: 'none', 
-            cursor: 'pointer',
-            fontSize: '1rem'
-          }}
-        >
-          Learn
-        </button>
-        <button 
-          onClick={() => handleNavClick('/trade')} 
-          style={{ 
-            color: location.pathname === '/trade' ? '#00c805' : '#fff', 
-            fontWeight: 600, 
-            background: 'none', 
-            border: 'none', 
-            cursor: 'pointer',
-            fontSize: '1rem'
-          }}
-        >
-          Trade
-        </button>
-        <button 
-          onClick={() => handleNavClick('/profile')} 
-          style={{ 
-            color: location.pathname === '/profile' ? '#00c805' : '#fff', 
-            fontWeight: 600, 
-            background: 'none', 
-            border: 'none', 
-            cursor: 'pointer',
-            fontSize: '1rem'
-          }}
-        >
-          Profile
-        </button>
+        {isLoggedIn && (
+          <>
+            <button 
+              onClick={() => handleNavClick('/dashboard')} 
+              style={{ 
+                color: location.pathname === '/dashboard' ? '#00c805' : '#fff', 
+                fontWeight: 600, 
+                background: 'none', 
+                border: 'none', 
+                cursor: 'pointer',
+                fontSize: '1rem'
+              }}
+            >
+              Dashboard
+            </button>
+            <button 
+              onClick={() => handleNavClick('/learn')} 
+              style={{ 
+                color: location.pathname === '/learn' ? '#00c805' : '#fff', 
+                fontWeight: 600, 
+                background: 'none', 
+                border: 'none', 
+                cursor: 'pointer',
+                fontSize: '1rem'
+              }}
+            >
+              Learn
+            </button>
+            <button 
+              onClick={() => handleNavClick('/trade')} 
+              style={{ 
+                color: location.pathname === '/trade' ? '#00c805' : '#fff', 
+                fontWeight: 600, 
+                background: 'none', 
+                border: 'none', 
+                cursor: 'pointer',
+                fontSize: '1rem'
+              }}
+            >
+              Trade
+            </button>
+            <button 
+              onClick={() => handleNavClick('/profile')} 
+              style={{ 
+                color: location.pathname === '/profile' ? '#00c805' : '#fff', 
+                fontWeight: 600, 
+                background: 'none', 
+                border: 'none', 
+                cursor: 'pointer',
+                fontSize: '1rem'
+              }}
+            >
+              Profile
+            </button>
+          </>
+        )}
         <AuthButton onClick={handleAuthClick}>
           {isLoggedIn ? 'Logout' : 'Login'}
         </AuthButton>
