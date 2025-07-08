@@ -288,7 +288,7 @@ const Sidebar = () => {
 
   return (
     <>
-      <SidebarWrapper open={open}/>
+      <SidebarWrapper open={open}>
         <CloseBtn title="Close Sidebar" onClick={() => setOpen(false)}>
           <HamburgerMirrored>
             <span />
