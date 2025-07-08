@@ -58,6 +58,8 @@ const App = () => {
   // Placeholder logout function
   const handleLogout = () => {
     setIsLoggedIn(false);
+    localStorage.removeItem('token'); // Remove the token from localStorage
+    window.location.href = '/'; // Navigate back to homepage
   };
 
   return (
@@ -67,13 +69,19 @@ const App = () => {
         <MainContent>
           <ContentArea>
             <Routes>
-              <Route path="/" element={
+              <Route path="/" element={<Home onLogin={handleLogin} />} />
+              <Route path="/dashboard" element={
                 isLoggedIn ? <Dashboard /> : <Home onLogin={handleLogin} />
               } />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/learn" element={<Learn />} />
-              <Route path="/trade" element={<Trade />} />
-              <Route path="/profile" element={<Profile />} />
+              <Route path="/learn" element={
+                isLoggedIn ? <Learn /> : <Home onLogin={handleLogin} />
+              } />
+              <Route path="/trade" element={
+                isLoggedIn ? <Trade /> : <Home onLogin={handleLogin} />
+              } />
+              <Route path="/profile" element={
+                isLoggedIn ? <Profile /> : <Home onLogin={handleLogin} />
+              } />
               <Route path="/login" element={<Login onLogin={handleLogin} />} />
               <Route path="/signup" element={<Signup onLogin={handleLogin} />} />
             </Routes>

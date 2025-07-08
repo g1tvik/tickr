@@ -60,7 +60,7 @@ const Switch = styled.div`
   margin-top: 1rem;
 `;
 
-const Signup = () => {
+const Signup = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -77,6 +77,7 @@ const Signup = () => {
     try {
       const res = await axios.post('/api/auth/register', { email, password });
       localStorage.setItem('token', res.data.token);
+      onLogin(); // Call onLogin to update the authentication state
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Signup failed');
