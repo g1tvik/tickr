@@ -63,25 +63,17 @@ const App = () => {
   return (
     <Router>
       <AppWrapper>
-        {isLoggedIn && <NavBar onLogout={handleLogout} />}
+        <NavBar onLogout={handleLogout} isLoggedIn={isLoggedIn} />
         <MainContent>
           <ContentArea>
             <Routes>
               <Route path="/" element={
                 isLoggedIn ? <Dashboard /> : <Home onLogin={handleLogin} />
               } />
-              <Route path="/dashboard" element={
-                isLoggedIn ? <Dashboard /> : <Home onLogin={handleLogin} />
-              } />
-              <Route path="/learn" element={
-                isLoggedIn ? <Learn /> : <Home onLogin={handleLogin} />
-              } />
-              <Route path="/trade" element={
-                isLoggedIn ? <Trade /> : <Home onLogin={handleLogin} />
-              } />
-              <Route path="/profile" element={
-                isLoggedIn ? <Profile /> : <Home onLogin={handleLogin} />
-              } />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/learn" element={<Learn />} />
+              <Route path="/trade" element={<Trade />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/login" element={<Login onLogin={handleLogin} />} />
               <Route path="/signup" element={<Signup onLogin={handleLogin} />} />
             </Routes>
