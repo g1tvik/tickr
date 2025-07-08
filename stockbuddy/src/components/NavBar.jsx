@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 
 const navItems = [
@@ -105,72 +105,123 @@ const NavLink = styled(Link)`
 
 const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
 
-const NavBar = ({ onLogout }) => {
+const NavBarWrapper = styled.nav`
+  width: 100vw;
+  height: 4.5rem;
+  background: rgba(30, 32, 34);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2.5rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 300;
+  box-shadow: 0 2px 16px 0 #0002;
+`;
+
+const NavLinks = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+`;
+
+const AuthButton = styled.button`
+  background: #00c805;
+  color: #181a1b;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.3rem;
+  font-size: 1.08rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  margin-left: 2rem;
+  &:hover {
+    background: #00e805;
+    color: #0a0a0a;
+  }
+`;
+
+const NavBar = ({ onLogout, isLoggedIn }) => {
   const location = useLocation();
-  const [progress, setProgress] = useState(0);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (location.pathname !== '/') {
-      setProgress(0);
-      return;
+  const handleAuthClick = () => {
+    if (isLoggedIn) {
+      onLogout();
+    } else {
+      navigate('/login');
     }
-    const handleScroll = () => {
-      const scrollTop = document.body.scrollTop;
-      const scrollHeight = document.body.scrollHeight;
-      const clientHeight = document.body.clientHeight;
-      const maxScroll = scrollHeight - clientHeight;
-      const prog = maxScroll > 0 ? clamp(scrollTop / maxScroll, 0, 1) : 0;
-      setProgress(prog);
-    };
-    document.body.addEventListener('scroll', handleScroll);
-    handleScroll(); // set initial
-    return () => document.body.removeEventListener('scroll', handleScroll);
-  }, [location.pathname]);
+  };
 
-  // Staggered fade: each item fades out a bit later as you scroll down
-  const total = navItems.length + 1; // logo + links
-  const getItemOpacity = idx => {
-    if (location.pathname !== '/') return 1; // Always visible except on Dashboard
-    // idx: 0 = logo, 1 = Dashboard, 2 = Learn, ...
-    if (idx === 0) return 1; // Logo always visible
-    if (idx === navItems.length + 1) return 1; // Logout always visible (special case)
-    if (idx === 1) {
-      // Dashboard: visible for first 40% of scroll
-      const fadeStart = 0;
-      const fadeEnd = 0.4;
-      return progress < fadeEnd ? 1 : 0;
-    }
-    const fadeStart = idx / (total + 1);
-    const fadeEnd = (idx + 1) / (total + 1);
-    return progress < fadeEnd ? 1 : 0;
+  const handleNavClick = (path) => {
+    navigate(path);
   };
 
   return (
-    <Nav className="stockbuddy-navbar">
-      <Logo opacity={1}>
-        <span role="img" aria-label="StockBuddy">📈</span> StockBuddy
-      </Logo>
-      <CenterNav>
-        {navItems.map((item, idx) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={location.pathname === item.to ? 'active' : ''}
-            opacity={getItemOpacity(idx + 1)}
-          >
-            {item.label}
-          </NavLink>
-        ))}
-      </CenterNav>
-      <RightNav>
-        <LogoutButton 
-          onClick={onLogout}
-          opacity={1}
+    <NavBarWrapper>
+      <Link to="/" style={{ color: '#00c805', fontWeight: 900, fontSize: '1.5rem', textDecoration: 'none', letterSpacing: '0.03em' }}>
+        StockBuddy
+      </Link>
+      <NavLinks>
+        <button 
+          onClick={() => handleNavClick('/dashboard')} 
+          style={{ 
+            color: location.pathname === '/dashboard' ? '#00c805' : '#fff', 
+            fontWeight: 600, 
+            background: 'none', 
+            border: 'none', 
+            cursor: 'pointer',
+            fontSize: '1rem'
+          }}
         >
-          Logout
-        </LogoutButton>
-      </RightNav>
-    </Nav>
+          Dashboard
+        </button>
+        <button 
+          onClick={() => handleNavClick('/learn')} 
+          style={{ 
+            color: location.pathname === '/learn' ? '#00c805' : '#fff', 
+            fontWeight: 600, 
+            background: 'none', 
+            border: 'none', 
+            cursor: 'pointer',
+            fontSize: '1rem'
+          }}
+        >
+          Learn
+        </button>
+        <button 
+          onClick={() => handleNavClick('/trade')} 
+          style={{ 
+            color: location.pathname === '/trade' ? '#00c805' : '#fff', 
+            fontWeight: 600, 
+            background: 'none', 
+            border: 'none', 
+            cursor: 'pointer',
+            fontSize: '1rem'
+          }}
+        >
+          Trade
+        </button>
+        <button 
+          onClick={() => handleNavClick('/profile')} 
+          style={{ 
+            color: location.pathname === '/profile' ? '#00c805' : '#fff', 
+            fontWeight: 600, 
+            background: 'none', 
+            border: 'none', 
+            cursor: 'pointer',
+            fontSize: '1rem'
+          }}
+        >
+          Profile
+        </button>
+        <AuthButton onClick={handleAuthClick}>
+          {isLoggedIn ? 'Logout' : 'Login'}
+        </AuthButton>
+      </NavLinks>
+    </NavBarWrapper>
   );
 };
 
