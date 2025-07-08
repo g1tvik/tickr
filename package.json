@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "@types/styled-components": "^5.1.34"
+  },
+  "dependencies": {
+    "framer-motion": "^12.23.0",
+    "lottie-react": "^2.4.1"
+  }
+}
