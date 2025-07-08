@@ -276,7 +276,7 @@ export default function Home({ onLogin }) {
 
   // Update tab links to trigger login instead of navigation
   const handleTabLink = () => {
-    onLogin();
+    navigate(activeTabData.link);
   };
 
   return (
