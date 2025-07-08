@@ -110,6 +110,10 @@ const NavBar = ({ onLogout }) => {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
+    if (location.pathname !== '/') {
+      setProgress(0);
+      return;
+    }
     const handleScroll = () => {
       const scrollTop = document.body.scrollTop;
       const scrollHeight = document.body.scrollHeight;
@@ -121,18 +125,15 @@ const NavBar = ({ onLogout }) => {
     document.body.addEventListener('scroll', handleScroll);
     handleScroll(); // set initial
     return () => document.body.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [location.pathname]);
 
   // Staggered fade: each item fades out a bit later as you scroll down
   const total = navItems.length + 1; // logo + links
   const getItemOpacity = idx => {
+    if (location.pathname !== '/') return 1; // Always visible except on Dashboard
     // idx: 0 = logo, 1 = Dashboard, 2 = Learn, ...
-    if (idx === 0) {
-      // Logo: visible for first 20% of scroll (disappears first, appears last)
-      const fadeStart = 0;
-      const fadeEnd = 0.2;
-      return progress < fadeEnd ? 1 : 0;
-    }
+    if (idx === 0) return 1; // Logo always visible
+    if (idx === navItems.length + 1) return 1; // Logout always visible (special case)
     if (idx === 1) {
       // Dashboard: visible for first 40% of scroll
       const fadeStart = 0;
@@ -146,7 +147,7 @@ const NavBar = ({ onLogout }) => {
 
   return (
     <Nav className="stockbuddy-navbar">
-      <Logo opacity={getItemOpacity(0)}>
+      <Logo opacity={1}>
         <span role="img" aria-label="StockBuddy">📈</span> StockBuddy
       </Logo>
       <CenterNav>
@@ -164,7 +165,7 @@ const NavBar = ({ onLogout }) => {
       <RightNav>
         <LogoutButton 
           onClick={onLogout}
-          opacity={getItemOpacity(0)}
+          opacity={1}
         >
           Logout
         </LogoutButton>
