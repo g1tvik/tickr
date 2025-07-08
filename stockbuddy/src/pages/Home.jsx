@@ -184,19 +184,45 @@ const FeatureCard = styled.div`
     border: 2.5px solid rgba(255,255,255,0.45);
   }
 
-  & .glass-streak {
+  & .caustic {
     pointer-events: none;
     position: absolute;
-    width: 180px;
-    height: 8px;
-    left: 0;
-    top: 0;
-    opacity: ${props => props.streakActive ? 0.85 : 0};
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95) 50%, transparent);
-    filter: blur(1.5px);
-    border-radius: 8px;
-    transition: opacity 0.18s cubic-bezier(0.4,0,0.2,1), left 0.08s, top 0.08s, transform 0.08s;
+    width: 340px;
+    height: 18px;
+    left: -80px;
+    top: -40px;
+    opacity: 0.85;
+    background: linear-gradient(120deg,
+      transparent 0%,
+      hsl(190,100%,80%) 35%,
+      #fff 48%,
+      hsl(160,100%,70%) 52%,
+      transparent 65%
+    );
+    filter: blur(4px) brightness(1.08);
+    border-radius: 12px;
     z-index: 2;
+    mix-blend-mode: lighten;
+    transition: opacity 0.18s cubic-bezier(0.4,0,0.2,1);
+    animation: none;
+  }
+  &.shine .caustic {
+    animation: caustic-shine 1.1s cubic-bezier(0.4,0,0.2,1);
+  }
+  @keyframes caustic-shine {
+    0% {
+      left: -80px;
+      top: -40px;
+      opacity: 0.85;
+    }
+    60% {
+      opacity: 0.95;
+    }
+    100% {
+      left: 100%;
+      top: 100%;
+      opacity: 0;
+    }
   }
 `;
 
@@ -284,59 +310,39 @@ export default function Home({ onLogin }) {
   const [activeTab, setActiveTab] = useState('learn');
   const navigate = useNavigate();
 
-  // Add state for 3D pop-out and glass streak effect
-  const [cardTransforms, setCardTransforms] = useState([null, null, null, null]);
-  const [streakProps, setStreakProps] = useState([
-    { x: 0.5, y: 0.5, angle: 0, active: false },
-    { x: 0.5, y: 0.5, angle: 0, active: false },
-    { x: 0.5, y: 0.5, angle: 0, active: false },
-    { x: 0.5, y: 0.5, angle: 0, active: false }
-  ]);
+  // Remove causticProps and cardTransforms for shine-only effect
+  const [shined, setShined] = useState([false, false, false, false]);
+  const cardRefs = useRef([null, null, null, null]);
 
-  const handleCardMouseMove = (e, idx) => {
-    const card = e.currentTarget;
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const maxTilt = 10;
-    const rotateX = ((y - centerY) / centerY) * maxTilt;
-    const rotateY = ((x - centerX) / centerX) * -maxTilt;
-    const dist = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
-    const maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
-    const scale = 1.015 + 0.025 * (dist / maxDist);
-    setCardTransforms(tfs => {
-      const next = [...tfs];
-      next[idx] = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`;
+  const handleCardMouseEnter = idx => {
+    if (shined[idx]) return;
+    setShined(prev => {
+      const next = [...prev];
+      next[idx] = true;
       return next;
     });
-    // Calculate angle from center to cursor for streak rotation
-    const angle = Math.atan2(y - centerY, x - centerX) * 180 / Math.PI;
-    setStreakProps(props => {
-      const next = [...props];
-      next[idx] = {
-        x: x - 90, // center streak on cursor (180px wide)
-        y: y - 4,  // center streak on cursor (8px tall)
-        angle,
-        active: true
-      };
-      return next;
-    });
+    // Add .shine class to trigger animation
+    const card = cardRefs.current[idx];
+    if (card) {
+      card.classList.add('shine');
+      setTimeout(() => {
+        card.classList.remove('shine');
+      }, 1100);
+    }
   };
 
   const handleCardMouseLeave = idx => {
-    setCardTransforms(tfs => {
-      const next = [...tfs];
-      next[idx] = '';
-      return next;
-    });
-    setStreakProps(props => {
-      const next = [...props];
-      next[idx] = { ...next[idx], active: false };
-      return next;
-    });
+    // No specific action needed here for shine-only effect
   };
+
+  // Generate caustic background for each card
+  const getCausticBg = (hue) =>
+    `linear-gradient(120deg,
+      transparent 0%,
+      hsl(${(hue+30)%360},100%,80%) 35%,
+      #fff 48%,
+      hsl(${hue},100%,70%) 52%,
+      transparent 65%)`;
 
   const handleGetStarted = () => {
     onLogin();
@@ -397,20 +403,11 @@ export default function Home({ onLogin }) {
         {features.map((feature, index) => (
           <FeatureCard
             key={index}
-            style={{ transform: cardTransforms[index] || undefined }}
-            streakActive={streakProps[index].active}
-            onMouseMove={e => handleCardMouseMove(e, index)}
+            ref={el => cardRefs.current[index] = el}
+            onMouseEnter={() => handleCardMouseEnter(index)}
             onMouseLeave={() => handleCardMouseLeave(index)}
           >
-            <div
-              className="glass-streak"
-              style={{
-                left: streakProps[index].x,
-                top: streakProps[index].y,
-                opacity: streakProps[index].active ? 0.85 : 0,
-                transform: `rotate(${streakProps[index].angle}deg)`
-              }}
-            />
+            <div className="caustic" />
             <FeatureIcon>{feature.icon}</FeatureIcon>
             <FeatureTitle>{feature.title}</FeatureTitle>
             <FeatureDescription>{feature.description}</FeatureDescription>
