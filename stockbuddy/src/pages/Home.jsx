@@ -178,49 +178,49 @@ const FeatureCard = styled.div`
   perspective: 800px;
   overflow: hidden;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.16);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.32), 0 2px 16px 0 rgba(0,0,0,0.13), 0 0 0 2.5px rgba(255,255,255,0.18) inset;
-    border: 2.5px solid rgba(255,255,255,0.45);
+  &.sheen-animating::before {
+    opacity: 1;
+    animation: sheen-move 0.7s cubic-bezier(0.4,0,0.2,1) forwards;
   }
-
-  & .caustic {
-    pointer-events: none;
+  &::before {
+    content: '';
     position: absolute;
-    width: 340px;
-    height: 18px;
-    left: -80px;
-    top: -40px;
-    opacity: 0.85;
-    background: linear-gradient(120deg,
-      transparent 0%,
-      hsl(190,100%,80%) 35%,
-      #fff 48%,
-      hsl(160,100%,70%) 52%,
-      transparent 65%
-    );
-    filter: blur(4px) brightness(1.08);
-    border-radius: 12px;
+    top: 0; left: 0; right: 0; bottom: 0;
     z-index: 2;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(120deg, rgba(255,255,255,0.00) 41%, rgba(255,255,255,0.92) 49%, rgba(255,255,255,0.92) 51%, rgba(255,255,255,0.00) 59%);
+    transition: opacity 0.22s cubic-bezier(0.4,0,0.2,1);
+    background-size: 300% 300%;
+    background-position: 0% 0%;
+    filter: blur(0.3px) brightness(1.5);
+  }
+  &.polychrome {
+    filter: invert(1) hue-rotate(180deg) brightness(0.8) contrast(1.2) saturate(1.5);
+    background: #181a1b;
+  }
+  &.polychrome::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0.7;
+    background: radial-gradient(circle at var(--px,50%) var(--py,50%), rgba(255,255,255,0.18) 0%, rgba(0,255,255,0.12) 30%, rgba(255,0,255,0.10) 60%, rgba(0,0,0,0.0) 100%),
+      conic-gradient(from 90deg at var(--px,50%) var(--py,50%), #ff00cc 0%, #00ffea 25%, #ffe600 50%, #00ffea 75%, #ff00cc 100%);
     mix-blend-mode: lighten;
-    transition: opacity 0.18s cubic-bezier(0.4,0,0.2,1);
-    animation: none;
+    transition: background 0.18s, opacity 0.18s;
   }
-  &.shine .caustic {
-    animation: caustic-shine 1.1s cubic-bezier(0.4,0,0.2,1);
-  }
-  @keyframes caustic-shine {
+  @keyframes sheen-move {
     0% {
-      left: -80px;
-      top: -40px;
-      opacity: 0.85;
+      background-position: 0% 0%;
+      opacity: 0.2;
     }
     60% {
-      opacity: 0.95;
+      opacity: 1;
     }
     100% {
-      left: 100%;
-      top: 100%;
+      background-position: 100% 100%;
       opacity: 0;
     }
   }
@@ -310,39 +310,69 @@ export default function Home({ onLogin }) {
   const [activeTab, setActiveTab] = useState('learn');
   const navigate = useNavigate();
 
-  // Remove causticProps and cardTransforms for shine-only effect
-  const [shined, setShined] = useState([false, false, false, false]);
-  const cardRefs = useRef([null, null, null, null]);
+  // Add state for 3D, sheen, and polychrome effect
+  const [cardTransforms, setCardTransforms] = useState([null, null, null, null]);
+  const [effectState, setEffectState] = useState([
+    { sheen: false, poly: false, px: 50, py: 50 },
+    { sheen: false, poly: false, px: 50, py: 50 },
+    { sheen: false, poly: false, px: 50, py: 50 },
+    { sheen: false, poly: false, px: 50, py: 50 }
+  ]);
 
-  const handleCardMouseEnter = idx => {
-    if (shined[idx]) return;
-    setShined(prev => {
-      const next = [...prev];
-      next[idx] = true;
+  const handleCardMouseMove = (e, idx) => {
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const maxTilt = 10;
+    const rotateX = ((y - centerY) / centerY) * maxTilt;
+    const rotateY = ((x - centerX) / centerX) * -maxTilt;
+    const dist = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+    const maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
+    const scale = 1.015 + 0.025 * (dist / maxDist);
+    setCardTransforms(tfs => {
+      const next = [...tfs];
+      next[idx] = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`;
       return next;
     });
-    // Add .shine class to trigger animation
-    const card = cardRefs.current[idx];
-    if (card) {
-      card.classList.add('shine');
-      setTimeout(() => {
-        card.classList.remove('shine');
-      }, 1100);
-    }
+    // Update polychrome highlight position
+    setEffectState(state => {
+      const next = [...state];
+      next[idx] = { ...next[idx], px: ((x / rect.width) * 100).toFixed(1), py: ((y / rect.height) * 100).toFixed(1) };
+      return next;
+    });
+  };
+
+  const handleCardMouseEnter = idx => {
+    setEffectState(state => {
+      const next = [...state];
+      next[idx] = { ...next[idx], sheen: true, poly: false };
+      return next;
+    });
+  };
+
+  const handleSheenAnimationEnd = idx => {
+    setEffectState(state => {
+      const next = [...state];
+      next[idx] = { ...next[idx], sheen: false, poly: true };
+      return next;
+    });
   };
 
   const handleCardMouseLeave = idx => {
-    // No specific action needed here for shine-only effect
+    setCardTransforms(tfs => {
+      const next = [...tfs];
+      next[idx] = '';
+      return next;
+    });
+    setEffectState(state => {
+      const next = [...state];
+      next[idx] = { sheen: false, poly: false, px: 50, py: 50 };
+      return next;
+    });
   };
-
-  // Generate caustic background for each card
-  const getCausticBg = (hue) =>
-    `linear-gradient(120deg,
-      transparent 0%,
-      hsl(${(hue+30)%360},100%,80%) 35%,
-      #fff 48%,
-      hsl(${hue},100%,70%) 52%,
-      transparent 65%)`;
 
   const handleGetStarted = () => {
     onLogin();
@@ -403,11 +433,23 @@ export default function Home({ onLogin }) {
         {features.map((feature, index) => (
           <FeatureCard
             key={index}
-            ref={el => cardRefs.current[index] = el}
+            style={{
+              transform: cardTransforms[index] || undefined,
+              '--px': `${effectState[index].px}%`,
+              '--py': `${effectState[index].py}%`
+            }}
+            className={
+              effectState[index].sheen
+                ? 'sheen-animating'
+                : effectState[index].poly
+                ? 'polychrome'
+                : ''
+            }
+            onMouseMove={e => handleCardMouseMove(e, index)}
             onMouseEnter={() => handleCardMouseEnter(index)}
+            onAnimationEnd={() => handleSheenAnimationEnd(index)}
             onMouseLeave={() => handleCardMouseLeave(index)}
           >
-            <div className="caustic" />
             <FeatureIcon>{feature.icon}</FeatureIcon>
             <FeatureTitle>{feature.title}</FeatureTitle>
             <FeatureDescription>{feature.description}</FeatureDescription>
