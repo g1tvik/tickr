@@ -355,4 +355,19 @@ const Sidebar = () => {
             <a href="#" style={{ color: '#00c805', textDecoration: 'none' }}>Help Center</a>
           </PlaceholderBox>
         </Section>
+      </SidebarWrapper>
+      {!open && (
+        <OpenSidebarTab style={{ top: tabTop }} onClick={() => setOpen(true)}>
+          <HamburgerMirrored>
+            <span />
+            <span />
+            <span />
+          </HamburgerMirrored>
+        </OpenSidebarTab>
+      )}
+    </>
+  );
+};
+
+export default Sidebar;
      
