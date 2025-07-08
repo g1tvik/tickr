@@ -172,7 +172,7 @@ const FeatureCard = styled.div`
   box-shadow: 0 2px 16px 0 rgba(0,0,0,0.13), 0 0 0 2.5px rgba(255,255,255,0.18) inset;
   backdrop-filter: blur(36px) saturate(1.7);
   text-align: center;
-  transition: box-shadow 0.3s cubic-bezier(0.4,0,0.2,1), background 0.3s cubic-bezier(0.4,0,0.2,1), transform 0.12s cubic-bezier(0.4,0,0.2,1), border 0.3s cubic-bezier(0.4,0,0.2,1);
+  transition: box-shadow 0.3s cubic-bezier(0.4,0,0.2,1), background 0.3s cubic-bezier(0.4,0,0.2,1), transform 0.12s cubic-bezier(0.4,0,0.2,1), border 0.3s cubic-bezier(0.4,0,0.2,1), filter 0.3s cubic-bezier(0.4,0,0.2,1);
   position: relative;
   will-change: transform;
   perspective: 800px;
@@ -195,21 +195,8 @@ const FeatureCard = styled.div`
     background-position: 0% 0%;
     filter: blur(0.3px) brightness(1.5);
   }
-  &.polychrome {
-    filter: invert(1) hue-rotate(180deg) brightness(0.8) contrast(1.2) saturate(1.5);
-    background: #181a1b;
-  }
-  &.polychrome::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    pointer-events: none;
-    opacity: 0.7;
-    background: radial-gradient(circle at var(--px,50%) var(--py,50%), rgba(255,255,255,0.18) 0%, rgba(0,255,255,0.12) 30%, rgba(255,0,255,0.10) 60%, rgba(0,0,0,0.0) 100%),
-      conic-gradient(from 90deg at var(--px,50%) var(--py,50%), #ff00cc 0%, #00ffea 25%, #ffe600 50%, #00ffea 75%, #ff00cc 100%);
-    mix-blend-mode: lighten;
-    transition: background 0.18s, opacity 0.18s;
+  &.bw-invert {
+    filter: invert(1) grayscale(1);
   }
   @keyframes sheen-move {
     0% {
@@ -310,13 +297,13 @@ export default function Home({ onLogin }) {
   const [activeTab, setActiveTab] = useState('learn');
   const navigate = useNavigate();
 
-  // Add state for 3D, sheen, and polychrome effect
+  // Add state for 3D, sheen, and bw-invert effect
   const [cardTransforms, setCardTransforms] = useState([null, null, null, null]);
   const [effectState, setEffectState] = useState([
-    { sheen: false, poly: false, px: 50, py: 50 },
-    { sheen: false, poly: false, px: 50, py: 50 },
-    { sheen: false, poly: false, px: 50, py: 50 },
-    { sheen: false, poly: false, px: 50, py: 50 }
+    { sheen: false, bw: false },
+    { sheen: false, bw: false },
+    { sheen: false, bw: false },
+    { sheen: false, bw: false }
   ]);
 
   const handleCardMouseMove = (e, idx) => {
@@ -337,18 +324,12 @@ export default function Home({ onLogin }) {
       next[idx] = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`;
       return next;
     });
-    // Update polychrome highlight position
-    setEffectState(state => {
-      const next = [...state];
-      next[idx] = { ...next[idx], px: ((x / rect.width) * 100).toFixed(1), py: ((y / rect.height) * 100).toFixed(1) };
-      return next;
-    });
   };
 
   const handleCardMouseEnter = idx => {
     setEffectState(state => {
       const next = [...state];
-      next[idx] = { ...next[idx], sheen: true, poly: false };
+      next[idx] = { ...next[idx], sheen: true, bw: false };
       return next;
     });
   };
@@ -356,7 +337,7 @@ export default function Home({ onLogin }) {
   const handleSheenAnimationEnd = idx => {
     setEffectState(state => {
       const next = [...state];
-      next[idx] = { ...next[idx], sheen: false, poly: true };
+      next[idx] = { ...next[idx], sheen: false, bw: true };
       return next;
     });
   };
@@ -369,7 +350,7 @@ export default function Home({ onLogin }) {
     });
     setEffectState(state => {
       const next = [...state];
-      next[idx] = { sheen: false, poly: false, px: 50, py: 50 };
+      next[idx] = { sheen: false, bw: false };
       return next;
     });
   };
@@ -445,16 +426,12 @@ export default function Home({ onLogin }) {
         {features.map((feature, index) => (
           <FeatureCard
             key={index}
-            style={{
-              transform: cardTransforms[index] || undefined,
-              '--px': `${effectState[index].px}%`,
-              '--py': `${effectState[index].py}%`
-            }}
+            style={{ transform: cardTransforms[index] || undefined }}
             className={
               effectState[index].sheen
                 ? 'sheen-animating'
-                : effectState[index].poly
-                ? 'polychrome'
+                : effectState[index].bw
+                ? 'bw-invert'
                 : ''
             }
             onMouseMove={e => handleCardMouseMove(e, index)}
