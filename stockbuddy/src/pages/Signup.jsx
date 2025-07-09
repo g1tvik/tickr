@@ -4,10 +4,11 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 
 const Container = styled.div`
-  min-height: 100vh;
+  margin-top: 6rem;
+  margin-bottom: 2rem;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
   background: #0a0a0a;
 `;
 const Form = styled.form`
