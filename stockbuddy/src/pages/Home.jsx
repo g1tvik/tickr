@@ -50,7 +50,7 @@ const ButtonGroup = styled.div`
 `;
 
 const PrimaryButton = styled.button`
-  background: var(--accent-green, #00c805);
+  background: var(--accent-green, #FFF8E7);
   color: #0a0a0a;
   padding: 1rem 2rem;
   border-radius: 1rem;
@@ -58,12 +58,12 @@ const PrimaryButton = styled.button`
   font-size: 1.1rem;
   border: none;
   cursor: pointer;
-  box-shadow: 0 0 16px 0 var(--accent-green, #00c80544);
+  box-shadow: 0 0 16px 0 var(--accent-green, #FFF8E7AA);
   transition: all 0.2s ease;
   
   &:hover {
-    background: #00e805;
-    box-shadow: 0 0 24px 4px var(--accent-green, #00c805);
+    background: #FFF8E7;
+    box-shadow: 0 0 24px 4px var(--accent-green, #FFF8E7);
     transform: translateY(-2px);
   }
 `;
@@ -102,19 +102,19 @@ const TabList = styled.div`
 `;
 
 const TabButton = styled.button`
-  background: ${props => props.active ? 'rgba(0, 200, 5, 0.15)' : 'rgba(255, 255, 255, 0.08)'};
-  color: ${props => props.active ? 'var(--accent-green, #00c805)' : 'var(--text-muted, #b0b3b8)'};
+  background: ${props => props.active ? 'rgba(255, 248, 231, 0.15)' : 'rgba(255, 255, 255, 0.08)'};
+  color: ${props => props.active ? 'var(--accent-green, #FFF8E7)' : 'var(--text-muted, #b0b3b8)'};
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
   font-weight: 600;
   font-size: 1rem;
-  border: 1px solid ${props => props.active ? 'rgba(0, 200, 5, 0.3)' : 'rgba(255, 255, 255, 0.1)'};
+  border: 1px solid ${props => props.active ? 'rgba(255, 248, 231, 0.3)' : 'rgba(255, 255, 255, 0.1)'};
   cursor: pointer;
   transition: all 0.2s ease;
   backdrop-filter: blur(10px);
   
   &:hover {
-    background: ${props => props.active ? 'rgba(0, 200, 5, 0.2)' : 'rgba(255, 255, 255, 0.12)'};
+    background: ${props => props.active ? 'rgba(255, 248, 231, 0.2)' : 'rgba(255, 255, 255, 0.12)'};
     transform: translateY(-1px);
   }
 `;
@@ -136,7 +136,7 @@ const TabDescription = styled.p`
 `;
 
 const TabLink = styled.button`
-  color: var(--accent-green, #00c805);
+  color: var(--accent-green, #FFF8E7);
   text-decoration: none;
   font-weight: 600;
   font-size: 1.1rem;
@@ -149,7 +149,7 @@ const TabLink = styled.button`
   cursor: pointer;
   
   &:hover {
-    color: #00e805;
+    color: #FFF8E7;
     transform: translateX(4px);
   }
 `;
@@ -393,7 +393,7 @@ export default function Home({ onLogin }) {
       <HeroSection>
         <HeroTitle>Invest smarter. Learn faster.</HeroTitle>
         <HeroSubtitle>
-          StockBuddy helps beginners master stock trading with interactive lessons, 
+          tickr helps beginners master stock trading with interactive lessons, 
           paper trading, and real market insights.
         </HeroSubtitle>
         

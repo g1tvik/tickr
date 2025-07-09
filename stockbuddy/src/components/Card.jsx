@@ -12,8 +12,8 @@ const CardWrapper = styled.div`
   color: var(--text-main, #f5f6fa);
   transition: box-shadow 0.2s, border 0.2s;
   &:hover {
-    border: 1.5px solid var(--accent-green, #00c805);
-    box-shadow: 0 0 16px 2px var(--accent-green, #00c805), 0 2px 12px rgba(0,0,0,0.18);
+    border: 1.5px solid var(--accent-green, #FFF8E7);
+    box-shadow: 0 0 16px 2px var(--accent-green, #FFF8E7), 0 2px 12px rgba(0,0,0,0.18);
   }
 `;
 

@@ -38,11 +38,11 @@ const Title = styled.h1`
   font-weight: 900;
   margin-bottom: 1.2rem;
   letter-spacing: -1px;
-  color: var(--accent-green, #00c805);
+  color: var(--accent-green, #FFF8E7);
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  text-shadow: 0 0 8px #00c80544;
+  text-shadow: 0 0 8px #FFF8E744;
   justify-content: center;
   text-align: center;
 `;
@@ -87,7 +87,7 @@ const ChartCard = styled(DashboardCard)`
 const ChartTitle = styled.div`
   font-size: 1.1rem;
   font-weight: 600;
-  color: var(--accent-green, #00c805);
+  color: var(--accent-green, #FFF8E7);
   margin-bottom: 1.2rem;
   text-align: center;
 `;
@@ -114,8 +114,8 @@ const ChartPlaceholder = styled.div`
     right: 20px;
     top: 50%;
     height: 3px;
-    background: linear-gradient(90deg, #00c805 0%, #f7e600 100%);
-    box-shadow: 0 0 16px 2px #00c80544;
+    background: linear-gradient(90deg, #FFF8E7 0%, #f7e600 100%);
+    box-shadow: 0 0 16px 2px #FFF8E744;
     border-radius: 2px;
     transform: translateY(-50%) rotate(-7deg);
   }
@@ -125,8 +125,8 @@ const LessonTitle = styled.h2`
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: var(--accent-green, #00c805);
-  text-shadow: 0 0 6px #00c80533;
+  color: var(--accent-green, #FFF8E7);
+  text-shadow: 0 0 6px #FFF8E733;
 `;
 
 const LessonDesc = styled.p`
@@ -135,7 +135,7 @@ const LessonDesc = styled.p`
 `;
 
 const Button = styled.button`
-  background: var(--accent-green, #00c805);
+  background: var(--accent-green, #FFF8E7);
   color: #181a1b;
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
@@ -143,12 +143,12 @@ const Button = styled.button`
   font-size: 1rem;
   border: none;
   cursor: pointer;
-  box-shadow: 0 0 8px 0 var(--accent-green, #00c80544);
+  box-shadow: 0 0 8px 0 var(--accent-green, #FFF8E744);
   transition: background 0.2s, color 0.2s, box-shadow 0.2s;
   &:hover:enabled {
-    background: #00e805;
+    background: #FFF8E7;
     color: #0a0a0a;
-    box-shadow: 0 0 16px 2px var(--accent-green, #00c805);
+    box-shadow: 0 0 16px 2px var(--accent-green, #FFF8E7);
   }
   &:disabled {
     background: #23272a;
@@ -186,7 +186,7 @@ export default function Home() {
     <>
       <PageWrapper>
         <Header>
-          <Title>📈 StockBuddy</Title>
+          <Title>📈 tickr</Title>
           <Subtitle>Learn stocks the fun way</Subtitle>
         </Header>
         <CardsContainer>
@@ -203,7 +203,7 @@ export default function Home() {
           {/* Paper Trading Card */}
           <DashboardCard>
             <SectionTitle>💼 Paper Trading</SectionTitle>
-            <Cash>Cash Balance: <span style={{ fontWeight: 700, color: 'var(--accent-green, #00c805)' }}>${(10000).toLocaleString()}</span></Cash>
+            <Cash>Cash Balance: <span style={{ fontWeight: 700, color: 'var(--accent-green, #FFF8E7)' }}>${(10000).toLocaleString()}</span></Cash>
             <Button disabled>Buy 1 AAPL at ${AAPL_PRICE}</Button>
             <div style={{ marginTop: '1rem', width: '100%' }}>
               <div style={{ fontWeight: 600, color: 'var(--text-main, #f5f6fa)', marginBottom: '0.25rem' }}>Your Portfolio:</div>

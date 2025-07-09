@@ -21,11 +21,11 @@ const Title = styled.h1`
   font-weight: 900;
   margin-bottom: 1.7rem;
   letter-spacing: -1px;
-  color: var(--accent-green, #00c805);
+  color: var(--accent-green, #FFF8E7);
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  text-shadow: 0 0 12px #00c80544;
+  text-shadow: 0 0 12px #FFF8E744;
   justify-content: center;
   text-align: center;
 `;
@@ -63,12 +63,11 @@ const SectionTitle = styled.h2`
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 1.1rem;
-  color: var(--accent-green, #00c805);
-  text-shadow: 0 0 8px #00c80533;
+  color: var(--accent-green, #FFF8E7);
+  text-shadow: 0 0 8px #FFF8E733;
 `;
 
-const SectionDesc = styled.p`
-  margin-bottom: 2.2rem;
+const SectionDesc = styled.p`  margin-bottom: 2.2rem;
   color: var(--text-main, #f5f6fa);
   font-size: 1.18rem;
 `;
@@ -78,7 +77,7 @@ export default function Profile() {
     <PageWrapper>
       <Header>
         <Title>👤 Profile</Title>
-        <Subtitle>Your StockBuddy stats and achievements</Subtitle>
+        <Subtitle>Your tickr stats and achievements</Subtitle>
       </Header>
       <CardsContainer>
         <ProfileCard>

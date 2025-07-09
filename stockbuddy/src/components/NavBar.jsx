@@ -30,7 +30,7 @@ const fadeCss = css`
 const Logo = styled.div`
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--accent-green);
+  color: var(--accent-green, #FFF8E7);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -93,13 +93,13 @@ const NavLink = styled(Link)`
   pointer-events: ${props => (props.opacity > 0.05 ? 'auto' : 'none')};
   &:hover {
     background: #f5f6fa;
-    color: #00c805;
+    color: #FFF8E7;
     box-shadow: 0 2px 8px 0 #0002;
   }
   &.active {
-    background: linear-gradient(90deg, #00c805 0%, #00e805 100%);
+    background: linear-gradient(90deg, #FFF8E7 0%, #FFF8E7 100%);
     color: #fff;
-    box-shadow: 0 4px 16px 0 #00c80544;
+    box-shadow: 0 4px 16px 0 #FFF8E744;
   }
 `;
 
@@ -127,7 +127,7 @@ const NavLinks = styled.div`
 `;
 
 const AuthButton = styled.button`
-  background: #00c805;
+  background: #FFF8E7;
   color: #181a1b;
   border: none;
   border-radius: 8px;
@@ -138,7 +138,7 @@ const AuthButton = styled.button`
   transition: background 0.2s, color 0.2s;
   margin-left: 2rem;
   &:hover {
-    background: #00e805;
+    background: #FFF8E7;
     color: #0a0a0a;
   }
 `;
@@ -161,8 +161,8 @@ const NavBar = ({ onLogout, isLoggedIn }) => {
 
   return (
     <NavBarWrapper>
-      <Link to="/" style={{ color: '#00c805', fontWeight: 900, fontSize: '1.5rem', textDecoration: 'none', letterSpacing: '0.03em' }}>
-        StockBuddy
+      <Link to="/" style={{ color: '#FFF8E7', fontWeight: 900, fontSize: '1.5rem', textDecoration: 'none', letterSpacing: '0.03em' }}>
+        tickr
       </Link>
       <NavLinks>
         {isLoggedIn && (
@@ -170,7 +170,7 @@ const NavBar = ({ onLogout, isLoggedIn }) => {
             <button 
               onClick={() => handleNavClick('/dashboard')} 
               style={{ 
-                color: location.pathname === '/dashboard' ? '#00c805' : '#fff', 
+                color: location.pathname === '/dashboard' ? '#FFF8E7' : '#fff', 
                 fontWeight: 600, 
                 background: 'none', 
                 border: 'none', 
@@ -183,7 +183,7 @@ const NavBar = ({ onLogout, isLoggedIn }) => {
             <button 
               onClick={() => handleNavClick('/learn')} 
               style={{ 
-                color: location.pathname === '/learn' ? '#00c805' : '#fff', 
+                color: location.pathname === '/learn' ? '#FFF8E7' : '#fff', 
                 fontWeight: 600, 
                 background: 'none', 
                 border: 'none', 
@@ -196,7 +196,7 @@ const NavBar = ({ onLogout, isLoggedIn }) => {
             <button 
               onClick={() => handleNavClick('/trade')} 
               style={{ 
-                color: location.pathname === '/trade' ? '#00c805' : '#fff', 
+                color: location.pathname === '/trade' ? '#FFF8E7' : '#fff', 
                 fontWeight: 600, 
                 background: 'none', 
                 border: 'none', 
@@ -209,7 +209,7 @@ const NavBar = ({ onLogout, isLoggedIn }) => {
             <button 
               onClick={() => handleNavClick('/profile')} 
               style={{ 
-                color: location.pathname === '/profile' ? '#00c805' : '#fff', 
+                color: location.pathname === '/profile' ? '#FFF8E7' : '#fff', 
                 fontWeight: 600, 
                 background: 'none', 
                 border: 'none', 

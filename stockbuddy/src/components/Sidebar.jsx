@@ -57,7 +57,7 @@ const OpenSidebarTab = styled.button`
   left: calc(100vw - 10px - 48px); /* 10px scrollbar + 48px button width */
   z-index: 201;
   background: #23272a;
-  color: #00c805;
+  color: #FFF8E7;
   border: none;
   border-radius: 8px 0 0 8px;
   padding: 0.5rem 0.8rem;
@@ -68,7 +68,7 @@ const OpenSidebarTab = styled.button`
   transition: background 0.2s, color 0.2s, top 0.2s;
   &:hover {
     background: #181a1b;
-    color: #00e805;
+    color: #FFF8E7;
   }
 `;
 
@@ -78,7 +78,7 @@ const CloseBtn = styled.button`
   right: 8px;
   background: #23272a;
   border: none;
-  color: #00c805;
+  color: #FFF8E7;
   cursor: pointer;
   border-radius: 8px;
   width: 32px;
@@ -92,7 +92,7 @@ const CloseBtn = styled.button`
   padding: 0;
   &:hover {
     background: #181a1b;
-    color: #00e805;
+    color: #FFF8E7;
   }
 `;
 
@@ -109,7 +109,7 @@ const HamburgerMirrored = styled.span`
     display: block;
     height: 2px;
     width: 14px;
-    background: #00c805;
+    background: #FFF8E7;
     border-radius: 2px;
     transition: background 0.2s;
   }
@@ -176,7 +176,7 @@ const PriceChange = styled.span`
   font-size: 0.95rem;
   font-weight: 500;
   margin-left: 0.5rem;
-  color: ${props => props.up ? '#00c805' : '#ff3b30'};
+  color: ${props => props.up ? '#FFF8E7' : '#ff3b30'};
 `;
 
 const RemoveBtn = styled.button`
@@ -230,7 +230,7 @@ const AccountLabel = styled.div`
 const AccountValue = styled.div`
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--accent-green, #00c805);
+  color: var(--accent-green, #FFF8E7);
 `;
 
 const PlaceholderBox = styled.div`
@@ -334,7 +334,7 @@ const Sidebar = () => {
         <Divider />
         <Section>
           <SectionTitle>Notifications</SectionTitle>
-          <Notification>Welcome to StockBuddy! 🎉</Notification>
+          <Notification>Welcome to tickr! 🎉</Notification>
           <Notification>Your account is ready to trade.</Notification>
         </Section>
         <Divider />
@@ -350,9 +350,9 @@ const Sidebar = () => {
         <Section>
           <SectionTitle>Quick Links</SectionTitle>
           <PlaceholderBox>
-            <a href="#" style={{ color: '#00c805', textDecoration: 'none' }}>Deposit Funds</a><br />
-            <a href="#" style={{ color: '#00c805', textDecoration: 'none' }}>Withdraw</a><br />
-            <a href="#" style={{ color: '#00c805', textDecoration: 'none' }}>Help Center</a>
+            <a href="#" style={{ color: '#FFF8E7', textDecoration: 'none' }}>Deposit Funds</a><br />
+            <a href="#" style={{ color: '#FFF8E7', textDecoration: 'none' }}>Withdraw</a><br />
+            <a href="#" style={{ color: '#FFF8E7', textDecoration: 'none' }}>Help Center</a>
           </PlaceholderBox>
         </Section>
       </SidebarWrapper>
