@@ -14,7 +14,6 @@ const PageWrapper = styled.div`
 const HeroSection = styled.section`
   width: 100%;
   max-width: 1200px;
-  padding: 8rem 2rem 4rem 2rem;
   text-align: center;
   display: flex;
   flex-direction: column;
