@@ -247,85 +247,74 @@ const Sidebar = ({ open, onClose }) => {
   };
 
   return (
-    <>
-      <SidebarWrapper open={open}>
-        <CloseBtn title="Close Sidebar" onClick={() => setOpen(false)}>
-          <HamburgerMirrored>
-            <span />
-            <span />
-            <span />
-          </HamburgerMirrored>
-        </CloseBtn>
-        <Section>
-          <SectionTitle>
-            Lists
-            <Chevron onClick={() => setListsOpen(v => !v)}>{listsOpen ? '▲' : '▼'}</Chevron>
-          </SectionTitle>
-          <Divider />
-          {listsOpen && (
-            <List>
-              {watchlist.map(stock => (
-                <ListItem key={stock.symbol}>
-                  <StockInfo>
-                    <StockName>{stock.symbol}</StockName>
-                    <span>
-                      <StockPrice>${stock.price.toFixed(2)}</StockPrice>
-                      <PriceChange up={stock.change >= 0}>
-                        {stock.change >= 0 ? '+' : ''}{stock.change}%
-                      </PriceChange>
-                    </span>
-                  </StockInfo>
-                  <RemoveBtn title={`Remove ${stock.symbol}`} onClick={() => removeStock(stock.symbol)}>&times;</RemoveBtn>
-                </ListItem>
-              ))}
-            </List>
-          )}
-        </Section>
+    <SidebarWrapper open={open}>
+      <CloseBtn title="Close Sidebar" onClick={onClose}>
+        <HamburgerMirrored>
+          <span />
+          <span />
+          <span />
+        </HamburgerMirrored>
+      </CloseBtn>
+      <Section>
+        <SectionTitle>
+          Lists
+          <Chevron onClick={() => setListsOpen(v => !v)}>{listsOpen ? '▲' : '▼'}</Chevron>
+        </SectionTitle>
         <Divider />
-        <Section>
-          <SectionTitle>Account Summary</SectionTitle>
-          <AccountSummary>
-            <AccountLabel>Investing</AccountLabel>
-            <AccountValue>$10,000.00</AccountValue>
-            <AccountLabel>Buying Power</AccountLabel>
-            <AccountValue>$10,000.00</AccountValue>
-          </AccountSummary>
-        </Section>
-        <Divider />
-        <Section>
-          <SectionTitle>Notifications</SectionTitle>
-          <Notification>Welcome to StockBuddy! 🎉</Notification>
-          <Notification>Your account is ready to trade.</Notification>
-        </Section>
-        <Divider />
-        <Section>
-          <SectionTitle>Recent Activity</SectionTitle>
-          <PlaceholderBox>
-            • Bought 1 AAPL @ $190<br />
-            • Completed "What is a stock?" lesson<br />
-            • Added TSLA to watchlist
-          </PlaceholderBox>
-        </Section>
-        <Divider />
-        <Section>
-          <SectionTitle>Quick Links</SectionTitle>
-          <PlaceholderBox>
-            <a href="#" style={{ color: '#00c805', textDecoration: 'none' }}>Deposit Funds</a><br />
-            <a href="#" style={{ color: '#00c805', textDecoration: 'none' }}>Withdraw</a><br />
-            <a href="#" style={{ color: '#00c805', textDecoration: 'none' }}>Help Center</a>
-          </PlaceholderBox>
-        </Section>
-      </SidebarWrapper>
-      {!open && (
-        <OpenSidebarTab style={{ top: tabTop }} onClick={() => setOpen(true)}>
-          <HamburgerMirrored>
-            <span />
-            <span />
-            <span />
-          </HamburgerMirrored>
-        </OpenSidebarTab>
-      )}
-    </>
+        {listsOpen && (
+          <List>
+            {watchlist.map(stock => (
+              <ListItem key={stock.symbol}>
+                <StockInfo>
+                  <StockName>{stock.symbol}</StockName>
+                  <span>
+                    <StockPrice>${stock.price.toFixed(2)}</StockPrice>
+                    <PriceChange up={stock.change >= 0}>
+                      {stock.change >= 0 ? '+' : ''}{stock.change}%
+                    </PriceChange>
+                  </span>
+                </StockInfo>
+                <RemoveBtn title={`Remove ${stock.symbol}`} onClick={() => removeStock(stock.symbol)}>&times;</RemoveBtn>
+              </ListItem>
+            ))}
+          </List>
+        )}
+      </Section>
+      <Divider />
+      <Section>
+        <SectionTitle>Account Summary</SectionTitle>
+        <AccountSummary>
+          <AccountLabel>Investing</AccountLabel>
+          <AccountValue>$10,000.00</AccountValue>
+          <AccountLabel>Buying Power</AccountLabel>
+          <AccountValue>$10,000.00</AccountValue>
+        </AccountSummary>
+      </Section>
+      <Divider />
+      <Section>
+        <SectionTitle>Notifications</SectionTitle>
+        <Notification>Welcome to StockBuddy! 🎉</Notification>
+        <Notification>Your account is ready to trade.</Notification>
+      </Section>
+      <Divider />
+      <Section>
+        <SectionTitle>Recent Activity</SectionTitle>
+        <PlaceholderBox>
+          • Bought 1 AAPL @ $190<br />
+          • Completed "What is a stock?" lesson<br />
+          • Added TSLA to watchlist
+        </PlaceholderBox>
+      </Section>
+      <Divider />
+      <Section>
+        <SectionTitle>Quick Links</SectionTitle>
+        <PlaceholderBox>
+          <a href="#" style={{ color: '#00c805', textDecoration: 'none' }}>Deposit Funds</a><br />
+          <a href="#" style={{ color: '#00c805', textDecoration: 'none' }}>Withdraw</a><br />
+          <a href="#" style={{ color: '#00c805', textDecoration: 'none' }}>Help Center</a>
+        </PlaceholderBox>
+      </Section>
+    </SidebarWrapper>
   );
 };
 
