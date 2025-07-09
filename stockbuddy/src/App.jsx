@@ -61,7 +61,9 @@ const App = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    // Remove scroll event listeners (not needed for grid layout)
+    // Sync isLoggedIn with localStorage on mount
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
     return () => {};
   }, []);
 
