@@ -216,6 +216,12 @@ const FeatureCard = styled.div`
 const FeatureIcon = styled.div`
   font-size: 3rem;
   margin-bottom: 1.5rem;
+  transition: filter 0.3s;
+
+  /* Keep emoji color when parent card is in bw-invert mode */
+  .bw-invert & {
+    filter: none !important;
+  }
 `;
 
 const FeatureTitle = styled.h3`
@@ -282,7 +288,7 @@ const features = [
     description: 'Practice trading with virtual money in a safe, risk-free environment.'
   },
   {
-    icon: '📊',
+    icon: '📈', // changed from 📊 to 📈
     title: 'Market Analysis',
     description: 'Access powerful tools to analyze stocks, trends, and market data.'
   },
@@ -439,7 +445,7 @@ export default function Home({ onLogin }) {
             onAnimationEnd={() => handleSheenAnimationEnd(index)}
             onMouseLeave={() => handleCardMouseLeave(index)}
           >
-            <FeatureIcon>{feature.icon}</FeatureIcon>
+            <FeatureIcon className="feature-emoji">{feature.icon}</FeatureIcon>
             <FeatureTitle>{feature.title}</FeatureTitle>
             <FeatureDescription>{feature.description}</FeatureDescription>
           </FeatureCard>
