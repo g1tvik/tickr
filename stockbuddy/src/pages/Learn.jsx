@@ -23,7 +23,7 @@ const PageWrapper = styled.div`
 `;
 
 const Header = styled.header`
-  margin-bottom: 4.5rem;
+  margin-bottom: 5.5rem;
   text-align: center;
 `;
 
@@ -54,20 +54,9 @@ const CardsContainer = styled.div`
   max-width: 700px;
   display: flex;
   flex-direction: column;
-  gap: 3.5rem;
+  gap: 2.7rem;
   align-items: center;
-`;
-
-const LearnCard = styled.div`
-  background: #181a1b;
-  border-radius: 3rem;
-  box-shadow: 0 6px 32px 0 #0003;
-  padding: 3.5rem 2.7rem 2.7rem 2.7rem;
-  margin-bottom: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: 100%;
+  margin-top: 1.5rem;
 `;
 
 const LessonTitle = styled.h2`
@@ -118,15 +107,15 @@ export default function Learn() {
         <Subtitle>Interactive lessons to boost your investing knowledge</Subtitle>
       </Header>
       <CardsContainer>
-        <LearnCard>
+        <Card>
           <LessonTitle>{lesson.title}</LessonTitle>
           <LessonDesc>{lesson.description}</LessonDesc>
           <Button>Start Lesson</Button>
-        </LearnCard>
-        <LearnCard>
+        </Card>
+        <Card>
           <LessonTitle>Quiz</LessonTitle>
           <LessonDesc>[Quiz will appear here after each lesson]</LessonDesc>
-        </LearnCard>
+        </Card>
       </CardsContainer>
     </PageWrapper>
   );

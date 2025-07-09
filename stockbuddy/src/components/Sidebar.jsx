@@ -96,16 +96,16 @@ const HamburgerMirrored = styled.span`
 `;
 
 const Section = styled.div`
-  margin-bottom: 3.5rem;
+  margin-bottom: 2.7rem;
   padding-left: 0.5rem;
 `;
 
 const SectionTitle = styled.h3`
-  font-size: 1.25rem;
+  font-size: 1.18rem;
   font-weight: 800;
   color: #fff;
-  margin-bottom: 1.7rem;
-  margin-top: 2.5rem;
+  margin-bottom: 1.3rem;
+  margin-top: 2.2rem;
   letter-spacing: 0.03em;
   display: flex;
   align-items: center;
@@ -115,8 +115,8 @@ const SectionTitle = styled.h3`
 
 const Divider = styled.hr`
   border: none;
-  border-top: 2px solid rgba(255,255,255,0.15);
-  margin: 2rem 0;
+  border-top: 1.5px solid rgba(255,255,255,0.13);
+  margin: 1.7rem 0;
 `;
 
 const List = styled.ul`
@@ -180,7 +180,7 @@ const Notification = styled.div`
   color: var(--text-muted, #b0b3b8);
   border-radius: 1.5rem;
   padding: 1.7rem 2rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.2rem;
   font-size: 1.13rem;
   box-shadow: 0 2px 8px 0 #0001;
   border: 1.2px solid rgba(255,255,255,0.10);
@@ -189,13 +189,13 @@ const Notification = styled.div`
 
 const AccountSummary = styled.div`
   background: rgba(36, 38, 40, 0.55);
-  border-radius: 2rem;
-  padding: 2.5rem 2rem;
-  margin-bottom: 1.5rem;
+  border-radius: 1.5rem;
+  padding: 2rem 1.7rem;
+  margin-bottom: 1.2rem;
   color: var(--text-main, #f5f6fa);
   display: flex;
   flex-direction: column;
-  gap: 1.3rem;
+  gap: 1.1rem;
   box-shadow: 0 4px 16px 0 #0001;
   border: 1.5px solid rgba(255,255,255,0.13);
   font-size: 1.13rem;
@@ -216,10 +216,10 @@ const AccountValue = styled.div`
 const PlaceholderBox = styled.div`
   background: rgba(36, 38, 40, 0.45);
   border-radius: 1.5rem;
-  padding: 1.5rem 1.7rem;
+  padding: 1.7rem 2rem;
   color: var(--text-muted, #b0b3b8);
-  margin-bottom: 1.5rem;
-  font-size: 1.09rem;
+  margin-bottom: 1.2rem;
+  font-size: 1.13rem;
   box-shadow: 0 2px 8px 0 #0001;
   border: 1.2px solid rgba(255,255,255,0.10);
   line-height: 1.7;
