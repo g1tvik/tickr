@@ -383,7 +383,7 @@ export default function Home({ onLogin }) {
     if (token) {
       navigate(activeTabData.link);
     } else {
-      navigate('/signup');
+      navigate('/login');
     }
   };
 
