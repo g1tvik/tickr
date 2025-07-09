@@ -371,7 +371,7 @@ export default function Home({ onLogin }) {
   };
 
   const handleLearnMore = () => {
-    onLogin();
+    navigate('/about');
   };
 
   const activeTabData = tabs.find(tab => tab.id === activeTab);

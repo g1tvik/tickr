@@ -10,6 +10,7 @@ import Trade from './pages/Trade';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import About from './pages/About';
 import { FaBars } from 'react-icons/fa'; // Add this for hamburger icon
 
 // Grid container for the whole app
@@ -124,6 +125,7 @@ const App = () => {
             } />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/signup" element={<Signup onLogin={handleLogin} />} />
+            <Route path="/about" element={<About />} />
           </Routes>
         </MainArea>
         {isLoggedIn && (
