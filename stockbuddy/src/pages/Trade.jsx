@@ -21,11 +21,11 @@ const Title = styled.h1`
   font-weight: 900;
   margin-bottom: 1.7rem;
   letter-spacing: -1px;
-  color: var(--accent-green, #00c805);
+  color: var(--accent-green, #FFF8E7);
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  text-shadow: 0 0 12px #00c80544;
+  text-shadow: 0 0 12px #FFF8E744;
   justify-content: center;
   text-align: center;
 `;
@@ -63,8 +63,8 @@ const SectionTitle = styled.h2`
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 1.1rem;
-  color: var(--accent-green, #00c805);
-  text-shadow: 0 0 8px #00c80533;
+  color: var(--accent-green, #FFF8E7);
+  text-shadow: 0 0 8px #FFF8E733;
 `;
 
 const SectionDesc = styled.p`
@@ -74,7 +74,7 @@ const SectionDesc = styled.p`
 `;
 
 const Button = styled.button`
-  background: var(--accent-green, #00c805);
+  background: var(--accent-green, #FFF8E7);
   color: #181a1b;
   padding: 1.1rem 2.2rem;
   border-radius: 1.1rem;
@@ -82,13 +82,13 @@ const Button = styled.button`
   font-size: 1.15rem;
   border: none;
   cursor: pointer;
-  box-shadow: 0 0 12px 0 var(--accent-green, #00c80544);
+  box-shadow: 0 0 12px 0 var(--accent-green, #FFF8E744);
   transition: background 0.2s, color 0.2s, box-shadow 0.2s;
   margin-top: 0.5rem;
   &:hover:enabled {
-    background: #00e805;
+    background: #FFF8E7;
     color: #0a0a0a;
-    box-shadow: 0 0 20px 3px var(--accent-green, #00c805);
+    box-shadow: 0 0 20px 3px var(--accent-green, #FFF8E7);
   }
   &:disabled {
     background: #23272a;

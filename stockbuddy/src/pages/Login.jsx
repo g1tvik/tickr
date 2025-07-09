@@ -38,7 +38,7 @@ const Input = styled.input`
 `;
 const Button = styled.button`
   padding: 1rem;
-  background: #00c805;
+  background: #FFF8E7;
   color: #181a1b;
   border: none;
   border-radius: 12px;
@@ -47,7 +47,7 @@ const Button = styled.button`
   cursor: pointer;
   margin-bottom: 1rem;
   transition: background 0.2s;
-  &:hover { background: #00a604; }
+  &:hover { background: #FFF8E7; }
 `;
 const Error = styled.div`
   color: #f7e600;
