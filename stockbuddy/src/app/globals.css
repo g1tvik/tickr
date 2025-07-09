@@ -8,20 +8,18 @@
   background: #0a0a0a;
 }
 
-html, body {
-  background: #0a0a0a !important;
-  margin: 0 !important;
-  /* Keep left margin but allow scrollbar flush on right */
-  padding: 0 0 0 4vw !important;
-  width: 100% !important;
-  height: 100% !important;
+html, body, #root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background: var(--background, #0a0a0a);
   color: #000000;
   font-family: 'Inter', 'Roboto', 'Segoe UI', 'Helvetica Neue', Arial, 'Liberation Sans', 'sans-serif';
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  box-sizing: border-box !important;
-  border: none !important;
-  outline: none !important;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 /* Apply box-sizing globally */
