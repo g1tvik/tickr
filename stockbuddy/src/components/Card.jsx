@@ -10,7 +10,7 @@ const Card = styled.div`
   flex-direction: column;
   align-items: flex-start;
   width: 100%;
-  gap: 1.5rem;
+  gap: 1.2rem; /* adjust as needed for vertical spacing */
 `;
 
 export default Card; 
