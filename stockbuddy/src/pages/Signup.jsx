@@ -11,17 +11,23 @@ const SignUp = () => {
     e.preventDefault();
     setError("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/signup", {
+      const res = await fetch("http://localhost:5000/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        // If response is not JSON, get text
+        const text = await res.text();
+        throw new Error(text || "Unknown error");
+      }
       if (!res.ok) throw new Error(data.message || "Sign up failed");
-      // Save token (localStorage, cookie, etc.)
-      localStorage.setItem("token", data.token);
-      // Redirect to home or dashboard
-      navigate("/");
+      // Optionally, save token: localStorage.setItem("token", data.token);
+      // Redirect to sign in or dashboard
+      navigate("/signin");
     } catch (err) {
       setError(err.message);
     }
