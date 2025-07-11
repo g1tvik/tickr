@@ -24,7 +24,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
           ) : (
             <>
               <li className="nav-item"><a className="nav-link" href="/signin">Sign In</a></li>
-              <li className="nav-item"><a className="nav-link" href="/signup">Sign Up</a></li>
+              {/* Sign Up removed */}
             </>
           )}
         </ul>
