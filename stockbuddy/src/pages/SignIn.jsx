@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const SignIn = () => {
+const SignIn = ({ setIsLoggedIn }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -11,7 +11,7 @@ const SignIn = () => {
     e.preventDefault();
     setError("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/signin", {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -20,6 +20,7 @@ const SignIn = () => {
       if (!res.ok) throw new Error(data.message || "Sign in failed");
       // Save token (localStorage, cookie, etc.)
       localStorage.setItem("token", data.token);
+      setIsLoggedIn(true); // <-- This updates the NavBar!
       // Redirect to home or dashboard
       navigate("/");
     } catch (err) {
