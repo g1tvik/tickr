@@ -1,105 +1,26 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import React from "react";
 
-const Container = styled.div`
-  margin-top: 6rem;
-  margin-bottom: 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: #0a0a0a;
-`;
-const Form = styled.form`
-  background: #181a1b;
-  padding: 3rem 2.5rem;
-  border-radius: 24px;
-  box-shadow: 0 4px 32px rgba(0,0,0,0.12);
-  display: flex;
-  flex-direction: column;
-  min-width: 340px;
-`;
-const Title = styled.h2`
-  color: #f5f6fa;
-  margin-bottom: 2rem;
-  font-size: 2rem;
-  font-weight: 600;
-  text-align: center;
-`;
-const Input = styled.input`
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid #23272a;
-  border-radius: 12px;
-  background: #23272a;
-  color: #f5f6fa;
-  font-size: 1rem;
-  outline: none;
-`;
-const Button = styled.button`
-  padding: 1rem;
-  background: #FFF8E7;
-  color: #181a1b;
-  border: none;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  margin-bottom: 1rem;
-  transition: background 0.2s;
-  &:hover { background: #FFF8E7; }
-`;
-const Error = styled.div`
-  color: #f7e600;
-  margin-bottom: 1rem;
-  text-align: center;
-`;
-const Switch = styled.div`
-  color: #b0b3b8;
-  text-align: center;
-  margin-top: 1rem;
-`;
+const SignUp = () => (
+  <div className="container py-5">
+    <div className="row justify-content-center">
+      <div className="col-12 col-md-6 col-lg-4">
+        <div className="card p-4 shadow">
+          <h2 className="mb-4 text-center">Sign Up</h2>
+          <form>
+            <div className="mb-3">
+              <label htmlFor="email" className="form-label">Email address</label>
+              <input type="email" className="form-control" id="email" />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="password" className="form-label">Password</label>
+              <input type="password" className="form-control" id="password" />
+            </div>
+            <button type="submit" className="btn btn-dark w-100 fw-bold">Sign Up</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
-const Signup = ({ onLogin }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-    try {
-      const res = await axios.post('/api/auth/register', { email, password });
-      localStorage.setItem('token', res.data.token);
-      onLogin(); // Call onLogin to update the authentication state
-      navigate('/dashboard');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Signup failed');
-    }
-  };
-
-  return (
-    <Container>
-      <Form onSubmit={handleSubmit}>
-        <Title>Create Account</Title>
-        {error && <Error>{error}</Error>}
-        <Input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
-        <Input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
-        <Input type="password" placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
-        <Button type="submit">Sign Up</Button>
-        <Switch>
-          Already have an account? <Link to="/login">Sign in</Link>
-        </Switch>
-      </Form>
-    </Container>
-  );
-};
-
-export default Signup; 
+export default SignUp; 
