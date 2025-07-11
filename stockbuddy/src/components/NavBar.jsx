@@ -1,15 +1,36 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React from 'react';
 
-const NavBar = () => (
-  <nav className="navbar navbar-dark bg-dark px-3">
-    <div className="container-fluid">
-      <Link className="navbar-brand fw-bold" to="/">tickr</Link>
-      <div className="d-flex">
-        <Link to="/signin" className="btn btn-light fw-bold">Sign In</Link>
+function NavBar({ isLoggedIn, setIsLoggedIn }) {
+  const handleSignOut = () => {
+    localStorage.removeItem('token');
+    setIsLoggedIn(false);
+  };
+
+  return (
+    <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3">
+      <a className="navbar-brand" href="/">tickr</a>
+      <div className="collapse navbar-collapse">
+        <ul className="navbar-nav ms-auto">
+          {isLoggedIn ? (
+            <>
+              <li className="nav-item"><a className="nav-link" href="/dashboard">Dashboard</a></li>
+              <li className="nav-item"><a className="nav-link" href="/trade">Trade</a></li>
+              <li className="nav-item"><a className="nav-link" href="/learn">Learn</a></li>
+              <li className="nav-item"><a className="nav-link" href="/profile">Profile</a></li>
+              <li className="nav-item">
+                <button className="btn btn-outline-light ms-2" onClick={handleSignOut}>Sign Out</button>
+              </li>
+            </>
+          ) : (
+            <>
+              <li className="nav-item"><a className="nav-link" href="/signin">Sign In</a></li>
+              <li className="nav-item"><a className="nav-link" href="/signup">Sign Up</a></li>
+            </>
+          )}
+        </ul>
       </div>
-    </div>
-  </nav>
-);
+    </nav>
+  );
+}
 
 export default NavBar; 

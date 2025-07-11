@@ -7,7 +7,7 @@ const Home = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="container pt-4 pb-5">
+    <div className="container pt-7 pb-5">
       <div className="d-flex flex-column align-items-center justify-content-center">
         <h1 className="fw-bold text-center mb-3 hero-title">
           Invest smarter. Learn faster.
