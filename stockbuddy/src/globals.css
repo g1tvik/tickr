@@ -1,0 +1,33 @@
+body {
+  background-color: #101113;
+  color: #a0a0a0;
+  margin: 0;
+  padding: 0;
+}
+
+.pt-6 {
+    padding-top: 4.5rem !important;
+  }
+  .pt-7 {
+    padding-top: 6rem !important;
+  }
+
+.hero-title {
+  font-size: 3rem;
+  color: #fff;
+  text-shadow: 0 0 12px #fff8dc, 0 0 4px #fff;
+}
+
+.hero-subtitle {
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  color: #b0b3b8;
+}
+
+/* Example: override Bootstrap primary color */
+:root {
+  --bs-primary: #4fbe79;
+}
+
+/* You can add more custom classes or overrides here */ 

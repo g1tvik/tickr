@@ -1,37 +1,43 @@
 import React from "react";
-import Typewriter from "../components/Typewriter";
+import { useNavigate } from "react-router-dom";
 
-const Home = () => (
-  <div className="container py-5">
-    <div className="row justify-content-center">
-      <div className="col-12 col-lg-10">
-        <h1 className="fw-bold text-center mb-4" style={{
-          fontSize: "4rem",
-          textShadow: "0 0 12px #fff8dc, 0 0 4px #fff"
-        }}>
-          <Typewriter
-            text="Invest smarter. Learn faster."
-            speed={70}
-            style={{
-              fontWeight: "bold",
-              fontSize: "4rem",
-              color: "#fff",
-              textShadow: "0 0 12px #fff8dc, 0 0 4px #fff",
-              fontFamily: "inherit"
-            }}
-          />
+const isLoggedIn = false; // Replace with real auth logic later
+
+const Home = () => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="container pt-4 pb-5">
+      <div className="d-flex flex-column align-items-center justify-content-center">
+        <h1 className="fw-bold text-center mb-3 hero-title">
+          Invest smarter. Learn faster.
         </h1>
-        <p className="lead text-center mb-4 text-light">
+        <p className="lead text-center mb-4 hero-subtitle">
           tickr helps beginners master stock trading with interactive lessons, paper trading, and real market insights.
         </p>
-        <div className="d-flex justify-content-center gap-3 mb-5">
-          <button className="btn btn-light fw-bold px-4 py-2 shadow">Get Started Free</button>
-          <button className="btn btn-dark fw-bold px-4 py-2">Learn More</button>
+        <div className="d-flex gap-3">
+          <button
+            className="btn btn-light fw-bold px-4 py-2 shadow"
+            onClick={() => navigate("/signup")}
+          >
+            Get Started Free
+          </button>
+          <button
+            className="btn btn-dark fw-bold px-4 py-2 border border-light"
+            onClick={() => {
+              if (!isLoggedIn) {
+                navigate("/signin");
+              } else {
+                // navigate to learn or another page if logged in
+              }
+            }}
+          >
+            Learn More
+          </button>
         </div>
       </div>
     </div>
-    {/* Add more Bootstrap-based sections as needed */}
-  </div>
-);
+  );
+};
 
 export default Home; 
