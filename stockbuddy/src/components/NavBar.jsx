@@ -1,7 +1,12 @@
 import React from 'react';
 import './NavBar.css';
 
-function NavBar() {
+function NavBar({ isLoggedIn, setIsLoggedIn }) { // <-- Accept props here!
+  const handleSignOut = () => {
+    localStorage.removeItem('token');
+    setIsLoggedIn(false);
+  };
+
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3">
       <a className="navbar-brand" href="/">tickr</a>
