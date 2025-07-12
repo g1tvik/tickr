@@ -1,29 +1,11 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Typewriter from "../components/Typewriter";
 import StockTicker from "../components/StockTicker";
 import FadeInSection from "../components/FadeInSection";
 import CascadeText from "../components/CascadeText";
 
 function Home({ isLoggedIn }) {
-  const navigate = useNavigate();
-
-  const handleLearnMore = () => {
-    if (isLoggedIn) {
-      navigate('/dashboard');
-    } else {
-      navigate('/signin');
-    }
-  };
-
-  const handleGetStarted = () => {
-    if (isLoggedIn) {
-      navigate('/dashboard');
-    } else {
-      navigate('/signup');
-    }
-  };
-
   return (
     <div className="container pb-5">
       {/* HERO SECTION */}
@@ -37,15 +19,18 @@ function Home({ isLoggedIn }) {
         </h1>
         <StockTicker />
         <div className="d-flex gap-3 mt-4">
-          <button className="btn btn-light fw-bold px-4 py-2 shadow" onClick={handleGetStarted}>
+          <Link 
+            to={isLoggedIn ? "/dashboard" : "/signup"}
+            className="btn btn-light fw-bold px-4 py-2 shadow"
+          >
             Get Started Free
-          </button>
-          <button
+          </Link>
+          <Link
+            to={isLoggedIn ? "/dashboard" : "/signin"}
             className="btn btn-outline-light"
-            onClick={handleLearnMore}
           >
             Learn More
-          </button>
+          </Link>
         </div>
       </div>
 
