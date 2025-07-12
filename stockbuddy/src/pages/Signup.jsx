@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
@@ -51,7 +51,12 @@ const SignUp = () => {
                   value={password} onChange={e => setPassword(e.target.value)} required />
               </div>
               {error && <div className="alert alert-danger py-2">{error}</div>}
-              <button type="submit" className="btn btn-light w-100 fw-bold">Sign Up</button>
+              <button type="submit" className="btn btn-light w-100 fw-bold mb-3">Sign Up</button>
+              <div className="text-center">
+                <small className="text-muted">
+                  Already have an account? <Link to="/signin" className="text-light">Sign in</Link>
+                </small>
+              </div>
             </form>
           </div>
         </div>
