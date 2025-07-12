@@ -23,7 +23,7 @@ function Home({ isLoggedIn }) {
   };
 
   return (
-    <div className="container pt-8 pb-5">
+    <div className="container pb-5 pt-cum">
       <div className="d-flex flex-column align-items-center justify-content-center">
         <h1 className="fw-bold text-center mb-3 hero-title">
           <Typewriter 
