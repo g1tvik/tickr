@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const SignIn = ({ setIsLoggedIn }) => {
   const [email, setEmail] = useState("");
@@ -22,7 +22,7 @@ const SignIn = ({ setIsLoggedIn }) => {
       localStorage.setItem("token", data.token);
       setIsLoggedIn(true); // <-- This updates the NavBar!
       // Redirect to home or dashboard
-      navigate("/");
+      navigate("/dashboard");
     } catch (err) {
       setError(err.message);
     }
@@ -46,7 +46,12 @@ const SignIn = ({ setIsLoggedIn }) => {
                   value={password} onChange={e => setPassword(e.target.value)} required />
               </div>
               {error && <div className="alert alert-danger py-2">{error}</div>}
-              <button type="submit" className="btn btn-light w-100 fw-bold">Sign In</button>
+              <button type="submit" className="btn btn-light w-100 fw-bold mb-3">Sign In</button>
+              <div className="text-center">
+                <small className="text-muted">
+                  Don't have an account? <Link to="/signup" className="text-light">Sign up</Link>
+                </small>
+              </div>
             </form>
           </div>
         </div>
