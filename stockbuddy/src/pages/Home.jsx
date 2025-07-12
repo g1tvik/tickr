@@ -54,7 +54,7 @@ function Home({ isLoggedIn }) {
         <FadeInSection>
           <div className="row align-items-center mb-5">
             <div className="col-md-6">
-              <img src="https://placehold.co/500x300" alt="Placeholder 1" className="img-fluid rounded shadow" />
+              <img src="/dashboard-placeholder.jpg" alt="Track Your Portfolio Dashboard" className="img-fluid rounded shadow" />
             </div>
             <div className="col-md-6">
               <CascadeText
