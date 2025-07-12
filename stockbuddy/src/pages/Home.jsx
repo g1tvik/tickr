@@ -3,10 +3,24 @@ import { useNavigate } from "react-router-dom";
 import Typewriter from "../components/Typewriter";
 import StockTicker from "../components/StockTicker";
 
-const isLoggedIn = false; // Replace with real auth logic later
-
-const Home = () => {
+function Home({ isLoggedIn }) {
   const navigate = useNavigate();
+
+  const handleLearnMore = () => {
+    if (isLoggedIn) {
+      navigate('/dashboard');
+    } else {
+      navigate('/signin');
+    }
+  };
+
+  const handleGetStarted = () => {
+    if (isLoggedIn) {
+      navigate('/dashboard');
+    } else {
+      navigate('/signup');
+    }
+  };
 
   return (
     <div className="container pt-8 pb-5">
@@ -20,21 +34,12 @@ const Home = () => {
         </h1>
         <StockTicker />
         <div className="d-flex gap-3 mt-4">
-          <button
-            className="btn btn-light fw-bold px-4 py-2 shadow"
-            onClick={() => navigate("/signup")}
-          >
+          <button className="btn btn-light fw-bold px-4 py-2 shadow" onClick={handleGetStarted}>
             Get Started Free
           </button>
           <button
-            className="btn btn-dark fw-bold px-4 py-2 border border-light"
-            onClick={() => {
-              if (!isLoggedIn) {
-                navigate("/signin");
-              } else {
-                // navigate to learn or another page if logged in
-              }
-            }}
+            className="btn btn-outline-light"
+            onClick={handleLearnMore}
           >
             Learn More
           </button>
@@ -42,6 +47,6 @@ const Home = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Home; 
