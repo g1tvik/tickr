@@ -48,13 +48,7 @@ function Home({ isLoggedIn }) {
           </button>
         </div>
       </div>
-      <h1 className="fw-bold text-center mb-3 hero-title halftone-overlay">
-  <Typewriter 
-    text="Invest smarter. Learn faster." 
-    speed={100}
-    className="fw-bold"
-  />
-</h1>
+
       {/* SCROLL ANIMATED SECTIONS - now below hero */}
       <div className="mt-5">
         <FadeInSection>

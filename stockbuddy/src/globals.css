@@ -69,25 +69,4 @@ body {
 /* You can add more custom classes or overrides here */
 .text-muted-light {
   color: #b0b3b8 !important; /* or any light gray you prefer */
-}
-
-.halftone-overlay {
-  position: relative;
-  display: inline-block;
-  color: #00ff99; /* Your neon color */
-  text-shadow: 0 0 12px #00ff99, 0 0 24px #fff;
-  font-weight: bold;
-  /* Optional: make text a bit thicker for better effect */
-}
-
-.halftone-overlay::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: url('/halftone.svg');
-  background-size: 12px 12px;
-  opacity: 0.5; /* Adjust for effect strength */
-  mix-blend-mode: lighten; /* Or 'screen' for different look */
-  z-index: 2;
 } 
