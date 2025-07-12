@@ -39,4 +39,7 @@ body {
   --bs-primary: #4fbe79;
 }
 
-/* You can add more custom classes or overrides here */ 
+/* You can add more custom classes or overrides here */
+.text-muted-light {
+  color: #b0b3b8 !important; /* or any light gray you prefer */
+} 
