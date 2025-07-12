@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import './StockTicker.css';
 
 const stocks = [
@@ -12,27 +12,68 @@ const stocks = [
   { company: 'KO', price: '60.34', change: '-0.37 (-0.61%)', type: 'minus' },
 ];
 
-const StockTicker = () => (
-  <div className="stock-ticker">
-    <ul>
-      {stocks.map((stock, idx) => (
-        <li className={stock.type} key={idx}>
-          <span className="company">{stock.company}</span>
-          <span className="price">{stock.price}</span>
-          <span className="change">{stock.change}</span>
-        </li>
-      ))}
-    </ul>
-    <ul aria-hidden="true">
-      {stocks.map((stock, idx) => (
-        <li className={stock.type} key={idx}>
-          <span className="company">{stock.company}</span>
-          <span className="price">{stock.price}</span>
-          <span className="change">{stock.change}</span>
-        </li>
-      ))}
-    </ul>
-  </div>
-);
+const StockTicker = () => {
+  const containerRef = useRef(null);
+  const itemRefs = useRef([]);
+
+  useEffect(() => {
+    let running = true;
+    function animate() {
+      if (!containerRef.current) return;
+      const container = containerRef.current;
+      const containerRect = container.getBoundingClientRect();
+      const leftFade = containerRect.left + containerRect.width * 0.10;
+      const rightFade = containerRect.left + containerRect.width * 0.90;
+      const minScale = 0.7;
+      const maxScale = 1;
+      itemRefs.current.forEach((el) => {
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const itemCenter = rect.left + rect.width / 2;
+        let scale = maxScale;
+        if (itemCenter < leftFade) {
+          // Left fade-in zone: grow from minScale to maxScale
+          const t = (itemCenter - containerRect.left) / (containerRect.width * 0.10);
+          scale = minScale + t * (maxScale - minScale);
+          if (scale < minScale) scale = minScale;
+        } else if (itemCenter > rightFade) {
+          // Right fade-out zone: shrink from maxScale to minScale
+          const t = 1 - (itemCenter - rightFade) / (containerRect.width * 0.10);
+          scale = minScale + t * (maxScale - minScale);
+          if (scale < minScale) scale = minScale;
+        } else {
+          scale = maxScale;
+        }
+        el.style.transform = `scale(${scale})`;
+      });
+      if (running) requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+    return () => { running = false; };
+  }, []);
+
+  return (
+    <div className="stock-ticker" ref={containerRef}>
+      <ul>
+        {stocks.map((stock, idx) => (
+          <li className={stock.type} key={idx} ref={el => itemRefs.current[idx] = el}>
+            <span className="company">{stock.company}</span>
+            <span className="price">{stock.price}</span>
+            <span className="change">{stock.change}</span>
+          </li>
+        ))}
+      </ul>
+      <ul aria-hidden="true">
+        {stocks.map((stock, idx) => (
+          <li className={stock.type} key={idx} ref={el => itemRefs.current[idx + stocks.length] = el}>
+            <span className="company">{stock.company}</span>
+            <span className="price">{stock.price}</span>
+            <span className="change">{stock.change}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
 
 export default StockTicker; 

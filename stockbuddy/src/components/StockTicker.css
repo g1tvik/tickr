@@ -1,7 +1,7 @@
 .stock-ticker {
   font-size: 15px;
   padding-block: 8px;
-  overflow: hidden;
+  /* overflow: hidden; */
   user-select: none;
   --gap: 20px;
   display: flex;
@@ -10,6 +10,8 @@
   width: 100%;
   margin: 0 auto;
   min-width: 280px;
+  mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
 }
 
 .stock-ticker ul {
