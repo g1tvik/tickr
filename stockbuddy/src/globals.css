@@ -3,6 +3,33 @@ body {
   color: #a0a0a0;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+}
+
+/* Custom vertical scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  background: #101113;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #fff;
+  border-radius: 999px;
+  /* No border, no outline, no box-shadow */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #fffbe9;
+}
+
+::-webkit-scrollbar-track {
+  background: #101113;
+  border-radius: 999px;
+}
+
+/* Hide horizontal scrollbar */
+body {
+  overflow-x: hidden;
 }
 
 .pt-6 {
