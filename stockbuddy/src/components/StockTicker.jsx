@@ -9,7 +9,7 @@ const stocks = [
   { company: 'NVDA', price: '790.92', change: '+2.75 (+0.35%)', type: 'plus' },
   { company: 'MSFT', price: '407.54', change: '-2.80 (-0.68%)', type: 'minus' },
   { company: 'META', price: '487.05', change: '+5.31 (+1.10%)', type: 'plus' },
-  { company: 'KO', price: '60.34', change: '-0.37 (-0.61%)', type: 'minus' },
+  { company: 'ABNB', price: '60.34', change: '-0.37 (-0.61%)', type: 'minus' },
 ];
 
 const StockTicker = () => {
