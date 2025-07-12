@@ -1,5 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import Typewriter from "../components/Typewriter";
+import StockTicker from "../components/StockTicker";
 
 function Home({ isLoggedIn }) {
   const navigate = useNavigate();
@@ -21,15 +23,17 @@ function Home({ isLoggedIn }) {
   };
 
   return (
-    <div className="container pt-7 pb-5">
+    <div className="container pt-8 pb-5">
       <div className="d-flex flex-column align-items-center justify-content-center">
         <h1 className="fw-bold text-center mb-3 hero-title">
-          Invest smarter. Learn faster.
+          <Typewriter 
+            text="Invest smarter. Learn faster." 
+            speed={100}
+            className="fw-bold"
+          />
         </h1>
-        <p className="lead text-center mb-4 hero-subtitle">
-          tickr helps beginners master stock trading with interactive lessons, paper trading, and real market insights.
-        </p>
-        <div className="d-flex gap-3">
+        <StockTicker />
+        <div className="d-flex gap-3 mt-4">
           <button className="btn btn-light fw-bold px-4 py-2 shadow" onClick={handleGetStarted}>
             Get Started Free
           </button>
