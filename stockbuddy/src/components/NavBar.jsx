@@ -1,33 +1,20 @@
 import React from 'react';
+import './NavBar.css';
 
-function NavBar({ isLoggedIn, setIsLoggedIn }) {
-  const handleSignOut = () => {
-    localStorage.removeItem('token');
-    setIsLoggedIn(false);
-  };
-
+function NavBar() {
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3">
-      <a className="navbar-brand" href="/">tickr</a>
-      <div className="collapse navbar-collapse">
-        <ul className="navbar-nav ms-auto">
-          {isLoggedIn ? (
-            <>
-              <li className="nav-item"><a className="nav-link" href="/dashboard">Dashboard</a></li>
-              <li className="nav-item"><a className="nav-link" href="/trade">Trade</a></li>
-              <li className="nav-item"><a className="nav-link" href="/learn">Learn</a></li>
-              <li className="nav-item"><a className="nav-link" href="/profile">Profile</a></li>
-              <li className="nav-item">
-                <button className="btn btn-outline-light ms-2" onClick={handleSignOut}>Sign Out</button>
-              </li>
-            </>
-          ) : (
-            <>
-              <li className="nav-item"><a className="nav-link" href="/signin">Sign In</a></li>
-              <li className="nav-item"><a className="nav-link" href="/signup">Sign Up</a></li>
-            </>
-          )}
-        </ul>
+    <nav className="navbar transparent-navbar">
+      <div className="navbar-section navbar-left">
+        <a className="nav-link" href="#">Products</a>
+        <a className="nav-link" href="#">Pricing</a>
+        <a className="nav-link" href="#">Blog</a>
+      </div>
+      <div className="navbar-section navbar-center">
+        <a className="navbar-brand" href="/">tickr</a>
+      </div>
+      <div className="navbar-section navbar-right">
+        <a className="btn btn-outline-dark me-2" href="/signin">Sign In</a>
+        <a className="btn btn-dark" href="/signup">Get Started</a>
       </div>
     </nav>
   );
