@@ -6,6 +6,9 @@ import Home from "./pages/Home";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/Signup";
 import Dashboard from './pages/Dashboard';
+import Trade from './pages/Trade';
+import Learn from './pages/Learn';
+import Profile from './pages/Profile';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
@@ -19,6 +22,9 @@ function App() {
           <Route path="/signin" element={<SignIn setIsLoggedIn={setIsLoggedIn} />} />
           <Route path="/signup" element={<SignUp setIsLoggedIn={setIsLoggedIn} />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/trade" element={<Trade />} />
+          <Route path="/learn" element={<Learn />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </Router>
     </GoogleOAuthProvider>
