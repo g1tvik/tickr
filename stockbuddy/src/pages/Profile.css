@@ -1,0 +1,150 @@
+.profile-page-center {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.profile-card {
+  background: #18191a;
+  border-radius: 16px;
+  padding: 1.5rem 1rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  width: 100%;
+  max-width: 350px;
+  text-align: center;
+  color: #fff;
+}
+
+.profile-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  margin-bottom: 12px;
+  object-fit: cover;
+  background: #222;
+}
+
+.profile-name {
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+
+.profile-username {
+  color: #aaa;
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+}
+
+.profile-edit {
+  color: #fff;
+  font-weight: 500;
+  text-decoration: underline;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  display: inline-block;
+}
+
+.profile-total-value {
+  font-size: 1.5rem;
+  color: #fff;
+  margin: 1.2rem 0 0.3rem;
+  font-weight: 700;
+}
+
+.profile-total-label {
+  color: #aaa;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.profile-investing-section {
+  text-align: left;
+  margin: 0 auto 1.2rem;
+  max-width: 240px;
+}
+
+.profile-investing-title {
+  color: #fff;
+  font-weight: 500;
+  margin-bottom: 6px;
+  font-size: 1rem;
+}
+
+.profile-divider {
+  border-top: 1px solid #333;
+  margin-bottom: 6px;
+}
+
+.profile-investing-row {
+  display: flex;
+  justify-content: space-between;
+  color: #aaa;
+  font-size: 0.95rem;
+  margin-bottom: 7px;
+}
+
+.profile-investing-value {
+  color: #fff;
+}
+
+.profile-overview-section {
+  margin-top: 2rem;
+}
+
+.profile-overview-title {
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 18px;
+  font-size: 1.25rem;
+}
+
+.profile-overview-circles {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.profile-overview-circle {
+  background: #222;
+  color: #fff;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.profile-overview-circle-active {
+  background: #fff;
+  color: #000;
+}
+
+.profile-overview-value {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .profile-card {
+    padding: 1rem 0.2rem;
+    max-width: 98vw;
+  }
+  .profile-overview-circles {
+    gap: 10px;
+  }
+  .profile-overview-circle {
+    width: 44px;
+    height: 44px;
+    font-size: 12px;
+  }
+} 
