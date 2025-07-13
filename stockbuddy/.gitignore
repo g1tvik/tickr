@@ -143,5 +143,6 @@ auth-backend/.env
 auth-backend/.env.*
 
 #Ignore .env
-stockbuddy/.env.bak
+.env.bak
+.env.bak.*
 
