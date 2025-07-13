@@ -1,20 +1,13 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import './StockTicker.css';
 
-const stocks = [
-  { company: 'AAPL', price: '181.16', change: '-1.36 (-0.75%)', type: 'minus' },
-  { company: 'TSLA', price: '199.40', change: '+7.43 (+3.87%)', type: 'plus' },
-  { company: 'NFLX', price: '587.65', change: '+4.09 (+0.70%)', type: 'plus' },
-  { company: 'GOOG', price: '138.75', change: '-6.54 (-4.50%)', type: 'minus' },
-  { company: 'NVDA', price: '790.92', change: '+2.75 (+0.35%)', type: 'plus' },
-  { company: 'MSFT', price: '407.54', change: '-2.80 (-0.68%)', type: 'minus' },
-  { company: 'META', price: '487.05', change: '+5.31 (+1.10%)', type: 'plus' },
-  { company: 'ABNB', price: '60.34', change: '-0.37 (-0.61%)', type: 'minus' },
-];
+const ALPHA_API_KEY = "X5A9KJJE73YAL7GY";
+const API_URL = `https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=${ALPHA_API_KEY}`;
 
 const StockTicker = () => {
   const containerRef = useRef(null);
   const itemRefs = useRef([]);
+  const [stocks, setStocks] = useState([]);
 
   useEffect(() => {
     let running = true;
@@ -32,12 +25,10 @@ const StockTicker = () => {
         const itemCenter = rect.left + rect.width / 2;
         let scale = maxScale;
         if (itemCenter < leftFade) {
-          // Left fade-in zone: grow from minScale to maxScale
           const t = (itemCenter - containerRect.left) / (containerRect.width * 0.10);
           scale = minScale + t * (maxScale - minScale);
           if (scale < minScale) scale = minScale;
         } else if (itemCenter > rightFade) {
-          // Right fade-out zone: shrink from maxScale to minScale
           const t = 1 - (itemCenter - rightFade) / (containerRect.width * 0.10);
           scale = minScale + t * (maxScale - minScale);
           if (scale < minScale) scale = minScale;
@@ -52,23 +43,66 @@ const StockTicker = () => {
     return () => { running = false; };
   }, []);
 
+  useEffect(() => {
+    async function fetchTopMovers() {
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        const gainers = (data.top_gainers || []).slice(0, 3).map(stock => ({
+          ...stock,
+          type: 'gainer',
+        }));
+        const losers = (data.top_losers || []).slice(0, 3).map(stock => ({
+          ...stock,
+          type: 'loser',
+        }));
+        // Interleave gainers and losers
+        const interleaved = [];
+        for (let i = 0; i < 3; i++) {
+          if (gainers[i]) interleaved.push(gainers[i]);
+          if (losers[i]) interleaved.push(losers[i]);
+        }
+        setStocks(interleaved);
+      } catch (e) {
+        setStocks([]);
+      }
+    }
+    fetchTopMovers();
+    const interval = setInterval(fetchTopMovers, 3600000); // 60 minutes
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="stock-ticker" ref={containerRef}>
       <ul>
         {stocks.map((stock, idx) => (
-          <li className={stock.type} key={idx} ref={el => itemRefs.current[idx] = el}>
-            <span className="company">{stock.company}</span>
-            <span className="price">{stock.price}</span>
-            <span className="change">{stock.change}</span>
+          <li key={stock.ticker + '-' + idx} ref={el => itemRefs.current[idx] = el}>
+            {stock.type === 'gainer' && (
+              <span className="change plus">
+                <span className="arrow plus">▲</span>{stock.ticker} ${stock.price} (+{parseFloat(stock.change_percentage).toFixed(2)}%)
+              </span>
+            )}
+            {stock.type === 'loser' && (
+              <span className="change minus">
+                <span className="arrow minus">▼</span>{stock.ticker} ${stock.price} ({parseFloat(stock.change_percentage).toFixed(2)}%)
+              </span>
+            )}
           </li>
         ))}
       </ul>
       <ul aria-hidden="true">
         {stocks.map((stock, idx) => (
-          <li className={stock.type} key={idx} ref={el => itemRefs.current[idx + stocks.length] = el}>
-            <span className="company">{stock.company}</span>
-            <span className="price">{stock.price}</span>
-            <span className="change">{stock.change}</span>
+          <li key={stock.ticker + '-dup-' + idx}>
+            {stock.type === 'gainer' && (
+              <span className="change plus">
+                <span className="arrow plus">▲</span>{stock.ticker} ${stock.price} (+{parseFloat(stock.change_percentage).toFixed(2)}%)
+              </span>
+            )}
+            {stock.type === 'loser' && (
+              <span className="change minus">
+                <span className="arrow minus">▼</span>{stock.ticker} ${stock.price} ({parseFloat(stock.change_percentage).toFixed(2)}%)
+              </span>
+            )}
           </li>
         ))}
       </ul>

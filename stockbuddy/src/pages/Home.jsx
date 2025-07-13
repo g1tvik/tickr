@@ -14,7 +14,7 @@ function Home({ isLoggedIn }) {
           <h1 className="fw-bold mb-3 hero-title">
             <Typewriter 
               text="Invest smarter. Learn faster." 
-              speed={100}
+              speed={60}
               className="fw-bold"
             />
           </h1>
