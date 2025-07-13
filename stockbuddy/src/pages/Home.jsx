@@ -7,35 +7,36 @@ import CascadeText from "../components/CascadeText";
 
 function Home({ isLoggedIn }) {
   return (
-    <div className="container pb-5">
+    <div>
       {/* HERO SECTION */}
-      <div className="d-flex flex-column align-items-center justify-content-center pt-cum">
-        <h1 className="fw-bold text-center mb-3 hero-title">
-          <Typewriter 
-            text="Invest smarter. Learn faster." 
-            speed={100}
-            className="fw-bold"
-          />
-        </h1>
-        <StockTicker />
-        <div className="d-flex gap-3 mt-4">
-          <Link 
-            to={isLoggedIn ? "/dashboard" : "/signup"}
-            className="btn btn-light fw-bold px-4 py-2 shadow"
-          >
-            Get Started Free
-          </Link>
-          <Link
-            to={isLoggedIn ? "/dashboard" : "/signin"}
-            className="btn btn-outline-light"
-          >
-            Learn More
-          </Link>
+      <div className="pt-cum">
+        <div className="text-center">
+          <h1 className="fw-bold mb-3 hero-title">
+            <Typewriter 
+              text="Invest smarter. Learn faster." 
+              speed={100}
+              className="fw-bold"
+            />
+          </h1>
+          <StockTicker />
+          <div className="d-flex gap-3 mt-4 justify-content-center">
+            <Link 
+              to={isLoggedIn ? "/dashboard" : "/signup"}
+              className="btn btn-light fw-bold px-4 py-2 shadow"
+            >
+              Get Started Free
+            </Link>
+            <Link
+              to={isLoggedIn ? "/dashboard" : "/signin"}
+              className="btn btn-outline-light"
+            >
+              Learn More
+            </Link>
+          </div>
         </div>
       </div>
-
-      {/* SCROLL ANIMATED SECTIONS - now below hero */}
-      <div className="mt-5">
+      {/* SCROLL ANIMATED SECTIONS */}
+      <div className="container mt-5 pb-5">
         <FadeInSection>
           <div className="row align-items-center mb-5">
             <div className="col-md-6">

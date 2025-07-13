@@ -100,11 +100,12 @@ body {
 .pt-8 {
     padding-top: 20rem !important;
   }
-.pt-cum{
-  display: flex; /* Enables Flexbox layout */
-  justify-content: center; /* Centers horizontally */
-  align-items: center; /* Centers vertically */
-  height: 100vh; /* Ensures container takes full viewport height */
+.pt-cum {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 90vh; /* Ensures full viewport height */
+  width: 100%;
 }
 
 .hero-title {
