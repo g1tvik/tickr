@@ -28,7 +28,7 @@ function Home({ isLoggedIn }) {
             </Link>
             <Link
               to={isLoggedIn ? "/dashboard" : "/signin"}
-              className="btn btn-outline-light"
+              className="btn btn-outline-light learn-more-btn"
             >
               Learn More
             </Link>

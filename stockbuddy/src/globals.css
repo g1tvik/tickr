@@ -163,4 +163,12 @@ body {
 
 .nav-link:hover::after {
   width: 100%;
+}
+
+.learn-more-btn:hover,
+.learn-more-btn:focus {
+  background-color: #3b4247 !important; /* Space gray */
+  color: #fff !important;
+  border-color: #fdfeff !important;
+  box-shadow: 0 4px 16px rgba(35, 39, 42, 0.15);
 } 
