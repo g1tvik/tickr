@@ -4,10 +4,17 @@ import './StockTicker.css';
 const ALPHA_API_KEY = "X5A9KJJE73YAL7GY";
 const API_URL = `https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=${ALPHA_API_KEY}`;
 
+const DAILY_LIMIT = 25;
+const CACHE_KEY = "stock_ticker_cache";
+const COUNT_KEY = "stock_ticker_count";
+
+const getToday = () => new Date().toISOString().slice(0, 10);
+
 const StockTicker = () => {
   const containerRef = useRef(null);
   const itemRefs = useRef([]);
   const [stocks, setStocks] = useState([]);
+  const [limitReached, setLimitReached] = useState(false);
 
   useEffect(() => {
     let running = true;
@@ -44,7 +51,28 @@ const StockTicker = () => {
   }, []);
 
   useEffect(() => {
-    async function fetchTopMovers() {
+    async function fetchTopMoversWithCache() {
+      const today = getToday();
+      // Check cache
+      const cacheRaw = localStorage.getItem(CACHE_KEY);
+      const cache = cacheRaw ? JSON.parse(cacheRaw) : null;
+      if (cache && cache.date === today && Array.isArray(cache.stocks) && cache.stocks.length > 0) {
+        setStocks(cache.stocks);
+        return;
+      }
+      // Check request count
+      const countRaw = localStorage.getItem(COUNT_KEY);
+      const countObj = countRaw ? JSON.parse(countRaw) : { date: today, count: 0 };
+      if (countObj.date !== today) {
+        countObj.date = today;
+        countObj.count = 0;
+      }
+      if (countObj.count >= DAILY_LIMIT) {
+        setLimitReached(true);
+        setStocks([]);
+        return;
+      }
+      // Make API call
       try {
         const res = await fetch(API_URL);
         const data = await res.json();
@@ -56,21 +84,42 @@ const StockTicker = () => {
           ...stock,
           type: 'loser',
         }));
-        // Interleave gainers and losers
         const interleaved = [];
         for (let i = 0; i < 3; i++) {
           if (gainers[i]) interleaved.push(gainers[i]);
           if (losers[i]) interleaved.push(losers[i]);
         }
         setStocks(interleaved);
+        // Cache result
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ date: today, stocks: interleaved }));
+        // Increment count
+        countObj.count += 1;
+        localStorage.setItem(COUNT_KEY, JSON.stringify(countObj));
       } catch (e) {
         setStocks([]);
       }
     }
-    fetchTopMovers();
-    const interval = setInterval(fetchTopMovers, 3600000); // 60 minutes
+    fetchTopMoversWithCache();
+    // Only auto-refresh if under limit
+    const interval = setInterval(() => {
+      const countRaw = localStorage.getItem(COUNT_KEY);
+      const countObj = countRaw ? JSON.parse(countRaw) : { date: getToday(), count: 0 };
+      if (countObj.date === getToday() && countObj.count < DAILY_LIMIT) {
+        fetchTopMoversWithCache();
+      }
+    }, 3600000); // 60 minutes
     return () => clearInterval(interval);
   }, []);
+
+  if (limitReached) {
+    return (
+      <div className="stock-ticker stock-ticker-limit">
+        <p style={{ color: '#ff6666', textAlign: 'center', fontWeight: 'bold' }}>
+          Daily stock API request limit reached. Please try again tomorrow.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="stock-ticker" ref={containerRef}>
