@@ -142,3 +142,7 @@ Figma： The Collaborative Interface Design Tool (7_7_2025 6：31：19 PM).html
 auth-backend/.env
 auth-backend/.env.*
 
+#Ignore .env
+.env.bak
+.env.bak.*
+
