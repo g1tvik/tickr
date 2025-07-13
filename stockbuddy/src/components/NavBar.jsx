@@ -13,7 +13,11 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3">
-      <Link className="navbar-brand" to="/">tickr</Link>
+      <div className="navbar-left" style={{ display: 'flex', alignItems: 'center' }}>
+        <Link className="navbar-brand" to="/">
+          <img src="/logo.png" alt="Tickr Logo" style={{ height: '35px', width: 'auto', display: 'block' }} />
+        </Link>
+      </div>
       <div className="collapse navbar-collapse">
         <ul className="navbar-nav ms-auto">
           {isLoggedIn ? (
