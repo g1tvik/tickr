@@ -46,7 +46,7 @@ const StockTicker = () => {
   useEffect(() => {
     async function fetchTopMovers() {
       try {
-        const res = await fetch(API_URL);
+        // const res = await fetch(API_URL); #commented out to avoid API key limit
         const data = await res.json();
         const gainers = (data.top_gainers || []).slice(0, 3).map(stock => ({
           ...stock,
