@@ -1,1 +1,3 @@
 auth-backend/.env
+auth-backend/env
+stockbuddy/.env.bak
