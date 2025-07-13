@@ -1,6 +1,6 @@
 body {
-  background-color: #101113;
-  color: #a0a0a0;
+  background-color: #F9F9F8;
+  color: #222222;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
@@ -27,21 +27,21 @@ body {
 /* Custom vertical scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
-  background: #101113;
+  background: #E5E5E5;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #fff;
+  background: #B0B0B0;
   border-radius: 999px;
   /* No border, no outline, no box-shadow */
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #fffbe9;
+  background: #E6C87A;
 }
 
 ::-webkit-scrollbar-track {
-  background: #101113;
+  background: #F9F9F8;
   border-radius: 999px;
 }
 
@@ -60,11 +60,18 @@ body {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   position: relative;
   overflow: hidden;
+  background: #E6C87A;
+  color: #222222;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(230, 200, 122, 0.08);
 }
 
 .btn:hover {
+  background: #fffbe9;
+  color: #111111;
+  box-shadow: 0 4px 16px rgba(230, 200, 122, 0.18);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .btn:active {
@@ -74,21 +81,26 @@ body {
 /* Smooth form transitions */
 .form-control {
   transition: all 0.2s ease;
+  background: #F9F9F8;
+  color: #222222;
+  border: 1px solid #E5E5E5;
 }
 
 .form-control:focus {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(230, 200, 122, 0.10);
+  border-color: #E6C87A;
 }
 
 /* Card hover effects */
 .card {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #E5E5E5;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(176, 176, 176, 0.10);
+  color: #222222;
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px rgba(230, 200, 122, 0.18);
 }
 
 .pt-6 {
@@ -110,25 +122,25 @@ body {
 
 .hero-title {
   font-size: 3rem;
-  color: #fff;
-  text-shadow: 0 0 12px #fff8dc, 0 0 4px #fff;
+  color: #E6C87A;
+  text-shadow: 0 0 12px #E6C87A, 0 0 4px #F9F9F8;
 }
 
 .hero-subtitle {
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
-  color: #b0b3b8;
+  color: #B0B0B0;
 }
 
 /* Example: override Bootstrap primary color */
 :root {
-  --bs-primary: #4fbe79;
+  --bs-primary: #E6C87A;
 }
 
 /* You can add more custom classes or overrides here */
 .text-muted-light {
-  color: #b0b3b8 !important; /* or any light gray you prefer */
+  color: #B0B0B0 !important; /* or any light gray you prefer */
 }
 
 /* Smooth navbar transitions */
@@ -147,6 +159,7 @@ body {
 .nav-link {
   transition: all 0.2s ease;
   position: relative;
+  color: #222222;
 }
 
 .nav-link::after {
@@ -156,7 +169,7 @@ body {
   height: 2px;
   bottom: 0;
   left: 50%;
-  background-color: #fff;
+  background-color: #E6C87A;
   transition: all 0.3s ease;
   transform: translateX(-50%);
 }
@@ -165,10 +178,18 @@ body {
   width: 100%;
 }
 
-.learn-more-btn:hover,
-.learn-more-btn:focus {
-  background-color: #3b4247 !important; /* Space gray */
-  color: #fff !important;
-  border-color: #fdfeff !important;
-  box-shadow: 0 4px 16px rgba(35, 39, 42, 0.15);
+.learn-more-btn {
+  background: #B0B0B0 !important;
+  color: #222222 !important;
+  border: 2px solid #E5E5E5 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(176, 176, 176, 0.10);
+  font-weight: 500;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.learn-more-btn:hover, .learn-more-btn:focus {
+  background: #A0A0A0 !important;
+  border-color: #E5E5E5 !important;
+  color: #222222 !important;
+  box-shadow: 0 4px 16px rgba(176, 176, 176, 0.18);
 } 

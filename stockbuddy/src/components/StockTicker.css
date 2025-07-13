@@ -1,7 +1,6 @@
 .stock-ticker {
   font-size: 15px;
   padding-block: 8px;
-  /* overflow: hidden; */
   user-select: none;
   --gap: 20px;
   display: flex;
@@ -10,8 +9,12 @@
   width: 100%;
   margin: 0 auto;
   min-width: 280px;
-  mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  background: #E5E5E5;
+  color: #222222;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(230, 200, 122, 0.08);
+  mask-image: linear-gradient(to right, transparent 0%, #F9F9F8 8%, #F9F9F8 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #F9F9F8 8%, #F9F9F8 92%, transparent 100%);
 }
 
 .stock-ticker ul {
@@ -46,17 +49,17 @@
 
 .stock-ticker .plus .change,
 .stock-ticker .plus::before {
-  color: #089981;
+  color: #E6C87A;
 }
 
 .stock-ticker .minus .change,
 .stock-ticker .minus::before {
-  color: #f23645;
+  color: #111111;
 }
 
 .arrow.plus {
-  color: #089981;
+  color: #E6C87A;
 }
 .arrow.minus {
-  color: #f23645;
+  color: #111111;
 } 
