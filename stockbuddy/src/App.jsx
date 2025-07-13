@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import NavBar from "./components/NavBar";
 import PageTransition from "./components/PageTransition";
 import Home from "./pages/Home";
@@ -7,7 +8,6 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/Signup";
 import Dashboard from './pages/Dashboard';
 
-// Wrapper component to handle location changes
 function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -15,15 +15,11 @@ function AppContent() {
   const location = useLocation();
 
   useEffect(() => {
-    // Start transition immediately when location changes
     setIsTransitioning(true);
-    
-    // After transition out, update location and transition back in
     const timer = setTimeout(() => {
       setCurrentLocation(location);
       setIsTransitioning(false);
-    }, 300); // Match the CSS transition duration
-    
+    }, 300);
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
@@ -36,7 +32,7 @@ function AppContent() {
             <Routes location={currentLocation || location}>
               <Route path="/" element={<Home isLoggedIn={isLoggedIn} />} />
               <Route path="/signin" element={<SignIn setIsLoggedIn={setIsLoggedIn} />} />
-              <Route path="/signup" element={<SignUp />} />
+              <Route path="/signup" element={<SignUp setIsLoggedIn={setIsLoggedIn} />} />
               <Route path="/dashboard" element={<Dashboard />} />
             </Routes>
           </div>
@@ -48,9 +44,11 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_REACT_APP_GOOGLE_CLIENT_ID || "your-google-client-id"}>
+      <Router>
+        <AppContent />
+      </Router>
+    </GoogleOAuthProvider>
   );
 }
 
