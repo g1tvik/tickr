@@ -12,7 +12,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3">
+    <nav className="navbar navbar-expand-lg navbar-color px-3">
       <div className="navbar-left" style={{ display: 'flex', alignItems: 'center' }}>
         <Link className="navbar-brand" to="/">
           <img src="/logo.png" alt="Tickr Logo" style={{ height: '35px', width: 'auto', display: 'block' }} />
