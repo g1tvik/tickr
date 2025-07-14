@@ -15,7 +15,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
     <nav className="navbar navbar-expand-lg navbar-color px-3">
       <div className="navbar-left" style={{ display: 'flex', alignItems: 'center' }}>
         <Link className="navbar-brand" to="/">
-          <img src="/logo.png" alt="Tickr Logo" style={{ height: '35px', width: 'auto', display: 'block' }} />
+          <img src="/logo.png" alt="Tickr Logo" style={{ height: '50px', width: 'auto', display: 'block' }} />
         </Link>
       </div>
       <div className="collapse navbar-collapse">

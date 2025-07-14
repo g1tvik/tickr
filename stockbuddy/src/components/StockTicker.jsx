@@ -3,7 +3,6 @@ import './StockTicker.css';
 
 const ALPHA_API_KEY = "X5A9KJJE73YAL7GY";
 const API_URL = `https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=${ALPHA_API_KEY}`;
-
 const DAILY_LIMIT = 25;
 const CACHE_KEY = "stock_ticker_cache";
 const COUNT_KEY = "stock_ticker_count";
@@ -15,6 +14,7 @@ const StockTicker = () => {
   const itemRefs = useRef([]);
   const [stocks, setStocks] = useState([]);
   const [limitReached, setLimitReached] = useState(false);
+  const [noCache, setNoCache] = useState(false);
 
   useEffect(() => {
     let running = true;
@@ -51,30 +51,31 @@ const StockTicker = () => {
   }, []);
 
   useEffect(() => {
-    async function fetchTopMoversWithCache() {
-      const today = getToday();
-      // Check cache
-      const cacheRaw = localStorage.getItem(CACHE_KEY);
-      const cache = cacheRaw ? JSON.parse(cacheRaw) : null;
-      if (cache && cache.date === today && Array.isArray(cache.stocks) && cache.stocks.length > 0) {
-        setStocks(cache.stocks);
-        return;
+    const today = getToday();
+    const cacheRaw = localStorage.getItem(CACHE_KEY);
+    const cache = cacheRaw ? JSON.parse(cacheRaw) : null;
+    const countRaw = localStorage.getItem(COUNT_KEY);
+    const countObj = countRaw ? JSON.parse(countRaw) : { date: today, count: 0 };
+
+    // Always show cached data if available
+    if (cache && cache.stocks && cache.stocks.length > 0) {
+      setStocks(cache.stocks);
+    }
+
+    // If limit reached, do not fetch, just show cache (do NOT clear stocks)
+    if (countObj.date === today && countObj.count >= DAILY_LIMIT) {
+      setLimitReached(true);
+      if (!cache || !cache.stocks || cache.stocks.length === 0) {
+        setNoCache(true);
+        setStocks([]); // Only clear if truly no cache
       }
-      // Check request count
-      const countRaw = localStorage.getItem(COUNT_KEY);
-      const countObj = countRaw ? JSON.parse(countRaw) : { date: today, count: 0 };
-      if (countObj.date !== today) {
-        countObj.date = today;
-        countObj.count = 0;
-      }
-      if (countObj.count >= DAILY_LIMIT) {
-        setLimitReached(true);
-        setStocks([]);
-        return;
-      }
-      // Make API call
+      return;
+    }
+
+    // Otherwise, fetch new data, update cache and count
+    async function fetchTopMovers() {
       try {
-        // const res = await fetch(API_URL); #commented out to avoid API key limit
+        const res = await fetch(API_URL);
         const data = await res.json();
         const gainers = (data.top_gainers || []).slice(0, 3).map(stock => ({
           ...stock,
@@ -96,26 +97,30 @@ const StockTicker = () => {
         countObj.count += 1;
         localStorage.setItem(COUNT_KEY, JSON.stringify(countObj));
       } catch (e) {
-        setStocks([]);
+        // If fetch fails, show cache if available, else show no data
+        if (!cache || !cache.stocks || cache.stocks.length === 0) {
+          setNoCache(true);
+          setStocks([]);
+        }
       }
     }
-    fetchTopMoversWithCache();
+    fetchTopMovers();
     // Only auto-refresh if under limit
     const interval = setInterval(() => {
       const countRaw = localStorage.getItem(COUNT_KEY);
       const countObj = countRaw ? JSON.parse(countRaw) : { date: getToday(), count: 0 };
       if (countObj.date === getToday() && countObj.count < DAILY_LIMIT) {
-        fetchTopMoversWithCache();
+        fetchTopMovers();
       }
     }, 3600000); // 60 minutes
     return () => clearInterval(interval);
   }, []);
 
-  if (limitReached) {
+  if (noCache) {
     return (
       <div className="stock-ticker stock-ticker-limit">
         <p style={{ color: '#ff6666', textAlign: 'center', fontWeight: 'bold' }}>
-          Daily stock API request limit reached. Please try again tomorrow.
+          No cached stock data available. Please try again later.
         </p>
       </div>
     );
@@ -155,6 +160,11 @@ const StockTicker = () => {
           </li>
         ))}
       </ul>
+      {limitReached && (
+        <div style={{ textAlign: 'center', color: '#E6C87A', fontWeight: 'bold', marginTop: 8 }}>
+          Daily stock API request limit reached. Showing last cached data.
+        </div>
+      )}
     </div>
   );
 };
