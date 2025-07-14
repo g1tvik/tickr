@@ -9,12 +9,12 @@
   width: 100%;
   margin: 0 auto;
   min-width: 280px;
-  background: #F9F9F8;
-  color: #222222;
+  background: var(--marbleWhite);
+  color: var(--marbleDarkGray);
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(230, 200, 122, 0.08);
-  mask-image: linear-gradient(to right, transparent 0%, #F9F9F8 8%, #F9F9F8 92%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, #F9F9F8 8%, #F9F9F8 92%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, var(--marbleWhite) 8%, var(--marbleWhite) 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, var(--marbleWhite) 8%, var(--marbleWhite) 92%, transparent 100%);
 }
 
 .stock-ticker ul {
@@ -49,17 +49,17 @@
 
 .stock-ticker .plus .change,
 .stock-ticker .plus::before {
-  color: #E6C87A;
+  color: var(--marbleGold);
 }
 
 .stock-ticker .minus .change,
 .stock-ticker .minus::before {
-  color: #111111;
+  color: var(--marbleGray);
 }
 
 .arrow.plus {
-  color: #E6C87A;
+  color: var(--marbleGold);
 }
 .arrow.minus {
-  color: #111111;
+  color: var(--marbleBlack);
 } 

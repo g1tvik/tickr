@@ -11,7 +11,7 @@
   justify-content: space-between;
   padding: 1.5rem 3rem 1.5rem 3rem;
   backdrop-filter: blur(8px);
-  border-bottom: 1px solid #E5E5E5;
+  border-bottom: 1px solid var(--marbleLightGray);
 }
 
 .navbar-section {
@@ -21,7 +21,7 @@
 
 .navbar-left .nav-link {
   margin-right: 2rem;
-  color: #222222;
+  color: var(--marbleDarkGray);
   font-weight: 500;
   text-decoration: none;
   font-size: 1.1rem;
@@ -29,20 +29,20 @@
 }
 
 .navbar-left .nav-link:hover {
-  color: #E6C87A;
+  color: var(--marbleGold);
 }
 
 .navbar-center .navbar-brand {
   font-size: 2rem;
   font-weight: bold;
-  color: #222222;
+  color: var(--marbleDarkGray);
   text-decoration: none;
   letter-spacing: 0.05em;
   transition: color 0.2s;
 }
 
 .navbar-center .navbar-brand:hover {
-  color: #E6C87A;
+  color: var(--marbleGold);
 }
 
 .navbar-right .btn {
@@ -51,8 +51,8 @@
   border-radius: 2rem;
   padding: 0.5rem 1.5rem;
   font-size: 1rem;
-  background: #E6C87A;
-  color: #222222;
+  background: var(--marbleGold);
+  color: var(--marbleDarkGray);
   border: none;
   box-shadow: 0 2px 8px rgba(230, 200, 122, 0.08);
   transition: background 0.2s, color 0.2s;
@@ -60,7 +60,7 @@
 
 .navbar-right .btn:hover {
   background: #fffbe9;
-  color: #111111;
+  color: var(--marbleBlack);
 }
 
 @media (max-width: 900px) {
@@ -73,5 +73,5 @@
   }
 } 
 .navbar-color{
-  background-color: #F9F9F8 !important;
+  background-color: var(--marbleWhite) !important;
 }
