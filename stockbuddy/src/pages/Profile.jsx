@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './Profile.css';
 
-const mockUser = {
+const mockUserData = {
   name: "Akash K",
   username: "@AkashK84925",
   joined: "2022",
@@ -15,13 +15,23 @@ const mockUser = {
     { label: "ETFs", value: "0%" },
     { label: "Options", value: "0%" },
     { label: "Crypto", value: "0%" }
-  ]
+  ],
+  isPremium: false // Change to true for gold, false for silver
 };
 
 function Profile() {
+  const [mockUser, setMockUser] = useState(mockUserData);
+
+  const handleTogglePremium = () => {
+    setMockUser(prev => ({ ...prev, isPremium: !prev.isPremium }));
+  };
+
   return (
-    <div className="profile-page-center pt-4">
-      <div className="profile-card">
+    <div className="profile-page-center">
+      <button className="profile-premium-toggle" onClick={handleTogglePremium}>
+        Switch to {mockUser.isPremium ? 'Basic (Silver)' : 'Premium (Gold)'}
+      </button>
+      <div className={`profile-card ${mockUser.isPremium ? 'profile-card-gold' : 'profile-card-silver'}`}>
         <img src={mockUser.avatar} alt="avatar" className="profile-avatar" />
         <h2 className="profile-name">{mockUser.name}</h2>
         <div className="profile-username">{mockUser.username} · Joined {mockUser.joined}</div>

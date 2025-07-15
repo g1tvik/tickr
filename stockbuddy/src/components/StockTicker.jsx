@@ -161,12 +161,12 @@ const StockTicker = () => {
           <li key={stock.ticker + '-' + idx} ref={el => itemRefs.current[idx] = el}>
             {stock.type === 'gainer' && (
               <span className="change plus">
-                <span className="arrow plus">▲</span>{stock.ticker} ${stock.price} (+{parseFloat(stock.change_percentage).toFixed(2)}%)
+                <span className="arrow plus">▲</span>{stock.ticker} ${stock.price} (<span className="percent-change percent-positive">+{parseFloat(stock.change_percentage).toFixed(2)}%</span>)
               </span>
             )}
             {stock.type === 'loser' && (
               <span className="change minus">
-                <span className="arrow minus">▼</span>{stock.ticker} ${stock.price} ({parseFloat(stock.change_percentage).toFixed(2)}%)
+                <span className="arrow minus">▼</span>{stock.ticker} ${stock.price} (<span className="percent-change percent-negative">{parseFloat(stock.change_percentage).toFixed(2)}%</span>)
               </span>
             )}
           </li>
@@ -177,12 +177,12 @@ const StockTicker = () => {
           <li key={stock.ticker + '-dup-' + idx}>
             {stock.type === 'gainer' && (
               <span className="change plus">
-                <span className="arrow plus">▲</span>{stock.ticker} ${stock.price} (+{parseFloat(stock.change_percentage).toFixed(2)}%)
+                <span className="arrow plus">▲</span>{stock.ticker} ${stock.price} (<span className="percent-change percent-positive">+{parseFloat(stock.change_percentage).toFixed(2)}%</span>)
               </span>
             )}
             {stock.type === 'loser' && (
               <span className="change minus">
-                <span className="arrow minus">▼</span>{stock.ticker} ${stock.price} ({parseFloat(stock.change_percentage).toFixed(2)}%)
+                <span className="arrow minus">▼</span>{stock.ticker} ${stock.price} (<span className="percent-change percent-negative">{parseFloat(stock.change_percentage).toFixed(2)}%</span>)
               </span>
             )}
           </li>
