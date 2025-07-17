@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import Trade from './pages/Trade';
 import Learn from './pages/Learn';
 import Profile from './pages/Profile';
+import LessonDetail from "./pages/LessonDetail";
 
 function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
@@ -39,6 +40,7 @@ function AppContent() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/trade" element={<Trade />} />
               <Route path="/learn" element={<Learn />} />
+              <Route path="/learn/:lessonId" element={<LessonDetail />} />
               <Route path="/profile" element={<Profile />} />
             </Routes>
           </div>
