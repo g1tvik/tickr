@@ -65,10 +65,10 @@
 }
 
 .percent-positive {
-  color: #FFD700;
-  font-weight: 700;
+  color: var(--marbleGold);
+  font-weight: 650;
 }
 .percent-negative {
-  color: #b0b0b0;
-  font-weight: 700;
+  color: var(--marbleGray);
+  font-weight: 650;
 } 

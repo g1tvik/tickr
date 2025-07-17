@@ -23,19 +23,19 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
           {isLoggedIn ? (
             <>
               <li className="nav-item">
-                <Link className="nav-link" to="/dashboard">Dashboard</Link>
+                <Link className="nav-link" to="/dashboard">DASHBOARD</Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link" to="/trade">Trade</Link>
+                <Link className="nav-link" to="/trade">TRADE</Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link" to="/learn">Learn</Link>
+                <Link className="nav-link" to="/learn">LEARN</Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link" to="/profile">Profile</Link>
+                <Link className="nav-link" to="/profile">PROFILE</Link>
               </li>
               <li className="nav-item">
-                <button className="btn btn-outline-light ms-2" onClick={handleSignOut}>Sign Out</button>
+                <button className="btn btn-outline-light ms-2" onClick={handleSignOut}>SIGN OUT</button>
               </li>
             </>
           ) : (
