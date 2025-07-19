@@ -32,6 +32,9 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                 <Link className="nav-link" to="/learn">LEARN</Link>
               </li>
               <li className="nav-item">
+                <Link className="nav-link" to="/discover">DISCOVER</Link>
+              </li>
+              <li className="nav-item">
                 <Link className="nav-link" to="/profile">PROFILE</Link>
               </li>
               <li className="nav-item">
