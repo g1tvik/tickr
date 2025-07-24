@@ -72,7 +72,7 @@
     margin: 0.5rem 0;
   }
 } 
-.navbar-color{
+.navbar-color {
   background-color: var(--marbleWhite) !important;
   position: fixed !important;
   top: 0 !important;
@@ -80,4 +80,5 @@
   right: 0 !important;
   z-index: 1030 !important;
   box-shadow: 0 2px 12px rgba(230, 200, 122, 0.08) !important;
+  transition: background-color 0.5s ease !important;
 }

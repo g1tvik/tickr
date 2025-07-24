@@ -15,73 +15,60 @@ function Home({ isLoggedIn }) {
       const documentHeight = document.documentElement.scrollHeight;
       const scrollPercentage = scrollPosition / (documentHeight - windowHeight);
       
-      console.log('Scroll percentage:', scrollPercentage);
-      
       // Change background when we're in the bottom half of the page
       if (scrollPercentage > 0.5) {
-        console.log('Scroll > 0.5, isBottomHalf:', isBottomHalf);
         if (!isBottomHalf) {
-          console.log('Setting isBottomHalf to true');
           isBottomHalf = true;
           // Try multiple selectors to find the right element
           const pageTransition = document.querySelector('.page-transition');
           const mainContent = document.querySelector('.main-content');
           const appContainer = document.querySelector('.app-container');
-          
-          console.log('Found elements:', { pageTransition: !!pageTransition, mainContent: !!mainContent, appContainer: !!appContainer });
+          const navbar = document.querySelector('.navbar-color');
           
           if (pageTransition) {
             pageTransition.style.backgroundColor = '#E5E5E5'; // marbleLightGray
-            console.log('Changed .page-transition background to marbleLightGray');
           }
           if (mainContent) {
             mainContent.style.backgroundColor = '#E5E5E5'; // marbleLightGray
-            console.log('Changed .main-content background to marbleLightGray');
           }
           if (appContainer) {
             appContainer.style.backgroundColor = '#E5E5E5'; // marbleLightGray
-            console.log('Changed .app-container background to marbleLightGray');
           }
-          
-          console.log('Background changed to marbleLightGray at scroll percentage:', scrollPercentage);
+          if (navbar) {
+            navbar.style.backgroundColor = '#E0E0E0'; // slightly lighter than marbleLightGray for contrast
+          }
         }
       } else {
-        console.log('Scroll <= 0.5, isBottomHalf:', isBottomHalf);
         if (isBottomHalf) {
-          console.log('Setting isBottomHalf to false');
           isBottomHalf = false;
           // Try multiple selectors to find the right element
           const pageTransition = document.querySelector('.page-transition');
           const mainContent = document.querySelector('.main-content');
           const appContainer = document.querySelector('.app-container');
-          
-          console.log('Found elements:', { pageTransition: !!pageTransition, mainContent: !!mainContent, appContainer: !!appContainer });
+          const navbar = document.querySelector('.navbar-color');
           
           if (pageTransition) {
             pageTransition.style.backgroundColor = '#F4F1E9';
-            console.log('Changed .page-transition background to white');
           }
           if (mainContent) {
             mainContent.style.backgroundColor = '#F4F1E9';
-            console.log('Changed .main-content background to white');
           }
           if (appContainer) {
             appContainer.style.backgroundColor = '#F4F1E9';
-            console.log('Changed .app-container background to white');
           }
-          
-          console.log('Background changed to white at scroll percentage:', scrollPercentage);
+          if (navbar) {
+            navbar.style.backgroundColor = '#F4F1E9';
+          }
         }
       }
     };
 
     // Add smooth transition to multiple elements
-    const elements = ['.page-transition', '.main-content', '.app-container'];
+    const elements = ['.page-transition', '.main-content', '.app-container', '.navbar-color'];
     elements.forEach(selector => {
       const element = document.querySelector(selector);
       if (element) {
         element.style.transition = 'background-color 0.5s ease';
-        console.log(`Added transition to ${selector}`);
       }
     });
     
@@ -91,7 +78,7 @@ function Home({ isLoggedIn }) {
     return () => {
       window.removeEventListener('scroll', handleScroll);
       // Reset background color when component unmounts
-      const elements = ['.page-transition', '.main-content', '.app-container'];
+      const elements = ['.page-transition', '.main-content', '.app-container', '.navbar-color'];
       elements.forEach(selector => {
         const element = document.querySelector(selector);
         if (element) {
