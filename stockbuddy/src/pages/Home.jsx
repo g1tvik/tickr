@@ -29,13 +29,13 @@ function Home({ isLoggedIn }) {
             pageTransition.style.backgroundColor = '#E5E5E5'; // marbleLightGray
           }
           if (mainContent) {
-            mainContent.style.backgroundColor = '#E5E5E5'; // marbleLightGray
+            mainContent.style.backgroundColor = 'var(--marbleLightGray)'; // marbleLightGray
           }
           if (appContainer) {
-            appContainer.style.backgroundColor = '#E5E5E5'; // marbleLightGray
+            appContainer.style.backgroundColor = 'var(--marbleLightGray)'; // marbleLightGray
           }
           if (navbar) {
-            navbar.style.backgroundColor = '#E0E0E0'; // slightly lighter than marbleLightGray for contrast
+            navbar.style.backgroundColor = 'var(--marbleLightGray)'; // marbleLightGray
           }
         }
       } else {
