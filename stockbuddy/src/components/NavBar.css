@@ -78,4 +78,17 @@
   right: 0 !important;
   z-index: 1030 !important;
   transition: background-color 0.5s ease !important;
+  opacity: 0;
+  animation: navbarFadeIn 0.6s ease-out forwards;
+}
+
+@keyframes navbarFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
