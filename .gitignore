@@ -1,2 +1,43 @@
+# Environment files
 auth-backend/.env
+stockbuddy/.env
 stockbuddy/.env.bak
+
+# Data files (file-based storage)
+auth-backend/data/
+
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build files
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

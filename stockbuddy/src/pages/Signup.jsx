@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { GoogleLogin } from '@react-oauth/google';
+import { api } from "../services/api";
 
 const SignUp = ({ setIsLoggedIn }) => {
   const [email, setEmail] = useState("");
@@ -12,49 +12,20 @@ const SignUp = ({ setIsLoggedIn }) => {
     e.preventDefault();
     setError("");
     try {
-      const res = await fetch("http://localhost:5001/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        // If response is not JSON, get text
-        const text = await res.text();
-        throw new Error(text || "Unknown error");
-      }
-      if (!res.ok) throw new Error(data.message || "Sign up failed");
-      // Optionally, save token: localStorage.setItem("token", data.token);
-      // Redirect to sign in or dashboard
-      navigate("/signin");
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      const res = await fetch("http://localhost:5001/api/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: credentialResponse.credential }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Google sign up failed");
+      const response = await api.register({ email, password, name: email.split('@')[0] });
       
-      localStorage.setItem("token", data.token);
-      setIsLoggedIn(true);
-      navigate("/");
+      if (response.success) {
+        // Registration successful, redirect to sign in
+        navigate("/signin");
+      } else {
+        setError(response.message || 'Registration failed');
+      }
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Registration failed');
     }
   };
 
-  const handleGoogleError = () => {
-    setError("Google sign up failed. Please try again.");
-  };
+  // Google OAuth temporarily disabled
 
   return (
     <div className="container py-5">
@@ -63,23 +34,7 @@ const SignUp = ({ setIsLoggedIn }) => {
           <div className="card p-4 shadow bg-dark text-light">
             <h2 className="mb-4 text-center">Sign Up</h2>
             
-            {/* Google Sign-Up Button */}
-            <div className="mb-4">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                useOneTap
-                theme="filled_black"
-                size="large"
-                text="signup_with"
-                shape="rectangular"
-                width="100%"
-              />
-            </div>
-            
-            <div className="text-center mb-4">
-              <span className="text-muted">or</span>
-            </div>
+            {/* Google OAuth temporarily disabled */}
             
             <form onSubmit={handleSubmit}>
               <div className="mb-3">

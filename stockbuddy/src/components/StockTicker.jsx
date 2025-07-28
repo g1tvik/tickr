@@ -1,37 +1,9 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import './StockTicker.css';
 
-const ALPHA_API_KEY = import.meta.env.VITE_ALPHA_API_KEY;
-const API_URL = `https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=${ALPHA_API_KEY}`;
-const DAILY_LIMIT = 25;
-const CACHE_KEY = "stock_ticker_cache";
-const COUNT_KEY = "stock_ticker_count";
-const LAST_FETCH_KEY = "stock_ticker_last_fetch";
-const FETCH_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
-
-const getToday = () => new Date().toISOString().slice(0, 10);
-
-function stocksEqual(a, b) {
-  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (
-      a[i].ticker !== b[i].ticker ||
-      a[i].price !== b[i].price ||
-      a[i].change_percentage !== b[i].change_percentage ||
-      a[i].type !== b[i].type
-    ) {
-      return false;
-    }
-  }
-  return true;
-}
-
-const StockTicker = () => {
+const StockTicker = ({ stocks = [] }) => {
   const containerRef = useRef(null);
   const itemRefs = useRef([]);
-  const [stocks, setStocks] = useState([]);
-  const [limitReached, setLimitReached] = useState(false);
-  const [noCache, setNoCache] = useState(false);
 
   useEffect(() => {
     let running = true;
@@ -67,88 +39,34 @@ const StockTicker = () => {
     return () => { running = false; };
   }, []);
 
-  useEffect(() => {
-    const today = getToday();
-    const cacheRaw = localStorage.getItem(CACHE_KEY);
-    const cache = cacheRaw ? JSON.parse(cacheRaw) : null;
-    const countRaw = localStorage.getItem(COUNT_KEY);
-    const countObj = countRaw ? JSON.parse(countRaw) : { date: today, count: 0 };
-    const lastFetchRaw = localStorage.getItem(LAST_FETCH_KEY);
-    const lastFetch = lastFetchRaw ? parseInt(lastFetchRaw, 10) : 0;
-    const now = Date.now();
+  // Helper function to safely format change percent
+  const formatChangePercent = (changePercent) => {
+    if (changePercent === null || changePercent === undefined) return '0.00';
+    const num = parseFloat(changePercent);
+    if (isNaN(num)) return '0.00';
+    return num.toFixed(2);
+  };
 
-    // If API limit reached, show cache if available
-    if (countObj.date === today && countObj.count >= DAILY_LIMIT) {
-      setLimitReached(true);
-      if (cache && cache.stocks && cache.stocks.length > 0) {
-        setStocks(cache.stocks);
-      } else {
-        setNoCache(true);
-        setStocks([]);
-      }
-      return;
-    }
+  // Helper function to safely format price
+  const formatPrice = (price) => {
+    if (price === null || price === undefined) return 'N/A';
+    const num = parseFloat(price);
+    if (isNaN(num)) return 'N/A';
+    return num.toFixed(2);
+  };
 
-    // If under limit, but less than 1 hour since last fetch, show cached stocks if available
-    if (lastFetch && now - lastFetch < FETCH_INTERVAL_MS) {
-      if (cache && cache.stocks && cache.stocks.length > 0) {
-        setStocks(cache.stocks);
-      } else {
-        setNoCache(true);
-        setStocks([]);
-      }
-      return;
-    }
+  // Helper function to check if change is positive
+  const isPositiveChange = (changePercent) => {
+    if (changePercent === null || changePercent === undefined) return false;
+    const num = parseFloat(changePercent);
+    return !isNaN(num) && num >= 0;
+  };
 
-    // Otherwise, fetch new data
-    async function fetchTopMovers() {
-      try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        const gainers = (data.top_gainers || []).slice(0, 3).map(stock => ({
-          ...stock,
-          type: 'gainer',
-        }));
-        const losers = (data.top_losers || []).slice(0, 3).map(stock => ({
-          ...stock,
-          type: 'loser',
-        }));
-        const interleaved = [];
-        for (let i = 0; i < 3; i++) {
-          if (gainers[i]) interleaved.push(gainers[i]);
-          if (losers[i]) interleaved.push(losers[i]);
-        }
-        // Only update if data is different from cache
-        if (!cache || !stocksEqual(interleaved, cache.stocks)) {
-          setStocks(interleaved);
-          localStorage.setItem(CACHE_KEY, JSON.stringify({ date: today, stocks: interleaved }));
-          countObj.count += 1;
-          localStorage.setItem(COUNT_KEY, JSON.stringify(countObj));
-          localStorage.setItem(LAST_FETCH_KEY, now.toString());
-        } else {
-          // Data is the same, just update last fetch timestamp and show cached stocks
-          setStocks(cache.stocks);
-          localStorage.setItem(LAST_FETCH_KEY, now.toString());
-        }
-      } catch (e) {
-        // On fetch failure, show cache if available
-        if (cache && cache.stocks && cache.stocks.length > 0) {
-          setStocks(cache.stocks);
-        } else {
-          setNoCache(true);
-          setStocks([]);
-        }
-      }
-    }
-    fetchTopMovers();
-    // No interval: only fetch on mount or after 1 hour
-  }, []);
-
-  if (noCache) {
+  if (!stocks || stocks.length === 0) {
     return (
-      <div className="stock-ticker stock-ticker-limit">
-        <p style={{ color: '#ff6666', textAlign: 'center', fontWeight: 'bold' }}>
-          No cached stock data available. Please try again later.
+      <div className="stock-ticker">
+        <p style={{ color: '#666', textAlign: 'center', fontWeight: 'bold' }}>
+          Loading market data...
         </p>
       </div>
     );
@@ -157,42 +75,55 @@ const StockTicker = () => {
   return (
     <div className="stock-ticker" ref={containerRef}>
       <ul>
-        {stocks.map((stock, idx) => (
-          <li key={stock.ticker + '-' + idx} ref={el => itemRefs.current[idx] = el}>
-            {stock.type === 'gainer' && (
-              <span className="change plus">
-                <span className="arrow plus">▲</span>{stock.ticker} ${stock.price} (<span className="percent-change percent-positive">+{parseFloat(stock.change_percentage).toFixed(2)}%</span>)
-              </span>
-            )}
-            {stock.type === 'loser' && (
-              <span className="change minus">
-                <span className="arrow minus">▼</span>{stock.ticker} ${stock.price} (<span className="percent-change percent-negative">{parseFloat(stock.change_percentage).toFixed(2)}%</span>)
-              </span>
-            )}
-          </li>
-        ))}
+        {stocks.map((stock, idx) => {
+          const isPositive = isPositiveChange(stock.changePercent);
+          const formattedPrice = formatPrice(stock.price);
+          const formattedChange = formatChangePercent(stock.changePercent);
+          
+          return (
+            <li key={stock.symbol + '-' + idx} ref={el => itemRefs.current[idx] = el}>
+              {isPositive ? (
+                <span className="change plus">
+                  <span className="arrow plus">▲</span>
+                  {stock.symbol} ${formattedPrice} 
+                  (<span className="percent-change percent-positive">+{formattedChange}%</span>)
+                </span>
+              ) : (
+                <span className="change minus">
+                  <span className="arrow minus">▼</span>
+                  {stock.symbol} ${formattedPrice} 
+                  (<span className="percent-change percent-negative">-{formattedChange}%</span>)
+                </span>
+              )}
+            </li>
+          );
+        })}
       </ul>
       <ul aria-hidden="true">
-        {stocks.map((stock, idx) => (
-          <li key={stock.ticker + '-dup-' + idx}>
-            {stock.type === 'gainer' && (
-              <span className="change plus">
-                <span className="arrow plus">▲</span>{stock.ticker} ${stock.price} (<span className="percent-change percent-positive">+{parseFloat(stock.change_percentage).toFixed(2)}%</span>)
-              </span>
-            )}
-            {stock.type === 'loser' && (
-              <span className="change minus">
-                <span className="arrow minus">▼</span>{stock.ticker} ${stock.price} (<span className="percent-change percent-negative">{parseFloat(stock.change_percentage).toFixed(2)}%</span>)
-              </span>
-            )}
-          </li>
-        ))}
+        {stocks.map((stock, idx) => {
+          const isPositive = isPositiveChange(stock.changePercent);
+          const formattedPrice = formatPrice(stock.price);
+          const formattedChange = formatChangePercent(stock.changePercent);
+          
+          return (
+            <li key={stock.symbol + '-dup-' + idx}>
+              {isPositive ? (
+                <span className="change plus">
+                  <span className="arrow plus">▲</span>
+                  {stock.symbol} ${formattedPrice} 
+                  (<span className="percent-change percent-positive">+{formattedChange}%</span>)
+                </span>
+              ) : (
+                <span className="change minus">
+                  <span className="arrow minus">▼</span>
+                  {stock.symbol} ${formattedPrice} 
+                  (<span className="percent-change percent-negative">-{formattedChange}%</span>)
+                </span>
+              )}
+            </li>
+          );
+        })}
       </ul>
-      {limitReached && (
-        <div style={{ textAlign: 'center', color: '#E6C87A', fontWeight: 'bold', marginTop: 8 }}>
-          Daily stock API request limit reached. Showing last cached data.
-        </div>
-      )}
     </div>
   );
 };

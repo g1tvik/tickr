@@ -1,105 +1,256 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { GoogleLogin } from '@react-oauth/google';
+import { useNavigate } from "react-router-dom";
+import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from "../marblePalette";
+import { fontHeading, fontBody } from "../fontPalette";
+import { api } from "../services/api";
 
-const SignIn = ({ setIsLoggedIn }) => {
+function SignIn({ setIsLoggedIn }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     setError("");
-    try {
-      const res = await fetch("http://localhost:5001/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Sign in failed");
-      // Save token (localStorage, cookie, etc.)
-      localStorage.setItem("token", data.token);
-      setIsLoggedIn(true); // <-- This updates the NavBar!
-      // Redirect to home or dashboard
-      navigate("/dashboard");
-    } catch (err) {
-      setError(err.message);
-    }
-  };
 
-  const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const res = await fetch("http://localhost:5001/api/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: credentialResponse.credential }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Google sign in failed");
+      const response = await api.login({ email, password });
       
-      localStorage.setItem("token", data.token);
-      setIsLoggedIn(true);
-      navigate("/");
-    } catch (err) {
-      setError(err.message);
+      if (response.success) {
+        localStorage.setItem('token', response.token);
+        setIsLoggedIn(true);
+        navigate('/dashboard');
+      } else {
+        setError(response.message || 'Login failed');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleGoogleError = () => {
-    setError("Google sign in failed. Please try again.");
+  const handleDemoLogin = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      // Create a demo user or use existing one
+      const response = await api.register({
+        email: "demo@stockbuddy.com",
+        password: "demo123",
+        name: "Demo User"
+      });
+      
+      if (response.success) {
+        localStorage.setItem('token', response.token);
+        setIsLoggedIn(true);
+        navigate('/dashboard');
+      } else {
+        // Try to login if user already exists
+        const loginResponse = await api.login({
+          email: "demo@stockbuddy.com",
+          password: "demo123"
+        });
+        
+        if (loginResponse.success) {
+          localStorage.setItem('token', loginResponse.token);
+          setIsLoggedIn(true);
+          navigate('/dashboard');
+        } else {
+          setError('Demo login failed');
+        }
+      }
+    } catch (error) {
+      console.error('Demo login error:', error);
+      setError('Demo login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="container py-5">
-      <div className="row justify-content-center">
-        <div className="col-12 col-md-6 col-lg-4">
-          <div className="card p-4 shadow bg-dark text-light">
-            <h2 className="mb-4 text-center">Sign In</h2>
-            
-            {/* Google Sign-In Button */}
-            <div className="mb-4">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                useOneTap
-                theme="filled_black"
-                size="large"
-                text="signin_with"
-                shape="rectangular"
-                width="100%"
-              />
-            </div>
-            
-            <div className="text-center mb-4">
-              <span className="text-muted">or</span>
-            </div>
-            
-            <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <label htmlFor="email" className="form-label">Email address</label>
-                <input type="email" className="form-control" id="email"
-                  value={email} onChange={e => setEmail(e.target.value)} required />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="password" className="form-label">Password</label>
-                <input type="password" className="form-control" id="password"
-                  value={password} onChange={e => setPassword(e.target.value)} required />
-              </div>
-              {error && <div className="alert alert-danger py-2">{error}</div>}
-              <button type="submit" className="btn btn-light w-100 fw-bold mb-3">Sign In</button>
-              <div className="text-center">
-                <small className="text-muted">
-                  Don't have an account? <Link to="/signup" className="text-light">Sign up</Link>
-                </small>
-              </div>
-            </form>
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: marbleWhite,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '24px',
+      fontFamily: fontBody
+    }}>
+      <div style={{
+        backgroundColor: marbleLightGray,
+        borderRadius: '20px',
+        padding: '40px',
+        width: '100%',
+        maxWidth: '400px',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h1 style={{
+            fontSize: '28px',
+            fontWeight: 'bold',
+            color: marbleDarkGray,
+            marginBottom: '8px',
+            fontFamily: fontHeading
+          }}>
+            Welcome Back
+          </h1>
+          <p style={{
+            color: marbleGray,
+            fontSize: '16px'
+          }}>
+            Sign in to access your StockBuddy account
+          </p>
+        </div>
+
+        {error && (
+          <div style={{
+            backgroundColor: '#fef2f2',
+            color: '#dc2626',
+            padding: '12px',
+            borderRadius: '8px',
+            marginBottom: '24px',
+            fontSize: '14px'
+          }}>
+            {error}
           </div>
+        )}
+
+        <form onSubmit={handleSubmit} style={{ marginBottom: '24px' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{
+              display: 'block',
+              marginBottom: '8px',
+              color: marbleDarkGray,
+              fontWeight: '500'
+            }}>
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                border: '2px solid transparent',
+                fontSize: '16px',
+                backgroundColor: marbleWhite,
+                color: marbleDarkGray
+              }}
+              placeholder="Enter your email"
+            />
+          </div>
+
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{
+              display: 'block',
+              marginBottom: '8px',
+              color: marbleDarkGray,
+              fontWeight: '500'
+            }}>
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                border: '2px solid transparent',
+                fontSize: '16px',
+                backgroundColor: marbleWhite,
+                color: marbleDarkGray
+              }}
+              placeholder="Enter your password"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            style={{
+              width: '100%',
+              padding: '16px',
+              borderRadius: '12px',
+              border: 'none',
+              backgroundColor: isLoading ? marbleGray : marbleGold,
+              color: marbleDarkGray,
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              opacity: isLoading ? 0.6 : 1
+            }}
+          >
+            {isLoading ? 'Signing In...' : 'Sign In'}
+          </button>
+        </form>
+
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '24px'
+        }}>
+          <div style={{
+            color: marbleGray,
+            fontSize: '14px',
+            marginBottom: '16px'
+          }}>
+            Or
+          </div>
+          
+          <button
+            onClick={handleDemoLogin}
+            disabled={isLoading}
+            style={{
+              width: '100%',
+              padding: '16px',
+              borderRadius: '12px',
+              border: '2px solid marbleGold',
+              backgroundColor: 'transparent',
+              color: marbleDarkGray,
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              opacity: isLoading ? 0.6 : 1
+            }}
+          >
+            {isLoading ? 'Loading...' : 'Try Demo Account'}
+          </button>
+        </div>
+
+        <div style={{
+          textAlign: 'center',
+          color: marbleGray,
+          fontSize: '14px'
+        }}>
+          Don't have an account?{' '}
+          <button
+            onClick={() => navigate('/signup')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: marbleGold,
+              cursor: 'pointer',
+              fontWeight: '500'
+            }}
+          >
+            Sign up
+          </button>
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default SignIn; 
