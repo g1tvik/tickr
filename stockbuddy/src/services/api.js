@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {
@@ -12,9 +12,12 @@ const handleResponse = async (response) => {
 // Helper function to get auth headers
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('No authentication token found. Please sign in.');
+  }
   return {
     'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` })
+    'Authorization': `Bearer ${token}`
   };
 };
 
@@ -93,30 +96,23 @@ export const api = {
   }).then(handleResponse),
 };
 
-// Mock data for development (fallback when API is not available)
-export const mockData = {
-  stocks: [
-    { symbol: 'AAPL', name: 'Apple Inc.', price: 175.43, change: 2.15, changePercent: 1.24 },
-    { symbol: 'GOOGL', name: 'Alphabet Inc.', price: 142.56, change: -1.23, changePercent: -0.85 },
-    { symbol: 'MSFT', name: 'Microsoft Corporation', price: 378.85, change: 5.67, changePercent: 1.52 },
-    { symbol: 'TSLA', name: 'Tesla, Inc.', price: 248.42, change: -3.21, changePercent: -1.28 },
-    { symbol: 'AMZN', name: 'Amazon.com, Inc.', price: 145.24, change: 1.89, changePercent: 1.32 },
-  ],
-  portfolio: {
-    balance: 10000,
-    positions: [
-      { symbol: 'AAPL', shares: 10, avgPrice: 170.00, currentPrice: 175.43 },
-      { symbol: 'GOOGL', shares: 5, avgPrice: 145.00, currentPrice: 142.56 },
-    ]
-  }
-};
-
 // Utility function to check if API is available
 export const isApiAvailable = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/trading/market`);
+    const response = await fetch(`${API_BASE_URL}/health`);
     return response.ok;
   } catch (error) {
     return false;
   }
+};
+
+// Utility function to check if user is authenticated
+export const isAuthenticated = () => {
+  return !!localStorage.getItem('token');
+};
+
+// Utility function to logout
+export const logout = () => {
+  localStorage.removeItem('token');
+  window.location.href = '/signin';
 }; 

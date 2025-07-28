@@ -2,41 +2,165 @@ import React, { useState, useEffect } from 'react';
 import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 import StockTicker from '../components/StockTicker';
-
-// Mock stock data - replace with real API calls
-const mockStocks = [
-  { symbol: 'AAPL', name: 'Apple Inc.', price: 175.43, change: 2.15, changePercent: 1.24 },
-  { symbol: 'GOOGL', name: 'Alphabet Inc.', price: 142.56, change: -1.23, changePercent: -0.85 },
-  { symbol: 'MSFT', name: 'Microsoft Corporation', price: 378.85, change: 5.67, changePercent: 1.52 },
-  { symbol: 'TSLA', name: 'Tesla, Inc.', price: 248.42, change: -3.21, changePercent: -1.28 },
-  { symbol: 'AMZN', name: 'Amazon.com, Inc.', price: 145.24, change: 1.89, changePercent: 1.32 },
-];
-
-const mockPortfolio = {
-  balance: 10000,
-  positions: [
-    { symbol: 'AAPL', shares: 10, avgPrice: 170.00, currentPrice: 175.43 },
-    { symbol: 'GOOGL', shares: 5, avgPrice: 145.00, currentPrice: 142.56 },
-  ]
-};
+import { api } from '../services/api';
 
 function Trade() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStock, setSelectedStock] = useState(null);
   const [orderType, setOrderType] = useState('buy');
   const [shares, setShares] = useState(1);
-  const [portfolio, setPortfolio] = useState(mockPortfolio);
-  const [stocks, setStocks] = useState(mockStocks);
+  const [portfolio, setPortfolio] = useState(null);
+  const [stocks, setStocks] = useState([]);
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [marketStatus, setMarketStatus] = useState('loading');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const filteredStocks = stocks.filter(stock =>
-    stock.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    stock.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Check authentication on component mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsAuthenticated(true);
+      loadPortfolio();
+      loadMarketData();
+      checkMarketStatus();
+    } else {
+      setError('Please sign in to access trading features');
+    }
+  }, []);
 
-  const handleStockSelect = (stock) => {
-    setSelectedStock(stock);
-    setSearchTerm('');
+  // Auto-refresh portfolio and selected stock every 30 seconds
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    const interval = setInterval(() => {
+      loadPortfolio();
+      if (selectedStock) {
+        updateSelectedStockPrice();
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [selectedStock, isAuthenticated]);
+
+  // Search stocks when search term changes
+  useEffect(() => {
+    if (searchTerm.length >= 2) {
+      searchStocks();
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchTerm]);
+
+  const loadPortfolio = async () => {
+    try {
+      const response = await api.getPortfolio();
+      if (response.success) {
+        setPortfolio(response.portfolio);
+      } else {
+        setError('Failed to load portfolio');
+      }
+    } catch (error) {
+      console.error('Error loading portfolio:', error);
+      setError('Failed to load portfolio. Please check your connection.');
+    }
+  };
+
+  const loadMarketData = async () => {
+    try {
+      const response = await api.getMarketData();
+      if (response.success) {
+        setStocks(response.marketData);
+      } else {
+        setError('Failed to load market data');
+      }
+    } catch (error) {
+      console.error('Error loading market data:', error);
+      setError('Failed to load market data. Please check your connection.');
+    }
+  };
+
+  const checkMarketStatus = () => {
+    const now = new Date();
+    const day = now.getDay();
+    const hour = now.getHours();
+    const minute = now.getMinutes();
+    
+    // Check if it's a weekday (Monday = 1, Sunday = 0)
+    if (day === 0 || day === 6) {
+      setMarketStatus('closed');
+      return;
+    }
+    
+    // Check if it's during market hours (9:30 AM - 4:00 PM ET)
+    // Note: This is a simplified check. In production, you'd want to account for timezone
+    const marketOpen = 9 * 60 + 30; // 9:30 AM in minutes
+    const marketClose = 16 * 60; // 4:00 PM in minutes
+    const currentTime = hour * 60 + minute;
+    
+    if (currentTime >= marketOpen && currentTime <= marketClose) {
+      setMarketStatus('open');
+    } else {
+      setMarketStatus('closed');
+    }
+  };
+
+  const searchStocks = async () => {
+    if (searchTerm.length < 2) return;
+    
+    setIsSearching(true);
+    setError(null);
+    
+    try {
+      const response = await api.searchStocks(searchTerm);
+      if (response.success) {
+        setSearchResults(response.results);
+      } else {
+        setError('Failed to search stocks');
+      }
+    } catch (error) {
+      console.error('Error searching stocks:', error);
+      setError('Failed to search stocks. Please try again.');
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const updateSelectedStockPrice = async () => {
+    if (!selectedStock) return;
+    
+    try {
+      const response = await api.getStockQuote(selectedStock.symbol);
+      if (response.success) {
+        setSelectedStock(response.quote);
+      }
+    } catch (error) {
+      console.error('Error updating stock price:', error);
+    }
+  };
+
+  const handleStockSelect = async (stock) => {
+    setIsLoading(true);
+    try {
+      // Get real-time quote for the selected stock
+      const response = await api.getStockQuote(stock.symbol);
+      if (response.success) {
+        setSelectedStock(response.quote);
+      } else {
+        setSelectedStock(stock);
+      }
+    } catch (error) {
+      console.error('Error getting stock quote:', error);
+      setSelectedStock(stock);
+    } finally {
+      setIsLoading(false);
+      setSearchTerm('');
+      setSearchResults([]);
+    }
   };
 
   const calculateOrderTotal = () => {
@@ -44,49 +168,32 @@ function Trade() {
     return selectedStock.price * shares;
   };
 
-  const handleOrderSubmit = () => {
-    if (orderType === 'buy') {
-      const total = calculateOrderTotal();
-      if (total > portfolio.balance) {
-        alert('Insufficient funds!');
-        return;
-      }
-      
-      // Update portfolio
-      setPortfolio(prev => ({
-        ...prev,
-        balance: prev.balance - total,
-        positions: [...prev.positions, {
-          symbol: selectedStock.symbol,
-          shares: shares,
-          avgPrice: selectedStock.price,
-          currentPrice: selectedStock.price
-        }]
-      }));
-    } else {
-      // Sell logic
-      const position = portfolio.positions.find(p => p.symbol === selectedStock.symbol);
-      if (!position || position.shares < shares) {
-        alert('Insufficient shares!');
-        return;
-      }
-      
-      const total = calculateOrderTotal();
-      setPortfolio(prev => ({
-        ...prev,
-        balance: prev.balance + total,
-        positions: prev.positions.map(p => 
-          p.symbol === selectedStock.symbol 
-            ? { ...p, shares: p.shares - shares }
-            : p
-        ).filter(p => p.shares > 0)
-      }));
-    }
+  const handleOrderSubmit = async () => {
+    if (!selectedStock) return;
     
-    setShowOrderConfirmation(true);
-    setTimeout(() => setShowOrderConfirmation(false), 3000);
-    setSelectedStock(null);
-    setShares(1);
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = orderType === 'buy' 
+        ? await api.buyStock(selectedStock.symbol, shares)
+        : await api.sellStock(selectedStock.symbol, shares);
+      
+      if (response.success) {
+        setPortfolio(response.portfolio);
+        setShowOrderConfirmation(true);
+        setTimeout(() => setShowOrderConfirmation(false), 3000);
+        setSelectedStock(null);
+        setShares(1);
+      } else {
+        setError(response.message || 'Order failed');
+      }
+    } catch (error) {
+      console.error('Error executing order:', error);
+      setError('Failed to execute order. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getPositionValue = (position) => {
@@ -96,6 +203,57 @@ function Trade() {
     const pnlPercent = (pnl / costBasis) * 100;
     return { currentValue, pnl, pnlPercent };
   };
+
+  const getMarketStatusColor = () => {
+    return marketStatus === 'open' ? '#22c55e' : '#ef4444';
+  };
+
+  const getMarketStatusText = () => {
+    return marketStatus === 'open' ? 'Market Open' : 'Market Closed';
+  };
+
+  // Show loading state while checking authentication
+  if (!isAuthenticated && !error) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: marbleWhite,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: fontBody
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '24px', color: marbleDarkGray, marginBottom: '16px' }}>
+            Loading Trading Interface...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if not authenticated
+  if (!isAuthenticated && error) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: marbleWhite,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: fontBody
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '24px', color: '#ef4444', marginBottom: '16px' }}>
+            {error}
+          </div>
+          <div style={{ color: marbleGray }}>
+            Please sign in to access the trading features.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -119,20 +277,44 @@ function Trade() {
             borderRadius: '20px',
             padding: '24px'
           }}>
-            <h1 style={{
-              fontSize: '28px',
-              fontWeight: 'bold',
-              color: marbleDarkGray,
-              marginBottom: '8px',
-              fontFamily: fontHeading
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '8px'
             }}>
-              Paper Trading
-            </h1>
+              <h1 style={{
+                fontSize: '28px',
+                fontWeight: 'bold',
+                color: marbleDarkGray,
+                fontFamily: fontHeading
+              }}>
+                Paper Trading
+              </h1>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 12px',
+                backgroundColor: marbleWhite,
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}>
+                <div style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: getMarketStatusColor()
+                }}></div>
+                {getMarketStatusText()}
+              </div>
+            </div>
             <p style={{
               color: marbleGray,
               fontSize: '16px'
             }}>
-              Practice trading with virtual money. No real money at risk!
+              Practice trading with virtual money. Real-time data powered by Alpaca API.
             </p>
           </div>
 
@@ -151,24 +333,49 @@ function Trade() {
             }}>
               Search Stocks
             </h2>
-            <input
-              type="text"
-              placeholder="Search by symbol or company name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                border: '2px solid transparent',
-                fontSize: '16px',
-                backgroundColor: marbleWhite,
-                color: marbleDarkGray,
-                marginBottom: '16px'
-              }}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                placeholder="Search by symbol or company name (e.g., AAPL, Apple, TSLA)..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  borderRadius: '12px',
+                  border: '2px solid transparent',
+                  fontSize: '16px',
+                  backgroundColor: marbleWhite,
+                  color: marbleDarkGray,
+                  marginBottom: '16px'
+                }}
+              />
+              {isSearching && (
+                <div style={{
+                  position: 'absolute',
+                  right: '20px',
+                  top: '12px',
+                  color: marbleGray
+                }}>
+                  Searching...
+                </div>
+              )}
+            </div>
             
-            {searchTerm && (
+            {error && (
+              <div style={{
+                backgroundColor: '#fef2f2',
+                color: '#dc2626',
+                padding: '12px',
+                borderRadius: '8px',
+                marginBottom: '16px',
+                fontSize: '14px'
+              }}>
+                {error}
+              </div>
+            )}
+            
+            {searchResults.length > 0 && (
               <div style={{
                 maxHeight: '300px',
                 overflowY: 'auto',
@@ -176,7 +383,7 @@ function Trade() {
                 borderRadius: '12px',
                 border: '1px solid #e0e0e0'
               }}>
-                {filteredStocks.map((stock) => (
+                {searchResults.map((stock) => (
                   <div
                     key={stock.symbol}
                     onClick={() => handleStockSelect(stock)}
@@ -213,17 +420,30 @@ function Trade() {
                         color: marbleDarkGray,
                         fontSize: '16px'
                       }}>
-                        ${stock.price.toFixed(2)}
+                        ${stock.price ? stock.price.toFixed(2) : 'N/A'}
                       </div>
-                      <div style={{
-                        color: stock.change >= 0 ? '#22c55e' : '#ef4444',
-                        fontSize: '14px'
-                      }}>
-                        {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)} ({stock.changePercent.toFixed(2)}%)
-                      </div>
+                      {stock.change !== undefined && stock.changePercent !== undefined && (
+                        <div style={{
+                          color: stock.change >= 0 ? '#22c55e' : '#ef4444',
+                          fontSize: '14px'
+                        }}>
+                          {stock.change >= 0 ? '+' : ''}{parseFloat(stock.change).toFixed(2)} ({parseFloat(stock.changePercent).toFixed(2)}%)
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {searchTerm.length >= 2 && searchResults.length === 0 && !isSearching && (
+              <div style={{
+                textAlign: 'center',
+                color: marbleGray,
+                padding: '20px',
+                fontSize: '14px'
+              }}>
+                No stocks found. Try a different search term.
               </div>
             )}
           </div>
@@ -275,7 +495,7 @@ function Trade() {
                         color: marbleGray,
                         fontSize: '14px'
                       }}>
-                        {selectedStock.name}
+                        {selectedStock.name || 'Loading...'}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
@@ -284,16 +504,26 @@ function Trade() {
                         fontWeight: 'bold',
                         color: marbleDarkGray
                       }}>
-                        ${selectedStock.price.toFixed(2)}
+                        ${selectedStock.price ? selectedStock.price.toFixed(2) : 'N/A'}
                       </div>
-                      <div style={{
-                        color: selectedStock.change >= 0 ? '#22c55e' : '#ef4444',
-                        fontSize: '16px'
-                      }}>
-                        {selectedStock.change >= 0 ? '+' : ''}{selectedStock.change.toFixed(2)} ({selectedStock.changePercent.toFixed(2)}%)
-                      </div>
+                      {selectedStock.change !== undefined && selectedStock.changePercent !== undefined && (
+                        <div style={{
+                          color: selectedStock.change >= 0 ? '#22c55e' : '#ef4444',
+                          fontSize: '16px'
+                        }}>
+                          {selectedStock.change >= 0 ? '+' : ''}{parseFloat(selectedStock.change).toFixed(2)} ({parseFloat(selectedStock.changePercent).toFixed(2)}%)
+                        </div>
+                      )}
                     </div>
                   </div>
+                  {selectedStock.volume && (
+                    <div style={{
+                      color: marbleGray,
+                      fontSize: '14px'
+                    }}>
+                      Volume: {selectedStock.volume.toLocaleString()}
+                    </div>
+                  )}
                 </div>
 
                 {/* Order Form */}
@@ -317,6 +547,7 @@ function Trade() {
                     }}>
                       <button
                         onClick={() => setOrderType('buy')}
+                        disabled={isLoading}
                         style={{
                           flex: 1,
                           padding: '12px',
@@ -325,13 +556,15 @@ function Trade() {
                           backgroundColor: orderType === 'buy' ? '#22c55e' : marbleGray,
                           color: 'white',
                           fontWeight: '500',
-                          cursor: 'pointer'
+                          cursor: isLoading ? 'not-allowed' : 'pointer',
+                          opacity: isLoading ? 0.6 : 1
                         }}
                       >
                         Buy
                       </button>
                       <button
                         onClick={() => setOrderType('sell')}
+                        disabled={isLoading}
                         style={{
                           flex: 1,
                           padding: '12px',
@@ -340,7 +573,8 @@ function Trade() {
                           backgroundColor: orderType === 'sell' ? '#ef4444' : marbleGray,
                           color: 'white',
                           fontWeight: '500',
-                          cursor: 'pointer'
+                          cursor: isLoading ? 'not-allowed' : 'pointer',
+                          opacity: isLoading ? 0.6 : 1
                         }}
                       >
                         Sell
@@ -362,12 +596,14 @@ function Trade() {
                       min="1"
                       value={shares}
                       onChange={(e) => setShares(parseInt(e.target.value) || 1)}
+                      disabled={isLoading}
                       style={{
                         width: '100%',
                         padding: '12px',
                         borderRadius: '8px',
                         border: '2px solid #e0e0e0',
-                        fontSize: '16px'
+                        fontSize: '16px',
+                        opacity: isLoading ? 0.6 : 1
                       }}
                     />
                   </div>
@@ -384,7 +620,7 @@ function Trade() {
                       marginBottom: '8px'
                     }}>
                       <span style={{ color: marbleGray }}>Price per share:</span>
-                      <span style={{ fontWeight: '500' }}>${selectedStock.price.toFixed(2)}</span>
+                      <span style={{ fontWeight: '500' }}>${selectedStock.price ? selectedStock.price.toFixed(2) : 'N/A'}</span>
                     </div>
                     <div style={{
                       display: 'flex',
@@ -407,22 +643,24 @@ function Trade() {
 
                   <button
                     onClick={handleOrderSubmit}
+                    disabled={isLoading || !selectedStock.price}
                     style={{
                       width: '100%',
                       padding: '16px',
                       borderRadius: '12px',
                       border: 'none',
-                      backgroundColor: marbleGold,
+                      backgroundColor: isLoading ? marbleGray : marbleGold,
                       color: marbleDarkGray,
                       fontSize: '16px',
                       fontWeight: 'bold',
-                      cursor: 'pointer',
-                      transition: 'transform 0.2s'
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
+                      transition: 'transform 0.2s',
+                      opacity: isLoading ? 0.6 : 1
                     }}
-                    onMouseEnter={(e) => e.target.style.transform = 'scale(1.02)'}
-                    onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                    onMouseEnter={(e) => !isLoading && (e.target.style.transform = 'scale(1.02)')}
+                    onMouseLeave={(e) => !isLoading && (e.target.style.transform = 'scale(1)')}
                   >
-                    {orderType === 'buy' ? 'Buy' : 'Sell'} {shares} Share{shares > 1 ? 's' : ''}
+                    {isLoading ? 'Processing...' : `${orderType === 'buy' ? 'Buy' : 'Sell'} ${shares} Share${shares > 1 ? 's' : ''}`}
                   </button>
                 </div>
               </div>
@@ -461,20 +699,31 @@ function Trade() {
             }}>
               Account Balance
             </h2>
-            <div style={{
-              fontSize: '32px',
-              fontWeight: 'bold',
-              color: marbleDarkGray,
-              marginBottom: '8px'
-            }}>
-              ${portfolio.balance.toFixed(2)}
-            </div>
-            <div style={{
-              color: marbleGray,
-              fontSize: '14px'
-            }}>
-              Available for trading
-            </div>
+            {portfolio ? (
+              <>
+                <div style={{
+                  fontSize: '32px',
+                  fontWeight: 'bold',
+                  color: marbleDarkGray,
+                  marginBottom: '8px'
+                }}>
+                  ${portfolio.balance.toFixed(2)}
+                </div>
+                <div style={{
+                  color: marbleGray,
+                  fontSize: '14px'
+                }}>
+                  Available for trading
+                </div>
+              </>
+            ) : (
+              <div style={{
+                color: marbleGray,
+                fontSize: '14px'
+              }}>
+                Loading balance...
+              </div>
+            )}
           </div>
 
           {/* Portfolio */}
@@ -493,7 +742,15 @@ function Trade() {
               Portfolio
             </h2>
             
-            {portfolio.positions.length === 0 ? (
+            {!portfolio ? (
+              <div style={{
+                color: marbleGray,
+                textAlign: 'center',
+                padding: '20px'
+              }}>
+                Loading portfolio...
+              </div>
+            ) : portfolio.positions.length === 0 ? (
               <div style={{
                 color: marbleGray,
                 textAlign: 'center',
@@ -561,7 +818,17 @@ function Trade() {
             }}>
               Market Watch
             </h2>
-            <StockTicker stocks={stocks} />
+            {stocks.length > 0 ? (
+              <StockTicker stocks={stocks} />
+            ) : (
+              <div style={{
+                color: marbleGray,
+                textAlign: 'center',
+                padding: '20px'
+              }}>
+                Loading market data...
+              </div>
+            )}
           </div>
         </div>
       </div>

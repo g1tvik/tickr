@@ -69,7 +69,7 @@ const initializePortfolio = (req, userId) => {
   return portfolios[userId];
 };
 
-// Get stock quote from Alpaca
+// Get stock quote from Alpaca using the correct API methods
 const getStockQuote = async (symbol) => {
   try {
     // Use Alpaca's latest trade endpoint
@@ -79,12 +79,19 @@ const getStockQuote = async (symbol) => {
       throw new Error('No data found for symbol');
     }
 
-    // Get additional market data
-    const bars = await alpaca.getBars(symbol, { limit: 2 });
-    const previousBar = bars && bars.length > 1 ? bars[bars.length - 2] : null;
+    // Get additional market data using the correct method
+    const bars = await alpaca.getBarsV2(symbol, {
+      start: new Date(Date.now() - 24 * 60 * 60 * 1000), // 24 hours ago
+      end: new Date(),
+      limit: 2
+    });
+    
+    let previousPrice = response.p;
+    if (bars && bars.length > 1) {
+      previousPrice = bars[bars.length - 2].c;
+    }
     
     const currentPrice = response.p;
-    const previousPrice = previousBar ? previousBar.c : currentPrice;
     const change = currentPrice - previousPrice;
     const changePercent = previousPrice ? ((change / previousPrice) * 100) : 0;
 
@@ -126,7 +133,12 @@ const searchStocks = async (query) => {
       { symbol: 'NVDA', name: 'NVIDIA Corporation' },
       { symbol: 'NFLX', name: 'Netflix, Inc.' },
       { symbol: 'JPM', name: 'JPMorgan Chase & Co.' },
-      { symbol: 'JNJ', name: 'Johnson & Johnson' }
+      { symbol: 'JNJ', name: 'Johnson & Johnson' },
+      { symbol: 'V', name: 'Visa Inc.' },
+      { symbol: 'WMT', name: 'Walmart Inc.' },
+      { symbol: 'PG', name: 'Procter & Gamble Co.' },
+      { symbol: 'UNH', name: 'UnitedHealth Group Inc.' },
+      { symbol: 'HD', name: 'Home Depot Inc.' }
     ];
 
     return popularStocks.filter(stock => 
