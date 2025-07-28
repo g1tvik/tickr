@@ -2,11 +2,11 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api'
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {
+  const data = await response.json().catch(() => ({ message: 'Network error' }));
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Network error' }));
-    throw new Error(error.message || 'API request failed');
+    throw new Error(data.message || 'API request failed');
   }
-  return response.json();
+  return data;
 };
 
 // Helper function to get auth headers

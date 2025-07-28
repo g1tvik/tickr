@@ -27,19 +27,19 @@ export default function LessonDetail() {
   }, [lessonId]);
 
   if (!lesson) {
-    return (
-      <div style={{
-        minHeight: "100vh",
+  return (
+    <div style={{
+      minHeight: "100vh",
         background: marbleWhite,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
         justifyContent: "center",
-        padding: "2rem 1rem"
-      }}>
-        <h1 style={{
-          fontSize: "2rem",
-          fontWeight: 700,
+      padding: "2rem 1rem"
+    }}>
+      <h1 style={{
+        fontSize: "2rem",
+        fontWeight: 700,
           color: marbleDarkGray,
           marginBottom: "1rem"
         }}>
@@ -388,7 +388,7 @@ export default function LessonDetail() {
                     {objective}
                   </li>
                 ))}
-              </ul>
+        </ul>
             </div>
           </div>
 
@@ -539,21 +539,21 @@ export default function LessonDetail() {
                 </div>
                 
                 {currentSection === lesson.content.length - 1 && (
-                  <button
+          <button
                     onClick={() => setShowQuiz(true)}
-                    style={{
+            style={{
                       background: marbleGold,
                       color: marbleDarkGray,
-                      border: "none",
+              border: "none",
                       borderRadius: 12,
                       padding: "12px 24px",
-                      fontWeight: 600,
+              fontWeight: 600,
                       fontSize: "16px",
-                      cursor: "pointer"
-                    }}
-                  >
+              cursor: "pointer"
+            }}
+          >
                     Take Quiz
-                  </button>
+          </button>
                 )}
               </div>
             </div>

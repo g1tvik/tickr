@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import { GoogleOAuthProvider } from '@react-oauth/google';
+// Google OAuth temporarily disabled
 import NavBar from "./components/NavBar";
 import PageTransition from "./components/PageTransition";
 import Home from "./pages/Home";
@@ -56,11 +56,9 @@ function AppContent() {
 
 function App() {
   return (
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || "your-google-client-id"}>
-      <Router>
-        <AppContent />
-      </Router>
-    </GoogleOAuthProvider>
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
 

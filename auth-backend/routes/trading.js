@@ -27,8 +27,7 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
-// Apply authentication to all trading routes
-router.use(authenticateToken);
+// Apply authentication to most trading routes, but allow some public endpoints
 
 // File-based storage access
 const getPortfolios = (req) => req.app.locals.fileStorage.getPortfolios();
@@ -151,8 +150,8 @@ const searchStocks = async (query) => {
   }
 };
 
-// Get user portfolio
-router.get('/portfolio', async (req, res) => {
+// Get user portfolio (requires authentication)
+router.get('/portfolio', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
     const portfolio = initializePortfolio(req, userId);
@@ -241,8 +240,8 @@ router.get('/search', async (req, res) => {
   }
 });
 
-// Execute buy order
-router.post('/buy', async (req, res) => {
+// Execute buy order (requires authentication)
+router.post('/buy', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
     const { symbol, shares } = req.body;
@@ -332,8 +331,8 @@ router.post('/buy', async (req, res) => {
   }
 });
 
-// Execute sell order
-router.post('/sell', async (req, res) => {
+// Execute sell order (requires authentication)
+router.post('/sell', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
     const { symbol, shares } = req.body;
@@ -412,8 +411,8 @@ router.post('/sell', async (req, res) => {
   }
 });
 
-// Get transaction history
-router.get('/transactions', async (req, res) => {
+// Get transaction history (requires authentication)
+router.get('/transactions', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
     const transactions = getTransactions(req);
