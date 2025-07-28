@@ -114,8 +114,8 @@ Create `.env` files:
 
 **Backend (.env):**
 ```
-MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
+GOOGLE_CLIENT_ID=your_google_client_id
 ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key
 PORT=5001
 ```
@@ -131,7 +131,7 @@ REACT_APP_GOOGLE_CLIENT_ID=your_google_client_id
 **Backend Deployment (Railway):**
 1. Push code to GitHub
 2. Connect Railway to GitHub repo
-3. Add environment variables in Railway dashboard
+3. Add environment variables in Railway dashboard (no database needed!)
 4. Deploy
 
 **Frontend Deployment (Vercel):**

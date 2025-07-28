@@ -1,6 +1,34 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const jwt = require('jsonwebtoken');
+const Alpaca = require('@alpacahq/alpaca-trade-api');
+
+// Authentication middleware
+const authenticateToken = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: 'No token provided'
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid token'
+    });
+  }
+};
+
+// Apply authentication to all trading routes
+router.use(authenticateToken);
 
 // File-based storage access
 const getPortfolios = (req) => req.app.locals.fileStorage.getPortfolios();
@@ -8,9 +36,13 @@ const savePortfolios = (req, portfolios) => req.app.locals.fileStorage.savePortf
 const getTransactions = (req) => req.app.locals.fileStorage.getTransactions();
 const saveTransactions = (req, transactions) => req.app.locals.fileStorage.saveTransactions(transactions);
 
-// Alpha Vantage API configuration
-const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY || 'demo';
-const ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query';
+// Alpaca API configuration
+const alpaca = new Alpaca({
+  keyId: process.env.ALPACA_API_KEY || 'demo',
+  secretKey: process.env.ALPACA_SECRET_KEY || 'demo',
+  paper: true, // Use paper trading
+  usePolygon: false
+});
 
 // Initialize portfolio for new users
 const initializePortfolio = (req, userId) => {
@@ -37,98 +69,80 @@ const initializePortfolio = (req, userId) => {
   return portfolios[userId];
 };
 
-// Get stock quote from Alpha Vantage
+// Get stock quote from Alpaca
 const getStockQuote = async (symbol) => {
   try {
-    const response = await axios.get(ALPHA_VANTAGE_BASE_URL, {
-      params: {
-        function: 'GLOBAL_QUOTE',
-        symbol: symbol.toUpperCase(),
-        apikey: ALPHA_VANTAGE_API_KEY
-      }
-    });
-
-    const data = response.data;
+    // Use Alpaca's latest trade endpoint
+    const response = await alpaca.getLatestTrade(symbol);
     
-    if (data['Error Message']) {
-      throw new Error('Invalid symbol');
-    }
-
-    const quote = data['Global Quote'];
-    if (!quote || Object.keys(quote).length === 0) {
+    if (!response) {
       throw new Error('No data found for symbol');
     }
 
+    // Get additional market data
+    const bars = await alpaca.getBars(symbol, { limit: 2 });
+    const previousBar = bars && bars.length > 1 ? bars[bars.length - 2] : null;
+    
+    const currentPrice = response.p;
+    const previousPrice = previousBar ? previousBar.c : currentPrice;
+    const change = currentPrice - previousPrice;
+    const changePercent = previousPrice ? ((change / previousPrice) * 100) : 0;
+
     return {
-      symbol: quote['01. symbol'],
-      price: parseFloat(quote['05. price']),
-      change: parseFloat(quote['09. change']),
-      changePercent: quote['10. change percent'].replace('%', ''),
-      volume: parseInt(quote['06. volume']),
-      high: parseFloat(quote['03. high']),
-      low: parseFloat(quote['04. low']),
-      open: parseFloat(quote['02. open'])
+      symbol: symbol.toUpperCase(),
+      price: currentPrice,
+      change: change,
+      changePercent: changePercent.toFixed(2),
+      volume: response.s || 0,
+      timestamp: response.t
     };
   } catch (error) {
-    console.error('Error fetching stock quote:', error.message);
-    // Return mock data for development
+    console.error('Error fetching stock quote from Alpaca:', error.message);
+    
+    // Fallback to mock data for development
     return {
       symbol: symbol.toUpperCase(),
       price: 150 + Math.random() * 100,
       change: (Math.random() - 0.5) * 10,
       changePercent: ((Math.random() - 0.5) * 10).toFixed(2),
       volume: Math.floor(Math.random() * 1000000),
-      high: 160 + Math.random() * 20,
-      low: 140 + Math.random() * 20,
-      open: 150 + Math.random() * 10
+      timestamp: new Date().toISOString()
     };
   }
 };
 
-// Search stocks
+// Search stocks using Alpaca
 const searchStocks = async (query) => {
   try {
-    const response = await axios.get(ALPHA_VANTAGE_BASE_URL, {
-      params: {
-        function: 'SYMBOL_SEARCH',
-        keywords: query,
-        apikey: ALPHA_VANTAGE_API_KEY
-      }
-    });
+    // Alpaca doesn't have a direct search endpoint, so we'll use a predefined list
+    // In production, you might want to use a separate service like Polygon or IEX
+    const popularStocks = [
+      { symbol: 'AAPL', name: 'Apple Inc.' },
+      { symbol: 'GOOGL', name: 'Alphabet Inc.' },
+      { symbol: 'MSFT', name: 'Microsoft Corporation' },
+      { symbol: 'TSLA', name: 'Tesla, Inc.' },
+      { symbol: 'AMZN', name: 'Amazon.com, Inc.' },
+      { symbol: 'META', name: 'Meta Platforms, Inc.' },
+      { symbol: 'NVDA', name: 'NVIDIA Corporation' },
+      { symbol: 'NFLX', name: 'Netflix, Inc.' },
+      { symbol: 'JPM', name: 'JPMorgan Chase & Co.' },
+      { symbol: 'JNJ', name: 'Johnson & Johnson' }
+    ];
 
-    const data = response.data;
-    
-    if (data['Error Message']) {
-      throw new Error('Search failed');
-    }
-
-    const matches = data.bestMatches || [];
-    return matches.map(match => ({
-      symbol: match['1. symbol'],
-      name: match['2. name'],
-      type: match['3. type'],
-      region: match['4. region']
-    }));
-  } catch (error) {
-    console.error('Error searching stocks:', error.message);
-    // Return mock data for development
-    return [
-      { symbol: 'AAPL', name: 'Apple Inc.', type: 'Equity', region: 'United States' },
-      { symbol: 'GOOGL', name: 'Alphabet Inc.', type: 'Equity', region: 'United States' },
-      { symbol: 'MSFT', name: 'Microsoft Corporation', type: 'Equity', region: 'United States' },
-      { symbol: 'TSLA', name: 'Tesla, Inc.', type: 'Equity', region: 'United States' },
-      { symbol: 'AMZN', name: 'Amazon.com, Inc.', type: 'Equity', region: 'United States' }
-    ].filter(stock => 
+    return popularStocks.filter(stock => 
       stock.symbol.toLowerCase().includes(query.toLowerCase()) ||
       stock.name.toLowerCase().includes(query.toLowerCase())
     );
+  } catch (error) {
+    console.error('Error searching stocks:', error.message);
+    return [];
   }
 };
 
 // Get user portfolio
 router.get('/portfolio', async (req, res) => {
   try {
-    const userId = req.user.userId; // From JWT token
+    const userId = req.user.userId;
     const portfolio = initializePortfolio(req, userId);
     
     // Update current prices for all positions
@@ -309,7 +323,7 @@ router.post('/buy', async (req, res) => {
 // Execute sell order
 router.post('/sell', async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const { symbol, shares } = req.body;
     
     if (!symbol || !shares || shares <= 0) {
@@ -319,7 +333,8 @@ router.post('/sell', async (req, res) => {
       });
     }
     
-    const portfolio = initializePortfolio(userId);
+    const portfolios = getPortfolios(req);
+    const portfolio = initializePortfolio(req, userId);
     const quote = await getStockQuote(symbol);
     const totalValue = quote.price * shares;
     
@@ -345,8 +360,13 @@ router.post('/sell', async (req, res) => {
       portfolio.positions = portfolio.positions.filter(p => p.symbol !== symbol);
     }
     
+    portfolio.lastUpdated = new Date().toISOString();
+    portfolios[userId] = portfolio;
+    savePortfolios(req, portfolios);
+    
     // Record transaction
-    transactions[userId].push({
+    const transactions = getTransactions(req);
+    const transaction = {
       id: Date.now().toString(),
       type: 'sell',
       symbol: symbol,
@@ -354,7 +374,11 @@ router.post('/sell', async (req, res) => {
       price: quote.price,
       total: totalValue,
       timestamp: new Date().toISOString()
-    });
+    };
+    
+    transactions[userId] = transactions[userId] || [];
+    transactions[userId].push(transaction);
+    saveTransactions(req, transactions);
     
     res.json({
       success: true,
@@ -379,7 +403,8 @@ router.post('/sell', async (req, res) => {
 // Get transaction history
 router.get('/transactions', async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
+    const transactions = getTransactions(req);
     const userTransactions = transactions[userId] || [];
     
     // Sort by timestamp (newest first)

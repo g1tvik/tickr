@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@alpacahq/alpaca-trade-api": "^3.0.2",
     "axios": "^1.6.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
@@ -22,5 +23,5 @@
   "devDependencies": {
     "nodemon": "^3.0.0"
   },
-  "description": "StockBuddy Backend API with file-based storage"
+  "description": "StockBuddy Backend API with file-based storage and Alpaca integration"
 }
