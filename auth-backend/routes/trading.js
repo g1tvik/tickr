@@ -39,8 +39,9 @@ const saveTransactions = (req, transactions) => req.app.locals.fileStorage.saveT
 const alpaca = new Alpaca({
   keyId: process.env.ALPACA_API_KEY || 'demo',
   secretKey: process.env.ALPACA_SECRET_KEY || 'demo',
-  paper: true, // Use paper trading
-  usePolygon: false
+  paper: true, // Use paper trading (sandbox)
+  usePolygon: true, // Use Polygon for real-time market data
+  baseUrl: 'https://broker-api.sandbox.alpaca.markets' // Use sandbox endpoint
 });
 
 // Initialize portfolio for new users
@@ -68,52 +69,85 @@ const initializePortfolio = (req, userId) => {
   return portfolios[userId];
 };
 
-// Get stock quote from Alpaca using the correct API methods
+// Get stock quote using Alpaca API for real-time market data
 const getStockQuote = async (symbol) => {
   try {
-    // Use Alpaca's latest trade endpoint
-    const response = await alpaca.getLatestTrade(symbol);
-    
-    if (!response) {
-      throw new Error('No data found for symbol');
+    // Check if Alpaca API keys are configured
+    if (!process.env.ALPACA_API_KEY || !process.env.ALPACA_SECRET_KEY) {
+      throw new Error('Alpaca API keys not configured. Please set ALPACA_API_KEY and ALPACA_SECRET_KEY in your .env file.');
     }
 
-    // Get additional market data using the correct method
-    const bars = await alpaca.getBarsV2(symbol, {
-      start: new Date(Date.now() - 24 * 60 * 60 * 1000), // 24 hours ago
-      end: new Date(),
-      limit: 2
+    const headers = {
+      'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
+      'APCA-API-SECRET-KEY': process.env.ALPACA_SECRET_KEY
+    };
+
+    // Get current price from latest trade (more accurate than bid/ask)
+    const tradeResponse = await axios.get(`https://data.alpaca.markets/v2/stocks/${symbol}/trades/latest`, {
+      headers
     });
-    
-    let previousPrice = response.Price; // Use correct property name
-    if (bars && bars.length > 1) {
-      previousPrice = bars[bars.length - 2].c;
-    }
-    
-    const currentPrice = response.Price; // Use correct property name
-    const change = currentPrice - previousPrice;
-    const changePercent = previousPrice ? ((change / previousPrice) * 100) : 0;
 
+    const trade = tradeResponse.data;
+    if (!trade || !trade.trade) {
+      throw new Error(`No trade data available for ${symbol}`);
+    }
+
+    const currentPrice = trade.trade.p; // Latest trade price
+    const timestamp = trade.trade.t;
+
+    // Get yesterday's date for historical quotes
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    // Get historical quotes from yesterday to find previous close
+    const historicalResponse = await axios.get(`https://data.alpaca.markets/v2/stocks/quotes`, {
+      headers,
+      params: {
+        symbols: symbol,
+        start: yesterdayStr,
+        end: yesterdayStr,
+        limit: 1000,
+        feed: 'sip'
+      }
+    });
+
+    const historicalQuotes = historicalResponse.data.quotes[symbol];
+    
+    if (!historicalQuotes || historicalQuotes.length === 0) {
+      throw new Error("No historical quote data available for percentage calculation.");
+    }
+
+    // Get the last quote from yesterday as previous close
+    const lastQuote = historicalQuotes[historicalQuotes.length - 1];
+    let previousClose;
+    
+    // Use ask price as closing price, fallback to bid if ask is 0
+    if (lastQuote.ap > 0) {
+      previousClose = lastQuote.ap;
+    } else if (lastQuote.bp > 0) {
+      previousClose = lastQuote.bp;
+    } else {
+      throw new Error("No valid previous close price available");
+    }
+
+    // Calculate daily change
+    const change = currentPrice - previousClose;
+    const changePercent = ((change / previousClose) * 100).toFixed(2);
+    
+    console.log(`${symbol} (Alpaca): $${currentPrice} (${change >= 0 ? '+' : ''}${changePercent}%) - Previous Close: $${previousClose}`);
+    
     return {
       symbol: symbol.toUpperCase(),
       price: currentPrice,
       change: change,
-      changePercent: changePercent.toFixed(2),
-      volume: response.Size || 0, // Use correct property name
-      timestamp: response.Timestamp // Use correct property name
+      changePercent: changePercent,
+      volume: trade.trade.s || 0,
+      timestamp: timestamp
     };
   } catch (error) {
-    console.error('Error fetching stock quote from Alpaca:', error.message);
-    
-    // Fallback to mock data for development
-    return {
-      symbol: symbol.toUpperCase(),
-      price: 150 + Math.random() * 100,
-      change: (Math.random() - 0.5) * 10,
-      changePercent: ((Math.random() - 0.5) * 10).toFixed(2),
-      volume: Math.floor(Math.random() * 1000000),
-      timestamp: new Date().toISOString()
-    };
+    console.error(`Error fetching Alpaca data for ${symbol}:`, error.message);
+    throw new Error(`Failed to get Alpaca quote for ${symbol}: ${error.message}`);
   }
 };
 
@@ -131,6 +165,7 @@ const searchStocks = async (query) => {
       { symbol: 'META', name: 'Meta Platforms, Inc.' },
       { symbol: 'NVDA', name: 'NVIDIA Corporation' },
       { symbol: 'NFLX', name: 'Netflix, Inc.' },
+      { symbol: 'SPY', name: 'SPDR S&P 500 ETF' },
       { symbol: 'JPM', name: 'JPMorgan Chase & Co.' },
       { symbol: 'JNJ', name: 'Johnson & Johnson' },
       { symbol: 'V', name: 'Visa Inc.' },
@@ -148,30 +183,19 @@ const searchStocks = async (query) => {
     // Get real-time quotes for filtered stocks
     const stocksWithQuotes = [];
     for (const stock of filteredStocks) {
-      try {
-        const quote = await getStockQuote(stock.symbol);
-        stocksWithQuotes.push({
-          ...stock,
-          price: quote.price,
-          change: quote.change,
-          changePercent: quote.changePercent
-        });
-      } catch (error) {
-        console.error(`Error getting quote for ${stock.symbol}:`, error.message);
-        // Add stock without quote data
-        stocksWithQuotes.push({
-          ...stock,
-          price: null,
-          change: null,
-          changePercent: null
-        });
-      }
+      const quote = await getStockQuote(stock.symbol);
+      stocksWithQuotes.push({
+        ...stock,
+        price: quote.price,
+        change: quote.change,
+        changePercent: quote.changePercent
+      });
     }
 
     return stocksWithQuotes;
   } catch (error) {
     console.error('Error searching stocks:', error.message);
-    return [];
+    throw new Error(`Failed to search stocks: ${error.message}`);
   }
 };
 
@@ -188,14 +212,18 @@ router.get('/portfolio', authenticateToken, async (req, res) => {
         position.currentPrice = quote.price;
         position.change = quote.change;
         position.changePercent = quote.changePercent;
-      } catch (error) {
-        console.error(`Error updating price for ${position.symbol}:`, error.message);
+      } catch (quoteError) {
+        console.warn(`Failed to get quote for ${position.symbol}, using last known price`);
+        // Keep the existing price if quote fails
+        position.currentPrice = position.currentPrice || position.avgPrice;
+        position.change = position.change || 0;
+        position.changePercent = position.changePercent || '0.00';
       }
     }
     
     // Calculate total portfolio value
     const positionsValue = portfolio.positions.reduce((total, position) => {
-      return total + (position.shares * position.currentPrice);
+      return total + (position.shares * (position.currentPrice || position.avgPrice));
     }, 0);
     
     portfolio.totalValue = portfolio.balance + positionsValue;
@@ -461,20 +489,30 @@ router.get('/transactions', authenticateToken, async (req, res) => {
   }
 });
 
-// Get market data (top stocks)
+// Get market data (FAANG companies)
 router.get('/market', async (req, res) => {
   try {
-    const popularStocks = ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'META', 'NVDA', 'NFLX'];
+    const faangStocks = ['META', 'AAPL', 'AMZN', 'NFLX', 'GOOGL'];
     const marketData = [];
     
-    for (const symbol of popularStocks) {
+    console.log('Fetching FAANG market data for:', faangStocks.join(', '));
+    
+    for (const symbol of faangStocks) {
       try {
         const quote = await getStockQuote(symbol);
         marketData.push(quote);
-      } catch (error) {
-        console.error(`Error getting quote for ${symbol}:`, error.message);
+        console.log(`✅ ${symbol}: $${quote.price} (${quote.changePercent}%)`);
+      } catch (quoteError) {
+        console.warn(`Failed to get quote for ${symbol}:`, quoteError.message);
+        // Continue with other stocks even if one fails
       }
     }
+    
+    if (marketData.length === 0) {
+      throw new Error('No market data available');
+    }
+    
+    console.log('FAANG market data summary:', marketData.map(q => `${q.symbol}: ${q.changePercent}%`).join(', '));
     
     res.json({
       success: true,
@@ -484,7 +522,7 @@ router.get('/market', async (req, res) => {
     console.error('Error getting market data:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get market data'
+      message: `Failed to get market data: ${error.message}`
     });
   }
 });
