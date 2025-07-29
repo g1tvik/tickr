@@ -85,12 +85,12 @@ const getStockQuote = async (symbol) => {
       limit: 2
     });
     
-    let previousPrice = response.p;
+    let previousPrice = response.Price; // Use correct property name
     if (bars && bars.length > 1) {
       previousPrice = bars[bars.length - 2].c;
     }
     
-    const currentPrice = response.p;
+    const currentPrice = response.Price; // Use correct property name
     const change = currentPrice - previousPrice;
     const changePercent = previousPrice ? ((change / previousPrice) * 100) : 0;
 
@@ -99,8 +99,8 @@ const getStockQuote = async (symbol) => {
       price: currentPrice,
       change: change,
       changePercent: changePercent.toFixed(2),
-      volume: response.s || 0,
-      timestamp: response.t
+      volume: response.Size || 0, // Use correct property name
+      timestamp: response.Timestamp // Use correct property name
     };
   } catch (error) {
     console.error('Error fetching stock quote from Alpaca:', error.message);
@@ -140,10 +140,35 @@ const searchStocks = async (query) => {
       { symbol: 'HD', name: 'Home Depot Inc.' }
     ];
 
-    return popularStocks.filter(stock => 
+    const filteredStocks = popularStocks.filter(stock => 
       stock.symbol.toLowerCase().includes(query.toLowerCase()) ||
       stock.name.toLowerCase().includes(query.toLowerCase())
     );
+
+    // Get real-time quotes for filtered stocks
+    const stocksWithQuotes = [];
+    for (const stock of filteredStocks) {
+      try {
+        const quote = await getStockQuote(stock.symbol);
+        stocksWithQuotes.push({
+          ...stock,
+          price: quote.price,
+          change: quote.change,
+          changePercent: quote.changePercent
+        });
+      } catch (error) {
+        console.error(`Error getting quote for ${stock.symbol}:`, error.message);
+        // Add stock without quote data
+        stocksWithQuotes.push({
+          ...stock,
+          price: null,
+          change: null,
+          changePercent: null
+        });
+      }
+    }
+
+    return stocksWithQuotes;
   } catch (error) {
     console.error('Error searching stocks:', error.message);
     return [];

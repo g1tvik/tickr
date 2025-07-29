@@ -18,6 +18,7 @@ function Trade() {
   const [error, setError] = useState(null);
   const [marketStatus, setMarketStatus] = useState('loading');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState(null);
 
   // Check authentication on component mount
   useEffect(() => {
@@ -32,7 +33,7 @@ function Trade() {
     }
   }, []);
 
-  // Auto-refresh portfolio and selected stock every 30 seconds
+  // Auto-refresh portfolio and selected stock every 10 seconds for real-time updates
   useEffect(() => {
     if (!isAuthenticated) return;
     
@@ -41,7 +42,7 @@ function Trade() {
       if (selectedStock) {
         updateSelectedStockPrice();
       }
-    }, 30000);
+    }, 10000); // Refresh every 10 seconds for real-time feel
 
     return () => clearInterval(interval);
   }, [selectedStock, isAuthenticated]);
@@ -137,6 +138,7 @@ function Trade() {
       const response = await api.getStockQuote(selectedStock.symbol);
       if (response.success) {
         setSelectedStock(response.quote);
+        setLastUpdate(new Date());
       }
     } catch (error) {
       console.error('Error updating stock price:', error);
@@ -150,6 +152,7 @@ function Trade() {
       const response = await api.getStockQuote(stock.symbol);
       if (response.success) {
         setSelectedStock(response.quote);
+        setLastUpdate(new Date());
       } else {
         setSelectedStock(stock);
       }
@@ -289,7 +292,7 @@ function Trade() {
                 color: marbleDarkGray,
                 fontFamily: fontHeading
               }}>
-                Paper Trading
+                📈 Paper Trading
               </h1>
               <div style={{
                 display: 'flex',
@@ -314,7 +317,17 @@ function Trade() {
               color: marbleGray,
               fontSize: '16px'
             }}>
-              Practice trading with virtual money. Real-time data powered by Alpaca API.
+              💰 Practice trading with virtual money. Real-time data powered by Alpaca API.
+              {lastUpdate && (
+                <span style={{ 
+                  fontSize: '12px', 
+                  color: '#22c55e',
+                  marginLeft: '8px',
+                  fontWeight: '500'
+                }}>
+                  🔄 Last updated: {lastUpdate.toLocaleTimeString()}
+                </span>
+              )}
             </p>
           </div>
 
@@ -420,9 +433,9 @@ function Trade() {
                         color: marbleDarkGray,
                         fontSize: '16px'
                       }}>
-                        ${stock.price ? stock.price.toFixed(2) : 'N/A'}
+                        ${stock.price ? stock.price.toFixed(2) : 'Loading...'}
                       </div>
-                      {stock.change !== undefined && stock.changePercent !== undefined && (
+                      {stock.change !== undefined && stock.changePercent !== undefined && stock.price && (
                         <div style={{
                           color: stock.change >= 0 ? '#22c55e' : '#ef4444',
                           fontSize: '14px'
@@ -504,9 +517,9 @@ function Trade() {
                         fontWeight: 'bold',
                         color: marbleDarkGray
                       }}>
-                        ${selectedStock.price ? selectedStock.price.toFixed(2) : 'N/A'}
+                        ${selectedStock.price ? selectedStock.price.toFixed(2) : 'Loading...'}
                       </div>
-                      {selectedStock.change !== undefined && selectedStock.changePercent !== undefined && (
+                      {selectedStock.change !== undefined && selectedStock.changePercent !== undefined && selectedStock.price && (
                         <div style={{
                           color: selectedStock.change >= 0 ? '#22c55e' : '#ef4444',
                           fontSize: '16px'
@@ -620,7 +633,7 @@ function Trade() {
                       marginBottom: '8px'
                     }}>
                       <span style={{ color: marbleGray }}>Price per share:</span>
-                      <span style={{ fontWeight: '500' }}>${selectedStock.price ? selectedStock.price.toFixed(2) : 'N/A'}</span>
+                      <span style={{ fontWeight: '500' }}>${selectedStock.price ? selectedStock.price.toFixed(2) : 'Loading...'}</span>
                     </div>
                     <div style={{
                       display: 'flex',
