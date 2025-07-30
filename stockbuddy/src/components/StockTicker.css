@@ -71,4 +71,65 @@
 .percent-negative {
   color: var(--marbleGray);
   font-weight: 650;
+}
+
+/* Enhanced styling for Market Watch - all text same color when up/down */
+.stock-ticker .change.plus {
+  color: var(--marbleGold) !important;
+  font-weight: bold;
+}
+
+.stock-ticker .change.minus {
+  color: var(--marbleGray) !important;
+  font-weight: bold;
+}
+
+.stock-ticker .change.plus .arrow,
+.stock-ticker .change.plus .percent-change {
+  color: var(--marbleGold) !important;
+  font-weight: bold;
+}
+
+.stock-ticker .change.minus .arrow,
+.stock-ticker .change.minus .percent-change {
+  color: var(--marbleGray) !important;
+  font-weight: bold;
+}
+
+/* Ensure ticker symbol also gets the same styling */
+.stock-ticker .change.plus,
+.stock-ticker .change.plus * {
+  color: var(--marbleGold) !important;
+  font-weight: bold;
+}
+
+.stock-ticker .change.minus,
+.stock-ticker .change.minus * {
+  color: var(--marbleGray) !important;
+  font-weight: bold;
+}
+
+/* Make dollar value (price) black while keeping other elements colored */
+.stock-ticker .change.plus .price,
+.stock-ticker .change.minus .price {
+  color: var(--marbleDarkGray) !important;
+  font-weight: normal;
+}
+
+/* Make percentage changes black while keeping parentheses colored */
+.stock-ticker .change.plus .percent-change,
+.stock-ticker .change.minus .percent-change {
+  color: var(--marbleDarkGray) !important;
+  font-weight: normal;
+}
+
+/* Keep parentheses in the same color as the overall change */
+.stock-ticker .change.plus {
+  color: var(--marbleGold) !important;
+  font-weight: bold;
+}
+
+.stock-ticker .change.minus {
+  color: var(--marbleGray) !important;
+  font-weight: bold;
 } 

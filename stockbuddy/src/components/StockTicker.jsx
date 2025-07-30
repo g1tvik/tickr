@@ -47,6 +47,14 @@ const StockTicker = ({ stocks = [] }) => {
     return num.toFixed(2);
   };
 
+  // Helper function to format percentage display with proper minus sign
+  const formatPercentageDisplay = (changePercent) => {
+    if (changePercent === null || changePercent === undefined) return '+0.00';
+    const num = parseFloat(changePercent);
+    if (isNaN(num)) return '+0.00';
+    return num >= 0 ? `+${num.toFixed(2)}` : `−${Math.abs(num).toFixed(2)}`;
+  };
+
   // Helper function to safely format price
   const formatPrice = (price) => {
     if (price === null || price === undefined) return 'N/A';
@@ -78,21 +86,21 @@ const StockTicker = ({ stocks = [] }) => {
         {stocks.map((stock, idx) => {
           const isPositive = isPositiveChange(stock.changePercent);
           const formattedPrice = formatPrice(stock.price);
-          const formattedChange = formatChangePercent(stock.changePercent);
+          const formattedChange = formatPercentageDisplay(stock.changePercent);
           
           return (
             <li key={stock.symbol + '-' + idx} ref={el => itemRefs.current[idx] = el}>
               {isPositive ? (
                 <span className="change plus">
                   <span className="arrow plus">▲</span>
-                  {stock.symbol} ${formattedPrice} 
-                  (<span className="percent-change percent-positive">+{formattedChange}%</span>)
+                  {stock.symbol} <span className="price">${formattedPrice}</span> 
+                  (<span className="percent-change percent-positive">{formattedChange}%</span>)
                 </span>
               ) : (
                 <span className="change minus">
                   <span className="arrow minus">▼</span>
-                  {stock.symbol} ${formattedPrice} 
-                  (<span className="percent-change percent-negative">-{formattedChange}%</span>)
+                  {stock.symbol} <span className="price">${formattedPrice}</span> 
+                  (<span className="percent-change percent-negative">{formattedChange}%</span>)
                 </span>
               )}
             </li>
@@ -103,21 +111,21 @@ const StockTicker = ({ stocks = [] }) => {
         {stocks.map((stock, idx) => {
           const isPositive = isPositiveChange(stock.changePercent);
           const formattedPrice = formatPrice(stock.price);
-          const formattedChange = formatChangePercent(stock.changePercent);
+          const formattedChange = formatPercentageDisplay(stock.changePercent);
           
           return (
             <li key={stock.symbol + '-dup-' + idx}>
               {isPositive ? (
                 <span className="change plus">
                   <span className="arrow plus">▲</span>
-                  {stock.symbol} ${formattedPrice} 
-                  (<span className="percent-change percent-positive">+{formattedChange}%</span>)
+                  {stock.symbol} <span className="price">${formattedPrice}</span> 
+                  (<span className="percent-change percent-positive">{formattedChange}%</span>)
                 </span>
               ) : (
                 <span className="change minus">
                   <span className="arrow minus">▼</span>
-                  {stock.symbol} ${formattedPrice} 
-                  (<span className="percent-change percent-negative">-{formattedChange}%</span>)
+                  {stock.symbol} <span className="price">${formattedPrice}</span> 
+                  (<span className="percent-change percent-negative">{formattedChange}%</span>)
                 </span>
               )}
             </li>

@@ -33,7 +33,7 @@ function Trade() {
     }
   }, []);
 
-  // Auto-refresh portfolio and selected stock every 10 seconds for real-time updates
+  // Auto-refresh portfolio and selected stock every 60 seconds to stay within API limits
   useEffect(() => {
     if (!isAuthenticated) return;
     
@@ -42,7 +42,7 @@ function Trade() {
       if (selectedStock) {
         updateSelectedStockPrice();
       }
-    }, 10000); // Refresh every 10 seconds for real-time feel
+    }, 60000); // Refresh every 60 seconds to stay within 200 calls/min limit
 
     return () => clearInterval(interval);
   }, [selectedStock, isAuthenticated]);
@@ -75,6 +75,8 @@ function Trade() {
       const response = await api.getMarketData();
       if (response.success) {
         setStocks(response.marketData);
+        setLastUpdate(new Date());
+        setError(null); // Clear any previous errors
       } else {
         setError('Failed to load market data');
       }
@@ -396,56 +398,59 @@ function Trade() {
                 borderRadius: '12px',
                 border: '1px solid #e0e0e0'
               }}>
-                {searchResults.map((stock) => (
-                  <div
-                    key={stock.symbol}
-                    onClick={() => handleStockSelect(stock)}
-                    style={{
-                      padding: '16px',
-                      borderBottom: '1px solid #f0f0f0',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f8f8'}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                  >
-                    <div>
-                      <div style={{
-                        fontWeight: 'bold',
-                        color: marbleDarkGray,
-                        fontSize: '16px'
-                      }}>
-                        {stock.symbol}
-                      </div>
-                      <div style={{
-                        color: marbleGray,
-                        fontSize: '14px'
-                      }}>
-                        {stock.name}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{
-                        fontWeight: 'bold',
-                        color: marbleDarkGray,
-                        fontSize: '16px'
-                      }}>
-                        ${stock.price ? stock.price.toFixed(2) : 'Loading...'}
-                      </div>
-                      {stock.change !== undefined && stock.changePercent !== undefined && stock.price && (
+                {searchResults.map((stock) => {
+                  const isPositive = stock.change >= 0;
+                  return (
+                    <div
+                      key={stock.symbol}
+                      onClick={() => handleStockSelect(stock)}
+                      style={{
+                        padding: '16px',
+                        borderBottom: '1px solid #f0f0f0',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f8f8'}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                    >
+                      <div>
                         <div style={{
-                          color: stock.change >= 0 ? '#22c55e' : '#ef4444',
+                          fontWeight: 'bold',
+                          color: isPositive ? marbleGold : marbleGray,
+                          fontSize: '16px'
+                        }}>
+                          {stock.symbol}
+                        </div>
+                        <div style={{
+                          color: marbleDarkGray,
                           fontSize: '14px'
                         }}>
-                          {stock.change >= 0 ? '+' : ''}{parseFloat(stock.change).toFixed(2)} ({parseFloat(stock.changePercent).toFixed(2)}%)
+                          {stock.name}
                         </div>
-                      )}
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{
+                          fontWeight: 'bold',
+                          color: marbleDarkGray,
+                          fontSize: '16px'
+                        }}>
+                          ${stock.price ? stock.price.toFixed(2) : 'Loading...'}
+                        </div>
+                        {stock.change !== undefined && stock.changePercent !== undefined && stock.price && (
+                          <div style={{
+                            color: isPositive ? marbleGold : marbleGray,
+                            fontSize: '14px'
+                          }}>
+                            {isPositive ? '+' : ''}{parseFloat(stock.change).toFixed(2)} ({parseFloat(stock.changePercent).toFixed(2)}%)
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -822,15 +827,53 @@ function Trade() {
             borderRadius: '20px',
             padding: '24px'
           }}>
-            <h2 style={{
-              fontSize: '20px',
-              fontWeight: 'bold',
-              color: marbleDarkGray,
-              marginBottom: '16px',
-              fontFamily: fontHeading
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '16px'
             }}>
-              Market Watch
-            </h2>
+              <h2 style={{
+                fontSize: '20px',
+                fontWeight: 'bold',
+                color: marbleDarkGray,
+                fontFamily: fontHeading,
+                margin: 0
+              }}>
+                Market Watch
+              </h2>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                {lastUpdate && (
+                  <span style={{
+                    fontSize: '12px',
+                    color: marbleGray
+                  }}>
+                    Last: {lastUpdate.toLocaleTimeString()}
+                  </span>
+                )}
+                <button
+                  onClick={loadMarketData}
+                  disabled={isLoading}
+                  style={{
+                    backgroundColor: marbleGold,
+                    color: marbleWhite,
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    fontSize: '12px',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    opacity: isLoading ? 0.6 : 1,
+                    fontFamily: fontBody
+                  }}
+                >
+                  {isLoading ? 'Refreshing...' : 'Refresh'}
+                </button>
+              </div>
+            </div>
             {stocks.length > 0 ? (
               <StockTicker stocks={stocks} />
             ) : (

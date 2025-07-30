@@ -1,58 +1,94 @@
-// Test script to verify Alpaca API connection
-// Run this with: node test-alpaca.js
+const axios = require('axios');
+require('dotenv').config();
 
-const Alpaca = require('@alpacahq/alpaca-trade-api');
-require('dotenv').config({ path: './auth-backend/.env' });
+const API_KEY = process.env.ALPACA_API_KEY;
+const SECRET_KEY = process.env.ALPACA_SECRET_KEY;
 
-// Alpaca API configuration
-const alpaca = new Alpaca({
-  keyId: process.env.ALPACA_API_KEY || 'demo',
-  secretKey: process.env.ALPACA_SECRET_KEY || 'demo',
-  paper: true, // Use paper trading
-  usePolygon: false
-});
+const headers = {
+  'APCA-API-KEY-ID': API_KEY,
+  'APCA-API-SECRET-KEY': SECRET_KEY
+};
 
-console.log('Alpaca API Key:', process.env.ALPACA_API_KEY ? 'Set' : 'Not set');
-console.log('Alpaca Secret Key:', process.env.ALPACA_SECRET_KEY ? 'Set' : 'Not set');
+const endpoints = [
+  // Broker APIs
+  { name: 'Live Broker API', url: 'https://broker-api.alpaca.markets/v2/assets/AAPL' },
+  { name: 'Sandbox Broker API', url: 'https://broker-api.sandbox.alpaca.markets/v2/assets/AAPL' },
+  
+  // Data APIs
+  { name: 'Live Data API', url: 'https://data.alpaca.markets/v2/assets' },
+  { name: 'Sandbox Data API', url: 'https://data.sandbox.alpaca.markets/v2/assets' },
+  
+  // Trading APIs
+  { name: 'Live Trading API', url: 'https://api.alpaca.markets/v2/assets/AAPL' },
+  { name: 'Sandbox Trading API', url: 'https://paper-api.alpaca.markets/v2/assets/AAPL' },
+  
+  // Account Info
+  { name: 'Live Account', url: 'https://api.alpaca.markets/v2/account' },
+  { name: 'Sandbox Account', url: 'https://paper-api.alpaca.markets/v2/account' }
+];
 
-async function testAlpacaAPI() {
+async function testEndpoint(name, url, params = {}) {
   try {
-    console.log('\n=== Testing Alpaca API ===');
+    console.log(`\n🔍 Testing: ${name}`);
+    console.log(`   URL: ${url}`);
     
-    // Test 1: Get latest trade for TSLA
-    console.log('\n1. Testing getLatestTrade for TSLA...');
-    try {
-      const latestTrade = await alpaca.getLatestTrade('TSLA');
-      console.log('Latest trade response:', latestTrade);
-    } catch (error) {
-      console.error('getLatestTrade error:', error.message);
-    }
+    const response = await axios.get(url, { headers, params });
     
-    // Test 2: Get bars for TSLA
-    console.log('\n2. Testing getBarsV2 for TSLA...');
-    try {
-      const bars = await alpaca.getBarsV2('TSLA', {
-        start: new Date(Date.now() - 24 * 60 * 60 * 1000), // 24 hours ago
-        end: new Date(),
-        limit: 2
-      });
-      console.log('Bars response:', JSON.stringify(bars, null, 2));
-    } catch (error) {
-      console.error('getBarsV2 error:', error.message);
-    }
+    console.log(`✅ SUCCESS! Status: ${response.status}`);
+    console.log(`   Response:`, JSON.stringify(response.data, null, 2));
     
-    // Test 3: Get account information
-    console.log('\n3. Testing getAccount...');
-    try {
-      const account = await alpaca.getAccount();
-      console.log('Account response:', account);
-    } catch (error) {
-      console.error('getAccount error:', error.message);
-    }
-    
+    return { success: true, data: response.data };
   } catch (error) {
-    console.error('General error:', error);
+    console.log(`❌ FAILED! Status: ${error.response?.status || 'No response'}`);
+    console.log(`   Error: ${error.message}`);
+    if (error.response?.data) {
+      console.log(`   Response:`, JSON.stringify(error.response.data, null, 2));
+    }
+    return { success: false, error: error.message };
   }
 }
 
-testAlpacaAPI(); 
+async function runTests() {
+  console.log('🚀 Testing Alpaca API Endpoints');
+  console.log('================================');
+  console.log(`API Key: ${API_KEY ? '✅ Set' : '❌ Missing'}`);
+  console.log(`Secret Key: ${SECRET_KEY ? '✅ Set' : '❌ Missing'}`);
+  
+  const results = [];
+  
+  for (const endpoint of endpoints) {
+    const result = await testEndpoint(endpoint.name, endpoint.url);
+    results.push({ ...endpoint, ...result });
+    
+    // Small delay between requests
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+  
+  console.log('\n📊 SUMMARY');
+  console.log('==========');
+  
+  const successful = results.filter(r => r.success);
+  const failed = results.filter(r => !r.success);
+  
+  console.log(`✅ Successful: ${successful.length}`);
+  successful.forEach(r => console.log(`   - ${r.name}`));
+  
+  console.log(`❌ Failed: ${failed.length}`);
+  failed.forEach(r => console.log(`   - ${r.name}: ${r.error}`));
+  
+  if (successful.length > 0) {
+    console.log('\n🎉 WORKING ENDPOINTS FOUND!');
+    console.log('Use these in your trading.js file:');
+    successful.forEach(r => {
+      if (r.url.includes('/assets/')) {
+        console.log(`   - ${r.name}: ${r.url.replace('/AAPL', '/{symbol}')}`);
+      } else if (r.url.includes('/assets')) {
+        console.log(`   - ${r.name}: ${r.url}`);
+      }
+    });
+  } else {
+    console.log('\n⚠️ No working endpoints found. Check your API keys and account permissions.');
+  }
+}
+
+runTests().catch(console.error); 
