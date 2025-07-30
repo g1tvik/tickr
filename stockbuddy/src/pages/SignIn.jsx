@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from "../marblePalette";
 import { fontHeading, fontBody } from "../fontPalette";
 import { api } from "../services/api";
+import './SignIn.css';
 
 function SignIn({ setIsLoggedIn }) {
   const [email, setEmail] = useState("");
@@ -74,62 +75,26 @@ function SignIn({ setIsLoggedIn }) {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: marbleWhite,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '24px',
-      fontFamily: fontBody
-    }}>
-      <div style={{
-        backgroundColor: marbleLightGray,
-        borderRadius: '20px',
-        padding: '40px',
-        width: '100%',
-        maxWidth: '400px',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 style={{
-            fontSize: '28px',
-            fontWeight: 'bold',
-            color: marbleDarkGray,
-            marginBottom: '8px',
-            fontFamily: fontHeading
-          }}>
+    <div className="signin-container">
+      <div className="signin-card">
+        <div className="signin-header">
+          <h1 className="signin-title">
             Welcome Back
           </h1>
-          <p style={{
-            color: marbleGray,
-            fontSize: '16px'
-          }}>
+          <p className="signin-subtitle">
             Sign in to access your StockBuddy account
           </p>
         </div>
 
         {error && (
-          <div style={{
-            backgroundColor: '#fef2f2',
-            color: '#dc2626',
-            padding: '12px',
-            borderRadius: '8px',
-            marginBottom: '24px',
-            fontSize: '14px'
-          }}>
+          <div className="error-message">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ marginBottom: '24px' }}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '8px',
-              color: marbleDarkGray,
-              fontWeight: '500'
-            }}>
+        <form onSubmit={handleSubmit} className="signin-form">
+          <div className="form-group">
+            <label className="form-label">
               Email
             </label>
             <input
@@ -137,26 +102,13 @@ function SignIn({ setIsLoggedIn }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                border: '2px solid transparent',
-                fontSize: '16px',
-                backgroundColor: marbleWhite,
-                color: marbleDarkGray
-              }}
+              className="form-input"
               placeholder="Enter your email"
             />
           </div>
 
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '8px',
-              color: marbleDarkGray,
-              fontWeight: '500'
-            }}>
+          <div className="form-group">
+            <label className="form-label">
               Password
             </label>
             <input
@@ -164,15 +116,7 @@ function SignIn({ setIsLoggedIn }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                border: '2px solid transparent',
-                fontSize: '16px',
-                backgroundColor: marbleWhite,
-                color: marbleDarkGray
-              }}
+              className="form-input"
               placeholder="Enter your password"
             />
           </div>
@@ -180,70 +124,31 @@ function SignIn({ setIsLoggedIn }) {
           <button
             type="submit"
             disabled={isLoading}
-            style={{
-              width: '100%',
-              padding: '16px',
-              borderRadius: '12px',
-              border: 'none',
-              backgroundColor: isLoading ? marbleGray : marbleGold,
-              color: marbleDarkGray,
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              opacity: isLoading ? 0.6 : 1
-            }}
+            className="signin-button"
           >
             {isLoading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
 
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '24px'
-        }}>
-          <div style={{
-            color: marbleGray,
-            fontSize: '14px',
-            marginBottom: '16px'
-          }}>
+        <div className="demo-section">
+          <div className="demo-divider">
             Or
           </div>
           
           <button
             onClick={handleDemoLogin}
             disabled={isLoading}
-            style={{
-              width: '100%',
-              padding: '16px',
-              borderRadius: '12px',
-              border: '2px solid marbleGold',
-              backgroundColor: 'transparent',
-              color: marbleDarkGray,
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              opacity: isLoading ? 0.6 : 1
-            }}
+            className="demo-button"
           >
             {isLoading ? 'Loading...' : 'Try Demo Account'}
           </button>
         </div>
 
-        <div style={{
-          textAlign: 'center',
-          color: marbleGray,
-          fontSize: '14px'
-        }}>
+        <div className="signin-footer">
           Don't have an account?{' '}
           <button
             onClick={() => navigate('/signup')}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: marbleGold,
-              cursor: 'pointer',
-              fontWeight: '500'
-            }}
+            className="signin-link"
           >
             Sign up
           </button>

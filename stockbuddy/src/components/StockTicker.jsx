@@ -73,7 +73,7 @@ const StockTicker = ({ stocks = [] }) => {
   if (!stocks || stocks.length === 0) {
     return (
       <div className="stock-ticker">
-        <p style={{ color: '#666', textAlign: 'center', fontWeight: 'bold' }}>
+        <p className="loading-text">
           Loading market data...
         </p>
       </div>

@@ -1,0 +1,145 @@
+/* Trade Page Styles */
+
+/* Main Layout */
+.trade-container {
+  min-height: 100vh;
+  background-color: var(--marbleWhite);
+  padding: 24px;
+  font-family: var(--fontBody);
+}
+
+.trade-layout {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.trade-main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.trade-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Section Styles */
+.search-section {
+  background-color: var(--marbleLightGray);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.trading-interface {
+  background-color: var(--marbleLightGray);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--marbleDarkGray);
+  margin-bottom: 16px;
+  font-family: var(--fontHeading);
+}
+
+.trading-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.market-watch-wrapper {
+  background-color: var(--marbleLightGray);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+/* Loading and Error States */
+.loading-container {
+  min-height: 100vh;
+  background-color: var(--marbleWhite);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-content {
+  text-align: center;
+}
+
+.loading-text {
+  font-size: 18px;
+  color: var(--marbleGray);
+  font-weight: 500;
+}
+
+.error-container {
+  min-height: 100vh;
+  background-color: var(--marbleWhite);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.error-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--marbleDarkGray);
+  margin-bottom: 12px;
+}
+
+.error-subtitle {
+  font-size: 16px;
+  color: var(--marbleGray);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .trade-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .trade-sidebar {
+    order: -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .trade-container {
+    padding: 16px;
+  }
+  
+  .trading-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .search-section,
+  .trading-interface,
+  .market-watch-wrapper {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .trade-container {
+    padding: 12px;
+  }
+  
+  .section-title {
+    font-size: 18px;
+  }
+} 

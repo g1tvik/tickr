@@ -73,6 +73,10 @@ const initializePortfolio = (req, userId) => {
 // Cache for company names to reduce API calls
 let companyNameCache = {};
 
+// Cache for search results to improve performance
+let searchCache = {};
+const SEARCH_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 // Comprehensive company name mapping as fallback
 const companyNameMapping = {
   // FAANG + Major Tech
@@ -581,72 +585,7 @@ const searchStocks = async (query) => {
     const queryLower = query.toLowerCase().trim();
     const queryUpper = query.toUpperCase().trim();
     
-    // Define major stocks that should always be prioritized
-    const majorStocks = {
-      'AAPL': 'Apple Inc.',
-      'TSLA': 'Tesla, Inc.',
-      'MSFT': 'Microsoft Corporation',
-      'GOOGL': 'Alphabet Inc.',
-      'AMZN': 'Amazon.com, Inc.',
-      'META': 'Meta Platforms, Inc.',
-      'NFLX': 'Netflix, Inc.',
-      'NVDA': 'NVIDIA Corporation',
-      'AMD': 'Advanced Micro Devices, Inc.',
-      'INTC': 'Intel Corporation',
-      'JPM': 'JPMorgan Chase & Co.',
-      'JNJ': 'Johnson & Johnson',
-      'PG': 'Procter & Gamble Co.',
-      'V': 'Visa Inc.',
-      'MA': 'Mastercard Incorporated',
-      'WMT': 'Walmart Inc.',
-      'DIS': 'The Walt Disney Company',
-      'NKE': 'NIKE, Inc.',
-      'SBUX': 'Starbucks Corporation',
-      'MCD': 'McDonald\'s Corporation'
-    };
-
-    // Step 1: Check for exact major stock matches first
-    const exactMatches = [];
-    if (majorStocks[queryUpper]) {
-      exactMatches.push({
-        symbol: queryUpper,
-        name: majorStocks[queryUpper],
-        isMajorStock: true,
-        relevanceScore: 10000 // Highest possible score
-      });
-    }
-
-    // Step 1.5: Check for case-insensitive exact matches in major stocks
-    for (const [symbol, name] of Object.entries(majorStocks)) {
-      if (symbol.toLowerCase() === queryLower || name.toLowerCase() === queryLower) {
-        if (!exactMatches.some(match => match.symbol === symbol)) {
-          exactMatches.push({
-            symbol,
-            name,
-            isMajorStock: true,
-            relevanceScore: 10000 // Highest possible score
-          });
-        }
-      }
-    }
-
-    // Step 2: Check for partial major stock matches
-    const partialMatches = [];
-    for (const [symbol, name] of Object.entries(majorStocks)) {
-      if (symbol.toLowerCase().includes(queryLower) || 
-          name.toLowerCase().includes(queryLower)) {
-        if (symbol !== queryUpper) { // Avoid duplicates
-          partialMatches.push({
-            symbol,
-            name,
-            isMajorStock: true,
-            relevanceScore: symbol.toLowerCase().startsWith(queryLower) ? 9000 : 8000
-          });
-        }
-      }
-    }
-
-    // Step 3: Get Alpaca assets for broader search
+    // Step 1: Get Alpaca assets for comprehensive search
     const headers = {
       'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
       'APCA-API-SECRET-KEY': process.env.ALPACA_SECRET_KEY
@@ -664,94 +603,102 @@ const searchStocks = async (query) => {
       alpacaAssets = response.data;
     } catch (alpacaError) {
       console.warn('Failed to fetch Alpaca assets:', alpacaError.message);
+      throw new Error('Failed to fetch stock data');
     }
 
-    // Step 4: Enhanced AI-powered filtering and scoring
-    const allAssets = [...exactMatches, ...partialMatches];
+    // Step 2: Professional search algorithm (like Robinhood/Fidelity)
+    const searchResults = [];
     
-    // Add Alpaca assets that aren't already in our list
     for (const asset of alpacaAssets) {
       const symbolLower = asset.symbol.toLowerCase();
       const nameLower = asset.name.toLowerCase();
       
-      // Skip if already in our major stocks list
-      if (allAssets.some(a => a.symbol === asset.symbol)) {
-        continue;
-      }
-
       let score = 0;
       let shouldInclude = false;
 
-      // Exact symbol match
+      // Exact symbol match (highest priority)
       if (symbolLower === queryLower) {
-        score = 7000;
+        score = 10000;
         shouldInclude = true;
       }
-      // Symbol starts with query
+      // Symbol starts with query (very high priority)
       else if (symbolLower.startsWith(queryLower)) {
-        score = 6000;
+        score = 9000;
         shouldInclude = true;
       }
-      // Company name starts with query
+      // Company name starts with query (high priority)
       else if (nameLower.startsWith(queryLower)) {
-        score = 5000;
+        score = 8000;
         shouldInclude = true;
       }
       // Company name contains query as whole word
       else {
         const nameWords = nameLower.split(/\s+/);
         if (nameWords.some(word => word === queryLower)) {
-          score = 4000;
+          score = 7000;
           shouldInclude = true;
         }
         // Company name contains query word that starts with query
         else if (nameWords.some(word => word.startsWith(queryLower))) {
-          score = 3000;
+          score = 6000;
           shouldInclude = true;
         }
-        // Company name contains query
+        // Company name contains query (lower priority)
         else if (nameLower.includes(queryLower)) {
-          score = 2000;
+          score = 5000;
+          shouldInclude = true;
+        }
+        // Symbol contains query (lower priority)
+        else if (symbolLower.includes(queryLower)) {
+          score = 4000;
           shouldInclude = true;
         }
       }
 
       if (shouldInclude) {
-        // Bonus for shorter symbols (major companies)
-        score += Math.max(0, 20 - symbolLower.length) * 10;
+        // Professional relevance scoring (like major platforms)
         
-        // Bonus for common company keywords
-        const commonKeywords = ['inc', 'corp', 'company', 'ltd', 'llc', 'plc', 'sa', 'ag'];
-        if (commonKeywords.some(keyword => nameLower.includes(keyword))) {
-          score += 50;
+        // Bonus for shorter symbols (more recognizable companies)
+        score += Math.max(0, 15 - symbolLower.length) * 50;
+        
+        // Bonus for common company keywords (established companies)
+        const establishedKeywords = ['inc', 'corp', 'company', 'ltd', 'llc', 'plc', 'sa', 'ag', 'co', 'corporation'];
+        if (establishedKeywords.some(keyword => nameLower.includes(keyword))) {
+          score += 200;
         }
         
-        // Penalty for ETF keywords (prioritize actual companies)
-        const etfKeywords = ['etf', 'fund', 'trust', 'shares', 'strategy'];
+        // Penalty for ETF/Index keywords (prioritize actual companies)
+        const etfKeywords = ['etf', 'fund', 'trust', 'shares', 'strategy', 'index', 'portfolio'];
         if (etfKeywords.some(keyword => nameLower.includes(keyword))) {
-          score -= 1000;
+          score -= 2000;
+        }
+        
+        // Penalty for very long company names (less recognizable)
+        if (nameLower.length > 50) {
+          score -= 300;
+        }
+        
+        // Bonus for companies with recognizable brand names
+        const brandKeywords = ['apple', 'microsoft', 'google', 'amazon', 'tesla', 'netflix', 'facebook', 'meta', 'nvidia', 'intel', 'amd'];
+        if (brandKeywords.some(brand => nameLower.includes(brand))) {
+          score += 500;
         }
 
-        allAssets.push({
+        searchResults.push({
           symbol: asset.symbol,
           name: asset.name,
-          isMajorStock: false,
           relevanceScore: score
         });
       }
     }
 
-    // Step 5: Sort by relevance score (highest first)
-    allAssets.sort((a, b) => {
+    // Step 3: Sort by relevance score (highest first)
+    searchResults.sort((a, b) => {
       if (a.relevanceScore !== b.relevanceScore) {
         return b.relevanceScore - a.relevanceScore;
       }
       
-      // For same score, prioritize major stocks
-      if (a.isMajorStock && !b.isMajorStock) return -1;
-      if (!a.isMajorStock && b.isMajorStock) return 1;
-      
-      // Then by symbol length
+      // For same score, prioritize shorter symbols
       if (a.symbol.length !== b.symbol.length) {
         return a.symbol.length - b.symbol.length;
       }
@@ -761,26 +708,25 @@ const searchStocks = async (query) => {
     });
 
     // Debug logging for search results
-    console.log(`🔍 Search results for "${query}":`, allAssets.slice(0, 5).map(asset => ({
+    console.log(`🔍 Professional search results for "${query}":`, searchResults.slice(0, 5).map(asset => ({
       symbol: asset.symbol,
       name: asset.name,
-      score: asset.relevanceScore,
-      isMajor: asset.isMajorStock
+      score: asset.relevanceScore
     })));
 
-    // Step 6: Get quotes for top results
-    const searchResults = [];
-    const topAssets = allAssets.slice(0, 10);
+    // Step 4: Get quotes for top results
+    const finalResults = [];
+    const topAssets = searchResults.slice(0, 10);
     
     for (const asset of topAssets) {
       try {
-        console.log(`🔍 Searching for ${asset.symbol} using REST API...`);
+        console.log(`🔍 Getting quote for ${asset.symbol}...`);
         const quote = await getStockQuoteFromREST(asset.symbol);
-        searchResults.push(quote);
+        finalResults.push(quote);
       } catch (quoteError) {
         console.warn(`Failed to get quote for ${asset.symbol}:`, quoteError.message);
         // Add asset without quote data
-        searchResults.push({
+        finalResults.push({
           symbol: asset.symbol,
           name: asset.name,
           price: null,
@@ -794,9 +740,182 @@ const searchStocks = async (query) => {
       }
     }
 
-    return searchResults;
+    return finalResults;
   } catch (error) {
     console.error('Error searching stocks:', error);
+    throw new Error(`Failed to search stocks: ${error.message}`);
+  }
+};
+
+// Enhanced autocomplete search (lightweight, no quotes)
+const searchStocksAutocomplete = async (query) => {
+  try {
+    const queryLower = query.toLowerCase().trim();
+    
+    // Check cache first
+    const cacheKey = `autocomplete_${queryLower}`;
+    const cached = searchCache[cacheKey];
+    if (cached && (Date.now() - cached.timestamp) < SEARCH_CACHE_DURATION) {
+      return cached.results;
+    }
+
+    // Check if Alpaca API keys are configured
+    if (!process.env.ALPACA_API_KEY || !process.env.ALPACA_SECRET_KEY) {
+      throw new Error('Alpaca API keys not configured');
+    }
+
+    // Get Alpaca assets for comprehensive search
+    const headers = {
+      'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
+      'APCA-API-SECRET-KEY': process.env.ALPACA_SECRET_KEY
+    };
+
+    let alpacaAssets = [];
+    try {
+      const response = await axios.get('https://paper-api.alpaca.markets/v2/assets', {
+        headers,
+        params: {
+          status: 'active',
+          asset_class: 'us_equity'
+        }
+      });
+      alpacaAssets = response.data;
+    } catch (alpacaError) {
+      console.warn('Failed to fetch Alpaca assets:', alpacaError.message);
+      throw new Error('Failed to fetch stock data');
+    }
+
+    // Professional search algorithm (like TradingView/Robinhood)
+    const searchResults = [];
+    
+    for (const asset of alpacaAssets) {
+      const symbolLower = asset.symbol.toLowerCase();
+      const nameLower = asset.name.toLowerCase();
+      
+      let score = 0;
+      let shouldInclude = false;
+      let matchType = '';
+
+      // Exact symbol match (highest priority)
+      if (symbolLower === queryLower) {
+        score = 10000;
+        shouldInclude = true;
+        matchType = 'exact_symbol';
+      }
+      // Symbol starts with query (very high priority)
+      else if (symbolLower.startsWith(queryLower)) {
+        score = 9000;
+        shouldInclude = true;
+        matchType = 'symbol_starts';
+      }
+      // Company name starts with query (high priority)
+      else if (nameLower.startsWith(queryLower)) {
+        score = 8000;
+        shouldInclude = true;
+        matchType = 'name_starts';
+      }
+      // Company name contains query as whole word
+      else {
+        const nameWords = nameLower.split(/\s+/);
+        if (nameWords.some(word => word === queryLower)) {
+          score = 7000;
+          shouldInclude = true;
+          matchType = 'name_word';
+        }
+        // Company name contains query word that starts with query
+        else if (nameWords.some(word => word.startsWith(queryLower))) {
+          score = 6000;
+          shouldInclude = true;
+          matchType = 'name_word_starts';
+        }
+        // Company name contains query (lower priority)
+        else if (nameLower.includes(queryLower)) {
+          score = 5000;
+          shouldInclude = true;
+          matchType = 'name_contains';
+        }
+        // Symbol contains query (lower priority)
+        else if (symbolLower.includes(queryLower)) {
+          score = 4000;
+          shouldInclude = true;
+          matchType = 'symbol_contains';
+        }
+      }
+
+      if (shouldInclude) {
+        // Professional relevance scoring
+        
+        // Bonus for shorter symbols (more recognizable companies)
+        score += Math.max(0, 15 - symbolLower.length) * 50;
+        
+        // Bonus for common company keywords (established companies)
+        const establishedKeywords = ['inc', 'corp', 'company', 'ltd', 'llc', 'plc', 'sa', 'ag', 'co', 'corporation'];
+        if (establishedKeywords.some(keyword => nameLower.includes(keyword))) {
+          score += 200;
+        }
+        
+        // Penalty for ETF/Index keywords (prioritize actual companies)
+        const etfKeywords = ['etf', 'fund', 'trust', 'shares', 'strategy', 'index', 'portfolio'];
+        if (etfKeywords.some(keyword => nameLower.includes(keyword))) {
+          score -= 2000;
+        }
+        
+        // Penalty for very long company names (less recognizable)
+        if (nameLower.length > 50) {
+          score -= 300;
+        }
+        
+        // Bonus for companies with recognizable brand names
+        const brandKeywords = ['apple', 'microsoft', 'google', 'amazon', 'tesla', 'netflix', 'facebook', 'meta', 'nvidia', 'intel', 'amd', 'berkshire', 'coca', 'pepsi', 'mcdonalds', 'starbucks', 'disney', 'netflix', 'spotify', 'uber', 'lyft', 'airbnb', 'salesforce', 'oracle', 'adobe', 'paypal', 'visa', 'mastercard'];
+        if (brandKeywords.some(brand => nameLower.includes(brand))) {
+          score += 500;
+        }
+
+        // Bonus for exact ticker length matches (4-5 characters are most common)
+        if (symbolLower.length >= 4 && symbolLower.length <= 5) {
+          score += 100;
+        }
+
+        searchResults.push({
+          symbol: asset.symbol,
+          name: asset.name,
+          relevanceScore: score,
+          matchType: matchType
+        });
+      }
+    }
+
+    // Sort by relevance score (highest first)
+    searchResults.sort((a, b) => {
+      if (a.relevanceScore !== b.relevanceScore) {
+        return b.relevanceScore - a.relevanceScore;
+      }
+      
+      // For same score, prioritize shorter symbols
+      if (a.symbol.length !== b.symbol.length) {
+        return a.symbol.length - b.symbol.length;
+      }
+      
+      // Finally alphabetically
+      return a.symbol.toLowerCase().localeCompare(b.symbol.toLowerCase());
+    });
+
+    // Return top 15 results for autocomplete
+    const results = searchResults.slice(0, 15).map(asset => ({
+      symbol: asset.symbol,
+      name: asset.name,
+      matchType: asset.matchType
+    }));
+
+    // Cache the results
+    searchCache[cacheKey] = {
+      results: results,
+      timestamp: Date.now()
+    };
+
+    return results;
+  } catch (error) {
+    console.error('Error in autocomplete search:', error);
     throw new Error(`Failed to search stocks: ${error.message}`);
   }
 };
@@ -890,6 +1009,38 @@ router.get('/search', async (req, res) => {
     });
   } catch (error) {
     console.error('Error searching stocks:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to search stocks'
+    });
+  }
+});
+
+// Test route to verify server is loading updated code
+router.get('/test', (req, res) => {
+  res.json({ message: 'Test route working - server is updated' });
+});
+
+// Autocomplete search (lightweight, no quotes)
+router.get('/autocomplete', async (req, res) => {
+  try {
+    const { query } = req.query;
+    
+    if (!query || query.length < 1) {
+      return res.json({
+        success: true,
+        results: []
+      });
+    }
+    
+    const results = await searchStocksAutocomplete(query);
+    
+    res.json({
+      success: true,
+      results: results
+    });
+  } catch (error) {
+    console.error('Error in autocomplete search:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to search stocks'

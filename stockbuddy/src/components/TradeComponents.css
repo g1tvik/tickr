@@ -1,0 +1,404 @@
+/* Trade Components CSS */
+
+/* Market Status Component */
+.trade-header-section {
+  margin-bottom: 24px;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.trade-main-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--marbleDarkGray);
+  margin: 0;
+  font-family: var(--fontHeading);
+}
+
+.market-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--marbleGray);
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.trade-description {
+  color: var(--marbleGray);
+  font-size: 14px;
+  margin: 0;
+}
+
+.last-update {
+  margin-left: 12px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* Stock Info Component */
+.stock-info-card {
+  background-color: var(--marbleWhite);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.stock-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.stock-symbol {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--marbleDarkGray);
+}
+
+.stock-name {
+  color: var(--marbleGray);
+  font-size: 14px;
+}
+
+.stock-price-section {
+  text-align: right;
+}
+
+.stock-price {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--marbleDarkGray);
+}
+
+.stock-change {
+  font-size: 16px;
+}
+
+.stock-change.positive {
+  color: #22c55e;
+}
+
+.stock-change.negative {
+  color: #ef4444;
+}
+
+.stock-volume {
+  color: var(--marbleGray);
+  font-size: 14px;
+}
+
+/* Order Form Component */
+.order-form-card {
+  background-color: var(--marbleWhite);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.order-type-section {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--marbleDarkGray);
+  font-weight: 500;
+}
+
+.order-type-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.order-type-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.order-type-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.order-type-btn.buy-active {
+  background-color: #22c55e;
+}
+
+.order-type-btn.sell-active {
+  background-color: #ef4444;
+}
+
+.order-type-btn.inactive {
+  background-color: var(--marbleGray);
+}
+
+.shares-section {
+  margin-bottom: 16px;
+}
+
+.shares-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  font-size: 16px;
+}
+
+.shares-input:disabled {
+  opacity: 0.6;
+}
+
+.order-summary {
+  padding: 16px;
+  background-color: var(--marbleLightGray);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.summary-row.total {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 8px;
+  margin-bottom: 0;
+}
+
+.summary-label {
+  color: var(--marbleGray);
+}
+
+.summary-value {
+  font-weight: 500;
+}
+
+.summary-row.total .summary-label,
+.summary-row.total .summary-value {
+  font-weight: bold;
+  color: var(--marbleDarkGray);
+}
+
+.submit-order-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  border: none;
+  background-color: var(--marbleGold);
+  color: var(--marbleDarkGray);
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.submit-order-btn:hover:not(:disabled) {
+  transform: scale(1.02);
+}
+
+.submit-order-btn:disabled {
+  background-color: var(--marbleGray);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Account Balance Component */
+.balance-card {
+  background-color: var(--marbleLightGray);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.card-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--marbleDarkGray);
+  margin-bottom: 16px;
+  font-family: var(--fontHeading);
+}
+
+.balance-amount {
+  font-size: 32px;
+  font-weight: bold;
+  color: var(--marbleDarkGray);
+  margin-bottom: 8px;
+}
+
+.balance-subtitle {
+  color: var(--marbleGray);
+  font-size: 14px;
+}
+
+.loading-text {
+  color: var(--marbleGray);
+  font-size: 14px;
+}
+
+/* Portfolio Positions Component */
+.portfolio-card {
+  background-color: var(--marbleLightGray);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.empty-portfolio {
+  color: var(--marbleGray);
+  text-align: center;
+  padding: 20px;
+}
+
+.positions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.position-item {
+  background-color: var(--marbleWhite);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.position-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.position-symbol {
+  font-weight: bold;
+  color: var(--marbleDarkGray);
+}
+
+.position-pnl {
+  font-weight: 500;
+}
+
+.position-pnl.positive {
+  color: #22c55e;
+}
+
+.position-pnl.negative {
+  color: #ef4444;
+}
+
+.position-details {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--marbleGray);
+}
+
+/* Market Watch Component */
+.market-watch-card {
+  background-color: var(--marbleLightGray);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.market-watch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.market-watch-header .card-title {
+  margin: 0;
+}
+
+.market-watch-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.last-update-time {
+  font-size: 12px;
+  color: var(--marbleGray);
+}
+
+.refresh-btn {
+  background-color: var(--marbleGold);
+  color: var(--marbleWhite);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--fontBody);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.market-ticker-container {
+  /* Styles for the ticker container */
+}
+
+/* Order Confirmation Component */
+.order-confirmation {
+  background-color: #22c55e;
+  color: white;
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .stock-info-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .stock-price-section {
+    text-align: left;
+  }
+  
+  .order-type-buttons {
+    flex-direction: column;
+  }
+  
+  .position-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .market-watch-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+} 

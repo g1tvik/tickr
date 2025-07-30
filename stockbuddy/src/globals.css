@@ -5,6 +5,11 @@
   --marbleDarkGray: #222222;
   --marbleBlack: #111111;
   --marbleGold: #E6C87A;
+  
+  /* Scrollbar CSS custom properties */
+  --scrollbar-track-bg: #F4F1E9;
+  --scrollbar-thumb-bg: #B0B0B0;
+  --scrollbar-thumb-hover-bg: #E6C87A;
 }
 
 body {
@@ -13,14 +18,10 @@ body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  overflow-y: auto; /* Ensure vertical scrolling is enabled */
-  border: none !important;
-  box-shadow: none !important;
 }
 
 html {
-  border: none !important;
-  box-shadow: none !important;
+  scroll-behavior: smooth;
 }
 
 /* App container structure */
@@ -28,14 +29,12 @@ html {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-top: 60px; /* Increase padding to allow more scroll space above */
+  padding-top: 60px;
 }
 
 .main-content {
   flex: 1;
   position: relative;
-  overflow-y: auto; /* Ensure main content can scroll */
-  min-height: calc(100vh - 60px); /* Account for the increased padding */
 }
 
 /* Ensure navbar stays on top */
@@ -44,25 +43,25 @@ html {
   z-index: 1030;
 }
 
-/* Custom vertical scrollbar */
+/* Custom vertical scrollbar with dynamic properties */
 ::-webkit-scrollbar {
   width: 8px;
-  background: var(--marbleLightGray);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--marbleGray);
-  border-radius: 999px;
-  /* No border, no outline, no box-shadow */
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--marbleGold);
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--marbleWhite);
+  background: var(--scrollbar-track-bg) !important;
   border-radius: 999px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg) !important;
+  border-radius: 999px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover-bg) !important;
 }
 
 /* Hide horizontal scrollbar */
@@ -99,29 +98,22 @@ body {
 }
 
 /* Sign out button specific styling */
-.btn-outline-light,
-.navbar .btn-outline-light,
-.nav-item .btn-outline-light {
-  background: var(--marbleBlack) !important;
+.btn-outline-light {
+  background: var(--marbleDarkGray) !important;
   color: var(--marbleWhite) !important;
-  border: 1px solid var(--marbleBlack) !important;
-  box-shadow: 0 2px 8px rgba(17, 17, 17, 0.3) !important;
+  border: 1px solid var(--marbleDarkGray) !important;
+  box-shadow: 0 2px 8px rgba(34, 34, 34, 0.3) !important;
   font-weight: 600 !important;
   padding: 4px 12px !important;
   border-radius: 4px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: inline-block !important;
   font-size: 0.9rem !important;
 }
 
-.btn-outline-light:hover,
-.navbar .btn-outline-light:hover,
-.nav-item .btn-outline-light:hover {
-  background: var(--marbleDarkGray) !important;
+.btn-outline-light:hover {
+  background: var(--marbleBlack) !important;
   color: var(--marbleWhite) !important;
-  border-color: var(--marbleDarkGray) !important;
-  box-shadow: 0 4px 16px rgba(17, 17, 17, 0.4) !important;
+  border-color: var(--marbleBlack) !important;
+  box-shadow: 0 4px 16px rgba(34, 34, 34, 0.4) !important;
   transform: translateY(-2px);
 }
 
@@ -193,143 +185,6 @@ body {
 /* Smooth navbar transitions */
 .navbar {
   transition: all 0.3s ease;
-  border-bottom: none !important;
-  box-shadow: none !important;
-  border-top: none !important;
-  border-left: none !important;
-  border-right: none !important;
-}
-
-/* Remove any potential white bars from navbar elements */
-.navbar-nav {
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.nav-item {
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.nav-link {
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Remove any borders from the navbar container */
-.navbar-expand-lg {
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.navbar-collapse {
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Additional Bootstrap navbar overrides */
-.navbar > * {
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.navbar * {
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Remove any potential white lines from all navbar-related elements */
-.navbar,
-.navbar-brand,
-.navbar-nav,
-.navbar-nav > li,
-.navbar-nav > li > a,
-.navbar-collapse,
-.navbar-expand-lg,
-.navbar-color {
-  border: none !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-/* Remove any potential white bars from navbar and related elements */
-.navbar,
-.navbar *,
-.navbar-expand-lg,
-.navbar-collapse,
-.navbar-nav,
-.nav-item,
-.nav-link,
-.navbar-brand {
-  border: none !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-/* Specific overrides for common white bar sources */
-.navbar-expand-lg,
-.navbar-collapse,
-.navbar-nav,
-.nav-item,
-.nav-link,
-.navbar-brand,
-.navbar > div,
-.navbar > nav,
-.navbar > ul,
-.navbar > li {
-  border: none !important;
-  box-shadow: none !important;
-  outline: none !important;
-  background: none !important;
-}
-
-/* Remove any potential white backgrounds that might create lines */
-.navbar,
-.navbar * {
-  background-color: var(--marbleWhite) !important;
-  border: none !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-/* Additional overrides for potential white bar sources */
-.page-transition,
-.main-content,
-.app-container {
-  border: none !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-/* Force remove any white lines from the top of the page */
-body::before,
-body::after,
-html::before,
-html::after {
-  display: none !important;
-  content: none !important;
-}
-
-/* Remove white borders/outlines from text elements */
-* {
-  text-shadow: none !important;
-  -webkit-text-stroke: none !important;
-  -webkit-text-fill-color: inherit !important;
-}
-
-/* Remove white borders from specific text elements */
-.text-muted,
-.change,
-.percent-change,
-.price,
-.stock-price,
-.stock-change {
-  text-shadow: none !important;
-  -webkit-text-stroke: none !important;
-  -webkit-text-fill-color: inherit !important;
-  outline: none !important;
-  border: none !important;
-  box-shadow: none !important;
 }
 
 .navbar-brand {
@@ -376,22 +231,4 @@ html::after {
   border-color: var(--marbleLightGray) !important;
   color: var(--marbleDarkGray) !important;
   box-shadow: 0 4px 16px rgba(176, 176, 176, 0.18);
-}
-
-/* Force sign out button visibility */
-.navbar .nav-item .btn-outline-light,
-.navbar .btn-outline-light {
-  background: var(--marbleBlack) !important;
-  color: var(--marbleWhite) !important;
-  border: 1px solid var(--marbleBlack) !important;
-  box-shadow: 0 2px 8px rgba(17, 17, 17, 0.3) !important;
-  font-weight: 600 !important;
-  padding: 4px 12px !important;
-  border-radius: 4px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: inline-block !important;
-  position: relative !important;
-  z-index: 1000 !important;
-  font-size: 0.9rem !important;
 } 

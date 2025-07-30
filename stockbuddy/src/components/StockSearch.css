@@ -1,0 +1,239 @@
+.stock-search-container {
+  position: relative;
+  width: 100%;
+  font-family: var(--fontBody, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 40px 12px 16px;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  font-size: 16px;
+  font-family: inherit;
+  background-color: #ffffff;
+  color: #000000 !important;
+  font-weight: bold !important;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.search-input:not(:placeholder-shown) {
+  color: #000000 !important;
+  font-weight: bold !important;
+}
+
+.search-input::placeholder {
+  color: #6c757d;
+  font-weight: normal;
+}
+
+.search-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.search-input.error {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.search-loading {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e1e5e9;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.clear-button {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.clear-button:hover {
+  background-color: #f8f9fa;
+  color: #495057;
+}
+
+.search-error {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.suggestions-container {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #222222; /* marbleBlack */
+  border: 1px solid #222222; /* marbleBlack */
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 1000;
+  margin-top: 4px;
+}
+
+.suggestion-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item.selected {
+  background-color: #B0B0B0; /* marbleGold */
+}
+
+.suggestion-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.suggestion-symbol {
+  font-size: 16px;
+  font-weight: 600;
+  color: #F4F1E9; /* marbleWhite */
+}
+
+.suggestion-name {
+  font-size: 14px;
+  color: #F4F1E9; /* marbleWhite */
+  line-height: 1.3;
+}
+
+.suggestion-match-type {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: #E5E5E5; /* marbleLightGray */
+  color: #111111; /* marbleBlack */
+  white-space: nowrap;
+}
+
+.highlight {
+  background-color: #E6C87A; /* marbleGold */
+  color: #111111; /* marbleBlack */
+  padding: 0 1px;
+  border-radius: 2px;
+  font-weight: 600;
+}
+
+.no-results {
+  padding: 20px;
+  text-align: center;
+  color: #111111; /* marbleBlack */
+}
+
+.no-results-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.no-results-text {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.no-results-subtext {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+/* Scrollbar styling */
+.suggestions-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.suggestions-container::-webkit-scrollbar-track {
+  background: #222222; /* marbleDarkGray */
+  border-radius: 4px;
+}
+
+.suggestions-container::-webkit-scrollbar-thumb {
+  background: #E6C87A; /* marbleGold */
+  border-radius: 4px;
+}
+
+.suggestions-container::-webkit-scrollbar-thumb:hover {
+  background: #d4b76a;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .search-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 12px 40px 12px 16px;
+  }
+  
+  .suggestion-item {
+    padding: 16px;
+  }
+  
+  .suggestion-symbol {
+    font-size: 16px;
+  }
+  
+  .suggestion-name {
+    font-size: 14px;
+  }
+  
+  .suggestions-container {
+    max-height: 300px;
+  }
+}
+
+/* Dark mode support - REMOVED to prevent override */ 

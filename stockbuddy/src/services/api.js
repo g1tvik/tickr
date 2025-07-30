@@ -54,6 +54,10 @@ export const api = {
     headers: getAuthHeaders()
   }).then(handleResponse),
 
+  searchStocksAutocomplete: (query) => fetch(`${API_BASE_URL}/trading/autocomplete?query=${encodeURIComponent(query)}`, {
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
   buyStock: (symbol, shares) => fetch(`${API_BASE_URL}/trading/buy`, {
     method: 'POST',
     headers: getAuthHeaders(),

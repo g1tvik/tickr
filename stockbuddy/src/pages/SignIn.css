@@ -1,0 +1,149 @@
+/* SignIn Page Styles */
+.signin-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--marbleGold) 0%, var(--marbleDarkGray) 100%);
+  padding: 20px;
+}
+
+.signin-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  padding: 48px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.signin-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.signin-title {
+  font-size: 32px;
+  font-weight: bold;
+  color: var(--marbleDarkGray);
+  margin-bottom: 8px;
+}
+
+.signin-subtitle {
+  color: var(--marbleGray);
+  font-size: 16px;
+}
+
+.signin-form {
+  margin-bottom: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-weight: 500;
+  color: var(--marbleDarkGray);
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--marbleGray);
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--marbleGold);
+}
+
+.signin-button {
+  width: 100%;
+  padding: 12px 24px;
+  background: var(--marbleGold);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.signin-button:hover {
+  background: #d97706;
+}
+
+.signin-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.signin-footer {
+  text-align: center;
+  color: var(--marbleGray);
+  font-size: 14px;
+}
+
+.signin-link {
+  color: var(--marbleGold);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.signin-link:hover {
+  text-decoration: underline;
+}
+
+.demo-section {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.demo-divider {
+  color: var(--marbleGray);
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.demo-button {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  border: 2px solid var(--marbleGold);
+  background-color: transparent;
+  color: var(--marbleDarkGray);
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.demo-button:hover:not(:disabled) {
+  background-color: var(--marbleGold);
+  color: white;
+}
+
+.demo-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .signin-card {
+    padding: 32px 24px;
+  }
+  
+  .signin-title {
+    font-size: 28px;
+  }
+} 

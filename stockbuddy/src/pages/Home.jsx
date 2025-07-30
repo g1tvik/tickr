@@ -24,6 +24,7 @@ function Home({ isLoggedIn }) {
           const mainContent = document.querySelector('.main-content');
           const appContainer = document.querySelector('.app-container');
           const navbar = document.querySelector('.navbar-color');
+          const body = document.body;
           
           if (pageTransition) {
             pageTransition.style.backgroundColor = '#E5E5E5'; // marbleLightGray
@@ -37,6 +38,8 @@ function Home({ isLoggedIn }) {
           if (navbar) {
             navbar.style.backgroundColor = 'var(--marbleLightGray)'; // marbleLightGray
           }
+          // Update scrollbar to match the new background
+          body.style.setProperty('--scrollbar-track-bg', '#E5E5E5', 'important');
         }
       } else {
         if (isBottomHalf) {
@@ -46,6 +49,7 @@ function Home({ isLoggedIn }) {
           const mainContent = document.querySelector('.main-content');
           const appContainer = document.querySelector('.app-container');
           const navbar = document.querySelector('.navbar-color');
+          const body = document.body;
           
           if (pageTransition) {
             pageTransition.style.backgroundColor = '#F4F1E9';
@@ -59,6 +63,8 @@ function Home({ isLoggedIn }) {
           if (navbar) {
             navbar.style.backgroundColor = '#F4F1E9';
           }
+          // Update scrollbar to match the original background
+          body.style.setProperty('--scrollbar-track-bg', '#F4F1E9', 'important');
         }
       }
     };
@@ -79,12 +85,15 @@ function Home({ isLoggedIn }) {
       window.removeEventListener('scroll', handleScroll);
       // Reset background color when component unmounts
       const elements = ['.page-transition', '.main-content', '.app-container', '.navbar-color'];
+      const body = document.body;
       elements.forEach(selector => {
         const element = document.querySelector(selector);
         if (element) {
           element.style.backgroundColor = '#F4F1E9';
         }
       });
+      // Reset scrollbar to default
+      body.style.setProperty('--scrollbar-track-bg', '#F4F1E9', 'important');
     };
   }, []); // Remove isBottomHalf dependency
 
@@ -117,6 +126,7 @@ function Home({ isLoggedIn }) {
           </div>
         </div>
       </div>
+
       {/* SCROLL ANIMATED SECTIONS */}
       <div className="container mt-5 pb-5">
         <FadeInSection>
