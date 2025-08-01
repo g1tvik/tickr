@@ -9,9 +9,10 @@ import SignUp from "./pages/Signup";
 import Dashboard from './pages/Dashboard';
 import Trade from './pages/Trade';
 import Learn from './pages/Learn';
-import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 import LessonDetail from "./pages/LessonDetail";
 import Discover from './pages/Discover';
+import Shop from './pages/Shop';
 import ArticleReader from './components/ArticleReader';
 
 function AppContent() {
@@ -43,9 +44,10 @@ function AppContent() {
               <Route path="/trade" element={<Trade />} />
               <Route path="/learn" element={<Learn />} />
               <Route path="/discover" element={<Discover />} />
-              <Route path="/learn/:lessonId" element={<LessonDetail />} />
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/learn/lesson/:lessonId" element={<LessonDetail />} />
               <Route path="/article/:articleId" element={<ArticleReader />} />
-              <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
             </Routes>
           </div>
         </PageTransition>

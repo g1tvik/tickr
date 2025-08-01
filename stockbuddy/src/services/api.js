@@ -41,6 +41,21 @@ export const api = {
     body: JSON.stringify({ token })
   }).then(handleResponse),
 
+  // User profile and data endpoints
+  getProfile: () => fetch(`${API_BASE_URL}/auth/profile`, {
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
+  getUserData: () => fetch(`${API_BASE_URL}/auth/user-data`, {
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
+  updateUserData: (data) => fetch(`${API_BASE_URL}/auth/user-data`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+
   // Trading endpoints
   getPortfolio: () => fetch(`${API_BASE_URL}/trading/portfolio`, {
     headers: getAuthHeaders()
@@ -113,6 +128,24 @@ export const isApiAvailable = async () => {
 // Utility function to check if user is authenticated
 export const isAuthenticated = () => {
   return !!localStorage.getItem('token');
+};
+
+// Utility function to get current user info from token
+export const getCurrentUser = () => {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  
+  try {
+    // Decode JWT token (without verification for client-side display)
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return {
+      userId: payload.userId,
+      email: payload.email,
+      username: payload.username
+    };
+  } catch (error) {
+    return null;
+  }
 };
 
 // Utility function to logout

@@ -924,16 +924,37 @@ const searchStocksAutocomplete = async (query) => {
 router.get('/portfolio', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const portfolio = initializePortfolio(req, userId);
+    
+    // Get user data from auth system
+    const users = req.app.locals.fileStorage.getUsers();
+    const user = users[userId];
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    // Initialize portfolio if it doesn't exist
+    if (!user.portfolio) {
+      user.portfolio = {
+        balance: 10000,
+        positions: [],
+        totalValue: 10000
+      };
+    }
+    
+    const portfolio = user.portfolio;
     
     // Update current prices for all positions
     for (let position of portfolio.positions) {
       try {
         // Use REST API for portfolio positions (works with any stock)
         const quote = await getStockQuoteFromREST(position.symbol);
-      position.currentPrice = quote.price;
-      position.change = quote.change;
-      position.changePercent = quote.changePercent;
+        position.currentPrice = quote.price;
+        position.change = quote.change;
+        position.changePercent = quote.changePercent;
       } catch (quoteError) {
         console.warn(`Failed to get quote for ${position.symbol}, using last known price`);
         // Keep the existing price if quote fails
@@ -949,12 +970,11 @@ router.get('/portfolio', authenticateToken, async (req, res) => {
     }, 0);
     
     portfolio.totalValue = portfolio.balance + positionsValue;
-    portfolio.lastUpdated = new Date().toISOString();
     
-    // Save updated portfolio
-    const portfolios = getPortfolios(req);
-    portfolios[userId] = portfolio;
-    savePortfolios(req, portfolios);
+    // Save updated user data
+    user.portfolio = portfolio;
+    users[userId] = user;
+    req.app.locals.fileStorage.saveUsers(users);
     
     res.json({
       success: true,

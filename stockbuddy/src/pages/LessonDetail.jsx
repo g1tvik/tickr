@@ -1,536 +1,343 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { lessonContent } from "../data/lessonContent";
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from "../marblePalette";
-import { fontHeading, fontBody } from "../fontPalette";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { lessonStructure } from '../data/lessonStructure';
+import progressManager from '../utils/progressManager';
+import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { fontHeading, fontBody } from '../fontPalette';
 
 export default function LessonDetail() {
   const { lessonId } = useParams();
   const navigate = useNavigate();
-  const lesson = lessonContent[lessonId];
-  
   const [currentSection, setCurrentSection] = useState(0);
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState({});
-  const [quizSubmitted, setQuizSubmitted] = useState(false);
-  const [quizScore, setQuizScore] = useState(0);
-  const [lessonCompleted, setLessonCompleted] = useState(false);
+  const [lesson, setLesson] = useState(null);
+  const [progress, setProgress] = useState(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [completionData, setCompletionData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Reset state when lesson changes
-    setCurrentSection(0);
-    setShowQuiz(false);
-    setQuizAnswers({});
-    setQuizSubmitted(false);
-    setQuizScore(0);
-    setLessonCompleted(false);
+    loadLessonAndProgress();
   }, [lessonId]);
 
-  if (!lesson) {
-  return (
-    <div style={{
-      minHeight: "100vh",
-        background: marbleWhite,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
+  const loadLessonAndProgress = async () => {
+    try {
+      setLoading(true);
+      
+      // Find the lesson
+      let foundLesson = null;
+      for (const unit of lessonStructure.units) {
+        const lessonFound = unit.lessons.find(l => l.id === parseInt(lessonId));
+        if (lessonFound) {
+          foundLesson = lessonFound;
+          break;
+        }
+      }
+
+      if (foundLesson) {
+        setLesson(foundLesson);
+        
+        // Load progress
+        const lessonProgress = await progressManager.getLessonProgress(foundLesson.id);
+        setProgress(lessonProgress);
+      } else {
+        navigate('/learn');
+      }
+    } catch (error) {
+      console.error('Error loading lesson:', error);
+      navigate('/learn');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper function to find the next lesson
+  const findNextLesson = (currentLessonId) => {
+    for (const unit of lessonStructure.units) {
+      const lessonIndex = unit.lessons.findIndex(l => l.id === currentLessonId);
+      if (lessonIndex !== -1) {
+        // Check if there's a next lesson in this unit
+        if (lessonIndex < unit.lessons.length - 1) {
+          return unit.lessons[lessonIndex + 1];
+        }
+        // Check if there's a next unit with lessons
+        const currentUnitIndex = lessonStructure.units.findIndex(u => u.id === unit.id);
+        if (currentUnitIndex < lessonStructure.units.length - 1) {
+          const nextUnit = lessonStructure.units[currentUnitIndex + 1];
+          if (nextUnit && nextUnit.lessons.length > 0) {
+            return nextUnit.lessons[0];
+          }
+        }
+      }
+    }
+    return null;
+  };
+
+  const handleNextSection = () => {
+    if (currentSection < lesson.content.length - 1) {
+      setCurrentSection(currentSection + 1);
+    } else {
+      setShowQuiz(true);
+    }
+  };
+
+  const handlePreviousSection = () => {
+    if (currentSection > 0) {
+      setCurrentSection(currentSection - 1);
+    }
+  };
+
+  const handleQuizSubmit = async () => {
+    const correctAnswers = lesson.quiz.questions.filter((q, index) => 
+      quizAnswers[`q${index}`] === q.correct
+    ).length;
+    
+    const score = (correctAnswers / lesson.quiz.questions.length) * 100;
+    
+    try {
+      // Record the attempt and complete the lesson
+      await progressManager.recordLessonAttempt(lesson.id);
+      const result = await progressManager.completeLesson(lesson.id, score);
+      
+      // Set completion data for the modal
+      setCompletionData({
+        score: score.toFixed(1),
+        xpEarned: result.xpEarned,
+        coinsEarned: result.coinsEarned,
+        lessonCompleted: result.lessonCompleted,
+        correctAnswers,
+        totalQuestions: lesson.quiz.questions.length
+      });
+      
+      setShowQuiz(false);
+      
+      // Reload progress
+      const lessonProgress = await progressManager.getLessonProgress(lesson.id);
+      setProgress(lessonProgress);
+      
+      setShowCompletionModal(true);
+    } catch (error) {
+      console.error('Error submitting quiz:', error);
+      alert('Failed to submit quiz. Please try again.');
+    }
+  };
+
+  const handleRetakeQuiz = () => {
+    setQuizAnswers({});
+    setShowQuiz(true);
+    setShowCompletionModal(false);
+  };
+
+  const handleContinueToNext = () => {
+    const nextLesson = findNextLesson(lesson.id);
+    if (nextLesson) {
+      navigate(`/learn/lesson/${nextLesson.id}`);
+    } else {
+      navigate('/learn');
+    }
+  };
+
+  const handleBackToLearn = () => {
+    navigate('/learn');
+  };
+
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        backgroundColor: marbleWhite,
+        display: "flex",
+        alignItems: "center",
         justifyContent: "center",
-      padding: "2rem 1rem"
-    }}>
-      <h1 style={{
-        fontSize: "2rem",
-        fontWeight: 700,
-          color: marbleDarkGray,
-          marginBottom: "1rem"
-        }}>
-          Lesson not found
-        </h1>
-        <button
-          onClick={() => navigate('/learn')}
-          style={{
-            background: marbleGold,
-            color: marbleDarkGray,
-            border: "none",
-            borderRadius: 8,
-            padding: "0.8rem 1.6rem",
-            fontWeight: 600,
-            fontSize: "1rem",
-            cursor: "pointer"
-          }}
-        >
-          Back to Lessons
-        </button>
+        fontFamily: fontBody
+      }}>
+        <div>Loading lesson...</div>
       </div>
     );
   }
 
-  const handleQuizSubmit = () => {
-    let correct = 0;
-    const total = lesson.quiz.questions.length;
-    
-    lesson.quiz.questions.forEach((question, index) => {
-      if (quizAnswers[index] === question.correct) {
-        correct++;
-      }
-    });
-    
-    const score = Math.round((correct / total) * 100);
-    setQuizScore(score);
-    setQuizSubmitted(true);
-    
-    // Mark lesson as completed if score is 70% or higher
-    if (score >= 70) {
-      setLessonCompleted(true);
-    }
-  };
-
-  const renderContent = (content) => {
-    return (
-      <div 
-        dangerouslySetInnerHTML={{ __html: content }}
-        style={{
-          lineHeight: 1.6,
-          fontSize: '16px'
-        }}
-      />
-    );
-  };
-
-  const renderQuiz = () => {
+  if (!lesson) {
     return (
       <div style={{
-        backgroundColor: marbleLightGray,
-        borderRadius: '20px',
-        padding: '32px',
-        maxWidth: '800px',
-        width: '100%'
+        minHeight: "100vh",
+        backgroundColor: marbleWhite,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: fontBody
       }}>
-        <h2 style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          color: marbleDarkGray,
-          marginBottom: '24px',
-          fontFamily: fontHeading
-        }}>
-          {lesson.quiz.title}
-        </h2>
-        
-        {!quizSubmitted ? (
-          <div>
-            {lesson.quiz.questions.map((question, index) => (
-              <div key={index} style={{
-                backgroundColor: marbleWhite,
-                borderRadius: '16px',
-                padding: '24px',
-                marginBottom: '24px'
-              }}>
-                <h3 style={{
-                  fontSize: '18px',
-                  fontWeight: '600',
-                  color: marbleDarkGray,
-                  marginBottom: '16px'
-                }}>
-                  Question {index + 1}: {question.question}
-                </h3>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {question.options.map((option, optionIndex) => (
-                    <label key={optionIndex} style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '12px 16px',
-                      border: `2px solid ${quizAnswers[index] === optionIndex ? marbleGold : '#e0e0e0'}`,
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      backgroundColor: quizAnswers[index] === optionIndex ? marbleGold : 'transparent',
-                      transition: 'all 0.2s'
-                    }}>
-                      <input
-                        type="radio"
-                        name={`question-${index}`}
-                        value={optionIndex}
-                        checked={quizAnswers[index] === optionIndex}
-                        onChange={(e) => setQuizAnswers({
-                          ...quizAnswers,
-                          [index]: parseInt(e.target.value)
-                        })}
-                        style={{ marginRight: '12px' }}
-                      />
-                      {option}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ))}
-            
-            <button
-              onClick={handleQuizSubmit}
-              disabled={Object.keys(quizAnswers).length < lesson.quiz.questions.length}
-              style={{
-                background: marbleGold,
-                color: marbleDarkGray,
-                border: "none",
-                borderRadius: 12,
-                padding: "16px 32px",
-                fontWeight: 600,
-                fontSize: "16px",
-                cursor: "pointer",
-                opacity: Object.keys(quizAnswers).length < lesson.quiz.questions.length ? 0.5 : 1
-              }}
-            >
-              Submit Quiz
-            </button>
-          </div>
-        ) : (
-          <div>
-            <div style={{
-              textAlign: 'center',
-              marginBottom: '32px'
-            }}>
-              <div style={{
-                fontSize: '48px',
-                marginBottom: '16px'
-              }}>
-                {quizScore >= 70 ? '🎉' : '📚'}
-              </div>
-              <h3 style={{
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: marbleDarkGray,
-                marginBottom: '8px'
-              }}>
-                Quiz Complete!
-              </h3>
-              <div style={{
-                fontSize: '32px',
-                fontWeight: 'bold',
-                color: quizScore >= 70 ? '#22c55e' : '#ef4444'
-              }}>
-                {quizScore}%
-              </div>
-              <p style={{
-                color: marbleGray,
-                marginTop: '8px'
-              }}>
-                {quizScore >= 70 
-                  ? 'Great job! You passed the quiz.' 
-                  : 'Keep studying! You need 70% to pass.'}
-              </p>
-            </div>
-            
-            {lesson.quiz.questions.map((question, index) => (
-              <div key={index} style={{
-                backgroundColor: marbleWhite,
-                borderRadius: '16px',
-                padding: '24px',
-                marginBottom: '16px',
-                border: `2px solid ${quizAnswers[index] === question.correct ? '#22c55e' : '#ef4444'}`
-              }}>
-                <h4 style={{
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  color: marbleDarkGray,
-                  marginBottom: '12px'
-                }}>
-                  Question {index + 1}: {question.question}
-                </h4>
-                
-                <div style={{
-                  padding: '12px',
-                  backgroundColor: quizAnswers[index] === question.correct ? '#f0fdf4' : '#fef2f2',
-                  borderRadius: '8px',
-                  marginBottom: '12px'
-                }}>
-                  <div style={{
-                    color: quizAnswers[index] === question.correct ? '#22c55e' : '#ef4444',
-                    fontWeight: '500',
-                    marginBottom: '8px'
-                  }}>
-                    {quizAnswers[index] === question.correct ? '✓ Correct!' : '✗ Incorrect'}
-                  </div>
-                  <div style={{ color: marbleDarkGray }}>
-                    <strong>Explanation:</strong> {question.explanation}
-                  </div>
-                </div>
-              </div>
-            ))}
-            
-            <div style={{ textAlign: 'center', marginTop: '24px' }}>
-              {quizScore >= 70 ? (
-                <button
-                  onClick={() => {
-                    setLessonCompleted(true);
-                    setShowQuiz(false);
-                  }}
-                  style={{
-                    background: '#22c55e',
-                    color: 'white',
-                    border: "none",
-                    borderRadius: 12,
-                    padding: "16px 32px",
-                    fontWeight: 600,
-                    fontSize: "16px",
-                    cursor: "pointer"
-                  }}
-                >
-                  Complete Lesson
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    setQuizAnswers({});
-                    setQuizSubmitted(false);
-                    setQuizScore(0);
-                  }}
-                  style={{
-                    background: marbleGold,
-                    color: marbleDarkGray,
-                    border: "none",
-                    borderRadius: 12,
-                    padding: "16px 32px",
-                    fontWeight: 600,
-                    fontSize: "16px",
-                    cursor: "pointer"
-                  }}
-                >
-                  Retake Quiz
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+        <div>Lesson not found</div>
       </div>
     );
-  };
+  }
+
+  const currentContent = lesson.content[currentSection];
 
   return (
     <div style={{
       minHeight: "100vh",
-      background: marbleWhite,
-      padding: "24px",
+      backgroundColor: marbleWhite,
       fontFamily: fontBody
     }}>
+      {/* Header */}
+      <div style={{
+        backgroundColor: marbleLightGray,
+        padding: "24px",
+        borderBottom: `1px solid ${marbleGray}`
+      }}>
+        <div style={{
+          maxWidth: "1200px",
+          margin: "0 auto"
+        }}>
+          <button
+            onClick={() => navigate('/learn')}
+            style={{
+              backgroundColor: "transparent",
+              border: "none",
+              color: marbleDarkGray,
+              fontSize: "16px",
+              cursor: "pointer",
+              marginBottom: "16px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}
+          >
+            ← Back to Learn
+          </button>
+          
+          <h1 style={{
+            fontSize: "32px",
+            fontWeight: "bold",
+            color: marbleDarkGray,
+            fontFamily: fontHeading,
+            marginBottom: "8px"
+          }}>
+            {lesson.title}
+          </h1>
+          
+          <p style={{
+            fontSize: "18px",
+            color: marbleGray,
+            marginBottom: "16px"
+          }}>
+            {lesson.description}
+          </p>
+          
+          {/* Progress Bar */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "16px",
+            marginBottom: "16px"
+          }}>
+            <div style={{
+              flex: 1,
+              height: "8px",
+              backgroundColor: marbleGray,
+              borderRadius: "4px",
+              overflow: "hidden"
+            }}>
+              <div style={{
+                width: `${((currentSection + 1) / lesson.content.length) * 100}%`,
+                height: "100%",
+                backgroundColor: marbleGold,
+                transition: "width 0.3s ease"
+              }} />
+            </div>
+            <span style={{
+              fontSize: "14px",
+              color: marbleGray,
+              fontWeight: "500"
+            }}>
+              {currentSection + 1} of {lesson.content.length}
+            </span>
+          </div>
+          
+          {/* Lesson Info */}
+          <div style={{
+            display: "flex",
+            gap: "24px",
+            fontSize: "14px",
+            color: marbleGray
+          }}>
+            <span>Duration: {lesson.duration}</span>
+            <span>XP: {lesson.xp}</span>
+            {progress?.completed && (
+              <span style={{ color: marbleGold, fontWeight: "500" }}>
+                ✓ Completed
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
       <div style={{
         maxWidth: "1200px",
         margin: "0 auto",
-        display: "grid",
-        gridTemplateColumns: "300px 1fr",
-        gap: "32px"
+        padding: "48px 24px"
       }}>
-        {/* Sidebar */}
-        <div style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "24px"
-        }}>
-          {/* Lesson Info */}
+        {!showQuiz ? (
           <div style={{
-            backgroundColor: marbleLightGray,
-            borderRadius: "20px",
-            padding: "24px"
+            display: "grid",
+            gridTemplateColumns: "1fr 300px",
+            gap: "32px",
+            alignItems: "start"
           }}>
-            <h1 style={{
-              fontSize: "24px",
-              fontWeight: "bold",
-              color: marbleDarkGray,
-              marginBottom: "12px",
-              fontFamily: fontHeading
-            }}>
-              {lesson.title}
-            </h1>
-            
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              marginBottom: "16px"
-            }}>
-              <div style={{
-                width: "8px",
-                height: "8px",
-                borderRadius: "50%",
-                backgroundColor: lesson.status === "completed" ? "#22c55e" : 
-                               lesson.status === "current" ? marbleGold : marbleGray
-              }} />
-              <span style={{
-                fontSize: "14px",
-                color: marbleGray,
-                textTransform: "capitalize"
-              }}>
-                {lesson.status}
-              </span>
-            </div>
-            
-            <div style={{
-              fontSize: "14px",
-              color: marbleGray,
-              marginBottom: "16px"
-            }}>
-              Duration: {lesson.duration}
-            </div>
-            
+            {/* Main Content */}
             <div>
-              <h3 style={{
-                fontSize: "16px",
-                fontWeight: "600",
-                color: marbleDarkGray,
-                marginBottom: "12px"
-              }}>
-                Learning Objectives:
-              </h3>
-              <ul style={{
-                fontSize: "14px",
-                color: marbleGray,
-                paddingLeft: "16px"
-              }}>
-                {lesson.objectives.map((objective, index) => (
-                  <li key={index} style={{ marginBottom: "4px" }}>
-                    {objective}
-                  </li>
-                ))}
-        </ul>
-            </div>
-          </div>
-
-          {/* Progress */}
-          <div style={{
-            backgroundColor: marbleLightGray,
-            borderRadius: "20px",
-            padding: "24px"
-          }}>
-            <h3 style={{
-              fontSize: "18px",
-              fontWeight: "600",
-              color: marbleDarkGray,
-              marginBottom: "16px"
-            }}>
-              Lesson Progress
-            </h3>
-            
-            <div style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px"
-            }}>
-              {lesson.content.map((section, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentSection(index)}
-                  style={{
-                    padding: "12px 16px",
-                    borderRadius: "8px",
-                    border: "none",
-                    background: currentSection === index ? marbleGold : marbleWhite,
-                    color: currentSection === index ? marbleDarkGray : marbleGray,
-                    cursor: "pointer",
-                    textAlign: "left",
-                    fontWeight: currentSection === index ? "600" : "400"
-                  }}
-                >
-                  {section.title}
-                </button>
-              ))}
-              
-              <button
-                onClick={() => setShowQuiz(true)}
-                style={{
-                  padding: "12px 16px",
-                  borderRadius: "8px",
-                  border: "none",
-                  background: showQuiz ? marbleGold : marbleWhite,
-                  color: showQuiz ? marbleDarkGray : marbleGray,
-                  cursor: "pointer",
-                  textAlign: "left",
-                  fontWeight: showQuiz ? "600" : "400"
-                }}
-              >
-                📝 {lesson.quiz.title}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "24px"
-        }}>
-          {showQuiz ? (
-            renderQuiz()
-          ) : (
-            <div style={{
-              backgroundColor: marbleLightGray,
-              borderRadius: "20px",
-              padding: "32px"
-            }}>
+              {/* Section Content */}
               <div style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "24px"
+                backgroundColor: marbleLightGray,
+                borderRadius: "20px",
+                padding: "32px",
+                marginBottom: "32px"
               }}>
                 <h2 style={{
-                  fontSize: "28px",
+                  fontSize: "24px",
                   fontWeight: "bold",
                   color: marbleDarkGray,
+                  marginBottom: "24px",
                   fontFamily: fontHeading
                 }}>
-                  {lesson.content[currentSection].title}
+                  {currentContent.title}
                 </h2>
                 
                 <div style={{
-                  display: "flex",
-                  gap: "12px"
+                  fontSize: "18px",
+                  lineHeight: "1.6",
+                  color: marbleDarkGray
                 }}>
-                  <button
-                    onClick={() => setCurrentSection(Math.max(0, currentSection - 1))}
-                    disabled={currentSection === 0}
-                    style={{
-                      padding: "8px 16px",
-                      borderRadius: "8px",
-                      border: "none",
-                      background: currentSection === 0 ? marbleGray : marbleDarkGray,
-                      color: "white",
-                      cursor: currentSection === 0 ? "not-allowed" : "pointer",
-                      opacity: currentSection === 0 ? 0.5 : 1
-                    }}
-                  >
-                    Previous
-                  </button>
-                  
-                  <button
-                    onClick={() => setCurrentSection(Math.min(lesson.content.length - 1, currentSection + 1))}
-                    disabled={currentSection === lesson.content.length - 1}
-                    style={{
-                      padding: "8px 16px",
-                      borderRadius: "8px",
-                      border: "none",
-                      background: currentSection === lesson.content.length - 1 ? marbleGray : marbleGold,
-                      color: currentSection === lesson.content.length - 1 ? "white" : marbleDarkGray,
-                      cursor: currentSection === lesson.content.length - 1 ? "not-allowed" : "pointer",
-                      opacity: currentSection === lesson.content.length - 1 ? 0.5 : 1
-                    }}
-                  >
-                    Next
-                  </button>
+                  {currentContent.content}
                 </div>
               </div>
-              
-              <div style={{
-                backgroundColor: marbleWhite,
-                borderRadius: "16px",
-                padding: "24px",
-                marginBottom: "24px"
-              }}>
-                {renderContent(lesson.content[currentSection].content)}
-              </div>
-              
+
+              {/* Navigation */}
               <div style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center"
               }}>
+                <button
+                  onClick={handlePreviousSection}
+                  disabled={currentSection === 0}
+                  style={{
+                    backgroundColor: currentSection === 0 ? marbleGray : marbleDarkGray,
+                    color: marbleWhite,
+                    border: "none",
+                    padding: "12px 24px",
+                    borderRadius: "12px",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    cursor: currentSection === 0 ? "not-allowed" : "pointer",
+                    opacity: currentSection === 0 ? 0.6 : 1
+                  }}
+                >
+                  Previous
+                </button>
+                
                 <div style={{
                   fontSize: "14px",
                   color: marbleGray
@@ -538,41 +345,651 @@ export default function LessonDetail() {
                   Section {currentSection + 1} of {lesson.content.length}
                 </div>
                 
-                {currentSection === lesson.content.length - 1 && (
-          <button
-                    onClick={() => setShowQuiz(true)}
-            style={{
-                      background: marbleGold,
-                      color: marbleDarkGray,
-              border: "none",
-                      borderRadius: 12,
-                      padding: "12px 24px",
-              fontWeight: 600,
-                      fontSize: "16px",
-              cursor: "pointer"
-            }}
-          >
-                    Take Quiz
-          </button>
-                )}
+                <button
+                  onClick={handleNextSection}
+                  style={{
+                    backgroundColor: marbleGold,
+                    color: marbleDarkGray,
+                    border: "none",
+                    padding: "12px 24px",
+                    borderRadius: "12px",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    cursor: "pointer"
+                  }}
+                >
+                  {currentSection === lesson.content.length - 1 ? "Take Quiz" : "Next"}
+                </button>
               </div>
             </div>
-          )}
-          
-          {lessonCompleted && (
+
+            {/* Sidebar */}
             <div style={{
-              backgroundColor: "#22c55e",
-              color: "white",
-              padding: "16px 24px",
-              borderRadius: "12px",
-              textAlign: "center",
-              fontWeight: "500"
+              position: "sticky",
+              top: "24px"
             }}>
-              🎉 Congratulations! You've completed this lesson. You can now move on to the next lesson in your learning path.
+              {/* Progress Card */}
+              <div style={{
+                backgroundColor: marbleLightGray,
+                borderRadius: "20px",
+                padding: "24px",
+                marginBottom: "24px"
+              }}>
+                <h3 style={{
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  color: marbleDarkGray,
+                  marginBottom: "16px",
+                  fontFamily: fontHeading
+                }}>
+                  Lesson Progress
+                </h3>
+                
+                <div style={{
+                  marginBottom: "16px"
+                }}>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "8px"
+                  }}>
+                    <span style={{
+                      fontSize: "14px",
+                      color: marbleGray
+                    }}>
+                      Progress
+                    </span>
+                    <span style={{
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: marbleDarkGray
+                    }}>
+                      {currentSection + 1} of {lesson.content.length}
+                    </span>
+                  </div>
+                  
+                  <div style={{
+                    height: "8px",
+                    backgroundColor: marbleGray,
+                    borderRadius: "4px",
+                    overflow: "hidden"
+                  }}>
+                    <div style={{
+                      width: `${((currentSection + 1) / lesson.content.length) * 100}%`,
+                      height: "100%",
+                      backgroundColor: marbleGold,
+                      transition: "width 0.3s ease"
+                    }} />
+                  </div>
+                </div>
+                
+                <div style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px"
+                }}>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "14px"
+                  }}>
+                    <span style={{ color: marbleGray }}>Duration:</span>
+                    <span style={{ color: marbleDarkGray, fontWeight: "500" }}>{lesson.duration}</span>
+                  </div>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "14px"
+                  }}>
+                    <span style={{ color: marbleGray }}>XP Reward:</span>
+                    <span style={{ color: marbleGold, fontWeight: "500" }}>{lesson.xp} XP</span>
+                  </div>
+                  {progress?.completed && (
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: "14px"
+                    }}>
+                      <span style={{ color: marbleGray }}>Status:</span>
+                      <span style={{ color: marbleGold, fontWeight: "500" }}>✓ Completed</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Section Navigation */}
+              <div style={{
+                backgroundColor: marbleLightGray,
+                borderRadius: "20px",
+                padding: "24px"
+              }}>
+                <h3 style={{
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  color: marbleDarkGray,
+                  marginBottom: "16px",
+                  fontFamily: fontHeading
+                }}>
+                  Sections
+                </h3>
+                
+                <div style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px"
+                }}>
+                  {lesson.content.map((section, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentSection(index)}
+                      style={{
+                        backgroundColor: index === currentSection ? marbleGold : marbleWhite,
+                        color: index === currentSection ? marbleDarkGray : marbleDarkGray,
+                        border: "none",
+                        padding: "12px 16px",
+                        borderRadius: "12px",
+                        fontSize: "14px",
+                        fontWeight: index === currentSection ? "600" : "500",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        transition: "all 0.2s ease"
+                      }}
+                    >
+                      {section.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 300px",
+            gap: "32px",
+            alignItems: "start"
+          }}>
+            {/* Main Quiz Content */}
+            <div>
+              {/* Quiz */}
+              <div style={{
+                backgroundColor: marbleLightGray,
+                borderRadius: "20px",
+                padding: "32px",
+                marginBottom: "32px"
+              }}>
+                <h2 style={{
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  color: marbleDarkGray,
+                  marginBottom: "24px",
+                  fontFamily: fontHeading
+                }}>
+                  Lesson Quiz
+                </h2>
+                
+                <p style={{
+                  fontSize: "16px",
+                  color: marbleGray,
+                  marginBottom: "32px"
+                }}>
+                  Test your knowledge with this quiz. You have unlimited attempts!
+                </p>
+                
+                {lesson.quiz.questions.map((question, index) => (
+                  <div key={index} style={{ marginBottom: "32px" }}>
+                    <p style={{
+                      fontSize: "18px",
+                      color: marbleDarkGray,
+                      marginBottom: "16px",
+                      fontWeight: "500"
+                    }}>
+                      {index + 1}. {question.question}
+                    </p>
+                    
+                    {question.options.map((option, optionIndex) => (
+                      <label
+                        key={optionIndex}
+                        style={{
+                          display: "block",
+                          padding: "16px",
+                          marginBottom: "12px",
+                          backgroundColor: marbleWhite,
+                          borderRadius: "12px",
+                          cursor: "pointer",
+                          border: quizAnswers[`q${index}`] === optionIndex ? `2px solid ${marbleGold}` : "2px solid transparent",
+                          transition: "border-color 0.2s ease"
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name={`q${index}`}
+                          value={optionIndex}
+                          checked={quizAnswers[`q${index}`] === optionIndex}
+                          onChange={(e) => setQuizAnswers({...quizAnswers, [`q${index}`]: parseInt(e.target.value)})}
+                          style={{ marginRight: "12px" }}
+                        />
+                        <span style={{
+                          fontSize: "16px",
+                          color: marbleDarkGray
+                        }}>
+                          {option}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                ))}
+                
+                <div style={{
+                  display: "flex",
+                  gap: "16px",
+                  justifyContent: "center"
+                }}>
+                  <button
+                    onClick={() => setShowQuiz(false)}
+                    style={{
+                      backgroundColor: marbleGray,
+                      color: marbleWhite,
+                      border: "none",
+                      padding: "12px 24px",
+                      borderRadius: "12px",
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Back to Lesson
+                  </button>
+                  
+                  <button
+                    onClick={handleQuizSubmit}
+                    style={{
+                      backgroundColor: marbleGold,
+                      color: marbleDarkGray,
+                      border: "none",
+                      padding: "12px 24px",
+                      borderRadius: "12px",
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Submit Quiz
+                  </button>
+                </div>
+              </div>
+              
+              {/* Completed Lesson Actions */}
+              {progress?.completed && (
+                <div style={{
+                  backgroundColor: marbleLightGray,
+                  borderRadius: "20px",
+                  padding: "24px",
+                  textAlign: "center"
+                }}>
+                  <h3 style={{
+                    fontSize: "20px",
+                    fontWeight: "bold",
+                    color: marbleDarkGray,
+                    marginBottom: "16px"
+                  }}>
+                    Lesson Completed! 🎉
+                  </h3>
+                  
+                  <div style={{
+                    display: "flex",
+                    gap: "16px",
+                    justifyContent: "center"
+                  }}>
+                    <button
+                      onClick={handleRetakeQuiz}
+                      style={{
+                        backgroundColor: marbleDarkGray,
+                        color: marbleWhite,
+                        border: "none",
+                        padding: "12px 24px",
+                        borderRadius: "12px",
+                        fontSize: "16px",
+                        fontWeight: "600",
+                        cursor: "pointer"
+                      }}
+                    >
+                      Retake Quiz
+                    </button>
+                    
+                    <button
+                      onClick={() => navigate('/learn')}
+                      style={{
+                        backgroundColor: marbleGold,
+                        color: marbleDarkGray,
+                        border: "none",
+                        padding: "12px 24px",
+                        borderRadius: "12px",
+                        fontSize: "16px",
+                        fontWeight: "600",
+                        cursor: "pointer"
+                      }}
+                    >
+                      Continue Learning
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Quiz Sidebar */}
+            <div style={{
+              position: "sticky",
+              top: "24px"
+            }}>
+              {/* Quiz Info Card */}
+              <div style={{
+                backgroundColor: marbleLightGray,
+                borderRadius: "20px",
+                padding: "24px",
+                marginBottom: "24px"
+              }}>
+                <h3 style={{
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  color: marbleDarkGray,
+                  marginBottom: "16px",
+                  fontFamily: fontHeading
+                }}>
+                  Quiz Information
+                </h3>
+                
+                <div style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px"
+                }}>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "14px"
+                  }}>
+                    <span style={{ color: marbleGray }}>Questions:</span>
+                    <span style={{ color: marbleDarkGray, fontWeight: "500" }}>{lesson.quiz.questions.length}</span>
+                  </div>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "14px"
+                  }}>
+                    <span style={{ color: marbleGray }}>Attempts:</span>
+                    <span style={{ color: marbleDarkGray, fontWeight: "500" }}>Unlimited</span>
+                  </div>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "14px"
+                  }}>
+                    <span style={{ color: marbleGray }}>Best Score:</span>
+                    <span style={{ color: marbleGold, fontWeight: "500" }}>
+                      {progress?.bestScore ? `${progress.bestScore}%` : "Not taken"}
+                    </span>
+                  </div>
+                  {progress?.completed && (
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: "14px"
+                    }}>
+                      <span style={{ color: marbleGray }}>Status:</span>
+                      <span style={{ color: marbleGold, fontWeight: "500" }}>✓ Completed</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Quiz Progress */}
+              <div style={{
+                backgroundColor: marbleLightGray,
+                borderRadius: "20px",
+                padding: "24px"
+              }}>
+                <h3 style={{
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  color: marbleDarkGray,
+                  marginBottom: "16px",
+                  fontFamily: fontHeading
+                }}>
+                  Quiz Progress
+                </h3>
+                
+                <div style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px"
+                }}>
+                  {lesson.quiz.questions.map((question, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "8px 12px",
+                        backgroundColor: marbleWhite,
+                        borderRadius: "8px",
+                        fontSize: "14px"
+                      }}
+                    >
+                      <div style={{
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "50%",
+                        backgroundColor: quizAnswers[`q${index}`] !== undefined ? marbleGold : marbleGray,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "12px",
+                        color: marbleWhite,
+                        fontWeight: "bold"
+                      }}>
+                        {index + 1}
+                      </div>
+                      <span style={{
+                        color: quizAnswers[`q${index}`] !== undefined ? marbleDarkGray : marbleGray,
+                        fontWeight: quizAnswers[`q${index}`] !== undefined ? "500" : "400"
+                      }}>
+                        Question {index + 1}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Quiz Completion Modal */}
+      {showCompletionModal && completionData && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.7)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          backdropFilter: "blur(4px)"
+        }}>
+          <div style={{
+            backgroundColor: marbleWhite,
+            borderRadius: "24px",
+            padding: "40px",
+            maxWidth: "500px",
+            width: "90%",
+            textAlign: "center",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+            animation: "slideIn 0.3s ease-out"
+          }}>
+            {/* Success Icon */}
+            <div style={{
+              width: "80px",
+              height: "80px",
+              borderRadius: "50%",
+              backgroundColor: marbleGold,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 24px",
+              fontSize: "40px"
+            }}>
+              🎉
+            </div>
+
+            {/* Title */}
+            <h2 style={{
+              fontSize: "28px",
+              fontWeight: "bold",
+              color: marbleDarkGray,
+              marginBottom: "16px",
+              fontFamily: fontHeading
+            }}>
+              {completionData.lessonCompleted ? "Lesson Completed!" : "Quiz Submitted!"}
+            </h2>
+
+            {/* Score */}
+            <div style={{
+              fontSize: "48px",
+              fontWeight: "bold",
+              color: marbleGold,
+              marginBottom: "24px"
+            }}>
+              {completionData.score}%
+            </div>
+
+            {/* Score Details */}
+            <div style={{
+              backgroundColor: marbleLightGray,
+              borderRadius: "16px",
+              padding: "20px",
+              marginBottom: "24px"
+            }}>
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "12px"
+              }}>
+                <span style={{ color: marbleGray }}>Correct Answers:</span>
+                <span style={{ fontWeight: "600", color: marbleDarkGray }}>
+                  {completionData.correctAnswers}/{completionData.totalQuestions}
+                </span>
+              </div>
+              
+              {completionData.lessonCompleted && (
+                <>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "12px"
+                  }}>
+                    <span style={{ color: marbleGray }}>XP Earned:</span>
+                    <span style={{ fontWeight: "600", color: marbleGold }}>
+                      +{completionData.xpEarned} XP
+                    </span>
+                  </div>
+                  
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center"
+                  }}>
+                    <span style={{ color: marbleGray }}>Coins Earned:</span>
+                    <span style={{ fontWeight: "600", color: marbleGold }}>
+                      +{completionData.coinsEarned} 🪙
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{
+              display: "flex",
+              gap: "12px",
+              justifyContent: "center"
+            }}>
+              <button
+                onClick={handleRetakeQuiz}
+                style={{
+                  backgroundColor: marbleGray,
+                  color: marbleWhite,
+                  border: "none",
+                  padding: "12px 20px",
+                  borderRadius: "12px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  flex: 1
+                }}
+              >
+                Retake Quiz
+              </button>
+              
+              {completionData.lessonCompleted && findNextLesson(lesson.id) ? (
+                <button
+                  onClick={handleContinueToNext}
+                  style={{
+                    backgroundColor: marbleGold,
+                    color: marbleDarkGray,
+                    border: "none",
+                    padding: "12px 20px",
+                    borderRadius: "12px",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    flex: 2
+                  }}
+                >
+                  Continue to Next Lesson
+                </button>
+              ) : (
+                <button
+                  onClick={handleBackToLearn}
+                  style={{
+                    backgroundColor: marbleGold,
+                    color: marbleDarkGray,
+                    border: "none",
+                    padding: "12px 20px",
+                    borderRadius: "12px",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    flex: 2
+                  }}
+                >
+                  Back to Learn
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+      `}</style>
     </div>
   );
 } 

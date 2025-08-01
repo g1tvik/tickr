@@ -1,14 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "../globals.css";
 import { useNavigate } from "react-router-dom";
 import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
-import { lessons } from '../lessonRoadmap';
-
-const mockUserData = {
-  name: "Akash K",
-  username: "@AkashK84925",
-};
+import { api, isAuthenticated, getCurrentUser } from '../services/api';
+import { getLevelProgress } from '../data/lessonStructure';
 
 const DummyChart = () => (
   <div style={{ 
@@ -43,6 +39,113 @@ const tradingMilestones = [
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [portfolio, setPortfolio] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+
+  const fetchPortfolio = async () => {
+    if (!isAuthenticated()) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await api.getPortfolio();
+      if (response.success && response.portfolio) {
+        // Transform the data to match the expected format
+        const transformedPortfolio = {
+          totalValue: response.portfolio.totalValue,
+          cash: response.portfolio.balance,
+          totalReturn: 0, // Will calculate below
+          holdings: response.portfolio.positions.map(position => ({
+            symbol: position.symbol,
+            shares: position.shares,
+            currentValue: position.shares * (position.currentPrice || position.avgPrice),
+            changePercent: position.changePercent || 0,
+            avgPrice: position.avgPrice
+          }))
+        };
+
+        // Calculate total return
+        if (response.portfolio.positions.length > 0) {
+          const totalCostBasis = response.portfolio.positions.reduce((total, position) => {
+            return total + (position.shares * position.avgPrice);
+          }, 0);
+          
+          const totalCurrentValue = response.portfolio.positions.reduce((total, position) => {
+            return total + (position.shares * (position.currentPrice || position.avgPrice));
+          }, 0);
+          
+          if (totalCostBasis > 0) {
+            transformedPortfolio.totalReturn = (totalCurrentValue - totalCostBasis) / totalCostBasis;
+          }
+        }
+        setPortfolio(transformedPortfolio);
+      } else {
+        setError('Failed to load portfolio data');
+      }
+    } catch (err) {
+      console.error('Error fetching portfolio:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUserData = async () => {
+    if (!isAuthenticated()) return;
+
+    try {
+      const response = await api.getUserData();
+      if (response.success) {
+        setUserData(response);
+      }
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    if (!isAuthenticated()) return;
+
+    try {
+      const response = await api.getProfile();
+      if (response.success) {
+        setUserProfile(response.user);
+      }
+    } catch (err) {
+      console.error('Error fetching user profile:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchPortfolio();
+    fetchUserData();
+    fetchUserProfile();
+  }, []);
+
+  // Helper function to format currency
+  const formatCurrency = (amount) => {
+    if (amount === null || amount === undefined) return '$0.00';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
+
+  // Helper function to format percentage
+  const formatPercentage = (value) => {
+    if (value === null || value === undefined) return '0.00%';
+    return `${(value * 100).toFixed(2)}%`;
+  };
+
+  // Helper function to get color for change
+  const getChangeColor = (change) => {
+    if (!change) return marbleGray;
+    return change >= 0 ? '#22c55e' : '#ef4444';
+  };
 
   const renderMilestoneStatus = (status) => {
     switch(status) {
@@ -82,6 +185,45 @@ export default function Dashboard() {
     }
   };
 
+  // Get current user info
+  const currentUser = getCurrentUser();
+  const userDisplayName = userProfile?.name || currentUser?.username || 'User';
+  const userDisplayUsername = userProfile?.username || currentUser?.username || `@${userDisplayName.toLowerCase().replace(/\s+/g, '_')}`;
+
+  // Get learning progress
+  const learningProgress = userData?.learningProgress || { xp: 0, coins: 0 };
+  const levelInfo = getLevelProgress(learningProgress.xp);
+
+  // Calculate daily goal progress
+  const calculateDailyGoal = () => {
+    const today = new Date().toDateString();
+    const completedLessons = learningProgress.completedLessons || [];
+    const lessonAttempts = learningProgress.lessonAttempts || {};
+    
+    // Count lessons completed today
+    const lessonsCompletedToday = Object.keys(lessonAttempts).filter(lessonId => {
+      const attempt = lessonAttempts[lessonId];
+      if (attempt.lastAttempt) {
+        const attemptDate = new Date(attempt.lastAttempt).toDateString();
+        return attemptDate === today && attempt.completed;
+      }
+      return false;
+    }).length;
+    
+    const dailyGoal = 3; // Target: 3 lessons per day
+    const progress = Math.min((lessonsCompletedToday / dailyGoal) * 100, 100);
+    const remaining = Math.max(dailyGoal - lessonsCompletedToday, 0);
+    
+    return {
+      completed: lessonsCompletedToday,
+      total: dailyGoal,
+      progress: Math.round(progress),
+      remaining
+    };
+  };
+
+  const dailyGoal = calculateDailyGoal();
+
   return (
     <div className="dashboard-container" style={{
       minHeight: '100vh',
@@ -111,12 +253,89 @@ export default function Dashboard() {
               fontFamily: fontHeading,
               color: marbleDarkGray,
               marginBottom: '4px'
-            }}>Welcome back, {mockUserData.name}!</h1>
+            }}>Welcome back, {userDisplayName}!</h1>
             <div style={{ 
               color: marbleGray,
               fontSize: '16px' 
-            }}>{mockUserData.username}</div>
+            }}>{userDisplayUsername}</div>
           </div>
+          
+          {/* XP and Coins Display */}
+          {learningProgress && (
+            <div style={{
+              display: 'flex',
+              gap: '16px',
+              alignItems: 'center'
+            }}>
+              <div style={{
+                backgroundColor: marbleLightGray,
+                borderRadius: '12px',
+                padding: '12px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span style={{ fontSize: '20px' }}>⭐</span>
+                <div>
+                  <div style={{
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    color: marbleDarkGray
+                  }}>
+                    {learningProgress.xp} XP
+                  </div>
+                  <div style={{
+                    fontSize: '12px',
+                    color: marbleGray
+                  }}>
+                    Level {levelInfo.currentLevel}
+                  </div>
+                </div>
+              </div>
+              
+              <div style={{
+                backgroundColor: marbleLightGray,
+                borderRadius: '12px',
+                padding: '12px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span style={{ fontSize: '20px' }}>🪙</span>
+                <div>
+                  <div style={{
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    color: marbleDarkGray
+                  }}>
+                    {learningProgress.coins}
+                  </div>
+                  <div style={{
+                    fontSize: '12px',
+                    color: marbleGray
+                  }}>
+                    Coins
+                  </div>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => navigate('/shop')}
+                style={{
+                  backgroundColor: marbleGold,
+                  color: marbleDarkGray,
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Shop
+              </button>
+            </div>
+          )}
           <div style={{ 
             color: marbleDarkGray,
             backgroundColor: marbleLightGray,
@@ -124,7 +343,7 @@ export default function Dashboard() {
             borderRadius: '20px',
             fontSize: '14px',
             fontWeight: '500'
-          }}>70% of daily goal</div>
+          }}>{dailyGoal.progress}% of daily goal</div>
         </div>
 
         {/* Stats Cards */}
@@ -162,12 +381,12 @@ export default function Dashboard() {
                 fontSize: '16px',
                 color: marbleGray,
                 marginBottom: '12px'
-              }}>Level 5 - Advanced</div>
+              }}>Level {levelInfo.currentLevel} - {levelInfo.currentLevel < 5 ? 'Beginner' : levelInfo.currentLevel < 10 ? 'Intermediate' : 'Advanced'}</div>
               <div style={{
                 fontSize: '14px',
                 color: marbleDarkGray
               }}>
-                <strong>25,000 XP</strong> earned this month
+                <strong>{learningProgress?.xp || 0} XP</strong> earned total
               </div>
             </div>
           </div>
@@ -200,12 +419,12 @@ export default function Dashboard() {
                 fontSize: '16px',
                 color: marbleGray,
                 marginBottom: '12px'
-              }}>7/10 Lessons Complete</div>
+              }}>{dailyGoal.completed}/{dailyGoal.total} Lessons Complete</div>
               <div style={{
                 fontSize: '14px',
                 color: marbleDarkGray
               }}>
-                <strong>3 lessons</strong> remaining today
+                <strong>{dailyGoal.remaining} lessons</strong> remaining today
               </div>
             </div>
           </div>
@@ -223,6 +442,228 @@ export default function Dashboard() {
             flexDirection: 'column',
             gap: '24px'
           }}>
+            {/* Portfolio Section */}
+            <div style={{
+              backgroundColor: marbleLightGray,
+              borderRadius: '20px',
+              padding: '24px'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px'
+              }}>
+                <h2 style={{ 
+                  fontSize: '20px',
+                  fontWeight: 'bold',
+                  color: marbleDarkGray,
+                  fontFamily: fontHeading
+                }}>Portfolio</h2>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button 
+                    onClick={() => {
+                      setLoading(true);
+                      fetchPortfolio();
+                    }}
+                    style={{
+                      backgroundColor: marbleDarkGray,
+                      color: marbleWhite,
+                      border: 'none',
+                      padding: '8px 12px',
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Refresh
+                  </button>
+                  <button 
+                    onClick={() => navigate('/trade')}
+                    style={{
+                      backgroundColor: marbleGold,
+                      color: marbleDarkGray,
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Trade
+                  </button>
+                </div>
+              </div>
+
+              {loading ? (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px',
+                  color: marbleGray
+                }}>
+                  Loading portfolio...
+                </div>
+              ) : error ? (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px',
+                  color: '#ef4444'
+                }}>
+                  Error loading portfolio: {error}
+                </div>
+              ) : !portfolio ? (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px',
+                  color: marbleGray
+                }}>
+                  <div style={{ marginBottom: '16px' }}>No portfolio data available</div>
+                  <button 
+                    onClick={() => navigate('/trade')}
+                    style={{
+                      backgroundColor: marbleGold,
+                      color: marbleDarkGray,
+                      border: 'none',
+                      padding: '12px 24px',
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Start Trading
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  {/* Portfolio Summary */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '16px',
+                    marginBottom: '24px'
+                  }}>
+                    <div style={{
+                      backgroundColor: marbleWhite,
+                      borderRadius: '12px',
+                      padding: '16px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{
+                        fontSize: '14px',
+                        color: marbleGray,
+                        marginBottom: '4px'
+                      }}>Total Value</div>
+                      <div style={{
+                        fontSize: '20px',
+                        fontWeight: 'bold',
+                        color: marbleDarkGray
+                      }}>{formatCurrency(portfolio.totalValue)}</div>
+                    </div>
+                    <div style={{
+                      backgroundColor: marbleWhite,
+                      borderRadius: '12px',
+                      padding: '16px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{
+                        fontSize: '14px',
+                        color: marbleGray,
+                        marginBottom: '4px'
+                      }}>Cash</div>
+                      <div style={{
+                        fontSize: '20px',
+                        fontWeight: 'bold',
+                        color: marbleDarkGray
+                      }}>{formatCurrency(portfolio.cash)}</div>
+                    </div>
+                    <div style={{
+                      backgroundColor: marbleWhite,
+                      borderRadius: '12px',
+                      padding: '16px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{
+                        fontSize: '14px',
+                        color: marbleGray,
+                        marginBottom: '4px'
+                      }}>Total Return</div>
+                      <div style={{
+                        fontSize: '20px',
+                        fontWeight: 'bold',
+                        color: getChangeColor(portfolio.totalReturn)
+                      }}>{formatPercentage(portfolio.totalReturn)}</div>
+                    </div>
+                  </div>
+
+                  {/* Holdings */}
+                  {portfolio.holdings && portfolio.holdings.length > 0 ? (
+                    <div>
+                      <h3 style={{
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: marbleDarkGray,
+                        marginBottom: '16px'
+                      }}>Holdings</h3>
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                      }}>
+                        {portfolio.holdings.map((holding, index) => (
+                          <div key={index} style={{
+                            backgroundColor: marbleWhite,
+                            borderRadius: '12px',
+                            padding: '16px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                          }}>
+                            <div>
+                              <div style={{
+                                fontSize: '16px',
+                                fontWeight: '600',
+                                color: marbleDarkGray,
+                                marginBottom: '4px'
+                              }}>{holding.symbol}</div>
+                              <div style={{
+                                fontSize: '14px',
+                                color: marbleGray
+                              }}>{holding.shares} shares</div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{
+                                fontSize: '16px',
+                                fontWeight: '600',
+                                color: marbleDarkGray,
+                                marginBottom: '4px'
+                              }}>{formatCurrency(holding.currentValue)}</div>
+                              <div style={{
+                                fontSize: '14px',
+                                color: getChangeColor(holding.changePercent)
+                              }}>
+                                {formatPercentage(holding.changePercent)}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{
+                      textAlign: 'center',
+                      padding: '20px',
+                      color: marbleGray
+                    }}>
+                      No holdings yet. Start trading to build your portfolio!
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Weekly Progress */}
             <div style={{
               backgroundColor: marbleLightGray,
@@ -319,56 +760,28 @@ export default function Dashboard() {
                 color: marbleDarkGray,
                 fontFamily: fontHeading
               }}>Continue Learning</h2>
-              {lessons.slice(0, 3).map((lesson, index) => (
-                <div key={index} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '16px',
-                  marginBottom: '16px',
-                  backgroundColor: lesson.status === 'current' ? marbleWhite : 'transparent',
-                  padding: '16px',
-                  borderRadius: '12px',
-                  cursor: 'pointer'
-                }}>
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    backgroundColor: lesson.status === 'completed' ? marbleGold : 
-                                   lesson.status === 'current' ? marbleDarkGray : marbleGray,
+              <div style={{
+                textAlign: 'center',
+                padding: '20px',
+                color: marbleGray
+              }}>
+                <div style={{ marginBottom: '16px' }}>Ready to learn?</div>
+                <button 
+                  onClick={() => navigate('/learn')}
+                  style={{
+                    backgroundColor: marbleGold,
+                    color: marbleDarkGray,
+                    border: 'none',
+                    padding: '12px 24px',
                     borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: marbleWhite,
-                    fontSize: '18px'
-                  }}>{index + 1}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{
-                      fontSize: '16px',
-                      fontWeight: '500',
-                      color: marbleDarkGray,
-                      marginBottom: '4px'
-                    }}>{lesson.title}</div>
-                    <div style={{
-                      fontSize: '14px',
-                      color: marbleGray
-                    }}>{lesson.status === 'completed' ? 'Completed' : 
-                        lesson.status === 'current' ? 'In Progress' : 'Locked'}</div>
-                  </div>
-                  {lesson.status === 'current' && (
-                    <button style={{
-                      backgroundColor: marbleGold,
-                      color: marbleDarkGray,
-                      border: 'none',
-                      padding: '8px 16px',
-                      borderRadius: '12px',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      cursor: 'pointer'
-                    }}>Continue</button>
-                  )}
-                </div>
-              ))}
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Start Learning
+                </button>
+              </div>
             </div>
           </div>
 

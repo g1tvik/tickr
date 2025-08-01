@@ -145,10 +145,10 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
               <li className="nav-item">
                 <Link 
                   className="nav-link" 
-                  to="/profile"
+                  to="/settings"
                   style={{ color: isOnTradePage ? '#F4F1E9' : undefined }}
                 >
-                  PROFILE
+                  SETTINGS
                 </Link>
               </li>
               <li className="nav-item">

@@ -15,41 +15,81 @@ const generateUserId = () => {
   return 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 };
 
+// Validate username format
+const validateUsername = (username) => {
+  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+  return usernameRegex.test(username);
+};
+
 // Register new user
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name, username } = req.body;
     
-    if (!email || !password || !name) {
+    if (!email || !password || !name || !username) {
       return res.status(400).json({
         success: false,
-        message: 'Email, password, and name are required'
+        message: 'Email, password, name, and username are required'
+      });
+    }
+
+    // Validate username format
+    if (!validateUsername(username)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username must be 3-20 characters long and contain only letters, numbers, and underscores'
       });
     }
 
     const users = getUsers(req);
     
-    // Check if user already exists
-    const existingUser = Object.values(users).find(user => user.email === email);
-    if (existingUser) {
+    // Check if user already exists by email or username
+    const existingUserByEmail = Object.values(users).find(user => user.email === email);
+    if (existingUserByEmail) {
       return res.status(400).json({
         success: false,
-        message: 'User already exists'
+        message: 'Email already registered'
+      });
+    }
+
+    const existingUserByUsername = Object.values(users).find(user => user.username === username);
+    if (existingUserByUsername) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username already taken'
       });
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    // Create new user
+    // Create new user with initial data
     const userId = generateUserId();
     const newUser = {
       id: userId,
       email,
+      username,
       password: hashedPassword,
       name,
       createdAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString()
+      lastLogin: new Date().toISOString(),
+      // Initialize user-specific data
+      portfolio: {
+        balance: 10000, // Starting balance
+        positions: [],
+        totalValue: 10000
+      },
+      learningProgress: {
+        xp: 0,
+        coins: 0,
+        completedLessons: [],
+        completedUnitTests: [],
+        finalTestCompleted: false,
+        finalTestLastAttempt: null,
+        unitTestAttempts: {},
+        lessonAttempts: {}
+      },
+      purchasedItems: []
     };
 
     users[userId] = newUser;
@@ -57,7 +97,7 @@ router.post('/register', async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: newUser.id, email: newUser.email },
+      { userId: newUser.id, email: newUser.email, username: newUser.username },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     );
@@ -69,6 +109,7 @@ router.post('/register', async (req, res) => {
       user: {
         id: newUser.id,
         email: newUser.email,
+        username: newUser.username,
         name: newUser.name
       }
     });
@@ -81,22 +122,25 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login user
+// Login user with email or username
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { emailOrUsername, password } = req.body;
     
-    if (!email || !password) {
+    if (!emailOrUsername || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Email and password are required'
+        message: 'Email/username and password are required'
       });
     }
 
     const users = getUsers(req);
     
-    // Find user by email
-    const user = Object.values(users).find(u => u.email === email);
+    // Find user by email or username
+    const user = Object.values(users).find(u => 
+      u.email === emailOrUsername || u.username === emailOrUsername
+    );
+    
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -120,7 +164,7 @@ router.post('/login', async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: user.id, email: user.email, username: user.username },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     );
@@ -132,6 +176,7 @@ router.post('/login', async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
+        username: user.username,
         name: user.name
       }
     });
@@ -171,16 +216,36 @@ router.post('/google', async (req, res) => {
     let user = Object.values(users).find(u => u.email === email);
     
     if (!user) {
-      // Create new user
+      // Create new user with generated username
       const userId = generateUserId();
+      const username = `user_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+      
       user = {
         id: userId,
         email,
+        username,
         name,
         picture,
         googleId: payload.sub,
         createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString()
+        lastLogin: new Date().toISOString(),
+        // Initialize user-specific data
+        portfolio: {
+          balance: 10000,
+          positions: [],
+          totalValue: 10000
+        },
+        learningProgress: {
+          xp: 0,
+          coins: 0,
+          completedLessons: [],
+          completedUnitTests: [],
+          finalTestCompleted: false,
+          finalTestLastAttempt: null,
+          unitTestAttempts: {},
+          lessonAttempts: {}
+        },
+        purchasedItems: []
       };
       users[userId] = user;
     } else {
@@ -194,7 +259,7 @@ router.post('/google', async (req, res) => {
 
     // Generate JWT token
     const jwtToken = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: user.id, email: user.email, username: user.username },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     );
@@ -206,6 +271,7 @@ router.post('/google', async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
+        username: user.username,
         name: user.name,
         picture: user.picture
       }
@@ -247,6 +313,7 @@ router.get('/profile', async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
+        username: user.username,
         name: user.name,
         picture: user.picture,
         createdAt: user.createdAt,
@@ -258,6 +325,103 @@ router.get('/profile', async (req, res) => {
     res.status(401).json({
       success: false,
       message: 'Invalid token'
+    });
+  }
+});
+
+// Get user data (portfolio and learning progress)
+router.get('/user-data', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const users = getUsers(req);
+    const user = users[decoded.userId];
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      portfolio: user.portfolio || {
+        balance: 10000,
+        positions: [],
+        totalValue: 10000
+      },
+      learningProgress: user.learningProgress || {
+        xp: 0,
+        coins: 0,
+        completedLessons: [],
+        completedUnitTests: [],
+        finalTestCompleted: false,
+        finalTestLastAttempt: null,
+        unitTestAttempts: {},
+        lessonAttempts: {}
+      },
+      purchasedItems: user.purchasedItems || []
+    });
+  } catch (error) {
+    console.error('User data error:', error);
+    res.status(401).json({
+      success: false,
+      message: 'Invalid token'
+    });
+  }
+});
+
+// Update user data (portfolio and learning progress)
+router.post('/user-data', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const users = getUsers(req);
+    const user = users[decoded.userId];
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const { portfolio, learningProgress, purchasedItems } = req.body;
+
+    // Update user data
+    if (portfolio) user.portfolio = portfolio;
+    if (learningProgress) user.learningProgress = learningProgress;
+    if (purchasedItems) user.purchasedItems = purchasedItems;
+
+    users[user.id] = user;
+    saveUsers(req, users);
+
+    res.json({
+      success: true,
+      message: 'User data updated successfully'
+    });
+  } catch (error) {
+    console.error('Update user data error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update user data'
     });
   }
 });

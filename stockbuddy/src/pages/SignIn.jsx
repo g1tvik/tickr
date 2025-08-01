@@ -6,7 +6,7 @@ import { api } from "../services/api";
 import './SignIn.css';
 
 function SignIn({ setIsLoggedIn }) {
-  const [email, setEmail] = useState("");
+  const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -18,7 +18,7 @@ function SignIn({ setIsLoggedIn }) {
     setError("");
 
     try {
-      const response = await api.login({ email, password });
+      const response = await api.login({ emailOrUsername, password });
       
       if (response.success) {
         localStorage.setItem('token', response.token);
@@ -44,7 +44,8 @@ function SignIn({ setIsLoggedIn }) {
       const response = await api.register({
         email: "demo@stockbuddy.com",
         password: "demo123",
-        name: "Demo User"
+        name: "Demo User",
+        username: "demo_user"
       });
       
       if (response.success) {
@@ -54,7 +55,7 @@ function SignIn({ setIsLoggedIn }) {
       } else {
         // Try to login if user already exists
         const loginResponse = await api.login({
-          email: "demo@stockbuddy.com",
+          emailOrUsername: "demo@stockbuddy.com",
           password: "demo123"
         });
         
@@ -95,15 +96,15 @@ function SignIn({ setIsLoggedIn }) {
         <form onSubmit={handleSubmit} className="signin-form">
           <div className="form-group">
             <label className="form-label">
-              Email
+              Email or Username
             </label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              value={emailOrUsername}
+              onChange={(e) => setEmailOrUsername(e.target.value)}
               required
               className="form-input"
-              placeholder="Enter your email"
+              placeholder="Enter your email or username"
             />
           </div>
 
