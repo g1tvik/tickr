@@ -13,5 +13,34 @@
   ],
   "user_1754009285977_t2hkxpow1": [],
   "user_1754009324170_xzsxqq54i": [],
-  "user_1754014829418_xy5ju38o1": []
+  "user_1754014829418_xy5ju38o1": [],
+  "user_1754028137929_dv2llmgc6": [
+    {
+      "id": "1754028188777",
+      "type": "buy",
+      "symbol": "FIG",
+      "shares": 1,
+      "price": 116.36,
+      "total": 116.36,
+      "timestamp": "2025-08-01T06:03:08.777Z"
+    },
+    {
+      "id": "1754028231582",
+      "type": "buy",
+      "symbol": "AAPL",
+      "shares": 1,
+      "price": 210.21,
+      "total": 210.21,
+      "timestamp": "2025-08-01T06:03:51.582Z"
+    },
+    {
+      "id": "1754028795148",
+      "type": "buy",
+      "symbol": "AAPL",
+      "shares": 1,
+      "price": 210.21,
+      "total": 210.21,
+      "timestamp": "2025-08-01T06:13:15.148Z"
+    }
+  ]
 }

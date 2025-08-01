@@ -32,5 +32,39 @@
       }
     },
     "purchasedItems": []
+  },
+  "user_1754028137929_dv2llmgc6": {
+    "id": "user_1754028137929_dv2llmgc6",
+    "email": "r.vudatha0101@gmail.com",
+    "username": "ritvik",
+    "password": "$2b$10$oP4bqNvS6SPfivfZLmIyh.lTs3mTJo/OkEL2wFO55C9KC4hLvkyle",
+    "name": "Ritvik Vudatha",
+    "createdAt": "2025-08-01T06:02:17.929Z",
+    "lastLogin": "2025-08-01T06:02:17.929Z",
+    "portfolio": {
+      "balance": 10000,
+      "positions": [],
+      "totalValue": 10000
+    },
+    "learningProgress": {
+      "xp": 25,
+      "coins": 300,
+      "completedLessons": [
+        1
+      ],
+      "completedUnitTests": [],
+      "finalTestCompleted": false,
+      "finalTestLastAttempt": null,
+      "unitTestAttempts": {},
+      "lessonAttempts": {
+        "1": {
+          "attempts": 4,
+          "completed": true,
+          "bestScore": 100,
+          "lastAttempt": "2025-08-01T06:13:57.221Z"
+        }
+      }
+    },
+    "purchasedItems": []
   }
 }

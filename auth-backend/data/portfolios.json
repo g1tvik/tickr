@@ -42,5 +42,29 @@
     "totalValue": 10000,
     "createdAt": "2025-08-01T02:20:29.832Z",
     "lastUpdated": "2025-08-01T02:21:37.832Z"
+  },
+  "user_1754028137929_dv2llmgc6": {
+    "balance": 9463.220000000001,
+    "positions": [
+      {
+        "symbol": "FIG",
+        "shares": 1,
+        "avgPrice": 116.36,
+        "currentPrice": 116.36,
+        "change": 0.8599999999999994,
+        "changePercent": "0.74"
+      },
+      {
+        "symbol": "AAPL",
+        "shares": 2,
+        "avgPrice": 210.21,
+        "currentPrice": 210.21,
+        "change": 2.640000000000015,
+        "changePercent": "1.27"
+      }
+    ],
+    "totalValue": 10000,
+    "createdAt": "2025-08-01T06:03:08.395Z",
+    "lastUpdated": "2025-08-01T06:13:15.148Z"
   }
 }
