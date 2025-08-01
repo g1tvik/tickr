@@ -1,0 +1,36 @@
+{
+  "user_1754015246129_cqlhmlb12": {
+    "id": "user_1754015246129_cqlhmlb12",
+    "email": "akashkarthik473@gmail.com",
+    "username": "dev_peachy",
+    "password": "$2b$10$8qqRZnhyR48R/bsvLzqvTeLw/.tPpfcULw1dS4H94tgn/52wQo9zO",
+    "name": "Akash Karthik",
+    "createdAt": "2025-08-01T02:27:26.129Z",
+    "lastLogin": "2025-08-01T02:27:26.129Z",
+    "portfolio": {
+      "balance": 10000,
+      "positions": [],
+      "totalValue": 10000
+    },
+    "learningProgress": {
+      "xp": 16,
+      "coins": null,
+      "completedLessons": [
+        1
+      ],
+      "completedUnitTests": [],
+      "finalTestCompleted": false,
+      "finalTestLastAttempt": null,
+      "unitTestAttempts": {},
+      "lessonAttempts": {
+        "1": {
+          "attempts": 6,
+          "completed": true,
+          "bestScore": 100,
+          "lastAttempt": "2025-08-01T02:40:27.950Z"
+        }
+      }
+    },
+    "purchasedItems": []
+  }
+}

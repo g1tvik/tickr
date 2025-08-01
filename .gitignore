@@ -3,9 +3,6 @@ auth-backend/.env
 stockbuddy/.env
 stockbuddy/.env.bak
 
-# Data files (file-based storage)
-auth-backend/data/
-
 # Dependencies
 node_modules/
 */node_modules/

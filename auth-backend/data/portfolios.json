@@ -1,0 +1,46 @@
+{
+  "user_1753739743751_b6vqujbk5": {
+    "balance": 10000,
+    "positions": [],
+    "totalValue": 10000,
+    "createdAt": "2025-07-28T22:25:03.392Z",
+    "lastUpdated": "2025-07-28T22:43:40.308Z"
+  },
+  "user_1753743314737_5emltoyny": {
+    "balance": 9789.79,
+    "positions": [
+      {
+        "symbol": "AAPL",
+        "shares": 1,
+        "avgPrice": 210.21,
+        "currentPrice": 210.21,
+        "change": 1.1599969482421955,
+        "changePercent": "0.55"
+      }
+    ],
+    "totalValue": 10000,
+    "createdAt": "2025-07-28T22:55:52.191Z",
+    "lastUpdated": "2025-08-01T00:48:01.429Z"
+  },
+  "user_1754009285977_t2hkxpow1": {
+    "balance": 10000,
+    "positions": [],
+    "totalValue": 10000,
+    "createdAt": "2025-08-01T00:48:11.089Z",
+    "lastUpdated": "2025-08-01T00:48:17.526Z"
+  },
+  "user_1754009324170_xzsxqq54i": {
+    "balance": 10000,
+    "positions": [],
+    "totalValue": 10000,
+    "createdAt": "2025-08-01T00:48:51.642Z",
+    "lastUpdated": "2025-08-01T00:48:51.661Z"
+  },
+  "user_1754014829418_xy5ju38o1": {
+    "balance": 10000,
+    "positions": [],
+    "totalValue": 10000,
+    "createdAt": "2025-08-01T02:20:29.832Z",
+    "lastUpdated": "2025-08-01T02:21:37.832Z"
+  }
+}
