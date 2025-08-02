@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from "../marblePalette";
 import { fontHeading, fontBody } from "../fontPalette";
 import { api } from "../services/api";
+import GoogleOAuth from "../components/GoogleOAuth";
 import './SignIn.css';
 
 function SignIn({ setIsLoggedIn }) {
@@ -136,13 +137,10 @@ function SignIn({ setIsLoggedIn }) {
             Or
           </div>
           
-          <button
-            onClick={handleDemoLogin}
-            disabled={isLoading}
-            className="demo-button"
-          >
-            {isLoading ? 'Loading...' : 'Try Demo Account'}
-          </button>
+          <GoogleOAuth 
+            setIsLoggedIn={setIsLoggedIn} 
+            onError={setError}
+          />
         </div>
 
         <div className="signin-footer">

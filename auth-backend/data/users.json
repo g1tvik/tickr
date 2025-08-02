@@ -40,7 +40,7 @@
     "password": "$2b$10$oP4bqNvS6SPfivfZLmIyh.lTs3mTJo/OkEL2wFO55C9KC4hLvkyle",
     "name": "Ritvik Vudatha",
     "createdAt": "2025-08-01T06:02:17.929Z",
-    "lastLogin": "2025-08-01T06:02:17.929Z",
+    "lastLogin": "2025-08-02T07:42:38.781Z",
     "portfolio": {
       "balance": 10000,
       "positions": [],
@@ -64,6 +64,33 @@
           "lastAttempt": "2025-08-01T06:13:57.221Z"
         }
       }
+    },
+    "purchasedItems": [],
+    "picture": "https://lh3.googleusercontent.com/a/ACg8ocKfoEZYj5WmASEKhItze-6R2kdAeexeZAb4MXNWGxOVox_YJGq9=s96-c"
+  },
+  "user_1754120571606_r6om804fx": {
+    "id": "user_1754120571606_r6om804fx",
+    "email": "ritvikvudatha@gmail.com",
+    "username": "user_1754120571606_ydsl9g",
+    "name": "Ritvik Vudatha",
+    "picture": "https://lh3.googleusercontent.com/a/ACg8ocIg8y2r8HULcCkDAGEQpBMzCYtHyBLhP1qhCzT1lsP45ko5rFM=s96-c",
+    "googleId": "105296474791496962591",
+    "createdAt": "2025-08-02T07:42:51.606Z",
+    "lastLogin": "2025-08-02T07:42:51.606Z",
+    "portfolio": {
+      "balance": 10000,
+      "positions": [],
+      "totalValue": 10000
+    },
+    "learningProgress": {
+      "xp": 0,
+      "coins": 0,
+      "completedLessons": [],
+      "completedUnitTests": [],
+      "finalTestCompleted": false,
+      "finalTestLastAttempt": null,
+      "unitTestAttempts": {},
+      "lessonAttempts": {}
     },
     "purchasedItems": []
   }

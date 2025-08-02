@@ -41,6 +41,12 @@ export const api = {
     body: JSON.stringify({ token })
   }).then(handleResponse),
 
+  googleLogin: (credential) => fetch(`${API_BASE_URL}/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: credential })
+  }).then(handleResponse),
+
   // User profile and data endpoints
   getProfile: () => fetch(`${API_BASE_URL}/auth/profile`, {
     headers: getAuthHeaders()

@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { api } from "../services/api";
 import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from "../marblePalette";
 import { fontHeading, fontBody } from "../fontPalette";
+import GoogleOAuth from "../components/GoogleOAuth";
 import './SignIn.css';
 
 const SignUp = ({ setIsLoggedIn }) => {
@@ -134,6 +135,17 @@ const SignUp = ({ setIsLoggedIn }) => {
             {isLoading ? 'Creating Account...' : 'Create Account'}
           </button>
         </form>
+
+        <div className="demo-section">
+          <div className="demo-divider">
+            Or
+          </div>
+          
+          <GoogleOAuth 
+            setIsLoggedIn={setIsLoggedIn} 
+            onError={setError}
+          />
+        </div>
 
         <div className="signin-footer">
           Already have an account?{' '}

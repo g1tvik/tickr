@@ -192,33 +192,49 @@ router.post('/login', async (req, res) => {
 // Google OAuth login
 router.post('/google', async (req, res) => {
   try {
+    console.log('🔍 Google OAuth request received');
+    console.log('🔍 Environment variables:', {
+      GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? 'SET' : 'NOT SET',
+      JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT SET'
+    });
+    
     const { token } = req.body;
     
     if (!token) {
+      console.error('❌ No token provided in request body');
       return res.status(400).json({
         success: false,
         message: 'Google token is required'
       });
     }
 
+    console.log('🔍 Token received, length:', token.length);
+    console.log('🔍 Token preview:', token.substring(0, 50) + '...');
+
     // Verify Google token
+    console.log('🔍 Verifying Google token...');
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID
     });
 
+    console.log('✅ Google token verified successfully');
     const payload = ticket.getPayload();
     const { email, name, picture } = payload;
+    
+    console.log('🔍 Google user info:', { email, name, picture: picture ? 'SET' : 'NOT SET' });
 
     const users = getUsers(req);
     
     // Check if user exists
     let user = Object.values(users).find(u => u.email === email);
+    console.log('🔍 User lookup result:', user ? 'EXISTING USER' : 'NEW USER');
     
     if (!user) {
       // Create new user with generated username
       const userId = generateUserId();
       const username = `user_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+      console.log('🔍 Creating new user with ID:', userId, 'Username:', username);
       
       user = {
         id: userId,
@@ -250,20 +266,26 @@ router.post('/google', async (req, res) => {
       users[userId] = user;
     } else {
       // Update existing user
+      console.log('🔍 Updating existing user:', user.id);
       user.lastLogin = new Date().toISOString();
       user.picture = picture;
       users[user.id] = user;
     }
 
+    console.log('🔍 Saving user data...');
     saveUsers(req, users);
+    console.log('✅ User data saved successfully');
 
     // Generate JWT token
+    console.log('🔍 Generating JWT token...');
     const jwtToken = jwt.sign(
       { userId: user.id, email: user.email, username: user.username },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     );
+    console.log('✅ JWT token generated successfully');
 
+    console.log('✅ Google OAuth login completed successfully');
     res.json({
       success: true,
       message: 'Google login successful',
@@ -277,7 +299,8 @@ router.post('/google', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Google login error:', error);
+    console.error('❌ Google login error:', error);
+    console.error('❌ Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Google login failed'

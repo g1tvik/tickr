@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-// Google OAuth temporarily disabled
 import NavBar from "./components/NavBar";
 import PageTransition from "./components/PageTransition";
 import Home from "./pages/Home";
