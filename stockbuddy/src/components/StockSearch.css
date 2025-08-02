@@ -237,3 +237,45 @@
 }
 
 /* Dark mode support - REMOVED to prevent override */ 
+
+/* Skeleton loader styles */
+.skeleton-text {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4px;
+  height: 16px;
+  margin-bottom: 4px;
+}
+
+.skeleton-text:last-child {
+  margin-bottom: 0;
+}
+
+.suggestion-symbol.skeleton-text {
+  height: 18px;
+  width: 60px;
+}
+
+.suggestion-name.skeleton-text {
+  height: 14px;
+  width: 120px;
+}
+
+.suggestion-match-type.skeleton-text {
+  height: 12px;
+  width: 80px;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton .suggestion-item {
+  pointer-events: none;
+} 

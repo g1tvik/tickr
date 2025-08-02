@@ -17,6 +17,29 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
   const inputRef = useRef(null);
   const suggestionsRef = useRef(null);
 
+  // Preload mechanism to warm up the cache
+  useEffect(() => {
+    // Preload a common search to warm up the backend cache
+    const preloadSearch = async () => {
+      try {
+        // First warm up the backend cache
+        await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/trading/health`);
+        console.log('✅ Backend cache warmed up');
+        
+        // Then preload a common search
+        await api.searchStocksAutocomplete('AAPL');
+        console.log('✅ Preloaded search cache');
+      } catch (error) {
+        console.warn('Preload failed:', error);
+      }
+    };
+    
+    // Delay the preload to not block initial render
+    const preloadTimer = setTimeout(preloadSearch, 2000);
+    
+    return () => clearTimeout(preloadTimer);
+  }, []);
+
   // Debounced search function
   const debouncedSearch = useCallback((query) => {
     if (searchTimeoutRef.current) {
@@ -27,6 +50,7 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
       if (query.length < 2) {
         setSuggestions([]);
         setIsLoading(false);
+        setShowSuggestions(false);
         return;
       }
 
@@ -37,19 +61,38 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
         const response = await api.searchStocksAutocomplete(query);
         if (response.success) {
           setSuggestions(response.results);
+          setShowSuggestions(true); // Show suggestions when results arrive
         } else {
           setError('Failed to search stocks');
           setSuggestions([]);
+          setShowSuggestions(false);
         }
       } catch (error) {
         console.error('Error searching stocks:', error);
         setError('Failed to search stocks. Please try again.');
         setSuggestions([]);
+        setShowSuggestions(false);
       } finally {
         setIsLoading(false);
       }
-    }, 300); // 300ms debounce
+    }, 150); // Reduced from 300ms to 150ms for faster response
   }, []);
+
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    
+    // Show loading immediately for better UX
+    if (value.length >= 2) {
+      setIsLoading(true);
+      setShowSuggestions(false); // Hide suggestions while loading
+    } else {
+      setIsLoading(false);
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
 
   // Handle search term changes
   useEffect(() => {
@@ -58,6 +101,7 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
     } else {
       setSuggestions([]);
       setIsLoading(false);
+      setShowSuggestions(false);
     }
   }, [searchTerm, debouncedSearch]);
 
@@ -193,7 +237,7 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
           type="text"
           placeholder={placeholder}
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
           onBlur={handleBlur}
@@ -227,7 +271,7 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
         </div>
       )}
 
-      {showSuggestions && suggestions.length > 0 && (
+      {suggestions.length > 0 && (
         <div ref={suggestionsRef} className="suggestions-container">
           {suggestions.map((suggestion, index) => (
             <div
@@ -247,6 +291,20 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
               <div className="suggestion-match-type">
                 {getMatchTypeDisplay(suggestion.matchType)}
               </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {isLoading && searchTerm.length >= 2 && !showSuggestions && (
+        <div className="suggestions-container">
+          {[...Array(3)].map((_, index) => (
+            <div key={index} className="suggestion-item skeleton">
+              <div className="suggestion-main">
+                <div className="suggestion-symbol skeleton-text"></div>
+                <div className="suggestion-name skeleton-text"></div>
+              </div>
+              <div className="suggestion-match-type skeleton-text"></div>
             </div>
           ))}
         </div>

@@ -77,6 +77,13 @@ let companyNameCache = {};
 let searchCache = {};
 const SEARCH_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// Cache for Alpaca assets to avoid repeated API calls
+let alpacaAssetsCache = {
+  data: null,
+  timestamp: null,
+  ttl: 10 * 60 * 1000 // 10 minutes cache for assets
+};
+
 // Comprehensive company name mapping as fallback
 const companyNameMapping = {
   // FAANG + Major Tech
@@ -756,6 +763,7 @@ const searchStocksAutocomplete = async (query) => {
     const cacheKey = `autocomplete_${queryLower}`;
     const cached = searchCache[cacheKey];
     if (cached && (Date.now() - cached.timestamp) < SEARCH_CACHE_DURATION) {
+      console.log(`📦 Returning cached autocomplete results for "${query}"`);
       return cached.results;
     }
 
@@ -764,25 +772,41 @@ const searchStocksAutocomplete = async (query) => {
       throw new Error('Alpaca API keys not configured');
     }
 
-    // Get Alpaca assets for comprehensive search
-    const headers = {
-      'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
-      'APCA-API-SECRET-KEY': process.env.ALPACA_SECRET_KEY
-    };
-
+    // Get Alpaca assets with caching
     let alpacaAssets = [];
-    try {
-      const response = await axios.get('https://paper-api.alpaca.markets/v2/assets', {
-        headers,
-        params: {
-          status: 'active',
-          asset_class: 'us_equity'
-        }
-      });
-      alpacaAssets = response.data;
-    } catch (alpacaError) {
-      console.warn('Failed to fetch Alpaca assets:', alpacaError.message);
-      throw new Error('Failed to fetch stock data');
+    const now = Date.now();
+    
+    // Check if we have cached assets and they're still valid
+    if (alpacaAssetsCache.data && alpacaAssetsCache.timestamp && 
+        (now - alpacaAssetsCache.timestamp) < alpacaAssetsCache.ttl) {
+      console.log('📦 Using cached Alpaca assets');
+      alpacaAssets = alpacaAssetsCache.data;
+    } else {
+      console.log('🔄 Fetching fresh Alpaca assets...');
+      const headers = {
+        'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
+        'APCA-API-SECRET-KEY': process.env.ALPACA_SECRET_KEY
+      };
+
+      try {
+        const response = await axios.get('https://paper-api.alpaca.markets/v2/assets', {
+          headers,
+          params: {
+            status: 'active',
+            asset_class: 'us_equity'
+          },
+          timeout: 10000 // 10 second timeout
+        });
+        alpacaAssets = response.data;
+        
+        // Cache the assets
+        alpacaAssetsCache.data = alpacaAssets;
+        alpacaAssetsCache.timestamp = now;
+        console.log(`✅ Cached ${alpacaAssets.length} Alpaca assets`);
+      } catch (alpacaError) {
+        console.warn('Failed to fetch Alpaca assets:', alpacaError.message);
+        throw new Error('Failed to fetch stock data');
+      }
     }
 
     // Professional search algorithm (like TradingView/Robinhood)
@@ -913,6 +937,7 @@ const searchStocksAutocomplete = async (query) => {
       timestamp: Date.now()
     };
 
+    console.log(`✅ Autocomplete search for "${query}" returned ${results.length} results`);
     return results;
   } catch (error) {
     console.error('Error in autocomplete search:', error);
@@ -1039,6 +1064,85 @@ router.get('/search', async (req, res) => {
 // Test route to verify server is loading updated code
 router.get('/test', (req, res) => {
   res.json({ message: 'Test route working - server is updated' });
+});
+
+// Health check and cache warmup endpoint
+router.get('/health', async (req, res) => {
+  try {
+    // Warm up the Alpaca assets cache if it's empty
+    if (!alpacaAssetsCache.data) {
+      console.log('🔥 Warming up Alpaca assets cache...');
+      try {
+        const headers = {
+          'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
+          'APCA-API-SECRET-KEY': process.env.ALPACA_SECRET_KEY
+        };
+
+        const response = await axios.get('https://paper-api.alpaca.markets/v2/assets', {
+          headers,
+          params: {
+            status: 'active',
+            asset_class: 'us_equity'
+          },
+          timeout: 10000
+        });
+        
+        alpacaAssetsCache.data = response.data;
+        alpacaAssetsCache.timestamp = Date.now();
+        console.log(`✅ Cache warmed up with ${response.data.length} assets`);
+      } catch (error) {
+        console.warn('Failed to warm up cache:', error.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Trading service is healthy',
+      cacheStatus: {
+        assetsCached: !!alpacaAssetsCache.data,
+        assetsCount: alpacaAssetsCache.data ? alpacaAssetsCache.data.length : 0,
+        searchCacheSize: Object.keys(searchCache).length
+      }
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Trading service health check failed'
+    });
+  }
+});
+
+// Cache status endpoint for debugging
+router.get('/cache-status', (req, res) => {
+  try {
+    const now = Date.now();
+    const assetsAge = alpacaAssetsCache.timestamp ? now - alpacaAssetsCache.timestamp : null;
+    const assetsValid = assetsAge && assetsAge < alpacaAssetsCache.ttl;
+    
+    res.json({
+      success: true,
+      cacheStatus: {
+        assets: {
+          cached: !!alpacaAssetsCache.data,
+          count: alpacaAssetsCache.data ? alpacaAssetsCache.data.length : 0,
+          age: assetsAge,
+          valid: assetsValid,
+          ttl: alpacaAssetsCache.ttl
+        },
+        search: {
+          size: Object.keys(searchCache).length,
+          keys: Object.keys(searchCache).slice(0, 10) // Show first 10 keys
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Cache status failed:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get cache status'
+    });
+  }
 });
 
 // Autocomplete search (lightweight, no quotes)
