@@ -31,7 +31,6 @@ function Trade() {
     return (
       <div style={{
         minHeight: '100vh',
-        backgroundColor: marbleWhite,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
@@ -54,7 +53,6 @@ function Trade() {
     return (
       <div style={{
         minHeight: '100vh',
-        backgroundColor: marbleWhite,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
@@ -80,9 +78,8 @@ function Trade() {
   }
 
   return (
-    <div style={{
+    <div className="page-dark" style={{
       minHeight: '100vh',
-      backgroundColor: '#222222',
       padding: '24px',
       fontFamily: fontBody
     }}>

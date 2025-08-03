@@ -18,25 +18,24 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
   useEffect(() => {
     const navbar = document.querySelector('.navbar-color');
     const body = document.body;
-    const html = document.documentElement;
     
     if (navbar) {
       // Add a data attribute to track the current page
       navbar.setAttribute('data-current-page', isOnTradePage ? 'trade' : 'other');
       
       if (isOnTradePage) {
-        // Set dark background for Trade page with higher priority
-        navbar.style.setProperty('background-color', '#222222', 'important');
-        navbar.style.setProperty('transition', 'background-color 0.3s ease', 'important');
+        // Use CSS classes instead of inline styles for seamless transitions
+        navbar.classList.add('page-dark');
+        navbar.classList.remove('page-light');
         
         // Set scrollbar background to match Trade page
         body.style.setProperty('--scrollbar-track-bg', '#222222', 'important');
         body.style.setProperty('--scrollbar-thumb-bg', '#B0B0B0', 'important');
         body.style.setProperty('--scrollbar-thumb-hover-bg', '#E6C87A', 'important');
       } else {
-        // Reset to default background for other pages
-        navbar.style.removeProperty('background-color');
-        navbar.style.setProperty('transition', 'background-color 0.3s ease', 'important');
+        // Use CSS classes for other pages
+        navbar.classList.remove('page-dark');
+        navbar.classList.add('page-light');
         
         // Set scrollbar background to match other pages
         body.style.setProperty('--scrollbar-track-bg', '#F4F1E9', 'important');
@@ -51,51 +50,19 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
         const currentPage = navbar.getAttribute('data-current-page');
         // Only reset if we're not on the trade page
         if (currentPage !== 'trade') {
-          navbar.style.removeProperty('background-color');
+          navbar.classList.remove('page-dark');
+          navbar.classList.add('page-light');
           body.style.setProperty('--scrollbar-track-bg', '#F4F1E9', 'important');
         }
       }
     };
   }, [isOnTradePage]);
 
-  // Additional effect to prevent Home page from overriding Trade page styling
-  useEffect(() => {
-    const navbar = document.querySelector('.navbar-color');
-    const body = document.body;
-    
-    if (navbar && isOnTradePage) {
-      // Set up an observer to prevent other scripts from changing the background
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-            const currentPage = navbar.getAttribute('data-current-page');
-            if (currentPage === 'trade') {
-              // Re-apply trade page styling if it gets overridden
-              const currentBg = navbar.style.backgroundColor;
-              if (currentBg !== 'rgb(34, 34, 34)' && currentBg !== '#222222') {
-                navbar.style.setProperty('background-color', '#222222', 'important');
-                body.style.setProperty('--scrollbar-track-bg', '#222222', 'important');
-              }
-            }
-          }
-        });
-      });
 
-      observer.observe(navbar, { attributes: true, attributeFilter: ['style'] });
-
-      return () => {
-        observer.disconnect();
-      };
-    }
-  }, [isOnTradePage]);
 
   return (
     <nav 
       className="navbar navbar-expand-lg navbar-color px-3"
-      style={{
-        backgroundColor: isOnTradePage ? '#222222' : undefined,
-        transition: 'background-color 0.3s ease'
-      }}
     >
       <div className="navbar-left" style={{ display: 'flex', alignItems: 'center' }}>
         <Link className="navbar-brand" to="/">

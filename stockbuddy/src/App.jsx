@@ -20,12 +20,35 @@ function AppContent() {
   const [currentLocation, setCurrentLocation] = useState(null);
   const location = useLocation();
 
+  // Handle page background transitions
+  useEffect(() => {
+    const mainContent = document.querySelector('.main-content');
+    const pageTransition = document.querySelector('.page-transition');
+    const body = document.body;
+    
+    if (mainContent && pageTransition) {
+      // Determine page type based on route
+      const isDarkPage = location.pathname === '/trade';
+      
+      // Add appropriate classes
+      if (isDarkPage) {
+        mainContent.classList.add('page-dark');
+        pageTransition.classList.add('page-dark');
+        body.classList.add('page-dark');
+      } else {
+        mainContent.classList.remove('page-dark');
+        pageTransition.classList.remove('page-dark');
+        body.classList.remove('page-dark');
+      }
+    }
+  }, [location.pathname]);
+
   useEffect(() => {
     setIsTransitioning(true);
     const timer = setTimeout(() => {
       setCurrentLocation(location);
       setIsTransitioning(false);
-    }, 300);
+    }, 0); // No delay - immediate transition to merge with navbar
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
