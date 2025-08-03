@@ -5,7 +5,67 @@ import StockTicker from "../components/StockTicker";
 import FadeInSection from "../components/FadeInSection";
 import CascadeText from "../components/CascadeText";
 
+// Cache for stock data to avoid repeated API calls
+let homeStockCache = {};
+let homeCacheTimestamp = 0;
+const HOME_CACHE_DURATION = 30000; // 30 seconds
+
 function Home({ isLoggedIn }) {
+  const [preloadedStocks, setPreloadedStocks] = useState([]);
+
+  // Preload stock data immediately when component mounts
+  useEffect(() => {
+    const preloadStockData = async () => {
+      const coreStocks = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'SPY'];
+      
+      // Check cache first
+      const now = Date.now();
+      if (homeStockCache.data && (now - homeCacheTimestamp) < HOME_CACHE_DURATION) {
+        setPreloadedStocks(homeStockCache.data);
+        return;
+      }
+      
+      try {
+        // Fetch all stocks in parallel for maximum speed
+        const stockPromises = coreStocks.map(async (symbol) => {
+          try {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/trading/quote/${symbol}`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              if (data.success) {
+                return data.quote;
+              }
+            }
+          } catch (error) {
+            console.warn(`Preload failed for ${symbol}:`, error);
+          }
+          return null;
+        });
+
+        const results = await Promise.all(stockPromises);
+        const validStocks = results.filter(stock => stock !== null);
+        
+        // Cache and set stocks immediately when available
+        if (validStocks.length > 0) {
+          homeStockCache.data = validStocks;
+          homeCacheTimestamp = now;
+          setPreloadedStocks(validStocks);
+        }
+      } catch (error) {
+        console.warn('Preload failed:', error);
+      }
+    };
+
+    // Start preloading immediately with no delay
+    preloadStockData();
+  }, []);
+
   useEffect(() => {
     let isBottomHalf = false; // Use local variable instead of state
     
@@ -109,7 +169,7 @@ function Home({ isLoggedIn }) {
               className="fw-bold"
             />
           </h1>
-          <StockTicker />
+          <StockTicker stocks={preloadedStocks} />
           <div className="d-flex gap-3 mt-4 justify-content-center">
             <Link 
               to={isLoggedIn ? "/dashboard" : "/signup"}

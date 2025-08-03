@@ -66,7 +66,16 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
     >
       <div className="navbar-left" style={{ display: 'flex', alignItems: 'center' }}>
         <Link className="navbar-brand" to="/">
-          <img src="/logo.png" alt="Tickr Logo" style={{ height: '50px', width: 'auto', display: 'block' }} />
+          <img 
+            src={isOnTradePage ? "/marbleWhitelogo.png" : "/logo.png"} 
+            alt="Tickr Logo" 
+            style={{ 
+              height: '50px', 
+              width: 'auto', 
+              display: 'block',
+              transition: 'opacity 0.3s ease'
+            }} 
+          />
         </Link>
       </div>
       <div className="collapse navbar-collapse">
