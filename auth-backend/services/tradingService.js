@@ -1,6 +1,17 @@
 const axios = require('axios');
 const Alpaca = require('@alpacahq/alpaca-trade-api');
 
+// Helper function to get formatted timestamp
+const getTimestamp = () => {
+  return new Date().toLocaleTimeString('en-US', { 
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    fractionalSecondDigits: 3
+  });
+};
+
 // Alpaca API configuration
 const alpaca = new Alpaca({
   keyId: process.env.ALPACA_API_KEY || 'demo',
@@ -68,7 +79,7 @@ const getCompanyName = async (symbol) => {
         return response.data.name;
       }
     } catch (alpacaError) {
-      console.warn(`Failed to fetch company name for ${symbol}:`, alpacaError.message);
+      console.warn(`[${getTimestamp()}] Failed to fetch company name for ${symbol}:`, alpacaError.message);
     }
 
     // Fallback to mapping
@@ -80,7 +91,7 @@ const getCompanyName = async (symbol) => {
 
     return symbol;
   } catch (error) {
-    console.error('Error getting company name:', error);
+    console.error(`[${getTimestamp()}] Error getting company name:`, error);
     return companyNameMapping[symbol] || symbol;
   }
 };
@@ -125,7 +136,7 @@ const getStockQuote = async (symbol) => {
       timestamp: quote.t
     };
   } catch (error) {
-    console.error('Error getting stock quote:', error);
+    console.error(`[${getTimestamp()}] Error getting stock quote:`, error);
     throw error;
   }
 };
@@ -160,7 +171,7 @@ const getPreviousClose = async (symbol) => {
     } catch (alpacaError) {
       // Only log if it's not a 403 (rate limit) or 401 (auth) error
       if (alpacaError.response && alpacaError.response.status !== 403 && alpacaError.response.status !== 401) {
-        console.warn(`⚠️ Failed to get daily volume for ${symbol}: ${alpacaError.message}`);
+        console.warn(`[${getTimestamp()}] ⚠️ Failed to get daily volume for ${symbol}: ${alpacaError.message}`);
       }
     }
 
@@ -188,7 +199,7 @@ const getPreviousClose = async (symbol) => {
     } catch (yahooError) {
       // Only log if it's a significant error
       if (yahooError.response && yahooError.response.status !== 404) {
-        console.warn(`⚠️ Failed to get Yahoo Finance data for ${symbol}: ${yahooError.message}`);
+        console.warn(`[${getTimestamp()}] ⚠️ Failed to get Yahoo Finance data for ${symbol}: ${yahooError.message}`);
       }
     }
 
@@ -214,7 +225,7 @@ const getPreviousClose = async (symbol) => {
 
     return { previousClose: null, dailyVolume: null };
   } catch (error) {
-    console.error('Error getting previous close:', error);
+    console.error(`[${getTimestamp()}] Error getting previous close:`, error);
     return { previousClose: null, dailyVolume: null };
   }
 };
@@ -251,7 +262,7 @@ const searchStocksAutocomplete = async (query) => {
       });
       alpacaAssets = response.data;
     } catch (alpacaError) {
-      console.warn('Failed to fetch Alpaca assets:', alpacaError.message);
+      console.warn(`[${getTimestamp()}] Failed to fetch Alpaca assets:`, alpacaError.message);
       throw new Error('Failed to fetch stock data');
     }
 
@@ -373,7 +384,7 @@ const searchStocksAutocomplete = async (query) => {
 
     return results;
   } catch (error) {
-    console.error('Error in autocomplete search:', error);
+    console.error(`[${getTimestamp()}] Error in autocomplete search:`, error);
     throw new Error(`Failed to search stocks: ${error.message}`);
   }
 };

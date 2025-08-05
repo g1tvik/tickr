@@ -338,22 +338,6 @@
   color: var(--marbleGray);
 }
 
-.refresh-btn {
-  background-color: var(--marbleGold);
-  color: var(--marbleWhite);
-  border: none;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 12px;
-  cursor: pointer;
-  font-family: var(--fontBody);
-}
-
-.refresh-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 .market-ticker-container {
   /* Styles for the ticker container */
 }

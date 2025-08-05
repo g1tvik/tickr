@@ -1,10 +1,17 @@
 import React, { useRef, useEffect, useState } from 'react';
 import './StockTicker.css';
+import { fetchStockData, CACHE_DURATION } from '../utils/stockCache';
 
-// Cache for stock data to avoid repeated API calls
-let stockCache = {};
-let cacheTimestamp = 0;
-const CACHE_DURATION = 30000; // 30 seconds
+// Helper function to get formatted timestamp
+const getTimestamp = () => {
+  return new Date().toLocaleTimeString('en-US', { 
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    fractionalSecondDigits: 3
+  });
+};
 
 const StockTicker = ({ stocks = [] }) => {
   const containerRef = useRef(null);
@@ -26,59 +33,22 @@ const StockTicker = ({ stocks = [] }) => {
         setIsLoading(true);
         setError(null);
         
-        // Check cache first
-        const now = Date.now();
-        if (stockCache.data && (now - cacheTimestamp) < CACHE_DURATION) {
-          setMarketStocks(stockCache.data);
-          setIsLoading(false);
-          // Fade in immediately for cached data
-          setTimeout(() => setIsVisible(true), 50);
-          return;
-        }
+        console.log(`[${getTimestamp()}] 🎯 StockTicker: Starting to fetch market data`);
         
-        // Fetch quotes for core stocks directly from the API
-        const stockPromises = coreStocks.map(async (symbol) => {
-          try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/trading/quote/${symbol}`, {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            });
-            
-            if (response.ok) {
-              const data = await response.json();
-              if (data.success) {
-                return data.quote;
-              } else {
-                console.warn(`Failed to fetch data for ${symbol}:`, data.message);
-                return null;
-              }
-            } else {
-              console.warn(`HTTP error for ${symbol}:`, response.status);
-              return null;
-            }
-          } catch (error) {
-            console.warn(`Error fetching ${symbol}:`, error);
-            return null;
-          }
-        });
-
-        const results = await Promise.all(stockPromises);
-        const validStocks = results.filter(stock => stock !== null);
+        // Use shared cache utility
+        const stockData = await fetchStockData(coreStocks);
         
-        if (validStocks.length > 0) {
-          // Cache the results
-          stockCache.data = validStocks;
-          cacheTimestamp = now;
-          setMarketStocks(validStocks);
+        if (stockData && stockData.length > 0) {
+          setMarketStocks(stockData);
+          console.log(`[${getTimestamp()}] 🎯 StockTicker: Successfully loaded ${stockData.length} stocks`);
           // Fade in after data is loaded
           setTimeout(() => setIsVisible(true), 100);
         } else {
           setError('No market data available');
+          console.warn(`[${getTimestamp()}] 🎯 StockTicker: No market data available`);
         }
       } catch (error) {
-        console.error('Error fetching market data:', error);
+        console.error(`[${getTimestamp()}] 🎯 StockTicker: Error fetching market data:`, error);
         setError('Failed to load market data');
       } finally {
         setIsLoading(false);
@@ -88,10 +58,16 @@ const StockTicker = ({ stocks = [] }) => {
     // Fetch data immediately
     fetchMarketData();
 
-    // Refresh data every 60 seconds
-    const interval = setInterval(fetchMarketData, 60000);
+    // Refresh data every 30 minutes
+    const interval = setInterval(() => {
+      console.log(`[${getTimestamp()}] 🎯 StockTicker: Auto-refreshing market data`);
+      fetchMarketData();
+    }, CACHE_DURATION);
     
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      console.log(`[${getTimestamp()}] 🎯 StockTicker: Cleanup - cleared refresh interval`);
+    };
   }, []);
 
   useEffect(() => {
