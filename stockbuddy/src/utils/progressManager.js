@@ -22,8 +22,10 @@ class ProgressManager {
           completedUnitTests: [],
           finalTestCompleted: false,
           finalTestLastAttempt: null,
+          finalTestUnlocked: false,
           unitTestAttempts: {},
-          lessonAttempts: {}
+          lessonAttempts: {},
+          lessonRewards: {} // Track which lessons have given rewards
         };
       } else {
         // Initialize with default values if no data exists
@@ -34,8 +36,10 @@ class ProgressManager {
           completedUnitTests: [],
           finalTestCompleted: false,
           finalTestLastAttempt: null,
+          finalTestUnlocked: false,
           unitTestAttempts: {},
-          lessonAttempts: {}
+          lessonAttempts: {},
+          lessonRewards: {}
         };
       }
       this.isInitialized = true;
@@ -50,8 +54,10 @@ class ProgressManager {
         completedUnitTests: [],
         finalTestCompleted: false,
         finalTestLastAttempt: null,
+        finalTestUnlocked: false,
         unitTestAttempts: {},
-        lessonAttempts: {}
+        lessonAttempts: {},
+        lessonRewards: {}
       };
       this.isInitialized = true;
       return this.progress;
@@ -105,7 +111,7 @@ class ProgressManager {
     await this.saveProgress();
   }
 
-  // Complete lesson
+  // Complete lesson with one-time reward system
   async completeLesson(lessonId, score) {
     const progress = await this.getProgress();
     
@@ -121,23 +127,28 @@ class ProgressManager {
     if (!Array.isArray(progress.completedLessons)) {
       progress.completedLessons = [];
     }
+    if (!progress.lessonRewards) {
+      progress.lessonRewards = {};
+    }
     
     // Check if lesson is being completed for the first time
     const lessonCompleted = !progress.completedLessons.includes(lessonId);
+    const rewardAlreadyGiven = progress.lessonRewards[lessonId] || false;
     
     if (lessonCompleted) {
       progress.completedLessons.push(lessonId);
       progress.lessonAttempts[lessonId].completed = true;
       progress.lessonAttempts[lessonId].lastAttempt = new Date().toISOString();
       
-      // Find lesson and award XP/coins
+      // Find lesson and award XP/coins (one-time only)
       const lesson = this.findLesson(lessonId);
-      if (lesson) {
+      if (lesson && !rewardAlreadyGiven) {
         const xpEarned = Math.floor(lesson.xp * (score / 100));
         const coinsEarned = Math.floor(lesson.coins * (score / 100));
         
         progress.xp += xpEarned;
         progress.coins += coinsEarned;
+        progress.lessonRewards[lessonId] = true; // Mark reward as given
       }
     } else {
       // Record attempt timestamp even if not completed
@@ -148,12 +159,13 @@ class ProgressManager {
     
     return {
       lessonCompleted,
-      xpEarned: lessonCompleted ? Math.floor(this.findLesson(lessonId)?.xp * (score / 100) || 0) : 0,
-      coinsEarned: lessonCompleted ? Math.floor(this.findLesson(lessonId)?.coins * (score / 100) || 0) : 0
+      xpEarned: (lessonCompleted && !rewardAlreadyGiven) ? Math.floor(this.findLesson(lessonId)?.xp * (score / 100) || 0) : 0,
+      coinsEarned: (lessonCompleted && !rewardAlreadyGiven) ? Math.floor(this.findLesson(lessonId)?.coins * (score / 100) || 0) : 0,
+      rewardAlreadyGiven
     };
   }
 
-  // Take unit test
+  // Take unit test with improved limits
   async takeUnitTest(unitId, score) {
     const progress = await this.getProgress();
     
@@ -168,6 +180,9 @@ class ProgressManager {
     if (!Array.isArray(progress.completedUnitTests)) {
       progress.completedUnitTests = [];
     }
+    if (!progress.unitTestAttempts) {
+      progress.unitTestAttempts = {};
+    }
     
     const allLessonsCompleted = unit.lessons.every(lesson => 
       progress.completedLessons.includes(lesson.id)
@@ -177,21 +192,32 @@ class ProgressManager {
       return { success: false, message: 'Complete all lessons in this unit first' };
     }
     
-    // Check attempts
-    const attempts = progress.unitTestAttempts[unitId] || 0;
-    if (attempts >= 3) {
-      return { success: false, message: 'No attempts left for today' };
+    // Check daily attempts (3 per day)
+    const today = new Date().toDateString();
+    const dailyAttempts = progress.unitTestAttempts[`${unitId}_${today}`] || 0;
+    if (dailyAttempts >= 3) {
+      return { success: false, message: 'No attempts left for today (3 per day limit)' };
     }
     
-    // Record attempt
-    progress.unitTestAttempts[unitId] = attempts + 1;
+    // Check total attempts (3 total)
+    const totalAttempts = progress.unitTestAttempts[`${unitId}_total`] || 0;
+    if (totalAttempts >= 3) {
+      return { success: false, message: 'No attempts left for this unit test (3 total limit)' };
+    }
     
-    // Award XP and coins based on score
-    const xpEarned = Math.floor(unit.unitTest.xp * (score / 100));
-    const coinsEarned = Math.floor(unit.unitTest.coins * (score / 100));
+    // Record attempts
+    progress.unitTestAttempts[`${unitId}_${today}`] = dailyAttempts + 1;
+    progress.unitTestAttempts[`${unitId}_total`] = totalAttempts + 1;
     
-    progress.xp += xpEarned;
-    progress.coins += coinsEarned;
+    // Award XP and coins based on score (one-time only)
+    const unitTestCompleted = progress.completedUnitTests.includes(unitId);
+    const xpEarned = unitTestCompleted ? 0 : Math.floor(unit.unitTest.xp * (score / 100));
+    const coinsEarned = unitTestCompleted ? 0 : Math.floor(unit.unitTest.coins * (score / 100));
+    
+    if (!unitTestCompleted) {
+      progress.xp += xpEarned;
+      progress.coins += coinsEarned;
+    }
     
     // Mark unit test as completed if score is good enough (e.g., 70%+)
     if (score >= 70 && !progress.completedUnitTests.includes(unitId)) {
@@ -204,8 +230,30 @@ class ProgressManager {
       success: true,
       xpEarned,
       coinsEarned,
-      unitCompleted: progress.completedUnitTests.includes(unitId)
+      unitCompleted: progress.completedUnitTests.includes(unitId),
+      attemptsLeft: Math.max(0, 3 - (totalAttempts + 1)),
+      dailyAttemptsLeft: Math.max(0, 3 - (dailyAttempts + 1))
     };
+  }
+
+  // Unlock final test with coins
+  async unlockFinalTest() {
+    const progress = await this.getProgress();
+    
+    if (progress.finalTestUnlocked) {
+      return { success: false, message: 'Final test is already unlocked' };
+    }
+    
+    const unlockCost = lessonStructure.finalTest.unlockCost;
+    if (progress.coins < unlockCost) {
+      return { success: false, message: `Not enough coins. Need ${unlockCost} coins to unlock.` };
+    }
+    
+    progress.coins -= unlockCost;
+    progress.finalTestUnlocked = true;
+    await this.saveProgress();
+    
+    return { success: true, message: 'Final test unlocked!' };
   }
 
   // Take final test
@@ -226,6 +274,11 @@ class ProgressManager {
       return { success: false, message: 'Complete all unit tests first' };
     }
     
+    // Check if final test is unlocked
+    if (!progress.finalTestUnlocked) {
+      return { success: false, message: 'Final test must be unlocked with coins first' };
+    }
+    
     // Check if already completed today
     const today = new Date().toDateString();
     if (progress.finalTestLastAttempt === today) {
@@ -235,12 +288,15 @@ class ProgressManager {
     // Record attempt
     progress.finalTestLastAttempt = today;
     
-    // Award XP and coins based on score
-    const xpEarned = Math.floor(lessonStructure.finalTest.xp * (score / 100));
-    const coinsEarned = Math.floor(lessonStructure.finalTest.coins * (score / 100));
+    // Award XP and coins based on score (one-time only)
+    const finalTestCompleted = progress.finalTestCompleted;
+    const xpEarned = finalTestCompleted ? 0 : Math.floor(lessonStructure.finalTest.xp * (score / 100));
+    const coinsEarned = finalTestCompleted ? 0 : Math.floor(lessonStructure.finalTest.coins * (score / 100));
     
-    progress.xp += xpEarned;
-    progress.coins += coinsEarned;
+    if (!finalTestCompleted) {
+      progress.xp += xpEarned;
+      progress.coins += coinsEarned;
+    }
     
     // Mark as completed if score is good enough
     if (score >= 70) {
@@ -262,13 +318,22 @@ class ProgressManager {
     const progress = this.progress;
     if (!progress) return { canTake: false, attemptsLeft: 0, message: 'Progress not loaded' };
     
-    const attempts = progress.unitTestAttempts[unitId] || 0;
-    const attemptsLeft = Math.max(0, 3 - attempts);
+    const today = new Date().toDateString();
+    const dailyAttempts = progress.unitTestAttempts?.[`${unitId}_${today}`] || 0;
+    const totalAttempts = progress.unitTestAttempts?.[`${unitId}_total`] || 0;
+    
+    const dailyAttemptsLeft = Math.max(0, 3 - dailyAttempts);
+    const totalAttemptsLeft = Math.max(0, 3 - totalAttempts);
+    
+    const canTake = dailyAttemptsLeft > 0 && totalAttemptsLeft > 0;
     
     return {
-      canTake: attemptsLeft > 0,
-      attemptsLeft,
-      message: attemptsLeft > 0 ? `${attemptsLeft} attempts left` : 'No attempts left for today'
+      canTake,
+      dailyAttemptsLeft,
+      totalAttemptsLeft,
+      message: canTake ? 
+        `${dailyAttemptsLeft} daily attempts left, ${totalAttemptsLeft} total attempts left` : 
+        dailyAttemptsLeft === 0 ? 'No daily attempts left (3 per day limit)' : 'No total attempts left (3 total limit)'
     };
   }
 
@@ -289,6 +354,17 @@ class ProgressManager {
     
     if (!allUnitsCompleted) {
       return { canTake: false, message: 'Complete all unit tests first' };
+    }
+    
+    // Check if final test is unlocked
+    if (!progress.finalTestUnlocked) {
+      const unlockCost = lessonStructure.finalTest.unlockCost;
+      return { 
+        canTake: false, 
+        message: `Final test must be unlocked with ${unlockCost} coins first`,
+        needsUnlock: true,
+        unlockCost
+      };
     }
     
     // Check if already taken today
@@ -318,11 +394,12 @@ class ProgressManager {
       coins: progress.coins,
       lessonProgress,
       unitProgress,
-      completedLessons: completedLessons.length,
+      completedLessons: completedLessons, // Return the actual array, not the count
       totalLessons,
-      completedUnitTests: completedUnitTests.length,
+      completedUnitTests: completedUnitTests, // Return the actual array, not the count
       totalUnits,
-      finalTestCompleted: progress.finalTestCompleted
+      finalTestCompleted: progress.finalTestCompleted,
+      finalTestUnlocked: progress.finalTestUnlocked
     };
   }
 
@@ -355,8 +432,10 @@ class ProgressManager {
       completedUnitTests: [],
       finalTestCompleted: false,
       finalTestLastAttempt: null,
+      finalTestUnlocked: false,
       unitTestAttempts: {},
-      lessonAttempts: {}
+      lessonAttempts: {},
+      lessonRewards: {}
     };
     await this.saveProgress();
   }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { lessonStructure } from '../data/lessonStructure';
 import progressManager from '../utils/progressManager';
 import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
@@ -7,6 +7,7 @@ import { fontHeading, fontBody } from '../fontPalette';
 
 export default function Learn() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showLessonsModal, setShowLessonsModal] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [showUnitTest, setShowUnitTest] = useState(false);
@@ -14,10 +15,27 @@ export default function Learn() {
   const [testAnswers, setTestAnswers] = useState({});
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
 
   useEffect(() => {
     loadProgress();
   }, []);
+
+  // Refresh progress when returning from lesson completion
+  useEffect(() => {
+    if (location.state?.refresh) {
+      loadProgress();
+      // Clear the refresh state
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname]);
+
+  // Refresh progress when modal opens
+  useEffect(() => {
+    if (showLessonsModal) {
+      loadProgress();
+    }
+  }, [showLessonsModal]);
 
   const loadProgress = async () => {
     try {
@@ -85,6 +103,8 @@ export default function Learn() {
     if (isUnitUnlocked(unit.id)) {
       setSelectedUnit(unit);
       setShowLessonsModal(true);
+      // Refresh progress when opening modal
+      loadProgress();
     }
   };
 
@@ -113,8 +133,29 @@ export default function Learn() {
   };
 
   const handleFinalTest = () => {
-    setShowFinalTest(true);
-    setTestAnswers({});
+    const canTakeResult = progressManager.canTakeFinalTest();
+    if (canTakeResult.needsUnlock) {
+      setShowUnlockModal(true);
+    } else {
+      setShowFinalTest(true);
+    }
+  };
+
+  const handleUnlockFinalTest = async () => {
+    try {
+      const result = await progressManager.unlockFinalTest();
+      if (result.success) {
+        alert(result.message);
+        await loadProgress();
+        setShowUnlockModal(false);
+        setShowFinalTest(true);
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error('Error unlocking final test:', error);
+      alert('Failed to unlock final test. Please try again.');
+    }
   };
 
   const handleTestSubmit = async (testType, unitId = null) => {
@@ -424,24 +465,29 @@ export default function Learn() {
               color: marbleGray,
               marginBottom: "24px"
             }}>
-              Complete all units to unlock the final test. You can take it once per day.
+              {progress.finalTestUnlocked 
+                ? "Complete all units to unlock the final test. You can take it once per day."
+                : "Complete all units to unlock the final test. You can spend coins to unlock it."
+              }
             </p>
             <button
               onClick={handleFinalTest}
-              disabled={!progressManager.canTakeFinalTest().canTake}
+              disabled={!progressManager.canTakeFinalTest().canTake && !progressManager.canTakeFinalTest().needsUnlock}
               style={{
-                backgroundColor: progressManager.canTakeFinalTest().canTake ? marbleGold : marbleGray,
-                color: progressManager.canTakeFinalTest().canTake ? marbleDarkGray : marbleWhite,
+                backgroundColor: (progressManager.canTakeFinalTest().canTake || progressManager.canTakeFinalTest().needsUnlock) ? marbleGold : marbleGray,
+                color: (progressManager.canTakeFinalTest().canTake || progressManager.canTakeFinalTest().needsUnlock) ? marbleDarkGray : marbleWhite,
                 border: "none",
                 padding: "16px 32px",
                 borderRadius: "12px",
                 fontSize: "16px",
                 fontWeight: "600",
-                cursor: progressManager.canTakeFinalTest().canTake ? "pointer" : "not-allowed"
+                cursor: (progressManager.canTakeFinalTest().canTake || progressManager.canTakeFinalTest().needsUnlock) ? "pointer" : "not-allowed"
               }}
             >
               {progressManager.canTakeFinalTest().canTake
                 ? "Take Final Test"
+                : progressManager.canTakeFinalTest().needsUnlock
+                ? `Unlock Final Test (${progressManager.canTakeFinalTest().unlockCost} coins)`
                 : progressManager.canTakeFinalTest().message
               }
             </button>
@@ -509,7 +555,9 @@ export default function Learn() {
               {selectedUnit.lessons.map((lesson) => {
                 const completedLessons = Array.isArray(progress?.completedLessons) ? progress.completedLessons : [];
                 const lessonProgress = completedLessons.includes(lesson.id);
-                const isLocked = lesson.id > 1 && !completedLessons.includes(lesson.id - 1);
+                // Check if previous lesson in the same unit is completed
+                const lessonIndex = selectedUnit.lessons.findIndex(l => l.id === lesson.id);
+                const isLocked = lessonIndex > 0 && !completedLessons.includes(selectedUnit.lessons[lessonIndex - 1].id);
 
                 return (
                   <div
@@ -555,7 +603,7 @@ export default function Learn() {
                           fontSize: "14px",
                           color: marbleGray
                         }}>
-                          {lesson.duration} • {lesson.xp} XP
+                          {lesson.duration} • {lesson.xp} XP • {lesson.coins} 🪙
                         </div>
                       </div>
                       <div style={{
@@ -636,8 +684,8 @@ export default function Learn() {
                       }}>
                         {allLessonsCompleted ?
                          (canTakeUnitTest.canTake ?
-                           `${canTakeUnitTest.attemptsLeft} attempts left` :
-                           "No attempts left") :
+                           `${canTakeUnitTest.dailyAttemptsLeft} daily, ${canTakeUnitTest.totalAttemptsLeft} total` :
+                           canTakeUnitTest.message) :
                          "Locked"}
                       </div>
                     </div>
@@ -915,6 +963,112 @@ export default function Learn() {
                 }}
               >
                 Submit Final Test
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Final Test Unlock Modal */}
+      {showUnlockModal && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: marbleWhite,
+            borderRadius: "20px",
+            padding: "32px",
+            maxWidth: "500px",
+            width: "90%",
+            textAlign: "center"
+          }}>
+            <h3 style={{
+              fontSize: "24px",
+              fontWeight: "bold",
+              color: marbleDarkGray,
+              marginBottom: "16px"
+            }}>
+              Unlock Final Test
+            </h3>
+            
+            <p style={{
+              fontSize: "16px",
+              color: marbleGray,
+              marginBottom: "24px"
+            }}>
+              Spend {lessonStructure.finalTest.unlockCost} coins to unlock the final test. 
+              This is a one-time purchase.
+            </p>
+            
+            <div style={{
+              backgroundColor: marbleLightGray,
+              borderRadius: "12px",
+              padding: "16px",
+              marginBottom: "24px"
+            }}>
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "8px"
+              }}>
+                <span style={{ color: marbleGray }}>Your Coins:</span>
+                <span style={{ color: marbleDarkGray, fontWeight: "600" }}>{progress?.coins || 0}</span>
+              </div>
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
+              }}>
+                <span style={{ color: marbleGray }}>Unlock Cost:</span>
+                <span style={{ color: marbleGold, fontWeight: "600" }}>{lessonStructure.finalTest.unlockCost} coins</span>
+              </div>
+            </div>
+            
+            <div style={{
+              display: "flex",
+              gap: "16px",
+              justifyContent: "center"
+            }}>
+              <button
+                onClick={() => setShowUnlockModal(false)}
+                style={{
+                  backgroundColor: marbleGray,
+                  color: marbleWhite,
+                  border: "none",
+                  padding: "12px 24px",
+                  borderRadius: "12px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  cursor: "pointer"
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUnlockFinalTest}
+                disabled={(progress?.coins || 0) < lessonStructure.finalTest.unlockCost}
+                style={{
+                  backgroundColor: (progress?.coins || 0) >= lessonStructure.finalTest.unlockCost ? marbleGold : marbleGray,
+                  color: (progress?.coins || 0) >= lessonStructure.finalTest.unlockCost ? marbleDarkGray : marbleWhite,
+                  border: "none",
+                  padding: "12px 24px",
+                  borderRadius: "12px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  cursor: (progress?.coins || 0) >= lessonStructure.finalTest.unlockCost ? "pointer" : "not-allowed"
+                }}
+              >
+                Unlock Final Test
               </button>
             </div>
           </div>

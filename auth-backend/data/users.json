@@ -6,7 +6,7 @@
     "password": "$2b$10$8qqRZnhyR48R/bsvLzqvTeLw/.tPpfcULw1dS4H94tgn/52wQo9zO",
     "name": "Akash Karthik",
     "createdAt": "2025-08-01T02:27:26.129Z",
-    "lastLogin": "2025-08-01T02:27:26.129Z",
+    "lastLogin": "2025-08-05T05:48:55.310Z",
     "portfolio": {
       "balance": 10000,
       "positions": [],
@@ -14,9 +14,10 @@
     },
     "learningProgress": {
       "xp": 16,
-      "coins": null,
+      "coins": 0,
       "completedLessons": [
-        1
+        1,
+        2
       ],
       "completedUnitTests": [],
       "finalTestCompleted": false,
@@ -24,11 +25,20 @@
       "unitTestAttempts": {},
       "lessonAttempts": {
         "1": {
-          "attempts": 6,
+          "attempts": 20,
           "completed": true,
           "bestScore": 100,
-          "lastAttempt": "2025-08-01T02:40:27.950Z"
+          "lastAttempt": "2025-08-05T06:03:51.921Z"
+        },
+        "2": {
+          "attempts": 2,
+          "completed": true,
+          "bestScore": 0,
+          "lastAttempt": "2025-08-05T06:00:35.510Z"
         }
+      },
+      "lessonRewards": {
+        "2": true
       }
     },
     "purchasedItems": []

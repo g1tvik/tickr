@@ -11,6 +11,7 @@ export const lessonStructure = {
           description: "Understanding the basics of investing and why it matters",
           duration: "12 min",
           xp: 25,
+          coins: 15,
           content: [
             {
               type: "text",
@@ -54,6 +55,7 @@ export const lessonStructure = {
           description: "Understanding the relationship between risk and potential returns",
           duration: "15 min",
           xp: 30,
+          coins: 20,
           content: [
             {
               type: "text",
@@ -97,6 +99,7 @@ export const lessonStructure = {
           description: "The power of compound interest and time in investing",
           duration: "10 min",
           xp: 25,
+          coins: 15,
           content: [
             {
               type: "text",
@@ -140,6 +143,7 @@ export const lessonStructure = {
           description: "Different types of investment accounts and their benefits",
           duration: "12 min",
           xp: 30,
+          coins: 20,
           content: [
             {
               type: "text",
@@ -183,6 +187,7 @@ export const lessonStructure = {
           description: "How to set and achieve your investment objectives",
           duration: "10 min",
           xp: 25,
+          coins: 15,
           content: [
             {
               type: "text",
@@ -264,6 +269,7 @@ export const lessonStructure = {
           description: "Understanding stock ownership and company shares",
           duration: "12 min",
           xp: 30,
+          coins: 20,
           content: [
             {
               type: "text",
@@ -307,6 +313,7 @@ export const lessonStructure = {
           description: "Understanding supply, demand, and price movements",
           duration: "15 min",
           xp: 35,
+          coins: 25,
           content: [
             {
               type: "text",
@@ -350,6 +357,7 @@ export const lessonStructure = {
           description: "Understanding when and how trading occurs",
           duration: "10 min",
           xp: 25,
+          coins: 15,
           content: [
             {
               type: "text",
@@ -393,6 +401,7 @@ export const lessonStructure = {
           description: "Understanding the spread and market makers",
           duration: "12 min",
           xp: 30,
+          coins: 20,
           content: [
             {
               type: "text",
@@ -436,6 +445,7 @@ export const lessonStructure = {
           description: "Understanding market benchmarks and indices",
           duration: "10 min",
           xp: 25,
+          coins: 15,
           content: [
             {
               type: "text",
@@ -517,6 +527,7 @@ export const lessonStructure = {
           description: "Understanding different types of stock charts",
           duration: "15 min",
           xp: 35,
+          coins: 25,
           content: [
             {
               type: "text",
@@ -560,6 +571,7 @@ export const lessonStructure = {
           description: "Understanding key price levels",
           duration: "12 min",
           xp: 30,
+          coins: 20,
           content: [
             {
               type: "text",
@@ -603,6 +615,7 @@ export const lessonStructure = {
           description: "Using moving averages to identify trends",
           duration: "18 min",
           xp: 40,
+          coins: 30,
           content: [
             {
               type: "text",
@@ -646,6 +659,7 @@ export const lessonStructure = {
           description: "Understanding trading volume and its significance",
           duration: "10 min",
           xp: 25,
+          coins: 15,
           content: [
             {
               type: "text",
@@ -689,6 +703,7 @@ export const lessonStructure = {
           description: "Popular technical indicators for trading decisions",
           duration: "15 min",
           xp: 35,
+          coins: 25,
           content: [
             {
               type: "text",
@@ -770,6 +785,7 @@ export const lessonStructure = {
           description: "How much to invest in each position",
           duration: "12 min",
           xp: 30,
+          coins: 20,
           content: [
             {
               type: "text",
@@ -813,6 +829,7 @@ export const lessonStructure = {
           description: "Setting automatic exit points to limit losses",
           duration: "15 min",
           xp: 35,
+          coins: 25,
           content: [
             {
               type: "text",
@@ -856,6 +873,7 @@ export const lessonStructure = {
           description: "Building a well-diversified portfolio",
           duration: "18 min",
           xp: 40,
+          coins: 30,
           content: [
             {
               type: "text",
@@ -899,6 +917,7 @@ export const lessonStructure = {
           description: "Managing emotions in trading decisions",
           duration: "12 min",
           xp: 30,
+          coins: 20,
           content: [
             {
               type: "text",
@@ -942,6 +961,7 @@ export const lessonStructure = {
           description: "Maintaining your target asset allocation",
           duration: "10 min",
           xp: 25,
+          coins: 15,
           content: [
             {
               type: "text",
@@ -1023,6 +1043,7 @@ export const lessonStructure = {
           description: "Understanding options trading fundamentals",
           duration: "20 min",
           xp: 45,
+          coins: 35,
           content: [
             {
               type: "text",
@@ -1066,6 +1087,7 @@ export const lessonStructure = {
           description: "Medium-term trading strategies",
           duration: "15 min",
           xp: 35,
+          coins: 25,
           content: [
             {
               type: "text",
@@ -1109,6 +1131,7 @@ export const lessonStructure = {
           description: "Finding undervalued stocks",
           duration: "18 min",
           xp: 40,
+          coins: 30,
           content: [
             {
               type: "text",
@@ -1152,6 +1175,7 @@ export const lessonStructure = {
           description: "Building income-generating portfolios",
           duration: "12 min",
           xp: 30,
+          coins: 20,
           content: [
             {
               type: "text",
@@ -1195,6 +1219,7 @@ export const lessonStructure = {
           description: "Maximizing returns while minimizing risk",
           duration: "15 min",
           xp: 35,
+          coins: 25,
           content: [
             {
               type: "text",
@@ -1320,7 +1345,8 @@ export const lessonStructure = {
       }
     ],
     xp: 500,
-    coins: 250
+    coins: 250,
+    unlockCost: 100
   }
 };
 

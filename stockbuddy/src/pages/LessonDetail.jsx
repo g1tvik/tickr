@@ -38,6 +38,11 @@ export default function LessonDetail() {
       if (foundLesson) {
         setLesson(foundLesson);
         
+        // Reset to first section when loading a new lesson
+        setCurrentSection(0);
+        setShowQuiz(false);
+        setQuizAnswers({});
+        
         // Load progress
         const lessonProgress = await progressManager.getLessonProgress(foundLesson.id);
         setProgress(lessonProgress);
@@ -107,7 +112,8 @@ export default function LessonDetail() {
         coinsEarned: result.coinsEarned,
         lessonCompleted: result.lessonCompleted,
         correctAnswers,
-        totalQuestions: lesson.quiz.questions.length
+        totalQuestions: lesson.quiz.questions.length,
+        rewardAlreadyGiven: result.rewardAlreadyGiven // Add this line
       });
       
       setShowQuiz(false);
@@ -130,6 +136,7 @@ export default function LessonDetail() {
   };
 
   const handleContinueToNext = () => {
+    setShowCompletionModal(false); // Close the completion modal
     const nextLesson = findNextLesson(lesson.id);
     if (nextLesson) {
       navigate(`/learn/lesson/${nextLesson.id}`);
@@ -139,7 +146,8 @@ export default function LessonDetail() {
   };
 
   const handleBackToLearn = () => {
-    navigate('/learn');
+    // Force refresh progress when returning to learn page
+    navigate('/learn', { state: { refresh: true } });
   };
 
   if (loading) {
@@ -445,6 +453,14 @@ export default function LessonDetail() {
                     <span style={{ color: marbleGray }}>XP Reward:</span>
                     <span style={{ color: marbleGold, fontWeight: "500" }}>{lesson.xp} XP</span>
                   </div>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "14px"
+                  }}>
+                    <span style={{ color: marbleGray }}>Coin Reward:</span>
+                    <span style={{ color: marbleGold, fontWeight: "500" }}>{lesson.coins} 🪙</span>
+                  </div>
                   {progress?.completed && (
                     <div style={{
                       display: "flex",
@@ -731,6 +747,16 @@ export default function LessonDetail() {
                       {progress?.bestScore ? `${progress.bestScore}%` : "Not taken"}
                     </span>
                   </div>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "14px"
+                  }}>
+                    <span style={{ color: marbleGray }}>Rewards:</span>
+                    <span style={{ color: marbleGold, fontWeight: "500" }}>
+                      {completionData?.rewardAlreadyGiven ? "Already claimed" : "One-time"}
+                    </span>
+                  </div>
                   {progress?.completed && (
                     <div style={{
                       display: "flex",
@@ -887,7 +913,7 @@ export default function LessonDetail() {
                 </span>
               </div>
               
-              {completionData.lessonCompleted && (
+              {completionData.lessonCompleted && !completionData.rewardAlreadyGiven && (
                 <>
                   <div style={{
                     display: "flex",
@@ -913,6 +939,20 @@ export default function LessonDetail() {
                   </div>
                 </>
               )}
+              
+              {completionData.rewardAlreadyGiven && (
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginTop: "12px"
+                }}>
+                  <span style={{ color: marbleGray }}>Rewards:</span>
+                  <span style={{ fontWeight: "600", color: marbleGray }}>
+                    Already claimed
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -937,6 +977,25 @@ export default function LessonDetail() {
               >
                 Retake Quiz
               </button>
+              
+              {findNextLesson(lesson.id) && (
+                <button
+                  onClick={handleContinueToNext}
+                  style={{
+                    backgroundColor: marbleDarkGray,
+                    color: marbleWhite,
+                    border: "none",
+                    padding: "12px 20px",
+                    borderRadius: "12px",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    flex: 1
+                  }}
+                >
+                  Next Lesson
+                </button>
+              )}
               
               {completionData.lessonCompleted && findNextLesson(lesson.id) ? (
                 <button
