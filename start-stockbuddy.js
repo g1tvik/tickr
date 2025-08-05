@@ -3,6 +3,7 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const readline = require('readline');
 
 console.log('🚀 Starting StockBuddy - Complete Development Environment\n');
 
@@ -123,6 +124,43 @@ function startService(name, command, args, cwd, port) {
   });
 }
 
+// Function to ask user if they want to restart
+async function askForRestart() {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  return new Promise((resolve) => {
+    log('\n🔄 Would you like to restart StockBuddy? (y/n)', 'yellow');
+    rl.question('', (answer) => {
+      rl.close();
+      resolve(answer.toLowerCase().includes('y'));
+    });
+  });
+}
+
+// Function to show restart menu
+async function showRestartMenu() {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  return new Promise((resolve) => {
+    log('\n🔄 StockBuddy Services Stopped', 'yellow');
+    log('What would you like to do?', 'cyan');
+    log('1. Restart StockBuddy', 'cyan');
+    log('2. Exit', 'cyan');
+    log('Enter your choice (1 or 2):', 'yellow');
+    
+    rl.question('', (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
+
 // Main startup function
 async function startStockBuddy() {
   try {
@@ -169,16 +207,26 @@ async function startStockBuddy() {
     log('• The frontend may take a moment to fully load', 'yellow');
     log('• Check the console for any error messages', 'yellow');
     log('• Press Ctrl+C to stop both services', 'yellow');
+    log('• You can restart the services after stopping', 'yellow');
     
-    // Handle graceful shutdown
-    const shutdown = () => {
+    // Handle graceful shutdown with restart option
+    const shutdown = async () => {
       log('\n🛑 Shutting down StockBuddy...', 'yellow');
       backend.kill('SIGINT');
       frontend.kill('SIGINT');
       
-      setTimeout(() => {
-        log('👋 Goodbye!', 'green');
-        process.exit(0);
+      // Wait a moment for services to stop
+      setTimeout(async () => {
+        const choice = await showRestartMenu();
+        
+        if (choice === '1') {
+          log('\n🔄 Restarting StockBuddy...', 'green');
+          // Restart the application
+          startStockBuddy();
+        } else {
+          log('👋 Goodbye!', 'green');
+          process.exit(0);
+        }
       }, 2000);
     };
     
@@ -192,7 +240,15 @@ async function startStockBuddy() {
     log('2. Check that ports 5001 and 5173 are available', 'yellow');
     log('3. Try running "npm install" in both auth-backend and stockbuddy directories', 'yellow');
     log('4. Check the console output above for specific errors', 'yellow');
-    process.exit(1);
+    
+    // Ask if user wants to retry
+    const retry = await askForRestart();
+    if (retry) {
+      log('\n🔄 Retrying...', 'green');
+      startStockBuddy();
+    } else {
+      process.exit(1);
+    }
   }
 }
 
