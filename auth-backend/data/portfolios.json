@@ -68,19 +68,19 @@
     "lastUpdated": "2025-08-01T06:13:15.148Z"
   },
   "user_1754015246129_cqlhmlb12": {
-    "balance": 9771.33,
+    "balance": 9542.45,
     "positions": [
       {
         "symbol": "AAPL",
-        "shares": 1,
-        "avgPrice": 228.67,
-        "currentPrice": 228.67,
+        "shares": 2,
+        "avgPrice": 228.77499999999998,
+        "currentPrice": 228.88,
         "change": 8.639999999999986,
         "changePercent": "3.93"
       }
     ],
     "totalValue": 10000,
     "createdAt": "2025-08-08T19:25:28.757Z",
-    "lastUpdated": "2025-08-08T19:25:29.267Z"
+    "lastUpdated": "2025-08-08T19:37:54.074Z"
   }
 }

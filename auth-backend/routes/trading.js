@@ -1725,21 +1725,21 @@ async function generateHistoricalData(symbol, timeframe, limit) {
       const quote = await getStockQuote(symbol);
       const basePrice = parseFloat(quote.price) || 100;
       
-      const candles = [];
-      const now = new Date();
-      
-      // Generate data points based on timeframe
-      let interval;
-      switch (timeframe) {
+  const candles = [];
+  const now = new Date();
+  
+  // Generate data points based on timeframe
+  let interval;
+  switch (timeframe) {
         case '1m':
           interval = 60 * 1000;
-          break;
+      break;
         case '5m':
           interval = 5 * 60 * 1000;
-          break;
+      break;
         case '15m':
           interval = 15 * 60 * 1000;
-          break;
+      break;
         case '1h':
           interval = 60 * 60 * 1000;
           break;
@@ -1751,17 +1751,17 @@ async function generateHistoricalData(symbol, timeframe, limit) {
           break;
         case '1w':
           interval = 7 * 24 * 60 * 60 * 1000;
-          break;
-        case '1M':
+      break;
+    case '1M':
           interval = 30 * 24 * 60 * 60 * 1000;
-          break;
-        default:
+      break;
+    default:
           interval = 24 * 60 * 60 * 1000;
-      }
-      
+  }
+  
       let currentPrice = basePrice;
-      for (let i = limit - 1; i >= 0; i--) {
-        const time = new Date(now.getTime() - (i * interval));
+  for (let i = limit - 1; i >= 0; i--) {
+    const time = new Date(now.getTime() - (i * interval));
         
         // More realistic price movement
         const priceChange = (Math.random() - 0.5) * (basePrice * 0.02); // 2% max change
@@ -1772,23 +1772,23 @@ async function generateHistoricalData(symbol, timeframe, limit) {
         const low = open - Math.random() * (basePrice * 0.01);
         const close = open + (Math.random() - 0.5) * (basePrice * 0.005);
         const volume = Math.floor(Math.random() * 10000000) + 1000000;
-        
-        candles.push({
-          timestamp: Math.floor(time.getTime() / 1000),
-          open: parseFloat(open.toFixed(2)),
-          high: parseFloat(high.toFixed(2)),
-          low: parseFloat(low.toFixed(2)),
-          close: parseFloat(close.toFixed(2)),
-          volume: volume
-        });
-      }
-      
-      return {
-        symbol,
-        timeframe,
-        candles,
-        lastUpdated: new Date().toISOString()
-      };
+    
+    candles.push({
+      timestamp: Math.floor(time.getTime() / 1000),
+      open: parseFloat(open.toFixed(2)),
+      high: parseFloat(high.toFixed(2)),
+      low: parseFloat(low.toFixed(2)),
+      close: parseFloat(close.toFixed(2)),
+      volume: volume
+    });
+  }
+  
+  return {
+    symbol,
+    timeframe,
+    candles,
+    lastUpdated: new Date().toISOString()
+  };
     } catch (error) {
       console.error(`[${getTimestamp()}] Error generating fallback data for ${symbol}:`, error);
       throw new Error(`Failed to generate chart data for ${symbol}`);

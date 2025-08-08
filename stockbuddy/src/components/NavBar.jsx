@@ -12,8 +12,8 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
     navigate('/');
   };
 
-  // Check if we're on the Trade page
-  const isOnTradePage = location.pathname === '/trade';
+  // Check if we're on the Trade page or AI Coach page
+  const isOnTradePage = location.pathname === '/trade' || location.pathname === '/ai-coach';
 
   useEffect(() => {
     const navbar = document.querySelector('.navbar-color');
@@ -112,7 +112,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
               <li className="nav-item">
                 <Link 
                   className="nav-link" 
-                  to="/discover"
+                  to="/ai-coach"
                   style={{ color: isOnTradePage ? '#F4F1E9' : undefined }}
                 >
                   AI COACH
