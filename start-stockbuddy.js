@@ -5,7 +5,13 @@ const path = require('path');
 const fs = require('fs');
 const readline = require('readline');
 
-console.log('🚀 Starting StockBuddy - Complete Development Environment\n');
+// Check if script is being called with arguments (from .bat file)
+const args = process.argv.slice(2);
+const isCalledFromBat = args.length > 0 || process.env.STOCKBUDDY_FROM_BAT === 'true';
+
+if (!isCalledFromBat) {
+  console.log('🚀 Starting StockBuddy - Complete Development Environment\n');
+}
 
 // Colors for console output
 const colors = {
@@ -74,11 +80,14 @@ function startService(name, command, args, cwd, port) {
       output += message;
       
       // Check for successful startup indicators
-      if (name === 'Backend' && message.includes('Server running on port')) {
+      if (name === 'Backend' && (message.includes('Server running on port') || message.includes('StockBuddy API running on port'))) {
         log(`✅ ${name} is running on port ${port}`, 'green');
         resolve(service);
-      } else if (name === 'Frontend' && (message.includes('Local:') || message.includes('localhost:'))) {
-        log(`✅ ${name} is running on port ${port}`, 'green');
+      } else if (name === 'Frontend' && (message.includes('Local:') || message.includes('localhost:') || message.includes('ready in') || message.includes('VITE v'))) {
+        // Extract the actual port from the output
+        const portMatch = message.match(/localhost:(\d+)/);
+        const actualPort = portMatch ? portMatch[1] : port;
+        log(`✅ ${name} is running on port ${actualPort}`, 'green');
         resolve(service);
       }
       
@@ -114,13 +123,13 @@ function startService(name, command, args, cwd, port) {
       }
     });
 
-    // Timeout after 30 seconds
+    // Timeout after 60 seconds (increased from 30)
     setTimeout(() => {
       if (!service.killed) {
         log(`⏰ ${name} startup timeout - service may still be starting`, 'yellow');
         resolve(service);
       }
-    }, 30000);
+    }, 60000);
   });
 }
 
@@ -400,8 +409,12 @@ async function startStockBuddy() {
     // Handle graceful shutdown
     const shutdown = async () => {
       log('\n🛑 Shutting down StockBuddy...', 'yellow');
-      backend.kill('SIGINT');
-      frontend.kill('SIGINT');
+      if (backend && !backend.killed) {
+        backend.kill('SIGINT');
+      }
+      if (frontend && !frontend.killed) {
+        frontend.kill('SIGINT');
+      }
       
       // Wait a moment for services to stop
       setTimeout(async () => {
@@ -479,5 +492,24 @@ async function mainMenu() {
   }
 }
 
-// Start the main menu
-mainMenu(); 
+// Handle different startup modes
+if (isCalledFromBat) {
+  // If called from .bat file, check for specific arguments
+  const mode = args[0] || 'both';
+  
+  switch (mode) {
+    case 'backend':
+      startBackendOnly();
+      break;
+    case 'frontend':
+      startFrontendOnly();
+      break;
+    case 'both':
+    default:
+      startStockBuddy();
+      break;
+  }
+} else {
+  // Start the main menu
+  mainMenu();
+} 

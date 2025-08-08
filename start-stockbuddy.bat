@@ -32,8 +32,8 @@ if "%choice%"=="1" (
         exit /b 1
     )
     
-    REM Run the startup script
-    node start-stockbuddy.js
+    REM Run the startup script with both services
+    node start-stockbuddy.js both
 ) else if "%choice%"=="2" (
     echo.
     echo Starting Backend Only...
@@ -49,7 +49,7 @@ if "%choice%"=="1" (
     )
     
     REM Run the startup script with backend only
-    node start-stockbuddy.js
+    node start-stockbuddy.js backend
 ) else if "%choice%"=="3" (
     echo.
     echo Starting Frontend Only...
@@ -65,7 +65,7 @@ if "%choice%"=="1" (
     )
     
     REM Run the startup script with frontend only
-    node start-stockbuddy.js
+    node start-stockbuddy.js frontend
 ) else if "%choice%"=="4" (
     echo.
     echo Quick Restart - StockBuddy Services...
