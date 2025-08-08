@@ -1,3 +1,6 @@
+/* Import minimal Bootstrap utilities */
+@import "bootstrap/dist/css/bootstrap.min.css";
+
 :root {
   --marbleWhite: #F4F1E9;
   --marbleLightGray: #E5E5E5;
@@ -259,4 +262,44 @@ body {
   border-color: var(--marbleLightGray) !important;
   color: var(--marbleDarkGray) !important;
   box-shadow: 0 4px 16px rgba(176, 176, 176, 0.18);
+}
+
+/* Chart animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.chart-loading {
+  animation: spin 1s linear infinite;
+}
+
+.chart-container {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.chart-container:hover {
+  transform: scale(1.01);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Chart indicator buttons */
+.chart-indicator-btn {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.chart-indicator-btn:hover {
+  transform: scale(1.05);
+}
+
+.chart-timeframe-btn {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.chart-timeframe-btn:hover {
+  transform: scale(1.02);
 } 

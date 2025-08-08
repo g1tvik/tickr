@@ -66,8 +66,7 @@
     "purchasedItems": [],
     "learningPreferences": {
       "dailyGoal": 1,
-      "notifications": true,
-      "difficulty": "easy"
+      "notifications": true
     }
   },
   "user_1754028137929_dv2llmgc6": {
@@ -116,8 +115,7 @@
     "picture": "https://lh3.googleusercontent.com/a/ACg8ocKfoEZYj5WmASEKhItze-6R2kdAeexeZAb4MXNWGxOVox_YJGq9=s96-c",
     "learningPreferences": {
       "dailyGoal": 1,
-      "notifications": true,
-      "difficulty": "hard"
+      "notifications": true
     }
   },
   "user_1754120571606_r6om804fx": {

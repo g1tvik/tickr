@@ -605,21 +605,19 @@ router.put('/learning-preferences', async (req, res) => {
       });
     }
 
-    const { dailyGoal, notifications, difficulty } = req.body;
+    const { dailyGoal, notifications } = req.body;
 
     // Initialize learning preferences if they don't exist
     if (!user.learningPreferences) {
       user.learningPreferences = {
         dailyGoal: 3,
-        notifications: true,
-        difficulty: 'auto'
+        notifications: true
       };
     }
 
     // Update preferences
     if (dailyGoal !== undefined) user.learningPreferences.dailyGoal = dailyGoal;
     if (notifications !== undefined) user.learningPreferences.notifications = notifications;
-    if (difficulty !== undefined) user.learningPreferences.difficulty = difficulty;
 
     users[user.id] = user;
     saveUsers(req, users);
@@ -665,8 +663,7 @@ router.get('/learning-preferences', async (req, res) => {
     if (!user.learningPreferences) {
       user.learningPreferences = {
         dailyGoal: 3,
-        notifications: true,
-        difficulty: 'auto'
+        notifications: true
       };
       users[user.id] = user;
       saveUsers(req, users);

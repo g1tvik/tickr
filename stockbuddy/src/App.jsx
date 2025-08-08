@@ -10,7 +10,7 @@ import Trade from './pages/Trade';
 import Learn from './pages/Learn';
 import Settings from './pages/Settings';
 import LessonDetail from "./pages/LessonDetail";
-import Discover from './pages/Discover';
+import AITradingCoach from './pages/Discover';
 import Shop from './pages/Shop';
 import ArticleReader from './components/ArticleReader';
 
@@ -65,7 +65,7 @@ function AppContent() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/trade" element={<Trade />} />
               <Route path="/learn" element={<Learn />} />
-              <Route path="/discover" element={<Discover />} />
+              <Route path="/discover" element={<AITradingCoach />} />
               <Route path="/shop" element={<Shop />} />
               <Route path="/learn/lesson/:lessonId" element={<LessonDetail />} />
               <Route path="/article/:articleId" element={<ArticleReader />} />

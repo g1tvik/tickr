@@ -9,8 +9,7 @@ const Settings = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [learningPreferences, setLearningPreferences] = useState({
     dailyGoal: 3,
-    notifications: true,
-    difficulty: 'auto'
+    notifications: true
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -31,8 +30,7 @@ const Settings = () => {
   });
   const [preferencesForm, setPreferencesForm] = useState({
     dailyGoal: 3,
-    notifications: true,
-    difficulty: 'auto'
+    notifications: true
   });
 
   useEffect(() => {
@@ -514,16 +512,7 @@ const Settings = () => {
                   {learningPreferences.notifications ? 'Enabled' : 'Disabled'}
                 </span>
               </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <span style={{ color: marbleGray }}>Difficulty</span>
-                <span style={{ color: marbleDarkGray, fontWeight: '500' }}>
-                  {learningPreferences.difficulty}
-                </span>
-              </div>
+
             </div>
             
             <div style={{
@@ -1027,32 +1016,7 @@ const Settings = () => {
               </select>
             </div>
             
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: marbleDarkGray,
-                fontWeight: '500'
-              }}>
-                Difficulty
-              </label>
-              <select
-                value={preferencesForm.difficulty}
-                onChange={(e) => setPreferencesForm({...preferencesForm, difficulty: e.target.value})}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: `1px solid ${marbleGray}`,
-                  fontSize: '16px'
-                }}
-              >
-                <option value="auto">Auto</option>
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
-            </div>
+
             
             <div style={{
               display: 'flex',

@@ -115,7 +115,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                   to="/discover"
                   style={{ color: isOnTradePage ? '#F4F1E9' : undefined }}
                 >
-                  DISCOVER
+                  AI COACH
                 </Link>
               </li>
               <li className="nav-item">
