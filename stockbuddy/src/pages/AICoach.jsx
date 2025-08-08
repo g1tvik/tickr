@@ -8,7 +8,7 @@ const HISTORICAL_SCENARIOS = [
   {
     id: 1,
     title: "Tesla's 2020 Breakout",
-    description: "March 2020 - Tesla was trading at $70 during the COVID crash. You have $10,000 to invest. What's your strategy?",
+    description: "March 2020 — After the COVID sell‑off, split‑adjusted TSLA traded near $70. Assume you already bought there. Your task: decide when to sell.",
     symbol: "TSLA",
     startDate: "2020-03-01",
     endDate: "2020-12-31",
@@ -17,7 +17,7 @@ const HISTORICAL_SCENARIOS = [
     // Explicit puzzle framing for clarity
     puzzleType: 'sell', // buy | sell | hold
     scenario: {
-      context: "Tesla was heavily shorted and facing bankruptcy rumors during COVID-19. The stock had dropped from $900 to $70.",
+      context: "Context: In Feb 2020 TSLA peaked near ~$900 pre‑split (≈$180 split‑adjusted), then during the March crash fell to ~\$70 (split‑adjusted). This scenario assumes an entry around $70 on 2020‑03‑01 and asks you to think about when to exit as price recovered into year‑end (Dec 2020 near ~$705 split‑adjusted).",
       keyEvents: [
         "March 2020: COVID-19 crash hits markets",
         "May 2020: Tesla announces strong Q1 delivery numbers",
@@ -143,9 +143,11 @@ function AICoach() {
   const [orderReasoning, setOrderReasoning] = useState('');
   const [chartData, setChartData] = useState(null);
   const [asOfDate, setAsOfDate] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
   const chatEndRef = useRef(null);
 
   const scenario = HISTORICAL_SCENARIOS[currentScenario];
+  const BEGINNER_BUDGET = 1000; // USD, used to size the example position and keep P/L approachable
 
   // Derive initial as-of date based on puzzle type for clarity
   useEffect(() => {
@@ -209,9 +211,11 @@ function AICoach() {
       const entryEpoch = parseDateToEpoch(scenario.startDate);
       const histEntry = getClosePriceOnOrBefore(entryEpoch);
       const entryPrice = histEntry || entry.price || scenario.initialPrice;
+      // Beginner-sized example position based on budget
+      const shares = Math.max(1, Math.floor(BEGINNER_BUDGET / entryPrice));
       return {
         hasPosition: true,
-        shares: entry.shares,
+        shares,
         entryDate: scenario.startDate,
         entryPrice
       };
@@ -375,7 +379,7 @@ function AICoach() {
         maxWidth: '1400px',
         margin: '0 auto',
         display: 'grid',
-        gridTemplateColumns: '1fr 400px',
+        gridTemplateColumns: '1.2fr 400px',
         gap: '16px'
       }}>
         {/* Main Content */}
@@ -384,76 +388,42 @@ function AICoach() {
           flexDirection: 'column',
           gap: '16px'
         }}>
-          {/* Header */}
+          {/* Top Bar - compact header + chips */}
           <div style={{
             backgroundColor: marbleLightGray,
             borderRadius: '20px',
             padding: '16px'
           }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '12px'
-            }}>
-              <h1 style={{
-                fontSize: '28px',
-                fontWeight: 'bold',
-                color: marbleDarkGray,
-                margin: 0,
-                fontFamily: fontHeading
-              }}>
-                🤖 AI Trading Coach
-              </h1>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '14px',
-                color: marbleGray
-              }}>
-                <span>Scenario {currentScenario + 1} of {HISTORICAL_SCENARIOS.length}</span>
-                {scenarioCompleted && <span style={{ color: '#22c55e' }}>✅ Complete</span>}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+              <div>
+                <h2 style={{
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  color: marbleDarkGray,
+                  margin: 0,
+                  fontFamily: fontHeading
+                }}>
+                  {scenario.title}
+                </h2>
+                <div style={{ color: marbleGray, fontSize: '12px', marginTop: '4px' }}>
+                  Scenario {currentScenario + 1} of {HISTORICAL_SCENARIOS.length}
+                  {scenarioCompleted && <span style={{ color: '#22c55e', marginLeft: 8 }}>✅ Complete</span>}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button onClick={() => setShowDetails(v => !v)} style={{
+                  padding: '6px 10px', borderRadius: 8, border: '1px solid #e5e7eb', background: marbleWhite,
+                  color: marbleDarkGray, fontSize: 12, cursor: 'pointer'
+                }}>{showDetails ? 'Hide Details' : 'Show Details'}</button>
               </div>
             </div>
-            <p style={{
-              color: marbleGray,
-              fontSize: '14px',
-              margin: 0
-            }}>
-              Learn trading through interactive scenarios and AI-powered guidance.
-            </p>
-          </div>
 
-          {/* Scenario Info */}
-          <div style={{
-            backgroundColor: marbleLightGray,
-            borderRadius: '20px',
-            padding: '16px'
-          }}>
-            <h2 style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: marbleDarkGray,
-              marginBottom: '8px',
-              fontFamily: fontHeading
-            }}>
-              {scenario.title}
-            </h2>
-            <p style={{
-              color: marbleGray,
-              fontSize: '16px',
-              marginBottom: '16px'
-            }}>
-              {scenario.description}
-            </p>
-
-            {/* Context Bar */}
+            {/* Compact chips */}
             <div style={{
               display: 'flex',
               flexWrap: 'wrap',
               gap: '8px',
-              marginBottom: '16px'
+              marginTop: '12px'
             }}>
               <span style={{
                 backgroundColor: marbleWhite,
@@ -484,106 +454,27 @@ function AICoach() {
                 fontSize: '12px',
                 border: '1px solid #e5e7eb'
               }}>
-                {position.hasPosition ? `💼 Position: ${position.shares} @ $${(position.entryPrice || 0).toFixed ? position.entryPrice.toFixed(2) : position.entryPrice}` : '💼 Position: None'}
-              </span>
-              <span style={{
-                backgroundColor: marbleWhite,
-                borderRadius: '9999px',
-                padding: '6px 12px',
-                color: marbleDarkGray,
-                fontSize: '12px',
-                border: '1px solid #e5e7eb'
-              }}>
                 🪙 Symbol: {scenario.symbol}
               </span>
             </div>
-            
-            <div style={{
-              backgroundColor: marbleWhite,
-              borderRadius: '12px',
-              padding: '16px',
-              marginBottom: '16px'
-            }}>
-              <h3 style={{
-                fontSize: '18px',
-                fontWeight: 'bold',
-                color: marbleDarkGray,
-                marginBottom: '12px'
-              }}>
-                📊 Market Context
-              </h3>
-              <p style={{
-                color: marbleGray,
-                fontSize: '14px',
-                lineHeight: '1.5'
-              }}>
-                {scenario.scenario.context}
-              </p>
-            </div>
 
-            <div style={{
-              backgroundColor: marbleWhite,
-              borderRadius: '12px',
-              padding: '16px'
-            }}>
-              <h3 style={{
-                fontSize: '18px',
-                fontWeight: 'bold',
-                color: marbleDarkGray,
-                marginBottom: '12px'
-              }}>
-                📅 Key Events
-              </h3>
-              <ul style={{
-                color: marbleGray,
-                fontSize: '14px',
-                lineHeight: '1.5',
-                paddingLeft: '20px'
-              }}>
-                {scenario.scenario.keyEvents.map((event, index) => (
-                  <li key={index} style={{ marginBottom: '8px' }}>{event}</li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Position & P/L (for SELL puzzles) */}
-            {scenario.puzzleType === 'sell' && (
-              <div style={{
-                backgroundColor: marbleWhite,
-                borderRadius: '12px',
-                padding: '16px',
-                marginTop: '16px'
-              }}>
-                <h3 style={{
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  color: marbleDarkGray,
-                  marginBottom: '12px'
-                }}>
-                  💼 Position & P/L
-                </h3>
-                {position.hasPosition ? (
-                  <div style={{ color: marbleDarkGray, fontSize: '14px' }}>
-                    <div style={{ marginBottom: '6px' }}>
-                      Position: Holding {position.shares} shares since {position.entryDate} @ ${position.entryPrice?.toFixed ? position.entryPrice.toFixed(2) : position.entryPrice}
-                    </div>
-                    {(() => {
-                      const pl = getPL();
-                      if (!pl) return <div style={{ color: marbleGray }}>Fetching historical data...</div>;
-                      const plColor = pl.value >= 0 ? '#22c55e' : '#ef4444';
-                      return (
-                        <div>
-                          <div>As-of price ({asOfDate}): ${pl.currentPrice.toFixed(2)}</div>
-                          <div style={{ fontWeight: 'bold', color: plColor }}>
-                            P/L: ${pl.value.toFixed(2)} ({pl.pct.toFixed(2)}%)
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                ) : (
-                  <div style={{ color: marbleGray, fontSize: '14px' }}>No open position.</div>
-                )}
+            {/* Collapsible details */}
+            {showDetails && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
+                <div style={{ backgroundColor: marbleWhite, borderRadius: 12, padding: 16 }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 'bold', color: marbleDarkGray, marginBottom: 8 }}>📊 Market Context</h3>
+                  <p style={{ color: marbleGray, fontSize: 13, lineHeight: 1.5, margin: 0 }}>
+                    {scenario.scenario.context}
+                  </p>
+                </div>
+                <div style={{ backgroundColor: marbleWhite, borderRadius: 12, padding: 16 }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 'bold', color: marbleDarkGray, marginBottom: 8 }}>📅 Key Events</h3>
+                  <ul style={{ color: marbleGray, fontSize: 13, lineHeight: 1.5, paddingLeft: 18, margin: 0 }}>
+                    {scenario.scenario.keyEvents.map((event, index) => (
+                      <li key={index} style={{ marginBottom: 6 }}>{event}</li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )}
           </div>
@@ -601,8 +492,57 @@ function AICoach() {
               realtime={false}
               height={400}
               onDataUpdate={(data) => setChartData(data)}
+              showDebugOverlay={false}
+              visibleRange={{
+                from: Math.floor(new Date((scenario.startDate || '2020-01-01') + 'T00:00:00Z').getTime() / 1000),
+                to: Math.floor(new Date((scenario.endDate || '2020-12-31') + 'T23:59:59Z').getTime() / 1000)
+              }}
             />
           </div>
+
+          {/* Example beginner position & P/L under the chart */}
+          {scenario.puzzleType !== 'buy' && position.hasPosition && (
+            <div style={{
+              backgroundColor: marbleLightGray,
+              borderRadius: '16px',
+              padding: '12px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div style={{ color: marbleDarkGray, fontSize: 13 }}>
+                <div style={{ fontWeight: 'bold', marginBottom: 4 }}>Example beginner position</div>
+                <div style={{ color: marbleGray }}>Budget: ${BEGINNER_BUDGET.toLocaleString()} • Entry: {position.entryDate} @ ${position.entryPrice.toFixed(2)}</div>
+                <div>Holding: {position.shares} shares</div>
+                <div style={{ color: marbleGray, fontSize: 12, marginTop: 4 }}>
+                  Shares = floor(Budget ÷ Entry) = floor(${BEGINNER_BUDGET} ÷ ${position.entryPrice.toFixed(2)}) = {position.shares}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                {(() => {
+                  const pl = getPL();
+                  if (!pl) return <div style={{ color: marbleGray, fontSize: 13 }}>Loading P/L…</div>;
+                  const plColor = pl.value >= 0 ? '#22c55e' : '#ef4444';
+                  const delta = (pl.currentPrice - position.entryPrice);
+                  return (
+                    <div>
+                      <div style={{ color: marbleGray, fontSize: 12 }}>As-of price ({asOfDate})</div>
+                      <div style={{ color: marbleDarkGray, fontWeight: 'bold' }}>${pl.currentPrice.toFixed(2)}</div>
+                      <div style={{ color: plColor, fontWeight: 'bold' }}>P/L: ${pl.value.toFixed(2)} ({pl.pct.toFixed(2)}%)</div>
+                      <div style={{ color: marbleGray, fontSize: 12, marginTop: 4 }}>
+                        Calculation: {position.shares} × (${pl.currentPrice.toFixed(2)} − ${position.entryPrice.toFixed(2)}) = ${
+                          (position.shares * delta).toFixed(2)
+                        }
+                      </div>
+                      <div style={{ color: marbleGray, fontSize: 12 }}>
+                        As-of price uses the official historical close on that date.
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Chat Panel */}

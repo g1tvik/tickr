@@ -1597,7 +1597,7 @@ async function generateHistoricalData(symbol, timeframe, limit) {
       case '1d':
         alpacaTimeframe = '1Day';
         yahooInterval = '1d';
-        yahooRange = '5y'; // 5 years for daily data
+        yahooRange = '10y'; // extend range so historical windows like 2020 are available
         break;
       case '1w':
         alpacaTimeframe = '1Week';
@@ -1607,7 +1607,7 @@ async function generateHistoricalData(symbol, timeframe, limit) {
       case '1M':
         alpacaTimeframe = '1Month';
         yahooInterval = '1d';
-        yahooRange = '5y'; // 5 years for monthly data
+        yahooRange = '10y'; // extend range for monthly as well
         break;
       default:
         alpacaTimeframe = '1Day';
@@ -1665,7 +1665,7 @@ async function generateHistoricalData(symbol, timeframe, limit) {
     try {
       // Get maximum historical data for all timeframes
       const yahooRangeAdjusted = yahooRange; // Use the full year range we set above
-      const yahooResponse = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${yahooInterval}&range=${yahooRangeAdjusted}`, {
+        const yahooResponse = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${yahooInterval}&range=${yahooRangeAdjusted}`, {
         timeout: 10000
       });
       

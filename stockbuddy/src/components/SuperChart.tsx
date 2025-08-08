@@ -14,6 +14,8 @@ export interface SuperChartProps {
   onChartReady?: (chart: any) => void;
   onDataUpdate?: (data: any) => void;
   onDrawingUpdate?: (drawings: any[]) => void;
+  showDebugOverlay?: boolean;
+  visibleRange?: { from: number; to: number };
 }
 
 export const SuperChart: React.FC<SuperChartProps> = ({
@@ -24,7 +26,9 @@ export const SuperChart: React.FC<SuperChartProps> = ({
   height = 500,
   onChartReady,
   onDataUpdate,
-  onDrawingUpdate
+  onDrawingUpdate,
+  showDebugOverlay = false,
+  visibleRange
 }) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
@@ -239,9 +243,18 @@ export const SuperChart: React.FC<SuperChartProps> = ({
         
         candlestickSeriesRef.current.setData(candleData);
         
-        // Fit content after setting data
+        // Apply visible range if provided; otherwise fit content
         if (chartRef.current) {
-          chartRef.current.timeScale().fitContent();
+          if (visibleRange && visibleRange.from && visibleRange.to) {
+            try {
+              chartRef.current.timeScale().setVisibleRange({ from: visibleRange.from, to: visibleRange.to });
+            } catch (e) {
+              console.warn('setVisibleRange failed, falling back to fitContent', e);
+              chartRef.current.timeScale().fitContent();
+            }
+          } else {
+            chartRef.current.timeScale().fitContent();
+          }
         }
         
         console.log('Chart data set successfully');
@@ -257,6 +270,17 @@ export const SuperChart: React.FC<SuperChartProps> = ({
       setError('Failed to update chart data');
     }
   }, [chartData, onDataUpdate, currentInterval]);
+
+  // Update visible range when prop changes
+  useEffect(() => {
+    if (chartRef.current && visibleRange && visibleRange.from && visibleRange.to) {
+      try {
+        chartRef.current.timeScale().setVisibleRange({ from: visibleRange.from, to: visibleRange.to });
+      } catch (e) {
+        console.warn('setVisibleRange failed on prop change', e);
+      }
+    }
+  }, [visibleRange]);
 
   // Handle interval changes
   const handleIntervalChange = useCallback((newInterval: string) => {
@@ -396,23 +420,25 @@ export const SuperChart: React.FC<SuperChartProps> = ({
              position: 'relative',
              display: 'block'
            }}
-         >
-           {/* Debug overlay */}
-           <div style={{
-             position: 'absolute',
-             top: '10px',
-             left: '10px',
-             color: 'white',
-             fontSize: '12px',
-             zIndex: 1000,
-             pointerEvents: 'none',
-             backgroundColor: 'rgba(0,0,0,0.7)',
-             padding: '4px 8px',
-             borderRadius: '4px'
-           }}>
-             Chart: {chartContainerRef.current?.getBoundingClientRect()?.width || 0} x {height}
-           </div>
-         </div>
+          >
+            {/* Debug overlay (hidden by default) */}
+            {showDebugOverlay && (
+              <div style={{
+                position: 'absolute',
+                top: '10px',
+                left: '10px',
+                color: 'white',
+                fontSize: '12px',
+                zIndex: 1000,
+                pointerEvents: 'none',
+                backgroundColor: 'rgba(0,0,0,0.7)',
+                padding: '4px 8px',
+                borderRadius: '4px'
+              }}>
+                Chart: {chartContainerRef.current?.getBoundingClientRect()?.width || 0} x {height}
+              </div>
+            )}
+          </div>
 
         {/* Tooltip */}
         {tooltipData && (
