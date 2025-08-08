@@ -44,6 +44,11 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
+  const [learningPreferences, setLearningPreferences] = useState({
+    dailyGoal: 3,
+    notifications: true,
+    difficulty: 'auto'
+  });
 
   const fetchPortfolio = async () => {
     if (!isAuthenticated()) {
@@ -120,10 +125,24 @@ export default function Dashboard() {
     }
   };
 
+  const fetchLearningPreferences = async () => {
+    if (!isAuthenticated()) return;
+
+    try {
+      const response = await api.getLearningPreferences();
+      if (response.success) {
+        setLearningPreferences(response.preferences);
+      }
+    } catch (err) {
+      console.error('Error fetching learning preferences:', err);
+    }
+  };
+
   useEffect(() => {
     fetchPortfolio();
     fetchUserData();
     fetchUserProfile();
+    fetchLearningPreferences();
   }, []);
 
   // Helper function to format currency
@@ -210,7 +229,7 @@ export default function Dashboard() {
       return false;
     }).length;
     
-    const dailyGoal = 3; // Target: 3 lessons per day
+    const dailyGoal = learningPreferences.dailyGoal || 3; // Use user's preference or default to 3
     const progress = Math.min((lessonsCompletedToday / dailyGoal) * 100, 100);
     const remaining = Math.max(dailyGoal - lessonsCompletedToday, 0);
     

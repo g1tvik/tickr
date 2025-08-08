@@ -155,7 +155,7 @@ const getCompanyName = async (symbol) => {
 
     // Check if Alpaca API keys are configured
     if (!process.env.ALPACA_API_KEY || !process.env.ALPACA_SECRET_KEY) {
-      console.warn(`['${getTimestamp()}'] `[${getTimestamp()}] Alpaca API keys not configured, using symbol as company name`);
+      console.warn(`[${getTimestamp()}] Alpaca API keys not configured, using symbol as company name`);
       companyNameCache[symbol] = symbol.toUpperCase();
       return symbol.toUpperCase();
     }
@@ -166,13 +166,13 @@ const getCompanyName = async (symbol) => {
     };
 
     // Use the working Alpaca Paper Trading API endpoint
-          console.log(`['${getTimestamp()}'] `[${getTimestamp()}] 🔍 Fetching company name for ${symbol} from Alpaca Paper Trading API...`);
+          console.log(`[${getTimestamp()}] 🔍 Fetching company name for ${symbol} from Alpaca Paper Trading API...`);
     try {
       const response = await axios.get(`https://paper-api.alpaca.markets/v2/assets/${symbol}`, {
         headers
       });
 
-              console.log(`['${getTimestamp()}'] `[${getTimestamp()}] 📄 Alpaca Paper Trading API response for ${symbol}:`, JSON.stringify(response.data, null, 2));
+              console.log(`[${getTimestamp()}] 📄 Alpaca Paper Trading API response for ${symbol}:`, JSON.stringify(response.data, null, 2));
 
       const asset = response.data;
       if (asset && asset.name) {
@@ -185,45 +185,45 @@ const getCompanyName = async (symbol) => {
           companyName = companyName.replace(' Inc.', ' Inc.');
         }
         
-        console.log(`['${getTimestamp()}'] `[${getTimestamp()}] ✅ Found company name for ${symbol}: ${companyName}`);
+        console.log(`[${getTimestamp()}] ✅ Found company name for ${symbol}: ${companyName}`);
         // Cache the company name
         companyNameCache[symbol] = companyName;
         return companyName;
       } else {
-        console.warn(`['${getTimestamp()}'] `[${getTimestamp()}] ⚠️ No company name found in Alpaca response for ${symbol}, checking fallback mapping`);
+        console.warn(`[${getTimestamp()}] ⚠️ No company name found in Alpaca response for ${symbol}, checking fallback mapping`);
       }
     } catch (alpacaError) {
-      console.error(`['${getTimestamp()}'] `[${getTimestamp()}] ❌ Alpaca API failed for ${symbol}:`, alpacaError.message);
+      console.error(`[${getTimestamp()}] ❌ Alpaca API failed for ${symbol}:`, alpacaError.message);
       if (alpacaError.response) {
-        console.error(`['${getTimestamp()}'] `[${getTimestamp()}]    Status: ${alpacaError.response.status}`);
-        console.error(`['${getTimestamp()}'] `[${getTimestamp()}]    Data:`, alpacaError.response.data);
+        console.error(`[${getTimestamp()}]    Status: ${alpacaError.response.status}`);
+        console.error(`[${getTimestamp()}]    Data:`, alpacaError.response.data);
       }
     }
 
     // If Alpaca API fails, use fallback mapping
-    console.warn(`['${getTimestamp()}'] `[${getTimestamp()}] ⚠️ Alpaca API failed for ${symbol}, checking fallback mapping`);
+    console.warn(`[${getTimestamp()}] ⚠️ Alpaca API failed for ${symbol}, checking fallback mapping`);
     if (companyNameMapping[symbol.toUpperCase()]) {
       const fallbackName = companyNameMapping[symbol.toUpperCase()];
-      console.log(`['${getTimestamp()}'] `[${getTimestamp()}] ✅ Using fallback company name for ${symbol}: ${fallbackName}`);
+      console.log(`[${getTimestamp()}] ✅ Using fallback company name for ${symbol}: ${fallbackName}`);
       companyNameCache[symbol] = fallbackName;
       return fallbackName;
     } else {
-      console.warn(`['${getTimestamp()}'] `[${getTimestamp()}] ⚠️ No fallback name found for ${symbol}, using symbol`);
+      console.warn(`[${getTimestamp()}] ⚠️ No fallback name found for ${symbol}, using symbol`);
       // Final fallback to symbol
       companyNameCache[symbol] = symbol.toUpperCase();
       return symbol.toUpperCase();
     }
   } catch (error) {
-    console.error(`['${getTimestamp()}'] `[${getTimestamp()}] ❌ Failed to get company name for ${symbol}:`, error.message);
+    console.error(`[${getTimestamp()}] ❌ Failed to get company name for ${symbol}:`, error.message);
     
     // Try fallback mapping first
     if (companyNameMapping[symbol.toUpperCase()]) {
       const fallbackName = companyNameMapping[symbol.toUpperCase()];
-      console.log(`['${getTimestamp()}'] `[${getTimestamp()}] ✅ Using fallback company name for ${symbol}: ${fallbackName}`);
+      console.log(`[${getTimestamp()}] ✅ Using fallback company name for ${symbol}: ${fallbackName}`);
       companyNameCache[symbol] = fallbackName;
       return fallbackName;
     } else {
-      console.warn(`['${getTimestamp()}'] `[${getTimestamp()}] ⚠️ No fallback name found for ${symbol}, using symbol`);
+      console.warn(`[${getTimestamp()}] ⚠️ No fallback name found for ${symbol}, using symbol`);
       // Final fallback to symbol
       companyNameCache[symbol] = symbol.toUpperCase();
       return symbol.toUpperCase();
@@ -251,7 +251,7 @@ const getStockQuote = async (symbol) => {
       if (ws.isConnected && ws.isAuthenticated) {
         // Wait a bit for data to arrive if we don't have it yet
         if (!ws.getLiveData(symbol)) {
-          console.log(`['${getTimestamp()}'] `[${getTimestamp()}] ⏳ Waiting for WebSocket data for ${symbol}...`);
+          console.log(`[${getTimestamp()}] ⏳ Waiting for WebSocket data for ${symbol}...`);
           await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
         }
       }
@@ -260,7 +260,7 @@ const getStockQuote = async (symbol) => {
       const wsPrice = ws.getCurrentPrice(symbol);
       const wsVolume = ws.getCurrentVolume(symbol);
       
-      console.log(`['${getTimestamp()}'] `[${getTimestamp()}] 🔍 WebSocket check for ${symbol}:`, {
+      console.log(`[${getTimestamp()}] 🔍 WebSocket check for ${symbol}:`, {
         hasData: !!wsData,
         hasPrice: !!wsPrice,
         isAuthenticated: ws.isAuthenticated,
@@ -270,7 +270,7 @@ const getStockQuote = async (symbol) => {
       });
       
       if (wsData && wsPrice && ws.isAuthenticated) {
-        console.log(`['${getTimestamp()}'] `[${getTimestamp()}] 📡 Using WebSocket data for ${symbol}: $${wsPrice} (Volume: ${wsVolume?.toLocaleString() || 'N/A'})`);
+        console.log(`[${getTimestamp()}] 📡 Using WebSocket data for ${symbol}: $${wsPrice} (Volume: ${wsVolume?.toLocaleString() || 'N/A'})`);
         
         // Get company name from Alpaca API
         const companyName = await getCompanyName(symbol);
@@ -284,7 +284,7 @@ const getStockQuote = async (symbol) => {
           change = wsPrice - previousClose;
           changePercent = ((change / previousClose) * 100).toFixed(2);
         } catch (prevCloseError) {
-          console.warn(`['${getTimestamp()}'] `⚠️ Could not calculate change for ${symbol}:`, prevCloseError.message);
+          console.warn(`[${getTimestamp()}] ⚠️ Could not calculate change for ${symbol}:`, prevCloseError.message);
           // Be honest about not having historical data
           change = null;
           changePercent = "N/A";
@@ -303,17 +303,17 @@ const getStockQuote = async (symbol) => {
           hasVolumeData: wsVolume !== null
         };
       } else {
-        console.log(`['${getTimestamp()}'] `📡 WebSocket data not available for ${symbol}, falling back to REST API...`);
+        console.log(`[${getTimestamp()}] 📡 WebSocket data not available for ${symbol}, falling back to REST API...`);
       }
     } else {
-      console.log(`['${getTimestamp()}'] `📡 Using REST API for ${symbol} (non-FAANG stock)`);
+      console.log(`[${getTimestamp()}] 📡 Using REST API for ${symbol} (non-FAANG stock)`);
     }
 
     // Use REST API for non-FAANG stocks or when WebSocket fails
     return await getStockQuoteFromREST(symbol);
     
   } catch (error) {
-    console.error(`['${getTimestamp()}'] `Error fetching data for ${symbol}:`, error.message);
+    console.error(`[${getTimestamp()}] Error fetching data for ${symbol}:`, error.message);
     throw new Error(`Failed to get quote for ${symbol}: ${error.message}`);
   }
 };
@@ -346,7 +346,7 @@ const getPreviousClose = async (symbol) => {
 
       const bars = response.data.bars;
       if (bars && bars.length > 0) {
-        console.log(`['${getTimestamp()}'] `📊 Previous close for ${symbol}: $${bars[0].c} (from yesterday's bar)`);
+        console.log(`[${getTimestamp()}] 📊 Previous close for ${symbol}: $${bars[0].c} (from yesterday's bar)`);
         return bars[0].c;
       }
       throw new Error('No bars data available');
@@ -373,7 +373,7 @@ const getPreviousClose = async (symbol) => {
       const bars = response.data.bars;
       if (bars && bars.length > 0) {
         const lastBar = bars[bars.length - 1];
-        console.log(`['${getTimestamp()}'] `📊 Previous close for ${symbol}: $${lastBar.c} (from historical bars)`);
+        console.log(`[${getTimestamp()}] 📊 Previous close for ${symbol}: $${lastBar.c} (from historical bars)`);
         return lastBar.c;
       }
       throw new Error('No historical bars available');
@@ -398,7 +398,7 @@ const getPreviousClose = async (symbol) => {
       const trades = response.data.trades;
       if (trades && trades.length > 0) {
         const lastTrade = trades[trades.length - 1];
-        console.log(`['${getTimestamp()}'] `📊 Previous close for ${symbol}: $${lastTrade.p} (from yesterday's last trade)`);
+        console.log(`[${getTimestamp()}] 📊 Previous close for ${symbol}: $${lastTrade.p} (from yesterday's last trade)`);
         return lastTrade.p;
       }
       throw new Error('No yesterday trades available');
@@ -424,7 +424,7 @@ const getPreviousClose = async (symbol) => {
       if (bars && bars.length > 0) {
         // Use the first bar of the day (open) as previous close for intraday change
         const openBar = bars[0];
-        console.log(`['${getTimestamp()}'] `📊 Intraday open for ${symbol}: $${openBar.o} (from today's bars)`);
+        console.log(`[${getTimestamp()}] 📊 Intraday open for ${symbol}: $${openBar.o} (from today's bars)`);
         return openBar.o;
       }
       throw new Error('No today bars available');
@@ -451,7 +451,7 @@ const getPreviousClose = async (symbol) => {
       if (bars && bars.length >= 2) {
         // Use the second-to-last bar as previous close
         const previousBar = bars[bars.length - 2];
-        console.log(`['${getTimestamp()}'] `📊 Previous close for ${symbol}: $${previousBar.c} (from recent bars)`);
+        console.log(`[${getTimestamp()}] 📊 Previous close for ${symbol}: $${previousBar.c} (from recent bars)`);
         return previousBar.c;
       }
       throw new Error('No recent bars available');
@@ -473,14 +473,14 @@ const getPreviousClose = async (symbol) => {
             const previousClose = closes[closes.length - 2];
             
             if (currentClose && previousClose) {
-              console.log(`['${getTimestamp()}'] `📊 Previous close for ${symbol}: $${previousClose} (from Yahoo Finance)`);
+              console.log(`[${getTimestamp()}] 📊 Previous close for ${symbol}: $${previousClose} (from Yahoo Finance)`);
               return previousClose;
             }
           }
         }
         throw new Error('No Yahoo Finance data available');
       } catch (yahooError) {
-        console.warn(`['${getTimestamp()}'] `⚠️ Yahoo Finance failed for ${symbol}:`, yahooError.message);
+        console.warn(`[${getTimestamp()}] ⚠️ Yahoo Finance failed for ${symbol}:`, yahooError.message);
         throw new Error('Yahoo Finance data not available');
       }
     },
@@ -497,7 +497,7 @@ const getPreviousClose = async (symbol) => {
       const result = await approaches[i]();
       return result;
     } catch (error) {
-      console.warn(`['${getTimestamp()}'] `⚠️ Approach ${i + 1} failed for ${symbol}:`, error.message);
+      console.warn(`[${getTimestamp()}] ⚠️ Approach ${i + 1} failed for ${symbol}:`, error.message);
       if (i === approaches.length - 1) {
         // This was the last approach, throw the error
         throw new Error(`All approaches failed to get previous close for ${symbol}`);
@@ -546,10 +546,10 @@ const getStockQuoteFromREST = async (symbol) => {
     const bars = barsResponse.data.bars;
     if (bars && bars.length > 0) {
       dailyVolume = bars[0].v;
-      console.log(`['${getTimestamp()}'] `📊 ${symbol} daily volume (REST): ${dailyVolume.toLocaleString()}`);
+      console.log(`[${getTimestamp()}] 📊 ${symbol} daily volume (REST): ${dailyVolume.toLocaleString()}`);
     }
   } catch (barsError) {
-    console.warn(`['${getTimestamp()}'] `⚠️ Failed to get daily volume for ${symbol}:`, barsError.message);
+    console.warn(`[${getTimestamp()}] ⚠️ Failed to get daily volume for ${symbol}:`, barsError.message);
     // Use trade volume as fallback only if available from API
     dailyVolume = trade.trade.s || null;
   }
@@ -563,16 +563,16 @@ const getStockQuoteFromREST = async (symbol) => {
             change = currentPrice - previousClose;
             changePercent = ((change / previousClose) * 100).toFixed(2);
           } catch (prevCloseError) {
-            console.warn(`['${getTimestamp()}'] `⚠️ Could not calculate change for ${symbol}:`, prevCloseError.message);
+            console.warn(`[${getTimestamp()}] ⚠️ Could not calculate change for ${symbol}:`, prevCloseError.message);
             // Be honest about not having historical data
             change = null;
             changePercent = "N/A";
           }
   
             if (change !== null) {
-            console.log(`['${getTimestamp()}'] `${symbol} (REST API): $${currentPrice} (${change >= 0 ? '+' : ''}${changePercent}%) - Volume: ${dailyVolume.toLocaleString()}`);
+            console.log(`[${getTimestamp()}] ${symbol} (REST API): $${currentPrice} (${change >= 0 ? '+' : ''}${changePercent}%) - Volume: ${dailyVolume.toLocaleString()}`);
     } else {
-            console.log(`['${getTimestamp()}'] `${symbol} (REST API): $${currentPrice} (change: N/A - no historical data) - Volume: ${dailyVolume.toLocaleString()}`);
+            console.log(`[${getTimestamp()}] ${symbol} (REST API): $${currentPrice} (change: N/A - no historical data) - Volume: ${dailyVolume.toLocaleString()}`);
           }
   
   // Get company name from Alpaca API
@@ -620,7 +620,7 @@ const searchStocks = async (query) => {
       });
       alpacaAssets = response.data;
     } catch (alpacaError) {
-      console.warn(`['${getTimestamp()}'] 'Failed to fetch Alpaca assets:', alpacaError.message);
+      console.warn(`[${getTimestamp()}] Failed to fetch Alpaca assets:`, alpacaError.message);
       throw new Error('Failed to fetch stock data');
     }
 
@@ -726,7 +726,7 @@ const searchStocks = async (query) => {
     });
 
     // Debug logging for search results
-    console.log(`['${getTimestamp()}'] `🔍 Professional search results for "${query}":`, searchResults.slice(0, 5).map(asset => ({
+    console.log(`[${getTimestamp()}] 🔍 Professional search results for "${query}":`, searchResults.slice(0, 5).map(asset => ({
       symbol: asset.symbol,
       name: asset.name,
       score: asset.relevanceScore
@@ -738,11 +738,11 @@ const searchStocks = async (query) => {
     
     for (const asset of topAssets) {
       try {
-        console.log(`['${getTimestamp()}'] `🔍 Getting quote for ${asset.symbol}...`);
+        console.log(`[${getTimestamp()}] 🔍 Getting quote for ${asset.symbol}...`);
         const quote = await getStockQuoteFromREST(asset.symbol);
         finalResults.push(quote);
       } catch (quoteError) {
-        console.warn(`['${getTimestamp()}'] `Failed to get quote for ${asset.symbol}:`, quoteError.message);
+        console.warn(`[${getTimestamp()}] Failed to get quote for ${asset.symbol}:`, quoteError.message);
         // Add asset without quote data
         finalResults.push({
           symbol: asset.symbol,
@@ -760,7 +760,7 @@ const searchStocks = async (query) => {
 
     return finalResults;
   } catch (error) {
-    console.error(`['${getTimestamp()}'] 'Error searching stocks:', error);
+    console.error(`[${getTimestamp()}] Error searching stocks:`, error);
     throw new Error(`Failed to search stocks: ${error.message}`);
   }
 };
@@ -774,7 +774,7 @@ const searchStocksAutocomplete = async (query) => {
     const cacheKey = `autocomplete_${queryLower}`;
     const cached = searchCache[cacheKey];
     if (cached && (Date.now() - cached.timestamp) < SEARCH_CACHE_DURATION) {
-      console.log(`['${getTimestamp()}'] `📦 Returning cached autocomplete results for "${query}"`);
+      console.log(`[${getTimestamp()}] 📦 Returning cached autocomplete results for "${query}"`);
       return cached.results;
     }
 
@@ -790,10 +790,10 @@ const searchStocksAutocomplete = async (query) => {
     // Check if we have cached assets and they're still valid
     if (alpacaAssetsCache.data && alpacaAssetsCache.timestamp && 
         (now - alpacaAssetsCache.timestamp) < alpacaAssetsCache.ttl) {
-      console.log(`['${getTimestamp()}'] '📦 Using cached Alpaca assets');
+      console.log(`[${getTimestamp()}] 📦 Using cached Alpaca assets`);
       alpacaAssets = alpacaAssetsCache.data;
     } else {
-      console.log(`['${getTimestamp()}'] '🔄 Fetching fresh Alpaca assets...');
+      console.log(`[${getTimestamp()}] 🔄 Fetching fresh Alpaca assets...`);
       const headers = {
         'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
         'APCA-API-SECRET-KEY': process.env.ALPACA_SECRET_KEY
@@ -813,9 +813,9 @@ const searchStocksAutocomplete = async (query) => {
         // Cache the assets
         alpacaAssetsCache.data = alpacaAssets;
         alpacaAssetsCache.timestamp = now;
-        console.log(`['${getTimestamp()}'] `✅ Cached ${alpacaAssets.length} Alpaca assets`);
+        console.log(`[${getTimestamp()}] ✅ Cached ${alpacaAssets.length} Alpaca assets`);
       } catch (alpacaError) {
-        console.warn(`['${getTimestamp()}'] 'Failed to fetch Alpaca assets:', alpacaError.message);
+        console.warn(`[${getTimestamp()}] Failed to fetch Alpaca assets:`, alpacaError.message);
         throw new Error('Failed to fetch stock data');
       }
     }
@@ -948,10 +948,10 @@ const searchStocksAutocomplete = async (query) => {
       timestamp: Date.now()
     };
 
-    console.log(`['${getTimestamp()}'] `✅ Autocomplete search for "${query}" returned ${results.length} results`);
+    console.log(`[${getTimestamp()}] ✅ Autocomplete search for "${query}" returned ${results.length} results`);
     return results;
   } catch (error) {
-    console.error(`['${getTimestamp()}'] 'Error in autocomplete search:', error);
+    console.error(`[${getTimestamp()}] Error in autocomplete search:`, error);
     throw new Error(`Failed to search stocks: ${error.message}`);
   }
 };
@@ -992,7 +992,7 @@ router.get('/portfolio', authenticateToken, async (req, res) => {
         position.change = quote.change;
         position.changePercent = quote.changePercent;
       } catch (quoteError) {
-        console.warn(`['${getTimestamp()}'] `Failed to get quote for ${position.symbol}, using last known price`);
+        console.warn(`[${getTimestamp()}] Failed to get quote for ${position.symbol}, using last known price`);
         // Keep the existing price if quote fails
         position.currentPrice = position.currentPrice || position.avgPrice;
         position.change = position.change || 0;
@@ -1017,7 +1017,7 @@ router.get('/portfolio', authenticateToken, async (req, res) => {
       portfolio: portfolio
     });
   } catch (error) {
-    console.error(`['${getTimestamp()}'] 'Error getting portfolio:', error);
+    console.error(`[${getTimestamp()}] Error getting portfolio:`, error);
     res.status(500).json({
       success: false,
       message: 'Failed to get portfolio'
@@ -1037,7 +1037,7 @@ router.get('/quote/:symbol', async (req, res) => {
       quote: quote
     });
   } catch (error) {
-    console.error(`['${getTimestamp()}'] 'Error getting quote:', error);
+    console.error(`[${getTimestamp()}] Error getting quote:`, error);
     res.status(500).json({
       success: false,
       message: 'Failed to get stock quote'
@@ -1064,7 +1064,7 @@ router.get('/search', async (req, res) => {
       results: results
     });
   } catch (error) {
-    console.error(`['${getTimestamp()}'] 'Error searching stocks:', error);
+    console.error(`[${getTimestamp()}] Error searching stocks:`, error);
     res.status(500).json({
       success: false,
       message: 'Failed to search stocks'
@@ -1082,7 +1082,7 @@ router.get('/health', async (req, res) => {
   try {
     // Warm up the Alpaca assets cache if it's empty
     if (!alpacaAssetsCache.data) {
-      console.log(`['${getTimestamp()}'] '🔥 Warming up Alpaca assets cache...');
+      console.log(`[${getTimestamp()}] 🔥 Warming up Alpaca assets cache...`);
       try {
         const headers = {
           'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
@@ -1100,9 +1100,9 @@ router.get('/health', async (req, res) => {
         
         alpacaAssetsCache.data = response.data;
         alpacaAssetsCache.timestamp = Date.now();
-        console.log(`['${getTimestamp()}'] `✅ Cache warmed up with ${response.data.length} assets`);
+        console.log(`[${getTimestamp()}] ✅ Cache warmed up with ${response.data.length} assets`);
       } catch (error) {
-        console.warn(`['${getTimestamp()}'] 'Failed to warm up cache:', error.message);
+        console.warn(`[${getTimestamp()}] Failed to warm up cache:`, error.message);
       }
     }
 
@@ -1116,7 +1116,7 @@ router.get('/health', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(`['${getTimestamp()}'] 'Health check failed:', error);
+    console.error(`[${getTimestamp()}] Health check failed:`, error);
     res.status(500).json({
       success: false,
       message: 'Trading service health check failed'
@@ -1148,7 +1148,7 @@ router.get('/cache-status', (req, res) => {
       }
     });
   } catch (error) {
-    console.error(`['${getTimestamp()}'] 'Cache status failed:', error);
+    console.error(`[${getTimestamp()}] Cache status failed:`, error);
     res.status(500).json({
       success: false,
       message: 'Failed to get cache status'
@@ -1175,7 +1175,7 @@ router.get('/autocomplete', async (req, res) => {
       results: results
     });
   } catch (error) {
-    console.error(`['${getTimestamp()}'] 'Error in autocomplete search:', error);
+    console.error(`[${getTimestamp()}] Error in autocomplete search:`, error);
     res.status(500).json({
       success: false,
       message: 'Failed to search stocks'
@@ -1267,7 +1267,7 @@ router.post('/buy', authenticateToken, async (req, res) => {
       portfolio: portfolio
     });
   } catch (error) {
-    console.error(`['${getTimestamp()}'] 'Error executing buy order:', error);
+    console.error(`[${getTimestamp()}] Error executing buy order:`, error);
     res.status(500).json({
       success: false,
       message: 'Failed to execute buy order'
@@ -1348,7 +1348,7 @@ router.post('/sell', authenticateToken, async (req, res) => {
       portfolio: portfolio
     });
   } catch (error) {
-    console.error(`['${getTimestamp()}'] 'Error executing sell order:', error);
+    console.error(`[${getTimestamp()}] Error executing sell order:`, error);
     res.status(500).json({
       success: false,
       message: 'Failed to execute sell order'
@@ -1373,7 +1373,7 @@ router.get('/transactions', authenticateToken, async (req, res) => {
       transactions: sortedTransactions
     });
   } catch (error) {
-    console.error(`['${getTimestamp()}'] 'Error getting transactions:', error);
+    console.error(`[${getTimestamp()}] Error getting transactions:`, error);
     res.status(500).json({
       success: false,
       message: 'Failed to get transaction history'
@@ -1389,7 +1389,7 @@ const initializeWebSocket = () => {
   if (!wsClient) {
     wsClient = new AlpacaWebSocketClient();
     wsClient.connect().catch(error => {
-      console.error(`['${getTimestamp()}'] '❌ Failed to initialize WebSocket:', error);
+      console.error(`[${getTimestamp()}] ❌ Failed to initialize WebSocket:`, error);
     });
   }
   return wsClient;
@@ -1416,7 +1416,7 @@ router.get('/websocket-status', (req, res) => {
     const status = wsClient.getStatus();
     res.json(status);
   } catch (error) {
-    console.error(`['${getTimestamp()}'] 'Error getting WebSocket status:', error);
+    console.error(`[${getTimestamp()}] Error getting WebSocket status:`, error);
     res.status(500).json({ error: 'Failed to get WebSocket status' });
   }
 });
@@ -1428,7 +1428,7 @@ router.get('/market', async (req, res) => {
     const now = Date.now();
     if (marketDataCache.data && marketDataCache.timestamp && 
         (now - marketDataCache.timestamp) < marketDataCache.ttl) {
-      console.log(`['${getTimestamp()}'] '📦 Returning cached FAANG market data');
+      console.log(`[${getTimestamp()}] 📦 Returning cached FAANG market data`);
       return res.json({
         success: true,
         marketData: marketDataCache.data,
@@ -1439,16 +1439,16 @@ router.get('/market', async (req, res) => {
     const faangStocks = ['META', 'AAPL', 'AMZN', 'NFLX', 'GOOGL'];
     const marketData = [];
     
-    console.log(`['${getTimestamp()}'] '🔄 Fetching fresh FAANG market data for:', faangStocks.join(', '));
+    console.log(`[${getTimestamp()}] 🔄 Fetching fresh FAANG market data for:`, faangStocks.join(', '));
     
     // Use Promise.all to fetch all stocks concurrently (faster, fewer API calls)
     const quotePromises = faangStocks.map(async (symbol) => {
       try {
       const quote = await getStockQuote(symbol);
-      console.log(`['${getTimestamp()}'] `✅ ${symbol}: $${quote.price} (${quote.changePercent}%)`);
+      console.log(`[${getTimestamp()}] ✅ ${symbol}: $${quote.price} (${quote.changePercent}%)`);
         return quote;
       } catch (quoteError) {
-        console.warn(`['${getTimestamp()}'] `❌ Failed to get quote for ${symbol}:`, quoteError.message);
+        console.warn(`[${getTimestamp()}] ❌ Failed to get quote for ${symbol}:`, quoteError.message);
         return null;
       }
     });
@@ -1464,7 +1464,7 @@ router.get('/market', async (req, res) => {
     marketDataCache.data = validResults;
     marketDataCache.timestamp = now;
     
-    console.log(`['${getTimestamp()}'] '📊 FAANG market data summary:', validResults.map(q => `${q.symbol}: ${q.changePercent}%`).join(', '));
+    console.log(`[${getTimestamp()}] 📊 FAANG market data summary:`, validResults.map(q => `${q.symbol}: ${q.changePercent}%`).join(', '));
     
     res.json({
       success: true,
@@ -1472,7 +1472,7 @@ router.get('/market', async (req, res) => {
       cached: false
     });
   } catch (error) {
-    console.error(`['${getTimestamp()}'] 'Error getting market data:', error);
+    console.error(`[${getTimestamp()}] Error getting market data:`, error);
     res.status(500).json({
       success: false,
       message: `Failed to get market data: ${error.message}`

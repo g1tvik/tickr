@@ -108,10 +108,13 @@ fileStorage.transactionsFile = transactionsFile;
 // Make file storage available to routes
 app.locals.fileStorage = fileStorage;
 
-// Routes
-const authRoutes = require('./routes/auth');
-const tradingRoutes = require('./routes/trading');
+// Debug middleware
+app.use((req, res, next) => {
+  console.log(`[${getTimestamp()}] ${req.method} ${req.path}`);
+  next();
+});
 
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/trading', tradingRoutes);
 

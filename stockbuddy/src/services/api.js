@@ -2,11 +2,18 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api'
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {
-  const data = await response.json().catch(() => ({ message: 'Network error' }));
-  if (!response.ok) {
-    throw new Error(data.message || 'API request failed');
+  try {
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'API request failed');
+    }
+    return data;
+  } catch (error) {
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+    throw new Error('Network error');
   }
-  return data;
 };
 
 // Helper function to get auth headers
@@ -113,6 +120,44 @@ export const api = {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ answers })
+  }).then(handleResponse),
+
+  // Settings endpoints
+  updateProfile: (profileData) => fetch(`${API_BASE_URL}/auth/profile`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(profileData)
+  }).then(handleResponse),
+
+  getLearningPreferences: () => fetch(`${API_BASE_URL}/auth/learning-preferences`, {
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
+  updateLearningPreferences: (preferences) => fetch(`${API_BASE_URL}/auth/learning-preferences`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(preferences)
+  }).then(handleResponse),
+
+  exportData: () => fetch(`${API_BASE_URL}/auth/export-data`, {
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
+  resetProgress: () => fetch(`${API_BASE_URL}/auth/reset-progress`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
+  deleteAccount: () => fetch(`${API_BASE_URL}/auth/account`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
+  // Send goal reminder email
+  sendGoalReminder: () => fetch(`${API_BASE_URL}/auth/send-goal-reminder`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({})
   }).then(handleResponse),
 
   // Leaderboard

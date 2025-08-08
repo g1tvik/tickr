@@ -673,22 +673,6 @@ export default function LessonDetail() {
                     >
                       Retake Quiz
                     </button>
-                    
-                    <button
-                      onClick={() => navigate('/learn')}
-                      style={{
-                        backgroundColor: marbleGold,
-                        color: marbleDarkGray,
-                        border: "none",
-                        padding: "12px 24px",
-                        borderRadius: "12px",
-                        fontSize: "16px",
-                        fontWeight: "600",
-                        cursor: "pointer"
-                      }}
-                    >
-                      Continue Learning
-                    </button>
                   </div>
                 </div>
               )}
