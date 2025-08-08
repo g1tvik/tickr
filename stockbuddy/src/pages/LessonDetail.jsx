@@ -773,7 +773,7 @@ export default function LessonDetail() {
                   }}>
                     <span style={{ color: marbleGray }}>Best Score:</span>
                     <span style={{ color: marbleGold, fontWeight: "500" }}>
-                      {progress?.bestScore ? `${progress.bestScore}%` : "Not taken"}
+                      {progress?.bestScore ? `${Math.round(progress.bestScore)}%` : "Not taken"}
                     </span>
                   </div>
                   <div style={{
