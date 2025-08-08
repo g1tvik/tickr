@@ -156,6 +156,12 @@ export default function LessonDetail() {
     navigate('/learn', { state: { refresh: true } });
   };
 
+  const handleBackToLesson = () => {
+    setShowCompletionModal(false);
+    // Force refresh progress when returning to learn page
+    navigate('/learn', { state: { refresh: true } });
+  };
+
   if (loading) {
     return (
       <div style={{
@@ -187,6 +193,17 @@ export default function LessonDetail() {
   }
 
   const currentContent = lesson.content[currentSection];
+  // Derived quiz stats for sidebar display
+  const totalQuestions = lesson?.quiz?.questions?.length || 0;
+  const xpBasedPercent = progress && progress.totalXpPossible > 0
+    ? Math.round((progress.xpEarned / progress.totalXpPossible) * 100)
+    : 0;
+  const bestScorePercent = progress?.bestScore && progress.bestScore > 0
+    ? Math.round(progress.bestScore)
+    : xpBasedPercent;
+  const hasQuizData = (bestScorePercent > 0) || (progress?.attempts ?? 0) > 0 || !!progress?.completed;
+  const bestCorrectCount = Math.round((bestScorePercent / 100) * totalQuestions);
+  const bestIncorrectCount = Math.max(0, totalQuestions - bestCorrectCount);
 
   return (
     <div style={{
@@ -475,6 +492,28 @@ export default function LessonDetail() {
                     }}>
                       <span style={{ color: marbleGray }}>Status:</span>
                       <span style={{ color: marbleGold, fontWeight: "500" }}>✓ Completed</span>
+                    </div>
+                  )}
+                  {hasQuizData && (
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: "14px"
+                    }}>
+                      <span style={{ color: marbleGray }}>Quiz Score:</span>
+                      <span style={{ color: marbleGold, fontWeight: "500" }}>{bestScorePercent}% correct</span>
+                    </div>
+                  )}
+                  {hasQuizData && totalQuestions > 0 && (
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: "14px"
+                    }}>
+                      <span style={{ color: marbleGray }}>Best Result:</span>
+                      <span style={{ color: marbleDarkGray, fontWeight: "500" }}>
+                        {bestCorrectCount}/{totalQuestions} correct ({bestIncorrectCount} wrong)
+                      </span>
                     </div>
                   )}
                 </div>
@@ -1034,8 +1073,27 @@ export default function LessonDetail() {
             <div style={{
               display: "flex",
               gap: "12px",
-              justifyContent: "center"
+              justifyContent: "center",
+              flexWrap: "wrap"
             }}>
+              <button
+                onClick={handleBackToLesson}
+                style={{
+                  backgroundColor: marbleGray,
+                  color: marbleWhite,
+                  border: "none",
+                  padding: "12px 20px",
+                  borderRadius: "12px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  flex: 1,
+                  minWidth: "140px"
+                }}
+              >
+                Back to Lesson
+              </button>
+              
               <button
                 onClick={handleRetakeQuiz}
                 style={{
@@ -1047,47 +1105,30 @@ export default function LessonDetail() {
                   fontSize: "14px",
                   fontWeight: "600",
                   cursor: "pointer",
-                  flex: 1
+                  flex: 1,
+                  minWidth: "140px"
                 }}
               >
                 {(completionData.xpRemaining > 0 || completionData.coinsRemaining > 0) ? "Retake for More Rewards" : "Retake Quiz"}
               </button>
               
-              {findNextLesson(lesson.id) && (
+              {findNextLesson(lesson.id) ? (
                 <button
                   onClick={handleContinueToNext}
                   style={{
-                    backgroundColor: marbleDarkGray,
-                    color: marbleWhite,
+                    backgroundColor: completionData.lessonCompleted ? marbleGold : marbleDarkGray,
+                    color: completionData.lessonCompleted ? marbleDarkGray : marbleWhite,
                     border: "none",
                     padding: "12px 20px",
                     borderRadius: "12px",
                     fontSize: "14px",
                     fontWeight: "600",
                     cursor: "pointer",
-                    flex: 1
+                    flex: 1,
+                    minWidth: "140px"
                   }}
                 >
-                  Next Lesson
-                </button>
-              )}
-              
-              {completionData.lessonCompleted && findNextLesson(lesson.id) ? (
-                <button
-                  onClick={handleContinueToNext}
-                  style={{
-                    backgroundColor: marbleGold,
-                    color: marbleDarkGray,
-                    border: "none",
-                    padding: "12px 20px",
-                    borderRadius: "12px",
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                    flex: 2
-                  }}
-                >
-                  Continue to Next Lesson
+                  {completionData.lessonCompleted ? "Continue to Next Lesson" : "Next Lesson"}
                 </button>
               ) : (
                 <button
@@ -1101,7 +1142,8 @@ export default function LessonDetail() {
                     fontSize: "14px",
                     fontWeight: "600",
                     cursor: "pointer",
-                    flex: 2
+                    flex: 1,
+                    minWidth: "140px"
                   }}
                 >
                   Back to Learn

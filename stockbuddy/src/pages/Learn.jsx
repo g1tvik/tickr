@@ -16,6 +16,7 @@ export default function Learn() {
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [lessonScores, setLessonScores] = useState({});
 
   useEffect(() => {
     loadProgress();
@@ -25,6 +26,10 @@ export default function Learn() {
   useEffect(() => {
     if (location.state?.refresh) {
       loadProgress();
+      // Reload lesson scores if modal is open
+      if (showLessonsModal && selectedUnit) {
+        setTimeout(() => loadLessonScores(), 100);
+      }
       // Clear the refresh state
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -34,6 +39,7 @@ export default function Learn() {
   useEffect(() => {
     if (showLessonsModal) {
       loadProgress();
+      loadLessonScores();
     }
   }, [showLessonsModal]);
 
@@ -46,6 +52,26 @@ export default function Learn() {
       console.error('Error loading progress:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadLessonScores = async () => {
+    if (!selectedUnit) return;
+    
+    try {
+      const scores = {};
+      for (const lesson of selectedUnit.lessons) {
+        const lp = await progressManager.getLessonProgress(lesson.id);
+        const percentFromRewards = Math.round(lp.rewardProgress || 0);
+        const percent = lp.bestScore || percentFromRewards;
+        scores[lesson.id] = {
+          percent,
+          show: lp.completed || (lp.attempts && lp.attempts > 0)
+        };
+      }
+      setLessonScores(scores);
+    } catch (error) {
+      console.error('Error loading lesson scores:', error);
     }
   };
 
@@ -105,6 +131,8 @@ export default function Learn() {
       setShowLessonsModal(true);
       // Refresh progress when opening modal
       loadProgress();
+      // Load lesson scores for this unit
+      setTimeout(() => loadLessonScores(), 100); // Small delay to ensure selectedUnit is set
     }
   };
 
@@ -559,6 +587,11 @@ export default function Learn() {
                 const lessonIndex = selectedUnit.lessons.findIndex(l => l.id === lesson.id);
                 const isLocked = lessonIndex > 0 && !completedLessons.includes(selectedUnit.lessons[lessonIndex - 1].id);
 
+                // Get score/percentage from stored lesson scores
+                const lessonScore = lessonScores[lesson.id];
+                const showPercent = lessonScore?.show && (lessonScore?.percent ?? 0) >= 0;
+                const percent = lessonScore?.percent || 0;
+
                 return (
                   <div
                     key={lesson.id}
@@ -604,6 +637,11 @@ export default function Learn() {
                           color: marbleGray
                         }}>
                           {lesson.duration} • {lesson.xp} XP • {lesson.coins} 🪙
+                          {showPercent && (
+                            <span style={{ color: marbleGold, fontWeight: "500" }}>
+                              {" "}• {percent.toFixed(0)}% correct
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div style={{

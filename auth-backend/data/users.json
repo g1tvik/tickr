@@ -13,14 +13,55 @@
       "totalValue": 10000
     },
     "learningProgress": {
-      "xp": 0,
-      "coins": 0,
-      "completedLessons": [],
+      "xp": 55,
+      "coins": 35,
+      "completedLessons": [
+        1,
+        2,
+        3
+      ],
       "completedUnitTests": [],
       "finalTestCompleted": false,
       "finalTestLastAttempt": null,
       "unitTestAttempts": {},
-      "lessonAttempts": {}
+      "lessonAttempts": {
+        "1": {
+          "attempts": 8,
+          "completed": true,
+          "bestScore": 100,
+          "lastAttempt": "2025-08-08T02:46:56.371Z"
+        },
+        "2": {
+          "attempts": 4,
+          "completed": true,
+          "bestScore": 100,
+          "lastAttempt": "2025-08-08T02:26:02.447Z"
+        },
+        "3": {
+          "attempts": 4,
+          "completed": true,
+          "bestScore": 0,
+          "lastAttempt": "2025-08-08T02:27:36.489Z"
+        }
+      },
+      "lessonRewards": {
+        "1": true,
+        "2": true
+      },
+      "lessonEarnedRewards": {
+        "1": {
+          "xp": 25,
+          "coins": 15
+        },
+        "2": {
+          "xp": 30,
+          "coins": 20
+        },
+        "3": {
+          "xp": 0,
+          "coins": 0
+        }
+      }
     },
     "purchasedItems": [],
     "learningPreferences": {
