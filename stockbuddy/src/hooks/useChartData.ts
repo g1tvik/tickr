@@ -25,7 +25,9 @@ export interface UseChartDataReturn {
 export const useChartData = (
   symbol: string,
   interval: string,
-  realtime: boolean = false
+  realtime: boolean = false,
+  startDate?: string,
+  endDate?: string
 ): UseChartDataReturn => {
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,10 +44,10 @@ export const useChartData = (
 
 
   // Fetch historical data
-  const fetchHistoricalData = useCallback(async (symbol: string, interval: string) => {
-    console.log(`fetchHistoricalData: Fetching ${symbol} with interval ${interval}`);
+  const fetchHistoricalData = useCallback(async (symbol: string, interval: string, startDate?: string, endDate?: string) => {
+    console.log(`fetchHistoricalData: Fetching ${symbol} with interval ${interval} ${startDate && endDate ? `(${startDate}→${endDate})` : ''}`);
     
-    const cacheKey = `${symbol}_${interval}`;
+    const cacheKey = `${symbol}_${interval}_${startDate || 'NA'}_${endDate || 'NA'}`;
     const cached = dataCache.current.get(cacheKey);
     
     // Check if we have valid cached data (disabled for debugging)
@@ -69,7 +71,7 @@ export const useChartData = (
       } else {
         dataLimit = 500; // Standard for daily+ intervals
       }
-      const response = await api.getChartData(symbol, interval, dataLimit);
+      const response = await api.getChartData(symbol, interval, dataLimit, startDate, endDate);
       
       if (response.success && response.chartData) {
         const normalizedData: ChartData = {
@@ -145,8 +147,8 @@ export const useChartData = (
     if (!symbol || !interval) return;
 
     console.log(`useChartData: Fetching data for ${symbol} with interval ${interval}`);
-    fetchHistoricalData(symbol, interval);
-  }, [symbol, interval, fetchHistoricalData]);
+    fetchHistoricalData(symbol, interval, startDate, endDate);
+  }, [symbol, interval, startDate, endDate, fetchHistoricalData]);
 
   // WebSocket effect
   useEffect(() => {
@@ -170,12 +172,12 @@ export const useChartData = (
   const refetch = useCallback(() => {
     if (symbol && interval) {
       // Clear cache for this symbol/interval
-      const cacheKey = `${symbol}_${interval}`;
+      const cacheKey = `${symbol}_${interval}_${startDate || 'NA'}_${endDate || 'NA'}`;
       dataCache.current.delete(cacheKey);
       
-      fetchHistoricalData(symbol, interval);
+      fetchHistoricalData(symbol, interval, startDate, endDate);
     }
-  }, [symbol, interval, fetchHistoricalData]);
+  }, [symbol, interval, startDate, endDate, fetchHistoricalData]);
 
   return {
     chartData,

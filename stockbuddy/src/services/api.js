@@ -99,8 +99,9 @@ export const api = {
   }).then(handleResponse),
 
   // Chart data endpoints
-  getChartData: (symbol, timeframe = '1D', limit = 100) => fetch(
-    `${API_BASE_URL}/trading/chart/${symbol}?timeframe=${timeframe}&limit=${limit}`, {
+  getChartData: (symbol, timeframe = '1D', limit = 100, startDate, endDate) => fetch(
+    `${API_BASE_URL}/trading/chart/${symbol}?timeframe=${timeframe}&limit=${limit}` +
+    (startDate && endDate ? `&start=${encodeURIComponent(startDate)}&end=${encodeURIComponent(endDate)}` : ''), {
     headers: getAuthHeaders()
   }).then(handleResponse),
 

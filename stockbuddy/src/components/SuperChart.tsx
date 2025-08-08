@@ -16,6 +16,8 @@ export interface SuperChartProps {
   onDrawingUpdate?: (drawings: any[]) => void;
   showDebugOverlay?: boolean;
   visibleRange?: { from: number; to: number };
+  // Optional explicit historical window to fetch from the API (YYYY-MM-DD)
+  dateRange?: { start: string; end: string };
 }
 
 export const SuperChart: React.FC<SuperChartProps> = ({
@@ -28,7 +30,8 @@ export const SuperChart: React.FC<SuperChartProps> = ({
   onDataUpdate,
   onDrawingUpdate,
   showDebugOverlay = false,
-  visibleRange
+  visibleRange,
+  dateRange
 }) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
@@ -59,7 +62,9 @@ export const SuperChart: React.FC<SuperChartProps> = ({
   const { chartData, isLoading: dataLoading, error: dataError } = useChartData(
     symbol,
     currentInterval,
-    realtime
+    realtime,
+    dateRange?.start,
+    dateRange?.end
   );
 
   // Initialize chart

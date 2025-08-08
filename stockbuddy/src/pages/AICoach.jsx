@@ -493,6 +493,7 @@ function AICoach() {
               height={400}
               onDataUpdate={(data) => setChartData(data)}
               showDebugOverlay={false}
+              dateRange={{ start: scenario.startDate, end: scenario.endDate }}
               visibleRange={{
                 from: Math.floor(new Date((scenario.startDate || '2020-01-01') + 'T00:00:00Z').getTime() / 1000),
                 to: Math.floor(new Date((scenario.endDate || '2020-12-31') + 'T23:59:59Z').getTime() / 1000)
