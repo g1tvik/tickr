@@ -76,7 +76,12 @@
       }
     },
     "purchasedItems": [],
-    "picture": "https://lh3.googleusercontent.com/a/ACg8ocKfoEZYj5WmASEKhItze-6R2kdAeexeZAb4MXNWGxOVox_YJGq9=s96-c"
+    "picture": "https://lh3.googleusercontent.com/a/ACg8ocKfoEZYj5WmASEKhItze-6R2kdAeexeZAb4MXNWGxOVox_YJGq9=s96-c",
+    "learningPreferences": {
+      "dailyGoal": 3,
+      "notifications": true,
+      "difficulty": "auto"
+    }
   },
   "user_1754120571606_r6om804fx": {
     "id": "user_1754120571606_r6om804fx",
