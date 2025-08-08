@@ -2,11 +2,11 @@
   "user_1754015246129_cqlhmlb12": {
     "id": "user_1754015246129_cqlhmlb12",
     "email": "akashkarthik473@gmail.com",
-    "username": "dev_peachy",
+    "username": "test_peachy",
     "password": "$2b$10$8qqRZnhyR48R/bsvLzqvTeLw/.tPpfcULw1dS4H94tgn/52wQo9zO",
     "name": "Akash Karthik",
     "createdAt": "2025-08-01T02:27:26.129Z",
-    "lastLogin": "2025-08-07T20:30:02.766Z",
+    "lastLogin": "2025-08-08T02:01:45.463Z",
     "portfolio": {
       "balance": 10000,
       "positions": [],
@@ -18,7 +18,8 @@
       "completedLessons": [
         1,
         2,
-        3
+        3,
+        4
       ],
       "completedUnitTests": [],
       "finalTestCompleted": false,
@@ -42,16 +43,23 @@
           "completed": true,
           "bestScore": 100,
           "lastAttempt": "2025-08-07T06:41:29.467Z"
+        },
+        "4": {
+          "attempts": 2,
+          "completed": true,
+          "bestScore": 0,
+          "lastAttempt": "2025-08-08T01:59:19.867Z"
         }
       },
       "lessonRewards": {
         "2": true,
-        "3": true
+        "3": true,
+        "4": true
       }
     },
     "purchasedItems": [],
     "learningPreferences": {
-      "dailyGoal": 3,
+      "dailyGoal": 1,
       "notifications": true,
       "difficulty": "easy"
     }

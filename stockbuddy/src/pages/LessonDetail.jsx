@@ -113,7 +113,13 @@ export default function LessonDetail() {
         lessonCompleted: result.lessonCompleted,
         correctAnswers,
         totalQuestions: lesson.quiz.questions.length,
-        rewardAlreadyGiven: result.rewardAlreadyGiven // Add this line
+        rewardAlreadyGiven: result.rewardAlreadyGiven,
+        totalXpPossible: result.totalXpPossible,
+        totalCoinsPossible: result.totalCoinsPossible,
+        xpRemaining: result.xpRemaining,
+        coinsRemaining: result.coinsRemaining,
+        totalXpEarned: result.totalXpEarned,
+        totalCoinsEarned: result.totalCoinsEarned
       });
       
       setShowQuiz(false);
@@ -897,7 +903,8 @@ export default function LessonDetail() {
                 </span>
               </div>
               
-              {completionData.lessonCompleted && !completionData.rewardAlreadyGiven && (
+              {/* Show rewards earned this attempt */}
+              {completionData.xpEarned > 0 || completionData.coinsEarned > 0 ? (
                 <>
                   <div style={{
                     display: "flex",
@@ -905,7 +912,7 @@ export default function LessonDetail() {
                     alignItems: "center",
                     marginBottom: "12px"
                   }}>
-                    <span style={{ color: marbleGray }}>XP Earned:</span>
+                    <span style={{ color: marbleGray }}>XP Earned This Attempt:</span>
                     <span style={{ fontWeight: "600", color: marbleGold }}>
                       +{completionData.xpEarned} XP
                     </span>
@@ -914,27 +921,111 @@ export default function LessonDetail() {
                   <div style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    alignItems: "center"
+                    alignItems: "center",
+                    marginBottom: "12px"
                   }}>
-                    <span style={{ color: marbleGray }}>Coins Earned:</span>
+                    <span style={{ color: marbleGray }}>Coins Earned This Attempt:</span>
                     <span style={{ fontWeight: "600", color: marbleGold }}>
                       +{completionData.coinsEarned} 🪙
                     </span>
                   </div>
                 </>
-              )}
-              
-              {completionData.rewardAlreadyGiven && (
+              ) : (
                 <div style={{
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  marginTop: "12px"
+                  marginBottom: "12px"
                 }}>
-                  <span style={{ color: marbleGray }}>Rewards:</span>
+                  <span style={{ color: marbleGray }}>Rewards Earned:</span>
                   <span style={{ fontWeight: "600", color: marbleGray }}>
-                    Already claimed
+                    No new rewards (already earned maximum)
                   </span>
+                </div>
+              )}
+              
+              {/* Show total rewards earned */}
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "12px",
+                paddingTop: "12px",
+                borderTop: `1px solid ${marbleGray}`
+              }}>
+                <span style={{ color: marbleGray }}>Total XP Earned:</span>
+                <span style={{ fontWeight: "600", color: marbleDarkGray }}>
+                  {completionData.totalXpEarned}/{completionData.totalXpPossible} XP
+                </span>
+              </div>
+              
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "12px"
+              }}>
+                <span style={{ color: marbleGray }}>Total Coins Earned:</span>
+                <span style={{ fontWeight: "600", color: marbleDarkGray }}>
+                  {completionData.totalCoinsEarned}/{completionData.totalCoinsPossible} 🪙
+                </span>
+              </div>
+              
+              {/* Show remaining rewards if any */}
+              {(completionData.xpRemaining > 0 || completionData.coinsRemaining > 0) && (
+                <>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "12px",
+                    paddingTop: "12px",
+                    borderTop: `1px solid ${marbleGray}`
+                  }}>
+                    <span style={{ color: marbleGray }}>XP Remaining:</span>
+                    <span style={{ fontWeight: "600", color: marbleGold }}>
+                      {completionData.xpRemaining} XP
+                    </span>
+                  </div>
+                  
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "12px"
+                  }}>
+                    <span style={{ color: marbleGray }}>Coins Remaining:</span>
+                    <span style={{ fontWeight: "600", color: marbleGold }}>
+                      {completionData.coinsRemaining} 🪙
+                    </span>
+                  </div>
+                  
+                  <div style={{
+                    backgroundColor: marbleGold,
+                    color: marbleDarkGray,
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                    textAlign: "center",
+                    marginTop: "8px"
+                  }}>
+                    💡 Retake the quiz to earn remaining rewards!
+                  </div>
+                </>
+              )}
+              
+              {/* Show completion message if 100% achieved */}
+              {completionData.rewardAlreadyGiven && (
+                <div style={{
+                  backgroundColor: marbleGold,
+                  color: marbleDarkGray,
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                  textAlign: "center",
+                  marginTop: "8px"
+                }}>
+                  🎉 Perfect score! All rewards earned!
                 </div>
               )}
             </div>
@@ -948,8 +1039,8 @@ export default function LessonDetail() {
               <button
                 onClick={handleRetakeQuiz}
                 style={{
-                  backgroundColor: marbleGray,
-                  color: marbleWhite,
+                  backgroundColor: (completionData.xpRemaining > 0 || completionData.coinsRemaining > 0) ? marbleGold : marbleGray,
+                  color: (completionData.xpRemaining > 0 || completionData.coinsRemaining > 0) ? marbleDarkGray : marbleWhite,
                   border: "none",
                   padding: "12px 20px",
                   borderRadius: "12px",
@@ -959,7 +1050,7 @@ export default function LessonDetail() {
                   flex: 1
                 }}
               >
-                Retake Quiz
+                {(completionData.xpRemaining > 0 || completionData.coinsRemaining > 0) ? "Retake for More Rewards" : "Retake Quiz"}
               </button>
               
               {findNextLesson(lesson.id) && (
