@@ -85,7 +85,7 @@
     },
     "learningProgress": {
       "xp": 44,
-      "coins": 313,
+      "coins": 28,
       "completedLessons": [
         1,
         2
@@ -99,17 +99,27 @@
           "attempts": 4,
           "completed": true,
           "bestScore": 100,
-          "lastAttempt": "2025-08-01T06:13:57.221Z"
+          "lastAttempt": "2025-08-08T02:54:36.257Z"
         },
         "2": {
           "attempts": 2,
           "completed": true,
           "bestScore": 66.66666666666666,
-          "lastAttempt": "2025-08-08T02:09:31.466Z"
+          "lastAttempt": "2025-08-08T02:55:12.173Z"
         }
       },
       "lessonRewards": {
-        "2": true
+        "1": true
+      },
+      "lessonEarnedRewards": {
+        "1": {
+          "xp": 25,
+          "coins": 15
+        },
+        "2": {
+          "xp": 19,
+          "coins": 13
+        }
       }
     },
     "purchasedItems": [],
