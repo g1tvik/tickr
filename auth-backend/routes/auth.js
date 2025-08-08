@@ -3,8 +3,32 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
+const { sendGoalReminder, sendWelcomeEmail } = require('../services/emailService');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Middleware to verify JWT token
+const authenticateToken = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: 'No token provided'
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid token'
+    });
+  }
+};
 
 // File-based user management
 const getUsers = (req) => req.app.locals.fileStorage.getUsers();
@@ -101,6 +125,11 @@ router.post('/register', async (req, res) => {
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     );
+
+    // Send welcome email (don't wait for it to complete)
+    sendWelcomeEmail(newUser.email, newUser.name).catch(error => {
+      console.error('Failed to send welcome email:', error);
+    });
 
     res.json({
       success: true,
@@ -286,6 +315,14 @@ router.post('/google', async (req, res) => {
     console.log('✅ JWT token generated successfully');
 
     console.log('✅ Google OAuth login completed successfully');
+    
+    // Send welcome email for new users (don't wait for it to complete)
+    if (isNewUser) {
+      sendWelcomeEmail(user.email, user.name).catch(error => {
+        console.error('Failed to send welcome email:', error);
+      });
+    }
+    
     res.json({
       success: true,
       message: 'Google login successful',
@@ -329,6 +366,17 @@ router.get('/profile', async (req, res) => {
         success: false,
         message: 'User not found'
       });
+    }
+
+    // Ensure user has learning preferences
+    if (!user.learningPreferences) {
+      user.learningPreferences = {
+        dailyGoal: 3,
+        notifications: true,
+        difficulty: 'auto'
+      };
+      users[user.id] = user;
+      saveUsers(req, users);
     }
 
     res.json({
@@ -449,28 +497,421 @@ router.post('/user-data', async (req, res) => {
   }
 });
 
-// Middleware to verify JWT token
-const authenticateToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: 'No token provided'
-    });
-  }
-
+// Update user profile (name, username, email)
+router.put('/profile', async (req, res) => {
   try {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    req.user = decoded;
-    next();
+    const users = getUsers(req);
+    const user = users[decoded.userId];
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const { name, username, email } = req.body;
+
+    // Validate username format if provided
+    if (username && !validateUsername(username)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username must be 3-20 characters long and contain only letters, numbers, and underscores'
+      });
+    }
+
+    // Check if username is already taken (if changing)
+    if (username && username !== user.username) {
+      const existingUserByUsername = Object.values(users).find(u => u.username === username);
+      if (existingUserByUsername) {
+        return res.status(400).json({
+          success: false,
+          message: 'Username already taken'
+        });
+      }
+    }
+
+    // Check if email is already taken (if changing)
+    if (email && email !== user.email) {
+      const existingUserByEmail = Object.values(users).find(u => u.email === email);
+      if (existingUserByEmail) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email already registered'
+        });
+      }
+    }
+
+    // Update user profile
+    if (name) user.name = name;
+    if (username) user.username = username;
+    if (email) user.email = email;
+
+    users[user.id] = user;
+    saveUsers(req, users);
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        name: user.name,
+        picture: user.picture,
+        createdAt: user.createdAt,
+        lastLogin: user.lastLogin
+      }
+    });
   } catch (error) {
-    return res.status(401).json({
+    console.error('Profile update error:', error);
+    res.status(500).json({
       success: false,
-      message: 'Invalid token'
+      message: 'Failed to update profile'
     });
   }
-};
+});
+
+// Update learning preferences
+router.put('/learning-preferences', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const users = getUsers(req);
+    const user = users[decoded.userId];
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const { dailyGoal, notifications, difficulty } = req.body;
+
+    // Initialize learning preferences if they don't exist
+    if (!user.learningPreferences) {
+      user.learningPreferences = {
+        dailyGoal: 3,
+        notifications: true,
+        difficulty: 'auto'
+      };
+    }
+
+    // Update preferences
+    if (dailyGoal !== undefined) user.learningPreferences.dailyGoal = dailyGoal;
+    if (notifications !== undefined) user.learningPreferences.notifications = notifications;
+    if (difficulty !== undefined) user.learningPreferences.difficulty = difficulty;
+
+    users[user.id] = user;
+    saveUsers(req, users);
+
+    res.json({
+      success: true,
+      message: 'Learning preferences updated successfully',
+      preferences: user.learningPreferences
+    });
+  } catch (error) {
+    console.error('Learning preferences update error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update learning preferences'
+    });
+  }
+});
+
+// Get learning preferences
+router.get('/learning-preferences', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const users = getUsers(req);
+    const user = users[decoded.userId];
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Ensure user has learning preferences
+    if (!user.learningPreferences) {
+      user.learningPreferences = {
+        dailyGoal: 3,
+        notifications: true,
+        difficulty: 'auto'
+      };
+      users[user.id] = user;
+      saveUsers(req, users);
+    }
+
+    res.json({
+      success: true,
+      preferences: user.learningPreferences
+    });
+  } catch (error) {
+    console.error('Get learning preferences error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get learning preferences'
+    });
+  }
+});
+
+// Export user data
+router.get('/export-data', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const users = getUsers(req);
+    const user = users[decoded.userId];
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Prepare export data (excluding sensitive information)
+    const exportData = {
+      profile: {
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        createdAt: user.createdAt,
+        lastLogin: user.lastLogin
+      },
+      portfolio: user.portfolio || {
+        balance: 10000,
+        positions: [],
+        totalValue: 10000
+      },
+      learningProgress: user.learningProgress || {
+        xp: 0,
+        coins: 0,
+        completedLessons: [],
+        completedUnitTests: [],
+        finalTestCompleted: false,
+        unitTestAttempts: {},
+        lessonAttempts: {}
+      },
+      learningPreferences: user.learningPreferences || {
+        dailyGoal: 3,
+        notifications: true,
+        difficulty: 'auto'
+      },
+      purchasedItems: user.purchasedItems || [],
+      exportDate: new Date().toISOString()
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="user-data-${user.username}-${new Date().toISOString().split('T')[0]}.json"`);
+    res.json(exportData);
+  } catch (error) {
+    console.error('Export data error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to export data'
+    });
+  }
+});
+
+// Reset learning progress
+router.post('/reset-progress', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const users = getUsers(req);
+    const user = users[decoded.userId];
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Reset learning progress
+    user.learningProgress = {
+      xp: 0,
+      coins: 0,
+      completedLessons: [],
+      completedUnitTests: [],
+      finalTestCompleted: false,
+      finalTestLastAttempt: null,
+      unitTestAttempts: {},
+      lessonAttempts: {}
+    };
+
+    users[user.id] = user;
+    saveUsers(req, users);
+
+    res.json({
+      success: true,
+      message: 'Learning progress reset successfully'
+    });
+  } catch (error) {
+    console.error('Reset progress error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reset progress'
+    });
+  }
+});
+
+// Delete account
+router.delete('/account', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const users = getUsers(req);
+    const user = users[decoded.userId];
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Delete user account
+    delete users[decoded.userId];
+    saveUsers(req, users);
+
+    res.json({
+      success: true,
+      message: 'Account deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete account'
+    });
+  }
+});
+
+// Send goal reminder email
+router.post('/send-goal-reminder', authenticateToken, async (req, res) => {
+  console.log('Received goal reminder request');
+  try {
+    const users = getUsers(req);
+    const user = users[req.user.userId];
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if notifications are enabled
+    if (!user.learningPreferences?.notifications) {
+      return res.status(400).json({
+        success: false,
+        message: 'Notifications are disabled for this user'
+      });
+    }
+
+    // Calculate today's progress
+    const today = new Date().toDateString();
+    const lessonAttempts = user.learningProgress?.lessonAttempts || {};
+    
+    const lessonsCompletedToday = Object.keys(lessonAttempts).filter(lessonId => {
+      const attempt = lessonAttempts[lessonId];
+      if (attempt.lastAttempt) {
+        const attemptDate = new Date(attempt.lastAttempt).toDateString();
+        return attemptDate === today && attempt.completed;
+      }
+      return false;
+    }).length;
+
+    const dailyGoal = user.learningPreferences?.dailyGoal || 3;
+
+    // Send email reminder
+    const emailSent = await sendGoalReminder(
+      user.email,
+      user.name || user.username,
+      dailyGoal,
+      lessonsCompletedToday
+    );
+
+    if (emailSent) {
+      res.json({
+        success: true,
+        message: 'Goal reminder email sent successfully',
+        data: {
+          dailyGoal,
+          completedToday: lessonsCompletedToday,
+          remaining: Math.max(dailyGoal - lessonsCompletedToday, 0)
+        }
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to send goal reminder email'
+      });
+    }
+  } catch (error) {
+    console.error('Send goal reminder error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send goal reminder'
+    });
+  }
+});
 
 // Export middleware for use in other routes
 router.authenticateToken = authenticateToken;

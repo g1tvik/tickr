@@ -228,13 +228,6 @@ export const MarketWatch = ({ stocks, lastUpdate, loadMarketData, isLoading }) =
               Last: {lastUpdate.toLocaleTimeString()}
             </span>
           )}
-          <button
-            onClick={loadMarketData}
-            disabled={isLoading}
-            className="refresh-btn"
-          >
-            {isLoading ? 'Refreshing...' : 'Refresh'}
-          </button>
         </div>
       </div>
       {stocks.length > 0 ? (

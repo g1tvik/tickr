@@ -25,7 +25,8 @@ class ProgressManager {
           finalTestUnlocked: false,
           unitTestAttempts: {},
           lessonAttempts: {},
-          lessonRewards: {} // Track which lessons have given rewards
+          lessonRewards: {}, // Track which lessons have given rewards
+          lessonEarnedRewards: {} // Track how much XP and coins have been earned per lesson
         };
       } else {
         // Initialize with default values if no data exists
@@ -39,7 +40,8 @@ class ProgressManager {
           finalTestUnlocked: false,
           unitTestAttempts: {},
           lessonAttempts: {},
-          lessonRewards: {}
+          lessonRewards: {},
+          lessonEarnedRewards: {}
         };
       }
       this.isInitialized = true;
@@ -57,7 +59,8 @@ class ProgressManager {
         finalTestUnlocked: false,
         unitTestAttempts: {},
         lessonAttempts: {},
-        lessonRewards: {}
+        lessonRewards: {},
+        lessonEarnedRewards: {}
       };
       this.isInitialized = true;
       return this.progress;
@@ -92,10 +95,23 @@ class ProgressManager {
     const completedLessons = Array.isArray(progress.completedLessons) ? progress.completedLessons : [];
     const completed = completedLessons.includes(lessonId);
     
+    // Get reward information
+    const lesson = this.findLesson(lessonId);
+    const earnedRewards = progress.lessonEarnedRewards?.[lessonId] || { xp: 0, coins: 0 };
+    const totalXpPossible = lesson?.xp || 0;
+    const totalCoinsPossible = lesson?.coins || 0;
+    
     return {
       attempts: lessonAttempts.attempts,
       completed: completed,
-      bestScore: lessonAttempts.bestScore
+      bestScore: lessonAttempts.bestScore,
+      totalXpPossible,
+      totalCoinsPossible,
+      xpEarned: earnedRewards.xp,
+      coinsEarned: earnedRewards.coins,
+      xpRemaining: Math.max(0, totalXpPossible - earnedRewards.xp),
+      coinsRemaining: Math.max(0, totalCoinsPossible - earnedRewards.coins),
+      rewardProgress: totalXpPossible > 0 ? (earnedRewards.xp / totalXpPossible) * 100 : 0
     };
   }
 
@@ -111,7 +127,7 @@ class ProgressManager {
     await this.saveProgress();
   }
 
-  // Complete lesson with one-time reward system
+  // Complete lesson with progressive reward system
   async completeLesson(lessonId, score) {
     const progress = await this.getProgress();
     
@@ -123,45 +139,95 @@ class ProgressManager {
     progress.lessonAttempts[lessonId].attempts += 1;
     progress.lessonAttempts[lessonId].bestScore = Math.max(progress.lessonAttempts[lessonId].bestScore, score);
     
-    // Ensure arrays are properly initialized
+    // Ensure arrays and objects are properly initialized
     if (!Array.isArray(progress.completedLessons)) {
       progress.completedLessons = [];
     }
     if (!progress.lessonRewards) {
       progress.lessonRewards = {};
     }
+    if (!progress.lessonEarnedRewards) {
+      progress.lessonEarnedRewards = {};
+    }
+    
+    // Initialize earned rewards for this lesson if not exists
+    if (!progress.lessonEarnedRewards[lessonId]) {
+      progress.lessonEarnedRewards[lessonId] = { xp: 0, coins: 0 };
+    }
+    
+    // Find lesson to get total possible rewards
+    const lesson = this.findLesson(lessonId);
+    if (!lesson) {
+      return {
+        lessonCompleted: false,
+        xpEarned: 0,
+        coinsEarned: 0,
+        totalXpPossible: 0,
+        totalCoinsPossible: 0,
+        xpRemaining: 0,
+        coinsRemaining: 0,
+        rewardAlreadyGiven: false
+      };
+    }
+    
+    const totalXpPossible = lesson.xp;
+    const totalCoinsPossible = lesson.coins;
+    
+    // Calculate rewards for this attempt based on score
+    const xpForThisAttempt = Math.floor(totalXpPossible * (score / 100));
+    const coinsForThisAttempt = Math.floor(totalCoinsPossible * (score / 100));
+    
+    // Calculate how much more can be earned (don't exceed total possible)
+    const currentXpEarned = progress.lessonEarnedRewards[lessonId].xp;
+    const currentCoinsEarned = progress.lessonEarnedRewards[lessonId].coins;
+    
+    const xpToAdd = Math.max(0, xpForThisAttempt - currentXpEarned);
+    const coinsToAdd = Math.max(0, coinsForThisAttempt - currentCoinsEarned);
+    
+
+    
+    // Add rewards to user's total
+    progress.xp += xpToAdd;
+    progress.coins += coinsToAdd;
+    
+    // Update earned rewards for this lesson
+    progress.lessonEarnedRewards[lessonId].xp = Math.max(currentXpEarned, xpForThisAttempt);
+    progress.lessonEarnedRewards[lessonId].coins = Math.max(currentCoinsEarned, coinsForThisAttempt);
     
     // Check if lesson is being completed for the first time
     const lessonCompleted = !progress.completedLessons.includes(lessonId);
-    const rewardAlreadyGiven = progress.lessonRewards[lessonId] || false;
     
     if (lessonCompleted) {
       progress.completedLessons.push(lessonId);
       progress.lessonAttempts[lessonId].completed = true;
       progress.lessonAttempts[lessonId].lastAttempt = new Date().toISOString();
-      
-      // Find lesson and award XP/coins (one-time only)
-      const lesson = this.findLesson(lessonId);
-      if (lesson && !rewardAlreadyGiven) {
-        const xpEarned = Math.floor(lesson.xp * (score / 100));
-        const coinsEarned = Math.floor(lesson.coins * (score / 100));
-        
-        progress.xp += xpEarned;
-        progress.coins += coinsEarned;
-        progress.lessonRewards[lessonId] = true; // Mark reward as given
-      }
     } else {
       // Record attempt timestamp even if not completed
       progress.lessonAttempts[lessonId].lastAttempt = new Date().toISOString();
     }
     
+    // Mark lesson as fully rewarded if 100% achieved
+    if (score >= 100) {
+      progress.lessonRewards[lessonId] = true;
+    }
+    
     await this.saveProgress();
+    
+    // Calculate remaining rewards
+    const xpRemaining = Math.max(0, totalXpPossible - progress.lessonEarnedRewards[lessonId].xp);
+    const coinsRemaining = Math.max(0, totalCoinsPossible - progress.lessonEarnedRewards[lessonId].coins);
     
     return {
       lessonCompleted,
-      xpEarned: (lessonCompleted && !rewardAlreadyGiven) ? Math.floor(this.findLesson(lessonId)?.xp * (score / 100) || 0) : 0,
-      coinsEarned: (lessonCompleted && !rewardAlreadyGiven) ? Math.floor(this.findLesson(lessonId)?.coins * (score / 100) || 0) : 0,
-      rewardAlreadyGiven
+      xpEarned: xpToAdd,
+      coinsEarned: coinsToAdd,
+      totalXpPossible,
+      totalCoinsPossible,
+      xpRemaining,
+      coinsRemaining,
+      rewardAlreadyGiven: progress.lessonRewards[lessonId] || false,
+      totalXpEarned: progress.lessonEarnedRewards[lessonId].xp,
+      totalCoinsEarned: progress.lessonEarnedRewards[lessonId].coins
     };
   }
 
@@ -435,9 +501,32 @@ class ProgressManager {
       finalTestUnlocked: false,
       unitTestAttempts: {},
       lessonAttempts: {},
-      lessonRewards: {}
+      lessonRewards: {},
+      lessonEarnedRewards: {}
     };
     await this.saveProgress();
+  }
+
+  // Test the new reward system (for debugging)
+  async testRewardSystem(lessonId) {
+    console.log('=== Testing Reward System ===');
+    
+    // Test 1: First attempt with 66% score
+    console.log('\nTest 1: 66% score');
+    const result1 = await this.completeLesson(lessonId, 66);
+    console.log('Result:', result1);
+    
+    // Test 2: Second attempt with 100% score
+    console.log('\nTest 2: 100% score');
+    const result2 = await this.completeLesson(lessonId, 100);
+    console.log('Result:', result2);
+    
+    // Test 3: Third attempt with 50% score (should not give more rewards)
+    console.log('\nTest 3: 50% score (should not give more rewards)');
+    const result3 = await this.completeLesson(lessonId, 50);
+    console.log('Result:', result3);
+    
+    console.log('\n=== Test Complete ===');
   }
 }
 

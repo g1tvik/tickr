@@ -4,14 +4,16 @@
 
 ### Option 1: Interactive Menu (Recommended)
 Double-click `start-stockbuddy.bat` for a menu with options:
-- **Start StockBuddy** - Full startup with dependency checks
-- **Quick Restart** - Stop and restart services quickly
-- **Check Status** - Verify if services are running
+- **Start Both Services** - Full startup with dependency checks
+- **Start Backend Only** - Start just the API server
+- **Start Frontend Only** - Start just the React development server
+- **Quick Restart** - Stop and restart both services quickly
+- **Check Status** - Verify if services are running (returns to menu)
 - **Exit** - Close the menu
 
 ### Option 2: Command Line
 ```bash
-# Full startup with restart option
+# Interactive menu with all options
 node start-stockbuddy.js
 
 # Quick restart (stops existing services first)
@@ -31,6 +33,22 @@ node restart-stockbuddy.js
 ```
 
 ## 🔄 Restart Features
+
+### Interactive Menu Options
+When you run `node start-stockbuddy.js`, you'll see:
+```
+========================================
+    StockBuddy Development Environment
+========================================
+Choose an option:
+1. Start Both Services (Full)
+2. Start Backend Only
+3. Start Frontend Only
+4. Quick Restart (Stop and restart both)
+5. Check Status
+6. Exit
+Enter your choice (1-6):
+```
 
 ### Built-in Restart Option
 When you press `Ctrl+C` to stop the services, you'll see:
@@ -96,10 +114,15 @@ node restart-stockbuddy.js
 ## 🎯 Usage Tips
 
 ### Development Workflow
-1. **Start**: Run `node start-stockbuddy.js`
+1. **Start**: Run `node start-stockbuddy.js` and choose option 1
 2. **Develop**: Make changes to your code
 3. **Restart**: Press `Ctrl+C` and choose "Restart StockBuddy"
 4. **Test**: Open http://localhost:5173 in your browser
+
+### Individual Service Development
+- **Backend Only**: Choose option 2 to start just the API server
+- **Frontend Only**: Choose option 3 to start just the React server
+- **Status Check**: Choose option 5 to check what's running
 
 ### Quick Development Cycle
 ```bash

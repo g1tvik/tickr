@@ -4,11 +4,18 @@ import Typewriter from "../components/Typewriter";
 import StockTicker from "../components/StockTicker";
 import FadeInSection from "../components/FadeInSection";
 import CascadeText from "../components/CascadeText";
+import { fetchStockData } from "../utils/stockCache";
 
-// Cache for stock data to avoid repeated API calls
-let homeStockCache = {};
-let homeCacheTimestamp = 0;
-const HOME_CACHE_DURATION = 30000; // 30 seconds
+// Helper function to get formatted timestamp
+const getTimestamp = () => {
+  return new Date().toLocaleTimeString('en-US', { 
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    fractionalSecondDigits: 3
+  });
+};
 
 function Home({ isLoggedIn }) {
   const [preloadedStocks, setPreloadedStocks] = useState([]);
@@ -18,47 +25,20 @@ function Home({ isLoggedIn }) {
     const preloadStockData = async () => {
       const coreStocks = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'SPY'];
       
-      // Check cache first
-      const now = Date.now();
-      if (homeStockCache.data && (now - homeCacheTimestamp) < HOME_CACHE_DURATION) {
-        setPreloadedStocks(homeStockCache.data);
-        return;
-      }
+      console.log(`[${getTimestamp()}] 🏠 Home: Starting to preload stock data`);
       
       try {
-        // Fetch all stocks in parallel for maximum speed
-        const stockPromises = coreStocks.map(async (symbol) => {
-          try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/trading/quote/${symbol}`, {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            });
-            
-            if (response.ok) {
-              const data = await response.json();
-              if (data.success) {
-                return data.quote;
-              }
-            }
-          } catch (error) {
-            console.warn(`Preload failed for ${symbol}:`, error);
-          }
-          return null;
-        });
-
-        const results = await Promise.all(stockPromises);
-        const validStocks = results.filter(stock => stock !== null);
+        // Use shared cache utility
+        const stockData = await fetchStockData(coreStocks);
         
-        // Cache and set stocks immediately when available
-        if (validStocks.length > 0) {
-          homeStockCache.data = validStocks;
-          homeCacheTimestamp = now;
-          setPreloadedStocks(validStocks);
+        if (stockData && stockData.length > 0) {
+          setPreloadedStocks(stockData);
+          console.log(`[${getTimestamp()}] 🏠 Home: Successfully preloaded ${stockData.length} stocks`);
+        } else {
+          console.warn(`[${getTimestamp()}] 🏠 Home: No stock data available for preloading`);
         }
       } catch (error) {
-        console.warn('Preload failed:', error);
+        console.warn(`[${getTimestamp()}] 🏠 Home: Preload failed:`, error);
       }
     };
 

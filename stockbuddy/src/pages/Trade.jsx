@@ -557,23 +557,6 @@ function Trade() {
                     Last: {new Date(lastUpdate).toLocaleTimeString()}
                   </span>
                 )}
-                <button
-                  onClick={loadMarketData}
-                  disabled={isLoading}
-                  style={{
-                    backgroundColor: marbleGold,
-                    color: marbleWhite,
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    fontSize: '12px',
-                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                    fontFamily: fontBody,
-                    opacity: isLoading ? 0.6 : 1
-                  }}
-                >
-                  Refresh
-                </button>
               </div>
             </div>
             {stocks.length > 0 && <StockTicker stocks={stocks} />}
