@@ -340,7 +340,8 @@ const getPreviousClose = async (symbol) => {
           end: yesterdayStr,
           timeframe: '1Day',
           limit: 1,
-          feed: 'sip'
+          feed: 'sip',
+          adjustment: 'split'
         }
       });
 
@@ -366,7 +367,8 @@ const getPreviousClose = async (symbol) => {
           end: endDate.toISOString().split('T')[0],
           timeframe: '1Day',
           limit: 5,
-          feed: 'sip'
+          feed: 'sip',
+          adjustment: 'split'
         }
       });
 
@@ -416,7 +418,8 @@ const getPreviousClose = async (symbol) => {
           end: todayStr,
           timeframe: '1Min',
           limit: 100,
-          feed: 'sip'
+          feed: 'sip',
+          adjustment: 'split'
         }
       });
 
@@ -443,7 +446,8 @@ const getPreviousClose = async (symbol) => {
           end: endDate.toISOString().split('T')[0],
           timeframe: '1Day',
           limit: 7,
-          feed: 'sip'
+          feed: 'sip',
+          adjustment: 'split'
         }
       });
 
@@ -1636,7 +1640,7 @@ async function generateHistoricalData(symbol, timeframe, limit, start, end) {
         const alpacaParams = start && end 
           ? `timeframe=${alpacaTimeframe}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
           : `timeframe=${alpacaTimeframe}&limit=${alpacaLimit}`;
-        const response = await axios.get(`https://data.alpaca.markets/v2/stocks/${symbol}/bars?${alpacaParams}`, {
+        const response = await axios.get(`https://data.alpaca.markets/v2/stocks/${symbol}/bars?${alpacaParams}&adjustment=split`, {
           headers,
           timeout: 10000
         });
@@ -1692,16 +1696,36 @@ async function generateHistoricalData(symbol, timeframe, limit, start, end) {
         const lows = quotes.low;
         const closes = quotes.close;
         const volumes = quotes.volume;
-        
+
+        // Build split events list to adjust historical OHLC like TradingView ADJ
+        const splitEventsRaw = (result.events && result.events.splits) ? result.events.splits : {};
+        const splitEvents = Object.values(splitEventsRaw).map((ev) => {
+          const numerator = typeof ev.numerator === 'number' ? ev.numerator : parseFloat((ev.splitRatio || '1/1').split('/')[0]);
+          const denominator = typeof ev.denominator === 'number' ? ev.denominator : parseFloat((ev.splitRatio || '1/1').split('/')[1]);
+          const ts = (typeof ev.date === 'number' ? ev.date : (typeof ev.timestamp === 'number' ? ev.timestamp : null));
+          return ts ? { ts, factor: denominator / numerator } : null;
+        }).filter(Boolean).sort((a, b) => a.ts - b.ts);
+
+        const computeAdjustmentFactor = (ts) => {
+          if (!splitEvents.length) return 1;
+          let f = 1;
+          for (const ev of splitEvents) {
+            if (ts < ev.ts) f *= ev.factor; // apply future splits to past candles
+          }
+          return f;
+        };
+
         const candles = [];
         for (let i = 0; i < timestamps.length; i++) {
           if (opens[i] !== null && highs[i] !== null && lows[i] !== null && closes[i] !== null) {
+            const ts = timestamps[i];
+            const adj = computeAdjustmentFactor(ts);
             candles.push({
-              timestamp: timestamps[i],
-              open: parseFloat(opens[i]),
-              high: parseFloat(highs[i]),
-              low: parseFloat(lows[i]),
-              close: parseFloat(closes[i]),
+              timestamp: ts,
+              open: parseFloat((opens[i] * adj).toFixed(6)),
+              high: parseFloat((highs[i] * adj).toFixed(6)),
+              low: parseFloat((lows[i] * adj).toFixed(6)),
+              close: parseFloat((closes[i] * adj).toFixed(6)),
               volume: volumes[i] ? parseInt(volumes[i]) : 0
             });
           }
