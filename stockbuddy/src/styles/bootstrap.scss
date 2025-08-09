@@ -1,0 +1,134 @@
+// Import only essential Bootstrap modules to avoid compilation issues
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/mixins";
+
+// Core CSS - only what we need
+@import "bootstrap/scss/reboot";
+@import "bootstrap/scss/type";
+@import "bootstrap/scss/containers";
+@import "bootstrap/scss/grid";
+
+// Components - only what we need for charts
+@import "bootstrap/scss/buttons";
+@import "bootstrap/scss/button-group";
+@import "bootstrap/scss/forms";
+@import "bootstrap/scss/modal";
+@import "bootstrap/scss/list-group";
+@import "bootstrap/scss/spinners";
+
+// Utilities
+@import "bootstrap/scss/utilities";
+
+// Bootstrap Icons
+@import "bootstrap-icons/font/bootstrap-icons";
+
+// Custom chart styles
+.chart-container {
+  .chart-toolbar {
+    .btn-group {
+      .btn {
+        &:focus {
+          box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+      }
+    }
+  }
+
+  .chart-engine {
+    canvas {
+      display: block;
+    }
+  }
+
+  .drawing-canvas {
+    cursor: crosshair;
+    
+    &:hover {
+      cursor: crosshair;
+    }
+  }
+
+  .chart-tooltip {
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    
+    .tooltip-arrow {
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+    }
+  }
+}
+
+// Dark theme overrides
+.bg-dark {
+  .chart-toolbar {
+    .btn-outline-light {
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+      
+      &:focus {
+        box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+      }
+    }
+  }
+}
+
+// Responsive utilities
+@media (max-width: 576px) {
+  .chart-toolbar {
+    .btn-group {
+      flex-wrap: wrap;
+      
+      .btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+      }
+    }
+  }
+}
+
+// Animation utilities
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Focus utilities for accessibility
+.btn:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .chart-tooltip {
+    border-width: 2px;
+  }
+  
+  .btn {
+    border-width: 2px;
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .fade-in {
+    animation: none;
+  }
+  
+  .spinner-border {
+    animation: none;
+  }
+}

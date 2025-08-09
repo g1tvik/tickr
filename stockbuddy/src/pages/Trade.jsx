@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import StockTicker from '../components/StockTicker';
 import StockSearch from '../components/StockSearch';
+import { SuperChart } from '../components/SuperChart';
 import { useTrading } from '../hooks/useTrading';
 import { getPositionValue, calculateOrderTotal } from '../utils/tradeUtils';
 import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
+import { api } from '../services/api';
 
 function Trade() {
   const {
@@ -26,33 +28,106 @@ function Trade() {
     loadMarketData,
   } = useTrading();
 
-  // Show loading state while checking authentication
-  if (!isAuthenticated && !error) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{
-            fontSize: '18px',
-            color: marbleGray,
-            fontWeight: '500'
-          }}>
-            Loading Trading Interface...
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Chart data state
+  const [chartData, setChartData] = useState(null);
+  const [chartLoading, setChartLoading] = useState(false);
+  const [chartError, setChartError] = useState(null);
+  const [timeframe, setTimeframe] = useState('1D');
 
-  // Show error if not authenticated
-  if (!isAuthenticated && error) {
+  // Load chart data when stock is selected
+  useEffect(() => {
+    if (selectedStock?.symbol) {
+      loadChartData(selectedStock.symbol, timeframe);
+    }
+  }, [selectedStock?.symbol, timeframe]);
+
+  const loadChartData = async (symbol, tf) => {
+    setChartLoading(true);
+    setChartError(null);
+    
+    try {
+      // Try to get data from API first
+      const response = await api.getChartData(symbol, tf, 100);
+      if (response.success) {
+        setChartData(response.chartData);
+      } else {
+        // Fallback to mock data
+        setChartData(generateMockChartData(symbol, tf));
+      }
+    } catch (error) {
+      console.error('Error loading chart data:', error);
+      // Fallback to mock data
+      setChartData(generateMockChartData(symbol, tf));
+    } finally {
+      setChartLoading(false);
+    }
+  };
+
+  const generateMockChartData = (symbol, timeframe) => {
+    const basePrice = 100 + Math.random() * 200; // Random base price between 100-300
+    const candles = [];
+    const now = new Date();
+    
+    // Generate data points based on timeframe
+    let interval;
+    switch (timeframe) {
+      case '1H':
+        interval = 60 * 60 * 1000; // 1 hour
+        break;
+      case '4H':
+        interval = 4 * 60 * 60 * 1000; // 4 hours
+        break;
+      case '1D':
+        interval = 24 * 60 * 60 * 1000; // 1 day
+        break;
+      case '1W':
+        interval = 7 * 24 * 60 * 60 * 1000; // 1 week
+        break;
+      case '1M':
+        interval = 30 * 24 * 60 * 60 * 1000; // 1 month
+        break;
+      default:
+        interval = 24 * 60 * 60 * 1000; // Default to 1 day
+    }
+    
+    for (let i = 30; i >= 0; i--) {
+      const time = new Date(now.getTime() - (i * interval));
+      const open = basePrice + (Math.random() - 0.5) * 20;
+      const high = open + Math.random() * 10;
+      const low = open - Math.random() * 10;
+      const close = open + (Math.random() - 0.5) * 8;
+      const volume = Math.floor(Math.random() * 1000000) + 100000;
+      
+      candles.push({
+        timestamp: Math.floor(time.getTime() / 1000),
+        open: parseFloat(open.toFixed(2)),
+        high: parseFloat(high.toFixed(2)),
+        low: parseFloat(low.toFixed(2)),
+        close: parseFloat(close.toFixed(2)),
+        volume: volume
+      });
+    }
+    
+    return {
+      symbol,
+      timeframe,
+      candles,
+      lastUpdated: new Date().toISOString()
+    };
+  };
+
+  const handleTimeframeChange = (newTimeframe) => {
+    setTimeframe(newTimeframe);
+    if (selectedStock?.symbol) {
+      loadChartData(selectedStock.symbol, newTimeframe);
+    }
+  };
+
+  if (!isAuthenticated) {
     return (
       <div style={{
         minHeight: '100vh',
+        backgroundColor: marbleDarkGray,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
@@ -80,13 +155,13 @@ function Trade() {
   return (
     <div className="page-dark" style={{
       minHeight: '100vh',
-      padding: '24px',
+      padding: '16px',
       fontFamily: fontBody
     }}>
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 350px',
-        gap: '24px',
+        gridTemplateColumns: '1fr 320px',
+        gap: '16px',
         maxWidth: '1400px',
         margin: '0 auto'
       }}>
@@ -94,14 +169,13 @@ function Trade() {
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '24px'
+          gap: '16px'
         }}>
           {/* Header */}
           <div style={{
             backgroundColor: marbleLightGray,
             borderRadius: '20px',
-            padding: '24px',
-            marginBottom: '24px'
+            padding: '16px'
           }}>
             <div style={{
               display: 'flex',
@@ -157,7 +231,7 @@ function Trade() {
           <div style={{
             backgroundColor: marbleLightGray,
             borderRadius: '20px',
-            padding: '24px'
+            padding: '16px'
           }}>
             <h2 style={{
               fontSize: '20px',
@@ -174,226 +248,246 @@ function Trade() {
             />
           </div>
 
-          {/* Trading Interface */}
+          {/* Chart and Trading Section */}
           {selectedStock && (
             <div style={{
               backgroundColor: marbleLightGray,
               borderRadius: '20px',
-              padding: '24px'
+              padding: '16px'
             }}>
-              <h2 style={{
-                fontSize: '20px',
-                fontWeight: 'bold',
-                color: marbleDarkGray,
-                marginBottom: '16px',
-                fontFamily: fontHeading
-              }}>
-                Place Order
-              </h2>
-              
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '24px',
-                marginBottom: '24px'
+                gridTemplateColumns: '1fr 280px',
+                gap: '16px',
+                alignItems: 'start'
               }}>
-                {/* Stock Info */}
-                <div style={{
-                  backgroundColor: marbleWhite,
-                  borderRadius: '16px',
-                  padding: '20px'
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '16px'
-                  }}>
-                    <div>
-                      <div style={{
-                        fontSize: '24px',
-                        fontWeight: 'bold',
-                        color: marbleDarkGray
-                      }}>
-                        {selectedStock.symbol}
-                      </div>
-                      <div style={{
-                        color: marbleGray,
-                        fontSize: '14px'
-                      }}>
-                        {selectedStock.name}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{
-                        fontSize: '28px',
-                        fontWeight: 'bold',
-                        color: marbleDarkGray
-                      }}>
-                        ${selectedStock.price?.toFixed(2) || 'N/A'}
-                      </div>
-                      <div style={{
-                        fontSize: '16px',
-                        color: selectedStock.changePercent && selectedStock.changePercent !== 'N/A' && parseFloat(selectedStock.changePercent) >= 0 ? '#22c55e' : '#ef4444'
-                      }}>
-                        {selectedStock.changePercent && selectedStock.changePercent !== 'N/A' ? 
-                          `${parseFloat(selectedStock.changePercent) >= 0 ? '+' : ''}${selectedStock.changePercent}%` : 
-                          'N/A'
-                        }
-                      </div>
-                    </div>
-                  </div>
-                  {selectedStock.volume && (
-                    <div style={{
-                      color: marbleGray,
-                      fontSize: '14px'
-                    }}>
-                      Volume: {selectedStock.volume.toLocaleString()}
-                    </div>
-                  )}
+                {/* Chart */}
+                <div>
+                  <SuperChart
+                    symbol={selectedStock.symbol}
+                    initialInterval="1d"
+                    theme="dark"
+                    realtime={false}
+                    height={400}
+                    onChartReady={(chart) => {
+                      console.log('SuperChart ready:', chart);
+                    }}
+                    onDataUpdate={(data) => {
+                      console.log('Chart data updated:', data);
+                    }}
+                    onDrawingUpdate={(drawings) => {
+                      console.log('Drawings updated:', drawings);
+                    }}
+                  />
                 </div>
 
-                {/* Order Form */}
+                {/* Trading Panel */}
                 <div style={{
                   backgroundColor: marbleWhite,
                   borderRadius: '16px',
-                  padding: '20px'
+                  padding: '16px',
+                  height: 'fit-content'
                 }}>
-                  <div style={{ marginBottom: '16px' }}>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '8px',
-                      color: marbleDarkGray,
-                      fontWeight: '500'
-                    }}>
-                      Order Type
-                    </label>
+                  {/* Stock Info */}
+                  <div style={{
+                    marginBottom: '20px',
+                    paddingBottom: '16px',
+                    borderBottom: '1px solid #e0e0e0'
+                  }}>
                     <div style={{
                       display: 'flex',
-                      gap: '8px'
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '8px'
                     }}>
-                      <button
-                        onClick={() => setOrderType('buy')}
-                        style={{
-                          flex: 1,
-                          padding: '12px',
-                          borderRadius: '8px',
-                          border: 'none',
-                          color: 'white',
-                          fontWeight: '500',
-                          cursor: 'pointer',
-                          backgroundColor: orderType === 'buy' ? '#22c55e' : marbleGray,
-                          transition: 'opacity 0.2s'
-                        }}
-                      >
-                        Buy
-                      </button>
-                      <button
-                        onClick={() => setOrderType('sell')}
-                        style={{
-                          flex: 1,
-                          padding: '12px',
-                          borderRadius: '8px',
-                          border: 'none',
-                          color: 'white',
-                          fontWeight: '500',
-                          cursor: 'pointer',
-                          backgroundColor: orderType === 'sell' ? '#ef4444' : marbleGray,
-                          transition: 'opacity 0.2s'
-                        }}
-                      >
-                        Sell
-                      </button>
+                      <div>
+                        <div style={{
+                          fontSize: '20px',
+                          fontWeight: 'bold',
+                          color: marbleDarkGray
+                        }}>
+                          {selectedStock.symbol}
+                        </div>
+                        <div style={{
+                          color: marbleGray,
+                          fontSize: '12px'
+                        }}>
+                          {selectedStock.name}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{
+                          fontSize: '24px',
+                          fontWeight: 'bold',
+                          color: marbleDarkGray
+                        }}>
+                          ${selectedStock.price?.toFixed(2) || 'N/A'}
+                        </div>
+                        <div style={{
+                          fontSize: '14px',
+                          color: selectedStock.changePercent && selectedStock.changePercent !== 'N/A' && parseFloat(selectedStock.changePercent) >= 0 ? '#22c55e' : '#ef4444'
+                        }}>
+                          {selectedStock.changePercent && selectedStock.changePercent !== 'N/A' ? 
+                            `${parseFloat(selectedStock.changePercent) >= 0 ? '+' : ''}${selectedStock.changePercent}%` : 
+                            'N/A'
+                          }
+                        </div>
+                      </div>
                     </div>
+                    {selectedStock.volume && (
+                      <div style={{
+                        color: marbleGray,
+                        fontSize: '12px'
+                      }}>
+                        Volume: {selectedStock.volume.toLocaleString()}
+                      </div>
+                    )}
                   </div>
 
-                  <div style={{ marginBottom: '16px' }}>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '8px',
-                      color: marbleDarkGray,
-                      fontWeight: '500'
+                  {/* Order Form */}
+                  <div>
+                    <div style={{ marginBottom: '16px' }}>
+                      <label style={{
+                        display: 'block',
+                        marginBottom: '6px',
+                        color: marbleDarkGray,
+                        fontWeight: '500',
+                        fontSize: '14px'
+                      }}>
+                        Order Type
+                      </label>
+                      <div style={{
+                        display: 'flex',
+                        gap: '6px'
+                      }}>
+                        <button
+                          onClick={() => setOrderType('buy')}
+                          style={{
+                            flex: 1,
+                            padding: '10px',
+                            borderRadius: '6px',
+                            border: 'none',
+                            color: 'white',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            backgroundColor: orderType === 'buy' ? '#22c55e' : marbleGray,
+                            transition: 'opacity 0.2s',
+                            fontSize: '14px'
+                          }}
+                        >
+                          Buy
+                        </button>
+                        <button
+                          onClick={() => setOrderType('sell')}
+                          style={{
+                            flex: 1,
+                            padding: '10px',
+                            borderRadius: '6px',
+                            border: 'none',
+                            color: 'white',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            backgroundColor: orderType === 'sell' ? '#ef4444' : marbleGray,
+                            transition: 'opacity 0.2s',
+                            fontSize: '14px'
+                          }}
+                        >
+                          Sell
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: '16px' }}>
+                      <label style={{
+                        display: 'block',
+                        marginBottom: '6px',
+                        color: marbleDarkGray,
+                        fontWeight: '500',
+                        fontSize: '14px'
+                      }}>
+                        Shares
+                      </label>
+                      <input
+                        type="number"
+                        value={shares}
+                        onChange={(e) => setShares(parseInt(e.target.value) || 1)}
+                        min="1"
+                        style={{
+                          width: '100%',
+                          padding: '10px',
+                          borderRadius: '6px',
+                          border: '2px solid #e0e0e0',
+                          fontSize: '14px'
+                        }}
+                      />
+                    </div>
+
+                    <div style={{
+                      padding: '12px',
+                      backgroundColor: marbleLightGray,
+                      borderRadius: '6px',
+                      marginBottom: '16px',
+                      fontSize: '12px'
                     }}>
-                      Shares
-                    </label>
-                    <input
-                      type="number"
-                      value={shares}
-                      onChange={(e) => setShares(parseInt(e.target.value) || 1)}
-                      min="1"
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginBottom: '4px'
+                      }}>
+                        <span style={{ color: marbleGray }}>Price per share</span>
+                        <span style={{ fontWeight: '500' }}>${selectedStock.price?.toFixed(2) || 'N/A'}</span>
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginBottom: '4px'
+                      }}>
+                        <span style={{ color: marbleGray }}>Number of shares</span>
+                        <span style={{ fontWeight: '500' }}>{shares}</span>
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        borderTop: '1px solid #e0e0e0',
+                        paddingTop: '4px',
+                        marginBottom: 0,
+                        fontWeight: 'bold'
+                      }}>
+                        <span style={{ color: marbleDarkGray }}>Total</span>
+                        <span style={{ color: marbleDarkGray }}>
+                          ${calculateOrderTotal(selectedStock, shares).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleOrderSubmit}
+                      disabled={isLoading}
                       style={{
                         width: '100%',
                         padding: '12px',
                         borderRadius: '8px',
-                        border: '2px solid #e0e0e0',
-                        fontSize: '16px'
+                        border: 'none',
+                        backgroundColor: marbleGold,
+                        color: marbleDarkGray,
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        cursor: isLoading ? 'not-allowed' : 'pointer',
+                        opacity: isLoading ? 0.6 : 1,
+                        transition: 'transform 0.2s'
                       }}
-                    />
+                      onMouseEnter={(e) => {
+                        if (!isLoading) {
+                          e.target.style.transform = 'scale(1.02)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.transform = 'scale(1)';
+                      }}
+                    >
+                      {isLoading ? 'Processing...' : `${orderType === 'buy' ? 'Buy' : 'Sell'} ${shares} ${shares === 1 ? 'Share' : 'Shares'}`}
+                    </button>
                   </div>
-
-                  <div style={{
-                    padding: '16px',
-                    backgroundColor: marbleLightGray,
-                    borderRadius: '8px',
-                    marginBottom: '16px'
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      marginBottom: '8px'
-                    }}>
-                      <span style={{ color: marbleGray }}>Price per share</span>
-                      <span style={{ fontWeight: '500' }}>${selectedStock.price?.toFixed(2) || 'N/A'}</span>
-                    </div>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      marginBottom: '8px'
-                    }}>
-                      <span style={{ color: marbleGray }}>Number of shares</span>
-                      <span style={{ fontWeight: '500' }}>{shares}</span>
-                    </div>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      borderTop: '1px solid #e0e0e0',
-                      paddingTop: '8px',
-                      marginBottom: 0
-                    }}>
-                      <span style={{ fontWeight: 'bold', color: marbleDarkGray }}>Total</span>
-                      <span style={{ fontWeight: 'bold', color: marbleDarkGray }}>
-                        ${calculateOrderTotal(selectedStock, shares).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleOrderSubmit}
-                    disabled={isLoading}
-                    style={{
-                      width: '100%',
-                      padding: '16px',
-                      borderRadius: '12px',
-                      border: 'none',
-                      backgroundColor: marbleGold,
-                      color: marbleDarkGray,
-                      fontSize: '16px',
-                      fontWeight: 'bold',
-                      cursor: isLoading ? 'not-allowed' : 'pointer',
-                      opacity: isLoading ? 0.6 : 1,
-                      transition: 'transform 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isLoading) {
-                        e.target.style.transform = 'scale(1.02)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.transform = 'scale(1)';
-                    }}
-                  >
-                    {isLoading ? 'Processing...' : `${orderType === 'buy' ? 'Buy' : 'Sell'} ${shares} ${shares === 1 ? 'Share' : 'Shares'}`}
-                  </button>
                 </div>
               </div>
             </div>
@@ -418,13 +512,13 @@ function Trade() {
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '24px'
+          gap: '16px'
         }}>
           {/* Account Balance */}
           <div style={{
             backgroundColor: marbleLightGray,
             borderRadius: '20px',
-            padding: '24px'
+            padding: '16px'
           }}>
             <h3 style={{
               fontSize: '20px',
@@ -455,7 +549,7 @@ function Trade() {
           <div style={{
             backgroundColor: marbleLightGray,
             borderRadius: '20px',
-            padding: '24px'
+            padding: '16px'
           }}>
             <h3 style={{
               fontSize: '20px',
@@ -492,30 +586,38 @@ function Trade() {
                       alignItems: 'center',
                       marginBottom: '8px'
                     }}>
-                      <span style={{
+                      <div style={{
+                        fontSize: '16px',
                         fontWeight: 'bold',
                         color: marbleDarkGray
                       }}>
                         {position.symbol}
-                      </span>
-                      <span style={{
-                        fontWeight: '500',
-                        color: position.changePercent && parseFloat(position.changePercent) >= 0 ? '#22c55e' : '#ef4444'
+                      </div>
+                      <div style={{
+                        fontSize: '14px',
+                        color: marbleGray
                       }}>
-                        {position.changePercent && position.changePercent !== 'N/A' ? 
-                          `${parseFloat(position.changePercent) >= 0 ? '+' : ''}${position.changePercent}%` : 
-                          'N/A'
-                        }
-                      </span>
+                        {position.shares} shares
+                      </div>
                     </div>
                     <div style={{
                       display: 'flex',
                       justifyContent: 'space-between',
-                      fontSize: '14px',
-                      color: marbleGray
+                      alignItems: 'center'
                     }}>
-                      <span>{position.shares} {position.shares === 1 ? 'share' : 'shares'}</span>
-                      <span>${getPositionValue(position).currentValue.toFixed(2)}</span>
+                      <div style={{
+                        fontSize: '14px',
+                        color: marbleGray
+                      }}>
+                        Avg: ${position.averagePrice?.toFixed(2)}
+                      </div>
+                      <div style={{
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        color: marbleDarkGray
+                      }}>
+                        ${getPositionValue(position).toFixed(2)}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -523,43 +625,57 @@ function Trade() {
             )}
           </div>
 
-          {/* Market Ticker */}
+          {/* Market Watch */}
           <div style={{
             backgroundColor: marbleLightGray,
             borderRadius: '20px',
-            padding: '24px'
+            padding: '16px'
           }}>
+            <h3 style={{
+              fontSize: '20px',
+              fontWeight: 'bold',
+              color: marbleDarkGray,
+              marginBottom: '16px',
+              fontFamily: fontHeading
+            }}>
+              Market Watch
+            </h3>
             <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
+              color: marbleGray,
+              fontSize: '14px',
               marginBottom: '16px'
             }}>
-              <h3 style={{
-                fontSize: '20px',
-                fontWeight: 'bold',
-                color: marbleDarkGray,
-                margin: 0,
-                fontFamily: fontHeading
-              }}>
-                Market Watch
-              </h3>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-              }}>
-                {lastUpdate && (
-                  <span style={{
-                    fontSize: '12px',
-                    color: marbleGray
-                  }}>
-                    Last: {new Date(lastUpdate).toLocaleTimeString()}
-                  </span>
-                )}
-              </div>
+              Last: {new Date().toLocaleTimeString()}
             </div>
-            {stocks.length > 0 && <StockTicker stocks={stocks} />}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px'
+            }}>
+              {stocks.slice(0, 5).map((stock, index) => (
+                <div key={index} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '8px 0',
+                  borderBottom: index < stocks.length - 1 ? '1px solid #e0e0e0' : 'none'
+                }}>
+                  <div style={{
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: marbleDarkGray
+                  }}>
+                    {stock.symbol}
+                  </div>
+                  <div style={{
+                    fontSize: '14px',
+                    color: marbleDarkGray
+                  }}>
+                    ${stock.price?.toFixed(2) || 'N/A'}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

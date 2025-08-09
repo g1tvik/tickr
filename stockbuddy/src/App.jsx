@@ -11,6 +11,7 @@ import Learn from './pages/Learn';
 import Settings from './pages/Settings';
 import LessonDetail from "./pages/LessonDetail";
 import Discover from './pages/Discover';
+import AICoach from './pages/AICoach';
 import Shop from './pages/Shop';
 import ArticleReader from './components/ArticleReader';
 
@@ -28,7 +29,7 @@ function AppContent() {
     
     if (mainContent && pageTransition) {
       // Determine page type based on route
-      const isDarkPage = location.pathname === '/trade';
+      const isDarkPage = location.pathname === '/trade' || location.pathname === '/ai-coach';
       
       // Add appropriate classes
       if (isDarkPage) {
@@ -66,6 +67,7 @@ function AppContent() {
               <Route path="/trade" element={<Trade />} />
               <Route path="/learn" element={<Learn />} />
               <Route path="/discover" element={<Discover />} />
+              <Route path="/ai-coach" element={<AICoach />} />
               <Route path="/shop" element={<Shop />} />
               <Route path="/learn/lesson/:lessonId" element={<LessonDetail />} />
               <Route path="/article/:articleId" element={<ArticleReader />} />

@@ -340,7 +340,8 @@ const getPreviousClose = async (symbol) => {
           end: yesterdayStr,
           timeframe: '1Day',
           limit: 1,
-          feed: 'sip'
+          feed: 'sip',
+          adjustment: 'split'
         }
       });
 
@@ -366,7 +367,8 @@ const getPreviousClose = async (symbol) => {
           end: endDate.toISOString().split('T')[0],
           timeframe: '1Day',
           limit: 5,
-          feed: 'sip'
+          feed: 'sip',
+          adjustment: 'split'
         }
       });
 
@@ -416,7 +418,8 @@ const getPreviousClose = async (symbol) => {
           end: todayStr,
           timeframe: '1Min',
           limit: 100,
-          feed: 'sip'
+          feed: 'sip',
+          adjustment: 'split'
         }
       });
 
@@ -443,7 +446,8 @@ const getPreviousClose = async (symbol) => {
           end: endDate.toISOString().split('T')[0],
           timeframe: '1Day',
           limit: 7,
-          feed: 'sip'
+          feed: 'sip',
+          adjustment: 'split'
         }
       });
 
@@ -1402,6 +1406,13 @@ let marketDataCache = {
   ttl: 30000 // 30 seconds cache
 };
 
+// Cache for chart data to reduce API calls
+let chartDataCache = {
+  data: {},
+  timestamp: {},
+  ttl: 300000 // 5 minutes cache for chart data (increased due to larger datasets)
+};
+
 // Get WebSocket connection status
 router.get('/websocket-status', (req, res) => {
   try {
@@ -1479,5 +1490,379 @@ router.get('/market', async (req, res) => {
     });
   }
 });
+
+// Get historical chart data for a stock
+router.get('/chart/:symbol', async (req, res) => {
+  try {
+    const { symbol } = req.params;
+    const { timeframe = '1D', limit = 500, start, end } = req.query;
+    
+    console.log(`[${getTimestamp()}] 📈 Fetching chart data for ${symbol} (${timeframe})` + (start && end ? ` range ${start}→${end}` : ''));
+    
+    // Check cache first
+    const cacheKey = `${symbol}_${timeframe}_${start || 'NA'}_${end || 'NA'}`;
+    const now = Date.now();
+    if (chartDataCache.data[cacheKey] && chartDataCache.timestamp[cacheKey] && 
+        (now - chartDataCache.timestamp[cacheKey]) < chartDataCache.ttl) {
+      console.log(`[${getTimestamp()}] 📦 Returning cached chart data for ${symbol}`);
+      return res.json({
+        success: true,
+        chartData: chartDataCache.data[cacheKey],
+        cached: true
+      });
+    }
+
+    // Generate historical data with optional date slicing
+    const chartData = await generateHistoricalData(symbol, timeframe, parseInt(limit), start, end);
+    
+    // Update cache
+    chartDataCache.data[cacheKey] = chartData;
+    chartDataCache.timestamp[cacheKey] = now;
+    
+    console.log(`[${getTimestamp()}] ✅ Chart data generated for ${symbol}: ${chartData.candles.length} candles`);
+    
+    res.json({
+      success: true,
+      chartData,
+      cached: false
+    });
+  } catch (error) {
+    console.error(`[${getTimestamp()}] Error getting chart data:`, error);
+    res.status(500).json({
+      success: false,
+      message: `Failed to get chart data: ${error.message}`
+    });
+  }
+});
+
+// Get real-time chart updates
+router.get('/chart/:symbol/live', async (req, res) => {
+  try {
+    const { symbol } = req.params;
+    
+    console.log(`[${getTimestamp()}] 🔄 Getting live chart update for ${symbol}`);
+    
+    // Get current quote
+    const quote = await getStockQuote(symbol);
+    
+    // Generate real-time candle data
+    const liveData = generateLiveCandleData(quote);
+    
+    res.json({
+      success: true,
+      liveData,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error(`[${getTimestamp()}] Error getting live chart data:`, error);
+    res.status(500).json({
+      success: false,
+      message: `Failed to get live chart data: ${error.message}`
+    });
+  }
+});
+
+// Helper function to generate historical data
+async function generateHistoricalData(symbol, timeframe, limit, start, end) {
+  try {
+    console.log(`[${getTimestamp()}] 🔍 Fetching real historical data for ${symbol} (${timeframe})`);
+    
+    // Map frontend timeframes to Alpaca timeframes with full year coverage
+    let alpacaTimeframe;
+    let yahooInterval;
+    let yahooRange;
+    
+    switch (timeframe) {
+      case '1m':
+        alpacaTimeframe = '1Min';
+        yahooInterval = '1m';
+        yahooRange = '60d'; // 60 days for minute data
+        break;
+      case '5m':
+        alpacaTimeframe = '5Min';
+        yahooInterval = '5m';
+        yahooRange = '60d'; // 60 days for 5-minute data
+        break;
+      case '15m':
+        alpacaTimeframe = '15Min';
+        yahooInterval = '15m';
+        yahooRange = '60d'; // 60 days for 15-minute data
+        break;
+      case '1h':
+        alpacaTimeframe = '1Hour';
+        yahooInterval = '1h';
+        yahooRange = '2y'; // 2 years for hourly data
+        break;
+      case '4h':
+        alpacaTimeframe = '4Hour';
+        yahooInterval = '1h';
+        yahooRange = '2y'; // 2 years for 4-hour data
+        break;
+      case '1d':
+        alpacaTimeframe = '1Day';
+        yahooInterval = '1d';
+        yahooRange = '10y'; // extend range so historical windows like 2020 are available
+        break;
+      case '1w':
+        alpacaTimeframe = '1Week';
+        yahooInterval = '1d';
+        yahooRange = '5y'; // 5 years for weekly data
+        break;
+      case '1M':
+        alpacaTimeframe = '1Month';
+        yahooInterval = '1d';
+        yahooRange = '10y'; // extend range for monthly as well
+        break;
+      default:
+        alpacaTimeframe = '1Day';
+        yahooInterval = '1d';
+        yahooRange = '5y'; // 5 years default
+    }
+    
+    // Try Alpaca API first
+    if (process.env.ALPACA_API_KEY && process.env.ALPACA_SECRET_KEY) {
+      try {
+        const headers = {
+          'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
+          'APCA-API-SECRET-KEY': process.env.ALPACA_SECRET_KEY
+        };
+        
+        // Get maximum historical data for all timeframes
+        let alpacaLimit;
+        if (timeframe === '1m' || timeframe === '5m' || timeframe === '15m') {
+          alpacaLimit = Math.min(limit * 10, 2000); // Much more data for minute intervals
+        } else if (timeframe === '1h' || timeframe === '4h') {
+          alpacaLimit = Math.min(limit * 8, 1500); // More data for hourly intervals
+        } else {
+          alpacaLimit = Math.min(limit * 5, 1000); // Standard for daily+ intervals
+        }
+        // If a date range is provided, prefer start/end over limit when calling Alpaca
+        const alpacaParams = start && end 
+          ? `timeframe=${alpacaTimeframe}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
+          : `timeframe=${alpacaTimeframe}&limit=${alpacaLimit}`;
+        const response = await axios.get(`https://data.alpaca.markets/v2/stocks/${symbol}/bars?${alpacaParams}&adjustment=split`, {
+          headers,
+          timeout: 10000
+        });
+        
+        if (response.data.bars && response.data.bars.length > 0) {
+          const candles = response.data.bars.map(bar => ({
+            timestamp: Math.floor(new Date(bar.t).getTime() / 1000),
+            open: parseFloat(bar.o),
+            high: parseFloat(bar.h),
+            low: parseFloat(bar.l),
+            close: parseFloat(bar.c),
+            volume: parseInt(bar.v)
+          }));
+          
+          let slicedCandles = candles;
+          if (start && end) {
+            const startTs = Math.floor(new Date(start + 'T00:00:00Z').getTime() / 1000);
+            const endTs = Math.floor(new Date(end + 'T23:59:59Z').getTime() / 1000);
+            slicedCandles = candles.filter(c => c.timestamp >= startTs && c.timestamp <= endTs);
+          }
+          console.log(`[${getTimestamp()}] ✅ Got ${slicedCandles.length} candles from Alpaca for ${symbol}`);
+          
+          return {
+            symbol,
+            timeframe,
+            candles: slicedCandles,
+            lastUpdated: new Date().toISOString()
+          };
+        }
+      } catch (alpacaError) {
+        console.warn(`[${getTimestamp()}] ⚠️ Alpaca API failed for ${symbol}: ${alpacaError.message}`);
+      }
+    }
+    
+    // Fallback to Yahoo Finance API
+    try {
+      // Get maximum historical data for all timeframes
+      const yahooRangeAdjusted = yahooRange; // Use the full year range we set above
+        // For Yahoo, if a specific date range is requested, switch to explicit period1/period2
+        const yahooUrl = start && end
+          ? `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${yahooInterval}&period1=${Math.floor(new Date(start + 'T00:00:00Z').getTime() / 1000)}&period2=${Math.floor(new Date(end + 'T23:59:59Z').getTime() / 1000)}`
+          : `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${yahooInterval}&range=${yahooRangeAdjusted}`;
+        const yahooResponse = await axios.get(yahooUrl, {
+        timeout: 10000
+      });
+      
+      if (yahooResponse.data.chart.result && yahooResponse.data.chart.result[0]) {
+        const result = yahooResponse.data.chart.result[0];
+        const timestamps = result.timestamp;
+        const quotes = result.indicators.quote[0];
+        const opens = quotes.open;
+        const highs = quotes.high;
+        const lows = quotes.low;
+        const closes = quotes.close;
+        const volumes = quotes.volume;
+
+        // Build split events list to adjust historical OHLC like TradingView ADJ
+        const splitEventsRaw = (result.events && result.events.splits) ? result.events.splits : {};
+        const splitEvents = Object.values(splitEventsRaw).map((ev) => {
+          const numerator = typeof ev.numerator === 'number' ? ev.numerator : parseFloat((ev.splitRatio || '1/1').split('/')[0]);
+          const denominator = typeof ev.denominator === 'number' ? ev.denominator : parseFloat((ev.splitRatio || '1/1').split('/')[1]);
+          const ts = (typeof ev.date === 'number' ? ev.date : (typeof ev.timestamp === 'number' ? ev.timestamp : null));
+          return ts ? { ts, factor: denominator / numerator } : null;
+        }).filter(Boolean).sort((a, b) => a.ts - b.ts);
+
+        const computeAdjustmentFactor = (ts) => {
+          if (!splitEvents.length) return 1;
+          let f = 1;
+          for (const ev of splitEvents) {
+            if (ts < ev.ts) f *= ev.factor; // apply future splits to past candles
+          }
+          return f;
+        };
+
+        const candles = [];
+        for (let i = 0; i < timestamps.length; i++) {
+          if (opens[i] !== null && highs[i] !== null && lows[i] !== null && closes[i] !== null) {
+            const ts = timestamps[i];
+            const adj = computeAdjustmentFactor(ts);
+            candles.push({
+              timestamp: ts,
+              open: parseFloat((opens[i] * adj).toFixed(6)),
+              high: parseFloat((highs[i] * adj).toFixed(6)),
+              low: parseFloat((lows[i] * adj).toFixed(6)),
+              close: parseFloat((closes[i] * adj).toFixed(6)),
+              volume: volumes[i] ? parseInt(volumes[i]) : 0
+            });
+          }
+        }
+        
+        // Get maximum historical data for all intervals
+        let targetLimit;
+        if (timeframe === '1m' || timeframe === '5m' || timeframe === '15m') {
+          targetLimit = Math.max(limit, 500); // Much more data for minute intervals
+        } else if (timeframe === '1h' || timeframe === '4h') {
+          targetLimit = Math.max(limit, 300); // More data for hourly intervals
+        } else {
+          targetLimit = Math.max(limit, 100); // Standard for daily+ intervals
+        }
+        let limitedCandles = candles.slice(-targetLimit);
+        if (start && end) {
+          const startTs = Math.floor(new Date(start + 'T00:00:00Z').getTime() / 1000);
+          const endTs = Math.floor(new Date(end + 'T23:59:59Z').getTime() / 1000);
+          limitedCandles = candles.filter(c => c.timestamp >= startTs && c.timestamp <= endTs);
+        }
+        
+        console.log(`[${getTimestamp()}] ✅ Got ${limitedCandles.length} candles from Yahoo Finance for ${symbol}`);
+        
+        return {
+          symbol,
+          timeframe,
+          candles: limitedCandles,
+          lastUpdated: new Date().toISOString()
+        };
+      }
+    } catch (yahooError) {
+      console.warn(`[${getTimestamp()}] ⚠️ Yahoo Finance API failed for ${symbol}: ${yahooError.message}`);
+    }
+    
+    // Final fallback - generate realistic mock data based on current price
+    console.log(`[${getTimestamp()}] ⚠️ Using fallback mock data for ${symbol}`);
+    
+    try {
+      // Get current price to base mock data on
+      const quote = await getStockQuote(symbol);
+      const basePrice = parseFloat(quote.price) || 100;
+      
+  const candles = [];
+  const now = new Date();
+  
+  // Generate data points based on timeframe
+  let interval;
+  switch (timeframe) {
+        case '1m':
+          interval = 60 * 1000;
+      break;
+        case '5m':
+          interval = 5 * 60 * 1000;
+      break;
+        case '15m':
+          interval = 15 * 60 * 1000;
+      break;
+        case '1h':
+          interval = 60 * 60 * 1000;
+          break;
+        case '4h':
+          interval = 4 * 60 * 60 * 1000;
+          break;
+        case '1d':
+          interval = 24 * 60 * 60 * 1000;
+          break;
+        case '1w':
+          interval = 7 * 24 * 60 * 60 * 1000;
+      break;
+    case '1M':
+          interval = 30 * 24 * 60 * 60 * 1000;
+      break;
+    default:
+          interval = 24 * 60 * 60 * 1000;
+  }
+  
+      let currentPrice = basePrice;
+  for (let i = limit - 1; i >= 0; i--) {
+    const time = new Date(now.getTime() - (i * interval));
+        
+        // More realistic price movement
+        const priceChange = (Math.random() - 0.5) * (basePrice * 0.02); // 2% max change
+        currentPrice = Math.max(currentPrice + priceChange, basePrice * 0.8);
+        
+        const open = currentPrice;
+        const high = open + Math.random() * (basePrice * 0.01);
+        const low = open - Math.random() * (basePrice * 0.01);
+        const close = open + (Math.random() - 0.5) * (basePrice * 0.005);
+        const volume = Math.floor(Math.random() * 10000000) + 1000000;
+    
+    candles.push({
+      timestamp: Math.floor(time.getTime() / 1000),
+      open: parseFloat(open.toFixed(2)),
+      high: parseFloat(high.toFixed(2)),
+      low: parseFloat(low.toFixed(2)),
+      close: parseFloat(close.toFixed(2)),
+      volume: volume
+    });
+  }
+  
+  // Slice mock candles to requested date range if provided
+  let mockResultCandles = candles;
+  if (start && end) {
+    const startTs = Math.floor(new Date(start + 'T00:00:00Z').getTime() / 1000);
+    const endTs = Math.floor(new Date(end + 'T23:59:59Z').getTime() / 1000);
+    mockResultCandles = candles.filter(c => c.timestamp >= startTs && c.timestamp <= endTs);
+  }
+
+  return {
+    symbol,
+    timeframe,
+    candles: mockResultCandles,
+    lastUpdated: new Date().toISOString()
+  };
+    } catch (error) {
+      console.error(`[${getTimestamp()}] Error generating fallback data for ${symbol}:`, error);
+      throw new Error(`Failed to generate chart data for ${symbol}`);
+    }
+  } catch (error) {
+    console.error(`[${getTimestamp()}] Error in generateHistoricalData for ${symbol}:`, error);
+    throw error;
+  }
+}
+
+// Helper function to generate live candle data
+function generateLiveCandleData(quote) {
+  const now = new Date();
+  const basePrice = parseFloat(quote.price);
+  
+  return {
+    timestamp: Math.floor(now.getTime() / 1000),
+    open: basePrice + (Math.random() - 0.5) * 2,
+    high: basePrice + Math.random() * 3,
+    low: basePrice - Math.random() * 3,
+    close: basePrice + (Math.random() - 0.5) * 1.5,
+    volume: Math.floor(Math.random() * 100000) + 50000
+  };
+}
 
 module.exports = router; 

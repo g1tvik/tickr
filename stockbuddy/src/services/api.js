@@ -98,6 +98,17 @@ export const api = {
     body: JSON.stringify({ symbol, shares })
   }).then(handleResponse),
 
+  // Chart data endpoints
+  getChartData: (symbol, timeframe = '1D', limit = 100, startDate, endDate) => fetch(
+    `${API_BASE_URL}/trading/chart/${symbol}?timeframe=${timeframe}&limit=${limit}` +
+    (startDate && endDate ? `&start=${encodeURIComponent(startDate)}&end=${encodeURIComponent(endDate)}` : ''), {
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
+  getLiveChartData: (symbol) => fetch(`${API_BASE_URL}/trading/chart/${symbol}/live`, {
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
   getTransactions: () => fetch(`${API_BASE_URL}/trading/transactions`, {
     headers: getAuthHeaders()
   }).then(handleResponse),

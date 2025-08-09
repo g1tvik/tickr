@@ -10,27 +10,36 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.7",
     "@react-oauth/google": "^0.12.2",
     "@react-three/drei": "^10.5.0",
     "@react-three/fiber": "^9.2.0",
+    "@tabler/icons-react": "^3.34.1",
     "axios": "^1.10.0",
     "bootstrap": "^5.3.7",
+    "bootstrap-icons": "^1.11.3",
+    "lightweight-charts": "^5.0.8",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.3",
     "styled-components": "^6.1.19",
     "three": "^0.178.0",
-    "webgl": "^0.0.7"
+    "webgl": "^0.0.7",
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.5.2",
+    "autoprefixer": "^10.4.21",
     "eslint": "^9.29.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.2.0",
+    "postcss": "^8.5.6",
+    "sass-embedded": "^1.90.0",
+    "tailwindcss": "^4.1.11",
     "vite": "^7.0.0"
   }
 }
