@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Starting StockBuddy - Complete Development Environment"
+echo "🚀 Starting tickr - Complete Development Environment"
 echo
 
 # Check if Node.js is installed
@@ -11,7 +11,7 @@ if ! command -v node &> /dev/null; then
 fi
 
 # Make the script executable
-chmod +x start-stockbuddy.js
+chmod +x start-tickr.js
 
 # Run the startup script
-node start-stockbuddy.js 
+node start-tickr.js 

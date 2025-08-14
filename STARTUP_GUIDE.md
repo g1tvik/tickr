@@ -1,9 +1,9 @@
-# StockBuddy Startup Guide
+# tickr Startup Guide
 
 ## 🚀 Quick Start Options
 
 ### Option 1: Interactive Menu (Recommended)
-Double-click `start-stockbuddy.bat` for a menu with options:
+Double-click `start-tickr.bat` for a menu with options:
 - **Start Both Services** - Full startup with dependency checks
 - **Start Backend Only** - Start just the API server
 - **Start Frontend Only** - Start just the React development server
@@ -17,7 +17,7 @@ Double-click `start-stockbuddy.bat` for a menu with options:
 node start-stockbuddy.js
 
 # Quick restart (stops existing services first)
-node restart-stockbuddy.js
+node restart-tickr.js
 
 # Check if services are running
 node check-status.js
@@ -29,16 +29,16 @@ node check-status.js
 ./start-stockbuddy.sh
 
 # Quick restart
-node restart-stockbuddy.js
+node restart-tickr.js
 ```
 
 ## 🔄 Restart Features
 
 ### Interactive Menu Options
-When you run `node start-stockbuddy.js`, you'll see:
+When you run `node start-tickr.js`, you'll see:
 ```
 ========================================
-    StockBuddy Development Environment
+    tickr Development Environment
 ========================================
 Choose an option:
 1. Start Both Services (Full)
@@ -53,15 +53,15 @@ Enter your choice (1-6):
 ### Built-in Restart Option
 When you press `Ctrl+C` to stop the services, you'll see:
 ```
-🔄 StockBuddy Services Stopped
+🔄 tickr Services Stopped
 What would you like to do?
-1. Restart StockBuddy
+1. Restart tickr
 2. Exit
 Enter your choice (1 or 2):
 ```
 
 ### Quick Restart Script
-The `restart-stockbuddy.js` script:
+The `restart-tickr.js` script:
 - ✅ Automatically stops existing services
 - ✅ Frees up ports 5001 and 5173
 - ✅ Starts both backend and frontend
@@ -108,15 +108,15 @@ cd ../stockbuddy && npm install
 node check-status.js
 
 # Force restart
-node restart-stockbuddy.js
+node restart-tickr.js
 ```
 
 ## 🎯 Usage Tips
 
 ### Development Workflow
-1. **Start**: Run `node start-stockbuddy.js` and choose option 1
+1. **Start**: Run `node start-tickr.js` and choose option 1
 2. **Develop**: Make changes to your code
-3. **Restart**: Press `Ctrl+C` and choose "Restart StockBuddy"
+3. **Restart**: Press `Ctrl+C` and choose "Restart tickr"
 4. **Test**: Open http://localhost:5173 in your browser
 
 ### Individual Service Development
@@ -127,12 +127,12 @@ node restart-stockbuddy.js
 ### Quick Development Cycle
 ```bash
 # Start services
-node start-stockbuddy.js
+node start-tickr.js
 
 # Make code changes...
 
 # Quick restart (faster than full startup)
-node restart-stockbuddy.js
+node restart-tickr.js
 ```
 
 ### Monitoring Services
@@ -148,22 +148,22 @@ node check-status.js
 ## 📁 File Structure
 ```
 thisisgoingtowork/
-├── start-stockbuddy.js      # Main startup script
-├── restart-stockbuddy.js    # Quick restart script
+├── start-tickr.js      # Main startup script
+├── restart-tickr.js    # Quick restart script
 ├── check-status.js          # Status checker
-├── start-stockbuddy.bat     # Windows menu
-├── start-stockbuddy.sh      # Unix startup script
+├── start-tickr.bat     # Windows menu
+├── start-tickr.sh      # Unix startup script
 └── STARTUP_GUIDE.md        # This guide
 ```
 
 ## 🚨 Common Issues
 
 ### "Port already in use"
-- Use `restart-stockbuddy.js` to automatically free ports
+- Use `restart-tickr.js` to automatically free ports
 - Or manually kill processes using the port
 
 ### "Module not found"
-- Run `npm install` in both `auth-backend` and `stockbuddy` directories
+- Run `npm install` in both `auth-backend` and `tickr` directories
 - The startup script will do this automatically if needed
 
 ### "Connection refused"

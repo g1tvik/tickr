@@ -4,7 +4,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-console.log('🔄 Quick Restart - StockBuddy Services\n');
+console.log('🔄 Quick Restart - tickr Services\n');
 
 // Colors for console output
 const colors = {
@@ -165,7 +165,7 @@ async function quickRestart() {
     
     // Wait for services to start
     setTimeout(() => {
-      log('\n🎉 StockBuddy restarted successfully!', 'green');
+      log('\n🎉 tickr restarted successfully!', 'green');
       log('📱 Frontend: http://localhost:5173', 'cyan');
       log('🔧 Backend: http://localhost:5001', 'cyan');
       log('\n💡 Press Ctrl+C to stop services', 'yellow');
@@ -187,7 +187,7 @@ async function quickRestart() {
     
   } catch (error) {
     log(`❌ Restart failed: ${error.message}`, 'red');
-    log('Try running the full startup script: node start-stockbuddy.js', 'yellow');
+    log('Try running the full startup script: node start-tickr.js', 'yellow');
     process.exit(1);
   }
 }
