@@ -7,10 +7,10 @@ const readline = require('readline');
 
 // Check if script is being called with arguments (from .bat file)
 const args = process.argv.slice(2);
-const isCalledFromBat = args.length > 0 || process.env.TICKR_FROM_BAT === 'true';
+const isCalledFromBat = args.length > 0 || process.env.STOCKBUDDY_FROM_BAT === 'true';
 
 if (!isCalledFromBat) {
-  console.log('🚀 Starting tickr - Complete Development Environment\n');
+  console.log('🚀 Starting StockBuddy - Complete Development Environment\n');
 }
 
 // Colors for console output
@@ -141,7 +141,7 @@ async function askForRestart() {
   });
 
   return new Promise((resolve) => {
-    log('\n🔄 Would you like to restart tickr? (y/n)', 'yellow');
+    log('\n🔄 Would you like to restart StockBuddy? (y/n)', 'yellow');
     rl.question('', (answer) => {
       rl.close();
       resolve(answer.toLowerCase().includes('y'));
@@ -157,9 +157,9 @@ async function showRestartMenu() {
   });
 
   return new Promise((resolve) => {
-    log('\n🔄 tickr Services Stopped', 'yellow');
+    log('\n🔄 StockBuddy Services Stopped', 'yellow');
     log('What would you like to do?', 'cyan');
-    log('1. Restart tickr', 'cyan');
+    log('1. Restart StockBuddy', 'cyan');
     log('2. Exit', 'cyan');
     log('Enter your choice (1 or 2):', 'yellow');
     
@@ -179,7 +179,7 @@ async function showMainMenu() {
 
   return new Promise((resolve) => {
     log('\n========================================', 'cyan');
-    log('    tickr Development Environment', 'bright');
+    log('    StockBuddy Development Environment', 'bright');
     log('========================================', 'cyan');
     log('Choose an option:', 'yellow');
     log('1. Start Both Services (Full)', 'cyan');
@@ -397,7 +397,7 @@ async function startStockBuddy() {
     const backend = await startService('Backend', 'npm', ['start'], backendPath, 5001);
     const frontend = await startService('Frontend', 'npm', ['run', 'dev'], frontendPath, 5173);
     
-    log('\n🎉 tickr is starting up!', 'green');
+    log('\n🎉 StockBuddy is starting up!', 'green');
     log('📱 Frontend: http://localhost:5173', 'cyan');
     log('🔧 Backend: http://localhost:5001', 'cyan');
     log('\n💡 Tips:', 'yellow');
@@ -408,7 +408,7 @@ async function startStockBuddy() {
     
     // Handle graceful shutdown
     const shutdown = async () => {
-      log('\n🛑 Shutting down tickr...', 'yellow');
+      log('\n🛑 Shutting down StockBuddy...', 'yellow');
       if (backend && !backend.killed) {
         backend.kill('SIGINT');
       }
@@ -421,13 +421,12 @@ async function startStockBuddy() {
         const choice = await showRestartMenu();
         
         if (choice === '1') {
-          log('\n🔄 Restarting tickr...', 'green');
+          log('\n🔄 Restarting StockBuddy...', 'green');
           // Restart the application
           startStockBuddy();
         } else {
-           log('\n🔄 Returning to main menu...', 'green');
-          // Return to main menu instead of exiting
-          mainMenu();
+          log('👋 Goodbye!', 'green');
+          process.exit(0);
         }
       }, 2000);
     };
@@ -436,11 +435,11 @@ async function startStockBuddy() {
     process.on('SIGTERM', shutdown);
     
   } catch (error) {
-    log(`❌ Failed to start tickr: ${error.message}`, 'red');
+    log(`❌ Failed to start StockBuddy: ${error.message}`, 'red');
     log('\n🔧 Troubleshooting:', 'yellow');
     log('1. Make sure Node.js is installed', 'yellow');
     log('2. Check that ports 5001 and 5173 are available', 'yellow');
-    log('3. Try running "npm install" in both auth-backend and tickr directories', 'yellow');
+    log('3. Try running "npm install" in both auth-backend and stockbuddy directories', 'yellow');
     log('4. Check the console output above for specific errors', 'yellow');
     
     // Ask if user wants to retry
@@ -475,7 +474,7 @@ async function mainMenu() {
       case '4':
         // Quick restart
         log('\n🔄 Running quick restart...', 'green');
-        require('./restart-tickr.js');
+        require('./restart-stockbuddy.js');
         return; // Exit menu loop when starting services
       case '5':
         // Check status
@@ -485,16 +484,7 @@ async function mainMenu() {
       case '6':
         // Exit
         log('👋 Goodbye!', 'green');
-        // Close the terminal completely when exiting from main menu
-        if (isCalledFromBat) {
-          // If called from batch file, close the terminal window
-          log('\n🔄 Closing terminal...', 'yellow');
-          // Use a special exit code to signal the batch file to close
-          process.exit(999);
-        } else {
-          // If running standalone, just exit normally
-          process.exit(0);
-        }
+        process.exit(0);
       default:
         log('❌ Invalid choice. Please try again.', 'red');
         break;
