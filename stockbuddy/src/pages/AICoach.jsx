@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { SuperChart } from '../components/SuperChart';
+import TVChart from '../components/TVChart.jsx';
 import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 
@@ -141,7 +141,6 @@ function AICoach() {
   const [orderPrice, setOrderPrice] = useState('');
   const [orderShares, setOrderShares] = useState('');
   const [orderReasoning, setOrderReasoning] = useState('');
-  const [chartData, setChartData] = useState(null);
   const [asOfDate, setAsOfDate] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const chatEndRef = useRef(null);
@@ -180,24 +179,11 @@ function AICoach() {
     return Math.floor(new Date(dateString + 'T00:00:00Z').getTime() / 1000);
   };
 
+  // Simplified price lookup using scenario data
   const getClosePriceOnOrBefore = (epochSeconds) => {
-    try {
-      if (!chartData?.candles?.length || !epochSeconds) return null;
-      const candles = chartData.candles;
-      // Find the latest candle at or before the target epoch
-      let candidate = null;
-      for (let i = 0; i < candles.length; i++) {
-        const c = candles[i];
-        if (c.timestamp <= epochSeconds) {
-          candidate = c;
-        } else {
-          break;
-        }
-      }
-      return candidate ? candidate.close : null;
-    } catch {
-      return null;
-    }
+    // For now, use scenario prices since we're using TradingView charts
+    // This can be enhanced later with real-time data integration
+    return null;
   };
 
   // Position context derived from scenario and puzzle type
@@ -207,10 +193,8 @@ function AICoach() {
       return { hasPosition: false };
     }
     if (entry) {
-      // Prefer historical entry price on scenario.startDate
-      const entryEpoch = parseDateToEpoch(scenario.startDate);
-      const histEntry = getClosePriceOnOrBefore(entryEpoch);
-      const entryPrice = histEntry || entry.price || scenario.initialPrice;
+      // Use scenario entry price
+      const entryPrice = entry.price || scenario.initialPrice;
       // Beginner-sized example position based on budget
       const shares = Math.max(1, Math.floor(BEGINNER_BUDGET / entryPrice));
       return {
@@ -225,12 +209,11 @@ function AICoach() {
 
   const position = getPositionContext();
 
-  // P/L calculation for sell puzzle using historical reference
+  // P/L calculation for sell puzzle using scenario data
   const getPL = () => {
     if (scenario.puzzleType !== 'sell' || !position.hasPosition) return null;
-    const asOfEpoch = parseDateToEpoch(asOfDate);
-    const currentClose = getClosePriceOnOrBefore(asOfEpoch);
-    const currentPrice = currentClose || scenario.finalPrice || null;
+    // Use scenario final price for P/L calculation
+    const currentPrice = scenario.finalPrice;
     if (!currentPrice || !position.entryPrice) return null;
     const diff = currentPrice - position.entryPrice;
     const value = diff * (position.shares || 0);
@@ -485,19 +468,15 @@ function AICoach() {
             borderRadius: '20px',
             padding: '16px'
           }}>
-            <SuperChart
+            <TVChart
+              key={scenario.id}
+              scenarioId={scenario.id.toString()}
               symbol={scenario.symbol}
-              initialInterval="1d"
-              theme="dark"
-              realtime={false}
-              height={400}
-              onDataUpdate={(data) => setChartData(data)}
-              showDebugOverlay={false}
-              dateRange={{ start: scenario.startDate, end: scenario.endDate }}
-              visibleRange={{
-                from: Math.floor(new Date((scenario.startDate || '2020-01-01') + 'T00:00:00Z').getTime() / 1000),
-                to: Math.floor(new Date((scenario.endDate || '2020-12-31') + 'T23:59:59Z').getTime() / 1000)
-              }}
+              interval="1D"
+              active={true}
+              mode="widget"
+              startDate={scenario.startDate}
+              endDate={scenario.endDate}
             />
           </div>
 
