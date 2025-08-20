@@ -36,6 +36,7 @@ export const SuperChart: React.FC<SuperChartProps> = ({
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const candlestickSeriesRef = useRef<any>(null);
+  const initialDataAppliedRef = useRef<boolean>(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
   
   const [isChartReady, setIsChartReady] = useState(false);
@@ -71,26 +72,20 @@ export const SuperChart: React.FC<SuperChartProps> = ({
   useEffect(() => {
     if (!chartContainerRef.current || !symbol) return;
 
-    console.log('Initializing chart for symbol:', symbol);
-
     const initChart = () => {
       const container = chartContainerRef.current;
       if (!container) return;
 
-      // Force container dimensions
+      // Set container dimensions
       container.style.width = '100%';
-      container.style.minWidth = '400px';
       container.style.height = `${height}px`;
 
-      // Get computed dimensions
+      // Get container dimensions
       const rect = container.getBoundingClientRect();
-      const containerWidth = rect.width || 800;
-      const containerHeight = rect.height || height || 500;
-
-      console.log('Container dimensions:', containerWidth, 'x', containerHeight);
+      const containerWidth = Math.max(rect.width, 400);
+      const containerHeight = Math.max(rect.height, height);
 
       if (containerWidth === 0) {
-        console.warn('Container has zero width, retrying...');
         setTimeout(initChart, 100);
         return;
       }
@@ -108,8 +103,6 @@ export const SuperChart: React.FC<SuperChartProps> = ({
           chartRef.current = null;
           candlestickSeriesRef.current = null;
         }
-
-        console.log('Creating chart with dimensions:', containerWidth, 'x', containerHeight);
 
         // Create new chart
         const chart = createChart(container, {
@@ -139,8 +132,8 @@ export const SuperChart: React.FC<SuperChartProps> = ({
 
         chartRef.current = chart;
 
-        // Add candlestick series
-        const candlestickSeries = chart.addSeries(CandlestickSeries, {
+        // Add candlestick series for v5 API
+        const candlestickSeries = (chart as any).addSeries(CandlestickSeries, {
           upColor: '#22c55e',
           downColor: '#ef4444',
           borderVisible: false,
@@ -148,8 +141,10 @@ export const SuperChart: React.FC<SuperChartProps> = ({
           wickDownColor: '#ef4444',
         });
         candlestickSeriesRef.current = candlestickSeries;
-        
-        console.log('Chart initialized successfully');
+
+        // Ensure chart is properly configured
+        chart.timeScale().fitContent();
+        chart.priceScale('right').applyOptions({ autoScale: true });
 
         // Handle window resize
         const handleResize = () => {
@@ -170,13 +165,7 @@ export const SuperChart: React.FC<SuperChartProps> = ({
 
         // Set chart as ready
         setIsChartReady(true);
-        console.log('Chart marked as ready');
-        
-        // Force a small delay to ensure state is set
-        setTimeout(() => {
-          console.log('Chart ready state after delay:', isChartReady);
-        }, 100);
-        
+
         if (onChartReady) onChartReady(chart);
 
         return () => {
@@ -214,15 +203,7 @@ export const SuperChart: React.FC<SuperChartProps> = ({
 
   // Update chart data
   useEffect(() => {
-    console.log('Data update effect triggered:', { 
-      isChartReady, 
-      hasData: !!chartData, 
-      hasSeries: !!candlestickSeriesRef.current,
-      dataLength: chartData?.candles?.length || 0
-    });
-
     if (!chartData || !candlestickSeriesRef.current) {
-      console.log('Missing data or series, skipping update');
       return;
     }
 
@@ -230,22 +211,28 @@ export const SuperChart: React.FC<SuperChartProps> = ({
       const formatData = (data: any[]) => {
         if (!data || !Array.isArray(data)) return [];
         
-        return data.map(item => ({
-          time: Math.floor(item.timestamp),
-          open: parseFloat(item.open),
-          high: parseFloat(item.high),
-          low: parseFloat(item.low),
-          close: parseFloat(item.close),
-        }));
+        const formatted = data.map(item => {
+          // Check if timestamp is in milliseconds (13 digits) or seconds (10 digits)
+          let timestamp = item.timestamp;
+          if (timestamp.toString().length === 13) {
+            timestamp = Math.floor(timestamp / 1000); // Convert milliseconds to seconds
+          }
+          
+          return {
+            time: Math.floor(timestamp),
+            open: parseFloat(item.open),
+            high: parseFloat(item.high),
+            low: parseFloat(item.low),
+            close: parseFloat(item.close),
+          };
+        });
+        
+        return formatted;
       };
 
       const candleData = formatData(chartData.candles || []);
 
       if (candleData.length > 0) {
-        console.log(`Setting ${candleData.length} candles for ${currentInterval}`);
-        console.log('First candle:', candleData[0]);
-        console.log('Last candle:', candleData[candleData.length - 1]);
-        
         candlestickSeriesRef.current.setData(candleData);
         
         // Apply visible range if provided; otherwise fit content
@@ -261,10 +248,6 @@ export const SuperChart: React.FC<SuperChartProps> = ({
             chartRef.current.timeScale().fitContent();
           }
         }
-        
-        console.log('Chart data set successfully');
-      } else {
-        console.warn('No candle data to display');
       }
 
       if (onDataUpdate) {
@@ -274,7 +257,7 @@ export const SuperChart: React.FC<SuperChartProps> = ({
       console.error('Error updating chart data:', err);
       setError('Failed to update chart data');
     }
-  }, [chartData, onDataUpdate, currentInterval]);
+  }, [chartData, onDataUpdate, currentInterval, visibleRange, isChartReady]);
 
   // Update visible range when prop changes
   useEffect(() => {
@@ -290,9 +273,7 @@ export const SuperChart: React.FC<SuperChartProps> = ({
   // Handle interval changes
   const handleIntervalChange = useCallback((newInterval: string) => {
     if (newInterval !== currentInterval) {
-      console.log(`Changing interval from ${currentInterval} to ${newInterval}`);
       setCurrentInterval(newInterval as any);
-      // Don't reset chart state - just let the data update effect handle it
     }
   }, [currentInterval]);
 
@@ -317,6 +298,46 @@ export const SuperChart: React.FC<SuperChartProps> = ({
       }
     };
   }, []);
+
+  // Ensure initial data is applied once when both chart and data are ready
+  useEffect(() => {
+    if (
+      !initialDataAppliedRef.current &&
+      isChartReady &&
+      candlestickSeriesRef.current &&
+      chartData &&
+      Array.isArray(chartData.candles) &&
+      chartData.candles.length > 0
+    ) {
+      try {
+        const formatted = chartData.candles.map((c: any) => ({
+          time: Math.floor((c.timestamp.toString().length === 13 ? Math.floor(c.timestamp / 1000) : c.timestamp)),
+          open: +c.open,
+          high: +c.high,
+          low: +c.low,
+          close: +c.close,
+        }));
+        requestAnimationFrame(() => {
+          candlestickSeriesRef.current.setData(formatted);
+          if (chartRef.current) {
+            if (visibleRange && visibleRange.from && visibleRange.to) {
+              try {
+                chartRef.current.timeScale().setVisibleRange({ from: visibleRange.from, to: visibleRange.to });
+              } catch {}
+            } else {
+              chartRef.current.timeScale().fitContent();
+            }
+          }
+          initialDataAppliedRef.current = true;
+        });
+      } catch {}
+    }
+  }, [isChartReady, chartData, visibleRange]);
+
+  // Reset initial data flag when inputs change
+  useEffect(() => {
+    initialDataAppliedRef.current = false;
+  }, [symbol, currentInterval, dateRange?.start, dateRange?.end]);
 
   if (!symbol) {
     return (
@@ -411,39 +432,39 @@ export const SuperChart: React.FC<SuperChartProps> = ({
 
       {/* Chart Container */}
       <div className="position-relative">
-                 <div 
-           ref={chartContainerRef}
-           className="chart-engine"
-           style={{
-             width: '100%',
-             minWidth: '400px',
-             height: height,
-             borderRadius: '12px',
-             overflow: 'hidden',
-             backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff',
-             border: `1px solid ${theme === 'dark' ? '#333' : '#ddd'}`,
-             position: 'relative',
-             display: 'block'
-           }}
-          >
-            {/* Debug overlay (hidden by default) */}
-            {showDebugOverlay && (
-              <div style={{
-                position: 'absolute',
-                top: '10px',
-                left: '10px',
-                color: 'white',
-                fontSize: '12px',
-                zIndex: 1000,
-                pointerEvents: 'none',
-                backgroundColor: 'rgba(0,0,0,0.7)',
-                padding: '4px 8px',
-                borderRadius: '4px'
-              }}>
-                Chart: {chartContainerRef.current?.getBoundingClientRect()?.width || 0} x {height}
-              </div>
-            )}
-          </div>
+        <div 
+          ref={chartContainerRef}
+          className="chart-engine"
+          style={{
+            width: '100%',
+            minWidth: '400px',
+            height: height,
+            borderRadius: '12px',
+            overflow: 'hidden',
+            backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff',
+            border: `1px solid ${theme === 'dark' ? '#333' : '#ddd'}`,
+            position: 'relative',
+            display: 'block'
+          }}
+        >
+          {/* Debug overlay (hidden by default) */}
+          {showDebugOverlay && (
+            <div style={{
+              position: 'absolute',
+              top: '10px',
+              left: '10px',
+              color: 'white',
+              fontSize: '12px',
+              zIndex: 1000,
+              pointerEvents: 'none',
+              backgroundColor: 'rgba(0,0,0,0.7)',
+              padding: '4px 8px',
+              borderRadius: '4px'
+            }}>
+              Chart: {chartContainerRef.current?.getBoundingClientRect()?.width || 0} x {height}
+            </div>
+          )}
+        </div>
 
         {/* Tooltip */}
         {tooltipData && (

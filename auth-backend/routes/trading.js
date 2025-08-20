@@ -1498,6 +1498,7 @@ router.get('/chart/:symbol', async (req, res) => {
     const { timeframe = '1D', limit = 500, start, end } = req.query;
     
     console.log(`[${getTimestamp()}] 📈 Fetching chart data for ${symbol} (${timeframe})` + (start && end ? ` range ${start}→${end}` : ''));
+    console.log(`[${getTimestamp()}] 📊 Request details:`, { symbol, timeframe, limit, start, end });
     
     // Check cache first
     const cacheKey = `${symbol}_${timeframe}_${start || 'NA'}_${end || 'NA'}`;
@@ -1513,6 +1514,7 @@ router.get('/chart/:symbol', async (req, res) => {
     }
 
     // Generate historical data with optional date slicing
+    console.log(`[${getTimestamp()}] 🔍 Calling generateHistoricalData for ${symbol}`);
     const chartData = await generateHistoricalData(symbol, timeframe, parseInt(limit), start, end);
     
     // Update cache
@@ -1566,6 +1568,7 @@ router.get('/chart/:symbol/live', async (req, res) => {
 async function generateHistoricalData(symbol, timeframe, limit, start, end) {
   try {
     console.log(`[${getTimestamp()}] 🔍 Fetching real historical data for ${symbol} (${timeframe})`);
+    console.log(`[${getTimestamp()}] 📅 Date range: ${start} → ${end}, limit: ${limit}`);
     
     // Map frontend timeframes to Alpaca timeframes with full year coverage
     let alpacaTimeframe;
@@ -1621,6 +1624,7 @@ async function generateHistoricalData(symbol, timeframe, limit, start, end) {
     
     // Try Alpaca API first
     if (process.env.ALPACA_API_KEY && process.env.ALPACA_SECRET_KEY) {
+      console.log(`[${getTimestamp()}] 🔑 Alpaca API keys found, trying Alpaca first...`);
       try {
         const headers = {
           'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
@@ -1640,6 +1644,7 @@ async function generateHistoricalData(symbol, timeframe, limit, start, end) {
         const alpacaParams = start && end 
           ? `timeframe=${alpacaTimeframe}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
           : `timeframe=${alpacaTimeframe}&limit=${alpacaLimit}`;
+        console.log(`[${getTimestamp()}] 📡 Alpaca URL params: ${alpacaParams}`);
         const response = await axios.get(`https://data.alpaca.markets/v2/stocks/${symbol}/bars?${alpacaParams}&adjustment=split`, {
           headers,
           timeout: 10000
@@ -1673,16 +1678,21 @@ async function generateHistoricalData(symbol, timeframe, limit, start, end) {
       } catch (alpacaError) {
         console.warn(`[${getTimestamp()}] ⚠️ Alpaca API failed for ${symbol}: ${alpacaError.message}`);
       }
+    } else {
+      console.log(`[${getTimestamp()}] ⚠️ No Alpaca API keys found, skipping Alpaca API call`);
     }
     
     // Fallback to Yahoo Finance API
     try {
+      console.log(`[${getTimestamp()}] 🔄 Trying Yahoo Finance API for ${symbol}...`);
       // Get maximum historical data for all timeframes
       const yahooRangeAdjusted = yahooRange; // Use the full year range we set above
+      console.log(`[${getTimestamp()}] 📡 Yahoo interval: ${yahooInterval}, range: ${yahooRangeAdjusted}`);
         // For Yahoo, if a specific date range is requested, switch to explicit period1/period2
         const yahooUrl = start && end
           ? `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${yahooInterval}&period1=${Math.floor(new Date(start + 'T00:00:00Z').getTime() / 1000)}&period2=${Math.floor(new Date(end + 'T23:59:59Z').getTime() / 1000)}`
           : `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${yahooInterval}&range=${yahooRangeAdjusted}`;
+        console.log(`[${getTimestamp()}] 🌐 Yahoo URL: ${yahooUrl}`);
         const yahooResponse = await axios.get(yahooUrl, {
         timeout: 10000
       });
@@ -1764,82 +1774,125 @@ async function generateHistoricalData(symbol, timeframe, limit, start, end) {
     console.log(`[${getTimestamp()}] ⚠️ Using fallback mock data for ${symbol}`);
     
     try {
-      // Get current price to base mock data on
-      const quote = await getStockQuote(symbol);
-      const basePrice = parseFloat(quote.price) || 100;
+      // Get current price to base mock data on, or use a default price if API keys are missing
+      let basePrice = 100; // Default price for historical scenarios
       
-  const candles = [];
-  const now = new Date();
-  
-  // Generate data points based on timeframe
-  let interval;
-  switch (timeframe) {
+      try {
+        const quote = await getStockQuote(symbol);
+        basePrice = parseFloat(quote.price) || basePrice;
+        console.log(`[${getTimestamp()}] 💰 Got quote price for ${symbol}: $${basePrice}`);
+      } catch (quoteError) {
+        console.log(`[${getTimestamp()}] ⚠️ Could not get quote for ${symbol}, using default price ${basePrice}:`, quoteError.message);
+        // Use default price for historical scenarios when API keys are missing
+      }
+      
+      const candles = [];
+      const now = new Date();
+
+      // Generate data points based on timeframe
+      let intervalMs;
+      switch (timeframe) {
         case '1m':
-          interval = 60 * 1000;
-      break;
+          intervalMs = 60 * 1000;
+          break;
         case '5m':
-          interval = 5 * 60 * 1000;
-      break;
+          intervalMs = 5 * 60 * 1000;
+          break;
         case '15m':
-          interval = 15 * 60 * 1000;
-      break;
+          intervalMs = 15 * 60 * 1000;
+          break;
         case '1h':
-          interval = 60 * 60 * 1000;
+          intervalMs = 60 * 60 * 1000;
           break;
         case '4h':
-          interval = 4 * 60 * 60 * 1000;
+          intervalMs = 4 * 60 * 60 * 1000;
           break;
         case '1d':
-          interval = 24 * 60 * 60 * 1000;
+          intervalMs = 24 * 60 * 60 * 1000;
           break;
         case '1w':
-          interval = 7 * 24 * 60 * 60 * 1000;
-      break;
-    case '1M':
-          interval = 30 * 24 * 60 * 60 * 1000;
-      break;
-    default:
-          interval = 24 * 60 * 60 * 1000;
-  }
-  
+          intervalMs = 7 * 24 * 60 * 60 * 1000;
+          break;
+        case '1M':
+          intervalMs = 30 * 24 * 60 * 60 * 1000;
+          break;
+        default:
+          intervalMs = 24 * 60 * 60 * 1000;
+      }
+
+      // If a historical date range is provided, generate candles anchored to that window
+      if (start && end) {
+        const startTsSec = Math.floor(new Date(start + 'T00:00:00Z').getTime() / 1000);
+        const endTsSec = Math.floor(new Date(end + 'T23:59:59Z').getTime() / 1000);
+        const totalSpanMs = Math.max(0, (endTsSec - startTsSec) * 1000);
+        // Compute how many steps fit in the window; ensure at least 1 and cap by limit
+        const steps = Math.max(1, Math.min(limit, Math.floor(totalSpanMs / intervalMs) + 1));
+
+        let currentPrice = basePrice;
+        for (let i = 0; i < steps; i++) {
+          const timeMs = (startTsSec * 1000) + (i * intervalMs);
+
+          // More realistic price movement
+          const priceChange = (Math.random() - 0.5) * (basePrice * 0.02); // 2% max change
+          currentPrice = Math.max(currentPrice + priceChange, basePrice * 0.8);
+
+          const open = currentPrice;
+          const high = open + Math.random() * (basePrice * 0.01);
+          const low = open - Math.random() * (basePrice * 0.01);
+          const close = open + (Math.random() - 0.5) * (basePrice * 0.005);
+          const volume = Math.floor(Math.random() * 10000000) + 1000000;
+
+          candles.push({
+            timestamp: Math.floor(timeMs / 1000),
+            open: parseFloat(open.toFixed(2)),
+            high: parseFloat(high.toFixed(2)),
+            low: parseFloat(low.toFixed(2)),
+            close: parseFloat(close.toFixed(2)),
+            volume: volume
+          });
+        }
+
+        console.log(`[${getTimestamp()}] 🎭 Generated ${candles.length} mock candles for ${symbol} (${timeframe}) within ${start} → ${end}`);
+        return {
+          symbol,
+          timeframe,
+          candles,
+          lastUpdated: new Date().toISOString()
+        };
+      }
+
+      // Otherwise, generate recent candles ending at now
       let currentPrice = basePrice;
-  for (let i = limit - 1; i >= 0; i--) {
-    const time = new Date(now.getTime() - (i * interval));
-        
+      for (let i = limit - 1; i >= 0; i--) {
+        const time = new Date(now.getTime() - (i * intervalMs));
+
         // More realistic price movement
         const priceChange = (Math.random() - 0.5) * (basePrice * 0.02); // 2% max change
         currentPrice = Math.max(currentPrice + priceChange, basePrice * 0.8);
-        
+
         const open = currentPrice;
         const high = open + Math.random() * (basePrice * 0.01);
         const low = open - Math.random() * (basePrice * 0.01);
         const close = open + (Math.random() - 0.5) * (basePrice * 0.005);
         const volume = Math.floor(Math.random() * 10000000) + 1000000;
-    
-    candles.push({
-      timestamp: Math.floor(time.getTime() / 1000),
-      open: parseFloat(open.toFixed(2)),
-      high: parseFloat(high.toFixed(2)),
-      low: parseFloat(low.toFixed(2)),
-      close: parseFloat(close.toFixed(2)),
-      volume: volume
-    });
-  }
-  
-  // Slice mock candles to requested date range if provided
-  let mockResultCandles = candles;
-  if (start && end) {
-    const startTs = Math.floor(new Date(start + 'T00:00:00Z').getTime() / 1000);
-    const endTs = Math.floor(new Date(end + 'T23:59:59Z').getTime() / 1000);
-    mockResultCandles = candles.filter(c => c.timestamp >= startTs && c.timestamp <= endTs);
-  }
 
-  return {
-    symbol,
-    timeframe,
-    candles: mockResultCandles,
-    lastUpdated: new Date().toISOString()
-  };
+        candles.push({
+          timestamp: Math.floor(time.getTime() / 1000),
+          open: parseFloat(open.toFixed(2)),
+          high: parseFloat(high.toFixed(2)),
+          low: parseFloat(low.toFixed(2)),
+          close: parseFloat(close.toFixed(2)),
+          volume: volume
+        });
+      }
+
+      console.log(`[${getTimestamp()}] 🎭 Generated ${candles.length} mock candles for ${symbol} (${timeframe}) ending at now`);
+      return {
+        symbol,
+        timeframe,
+        candles,
+        lastUpdated: new Date().toISOString()
+      };
     } catch (error) {
       console.error(`[${getTimestamp()}] Error generating fallback data for ${symbol}:`, error);
       throw new Error(`Failed to generate chart data for ${symbol}`);

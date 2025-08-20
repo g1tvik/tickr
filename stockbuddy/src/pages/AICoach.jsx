@@ -145,6 +145,7 @@ function AICoach() {
   const [asOfDate, setAsOfDate] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const chatEndRef = useRef(null);
+  const didBounceScenarioRef = useRef(false);
 
   const scenario = HISTORICAL_SCENARIOS[currentScenario];
   const BEGINNER_BUDGET = 1000; // USD, used to size the example position and keep P/L approachable
@@ -155,6 +156,18 @@ function AICoach() {
     const initial = scenario.puzzleType === 'buy' ? scenario.startDate : scenario.endDate;
     setAsOfDate(initial);
   }, [currentScenario]);
+
+  // On first mount, rapidly switch to a different scenario and back to default to force chart load
+  useEffect(() => {
+    if (didBounceScenarioRef.current) return;
+    didBounceScenarioRef.current = true;
+    try {
+      if (HISTORICAL_SCENARIOS.length > 1 && currentScenario === 0) {
+        setCurrentScenario(1);
+        setTimeout(() => setCurrentScenario(0), 60);
+      }
+    } catch {}
+  }, []);
 
   // Initialize chat with welcome message
   useEffect(() => {
@@ -485,6 +498,14 @@ function AICoach() {
             borderRadius: '20px',
             padding: '16px'
           }}>
+            <div style={{ marginBottom: '12px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: marbleDarkGray, margin: 0 }}>
+                📈 {scenario.symbol} Chart
+              </h3>
+              <div style={{ color: marbleGray, fontSize: '12px', marginTop: '4px' }}>
+                Loading historical data for {scenario.startDate} to {scenario.endDate}...
+              </div>
+            </div>
             <SuperChart
               symbol={scenario.symbol}
               initialInterval="1d"
