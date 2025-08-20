@@ -142,10 +142,15 @@ function AICoach() {
   const [orderShares, setOrderShares] = useState('');
   const [orderReasoning, setOrderReasoning] = useState('');
   const [chartData, setChartData] = useState(null);
+  const [chartScenarioIndex, setChartScenarioIndex] = useState(null);
   const [asOfDate, setAsOfDate] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const chatEndRef = useRef(null);
   const didBounceScenarioRef = useRef(false);
+  const bounceInProgressRef = useRef(false);
+  const bounceAltIndexRef = useRef(1);
+  const defaultScenarioIndexRef = useRef(0);
+  const [bouncePhase, setBouncePhase] = useState('idle'); // idle | toAlt | back | done
 
   const scenario = HISTORICAL_SCENARIOS[currentScenario];
   const BEGINNER_BUDGET = 1000; // USD, used to size the example position and keep P/L approachable
@@ -157,21 +162,21 @@ function AICoach() {
     setAsOfDate(initial);
   }, [currentScenario]);
 
-  // On first mount, rapidly switch to a different scenario and back to default to force chart load
+  // On first mount, switch to an alternate scenario and then back to default
   useEffect(() => {
     if (didBounceScenarioRef.current) return;
     didBounceScenarioRef.current = true;
-    try {
-      if (HISTORICAL_SCENARIOS.length > 1 && currentScenario === 0) {
-        setCurrentScenario(1);
-        setTimeout(() => setCurrentScenario(0), 60);
-      }
-    } catch {}
+    if (HISTORICAL_SCENARIOS.length <= 1) return;
+    bounceInProgressRef.current = true;
+    defaultScenarioIndexRef.current = currentScenario;
+    bounceAltIndexRef.current = currentScenario === 0 ? 1 : 0;
+    setBouncePhase('toAlt');
+    setCurrentScenario(bounceAltIndexRef.current);
   }, []);
 
-  // Initialize chat with welcome message
+  // Initialize chat with welcome message (skip during bounce)
   useEffect(() => {
-    if (chatMessages.length === 0) {
+    if (chatMessages.length === 0 && !bounceInProgressRef.current) {
       setChatMessages([
         {
           type: 'ai',
@@ -180,7 +185,36 @@ function AICoach() {
         }
       ]);
     }
-  }, [currentScenario]);
+  }, [currentScenario, chatMessages.length]);
+
+  // Progress bounce when candles arrive for the displayed scenario
+  useEffect(() => {
+    if (!bounceInProgressRef.current) return;
+    if (!chartData || !Array.isArray(chartData.candles) || chartData.candles.length === 0) return;
+
+    const dataMatchesCurrent = chartScenarioIndex === currentScenario;
+    if (!dataMatchesCurrent) return;
+
+    if (bouncePhase === 'toAlt' && currentScenario === bounceAltIndexRef.current) {
+      setBouncePhase('back');
+      setCurrentScenario(defaultScenarioIndexRef.current);
+      return;
+    }
+
+    if (bouncePhase === 'back' && currentScenario === defaultScenarioIndexRef.current) {
+      setBouncePhase('done');
+      bounceInProgressRef.current = false;
+      if (chatMessages.length === 0) {
+        setChatMessages([
+          {
+            type: 'ai',
+            content: `Welcome to the ${HISTORICAL_SCENARIOS[defaultScenarioIndexRef.current].title} trading challenge! 🎯\n\nI'm your AI trading coach. I can help you understand market concepts, explain trading strategies, and provide educational insights.\n\nWhat would you like to know about this scenario?`,
+            timestamp: Date.now()
+          }
+        ]);
+      }
+    }
+  }, [bouncePhase, currentScenario, chartScenarioIndex, chartData, chatMessages.length]);
 
   // Auto-scroll to bottom of chat
   useEffect(() => {
@@ -512,7 +546,10 @@ function AICoach() {
               theme="dark"
               realtime={false}
               height={400}
-              onDataUpdate={(data) => setChartData(data)}
+              onDataUpdate={(data) => {
+                setChartData(data);
+                setChartScenarioIndex(currentScenario);
+              }}
               showDebugOverlay={false}
               dateRange={{ start: scenario.startDate, end: scenario.endDate }}
               visibleRange={{
