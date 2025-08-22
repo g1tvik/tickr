@@ -17,7 +17,7 @@ StockBuddy is a full-stack learning and simulation environment for new and inter
   - Auth (JWT + optional Google OAuth)
   - Trading API: quotes, search, historical candles, portfolio, transactions, buy/sell
   - Data sources: Alpaca Market Data v2 (primary) with safe fallbacks; optional WebSocket stream for FAANG
-  - File-based storage for users/portfolios/transactions/lessons (no DB required)
+  - File-based storage for users/portfolios/transactions (no DB required)
 
 ## Monorepo Structure
 - `auth-backend/` (Express API, file storage, routes)
@@ -54,14 +54,14 @@ StockBuddy is a full-stack learning and simulation environment for new and inter
 
 ### Trading API (key endpoints)
 - `GET /api/trading/portfolio` (auth)
-- `GET /api/trading/quote/:symbol` (auth)
-- `GET /api/trading/search?query=...` (auth) – ranked relevance search over Alpaca assets
-- `GET /api/trading/autocomplete?query=...` (auth)
+- `GET /api/trading/quote/:symbol` (public)
+- `GET /api/trading/search?query=...` (public) – ranked relevance search over Alpaca assets
+- `GET /api/trading/autocomplete?query=...` (public)
 - `POST /api/trading/buy` (auth) – updates file-based portfolio and records a transaction
 - `POST /api/trading/sell` (auth)
 - `GET /api/trading/transactions` (auth)
-- `GET /api/trading/market` (auth) – FAANG snapshot using WS when available, REST otherwise
-- `GET /api/trading/chart/:symbol?timeframe=...&limit=...&start=YYYY-MM-DD&end=YYYY-MM-DD` (auth)
+- `GET /api/trading/market` (public) – FAANG snapshot using WS when available, REST otherwise
+- `GET /api/trading/chart/:symbol?timeframe=...&limit=...&start=YYYY-MM-DD&end=YYYY-MM-DD` (public)
 - Utilities: `GET /api/trading/health`, `/cache-status`, `/websocket-status`, `/test`
 
 Notes
@@ -121,7 +121,7 @@ Backend (`auth-backend/.env`)
 
 Frontend (`stockbuddy/.env`)
 - `VITE_API_URL=http://localhost:5001/api`
-- `REACT_APP_GOOGLE_CLIENT_ID=...` (if needed)
+- `VITE_GOOGLE_CLIENT_ID=...` (optional; used by Google Sign-In)
 
 ## Local Development
 - One-command menu (Windows/macOS/Linux options):
