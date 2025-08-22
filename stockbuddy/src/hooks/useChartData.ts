@@ -71,7 +71,10 @@ export const useChartData = (
       } else {
         dataLimit = 500; // Standard for daily+ intervals
       }
+      
+      console.log(`fetchHistoricalData: Calling API with params:`, { symbol, interval, dataLimit, startDate, endDate });
       const response = await api.getChartData(symbol, interval, dataLimit, startDate, endDate);
+      console.log(`fetchHistoricalData: API response:`, response);
       
       if (response.success && response.chartData) {
         const normalizedData: ChartData = {
@@ -82,14 +85,31 @@ export const useChartData = (
         };
         
         console.log(`fetchHistoricalData: Got real data for ${symbol}, ${normalizedData.candles.length} candles`);
+        console.log('fetchHistoricalData: Raw API response:', response);
+        console.log('fetchHistoricalData: Normalized data:', normalizedData);
+        console.log('fetchHistoricalData: First 3 candles:', normalizedData.candles.slice(0, 3));
+        console.log('fetchHistoricalData: Last 3 candles:', normalizedData.candles.slice(-3));
+        
         setChartData(normalizedData);
         dataCache.current.set(cacheKey, { data: normalizedData, timestamp: Date.now() });
       } else {
+        console.error('fetchHistoricalData: API response structure:', response);
         throw new Error('No chart data received from API');
       }
     } catch (err) {
       console.error('Error fetching chart data:', err);
       setError(`Failed to fetch chart data: ${err.message}`);
+      
+      // Add more detailed error logging
+      if (err instanceof TypeError && err.message.includes('fetch')) {
+        setError('Network error - Backend may not be running. Check if http://localhost:5001 is accessible.');
+      } else if (err.message.includes('401')) {
+        setError('Authentication error - Chart data requires login.');
+      } else if (err.message.includes('404')) {
+        setError('API endpoint not found - Backend route may be incorrect.');
+      } else if (err.message.includes('500')) {
+        setError('Backend server error - Check backend logs.');
+      }
     } finally {
       setIsLoading(false);
     }

@@ -78,6 +78,28 @@ export const api = {
     headers: getAuthHeaders()
   }).then(handleResponse),
 
+  // Chart data endpoint
+  getChartData: (symbol, interval, limit = 500, startDate, endDate) => {
+    const params = new URLSearchParams({
+      timeframe: interval, // Backend expects 'timeframe', not 'interval'
+      limit: limit.toString()
+    });
+    
+    if (startDate) params.append('start', startDate); // Backend expects 'start', not 'startDate'
+    if (endDate) params.append('end', endDate); // Backend expects 'end', not 'endDate'
+    
+    const url = `${API_BASE_URL}/trading/chart/${symbol}?${params}`;
+    console.log('getChartData: Calling URL:', url);
+    console.log('getChartData: Params:', { symbol, interval, limit, startDate, endDate });
+    console.log('getChartData: Final params string:', params.toString());
+    
+    // Chart data doesn't require authentication
+    // Backend route is /chart/:symbol, so symbol goes in the URL path
+    return fetch(url, {
+      headers: { 'Content-Type': 'application/json' }
+    }).then(handleResponse);
+  },
+
   searchStocks: (query) => fetch(`${API_BASE_URL}/trading/search?query=${encodeURIComponent(query)}`, {
     headers: getAuthHeaders()
   }).then(handleResponse),
@@ -98,13 +120,7 @@ export const api = {
     body: JSON.stringify({ symbol, shares })
   }).then(handleResponse),
 
-  // Chart data endpoints
-  getChartData: (symbol, timeframe = '1D', limit = 100, startDate, endDate) => fetch(
-    `${API_BASE_URL}/trading/chart/${symbol}?timeframe=${timeframe}&limit=${limit}` +
-    (startDate && endDate ? `&start=${encodeURIComponent(startDate)}&end=${encodeURIComponent(endDate)}` : ''), {
-    headers: getAuthHeaders()
-  }).then(handleResponse),
-
+  // Live chart data endpoint
   getLiveChartData: (symbol) => fetch(`${API_BASE_URL}/trading/chart/${symbol}/live`, {
     headers: getAuthHeaders()
   }).then(handleResponse),
