@@ -1799,7 +1799,8 @@ function AICoach() {
                     color: 'white',
                     fontWeight: '500',
                     cursor: 'pointer',
-                    fontSize: '12px'
+                    fontSize: '12px',
+                    fontFamily: fontBody
                   }}
                 >
                   🔄 Retry
@@ -1817,7 +1818,8 @@ function AICoach() {
                       color: marbleDarkGray,
                       fontWeight: '500',
                       cursor: 'pointer',
-                      fontSize: '12px'
+                      fontSize: '12px',
+                      fontFamily: fontBody
                     }}
                   >
                     ➡️ Next
