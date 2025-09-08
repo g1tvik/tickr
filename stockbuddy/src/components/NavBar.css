@@ -80,6 +80,9 @@
   transition: background-color 0.5s ease !important;
   opacity: 0;
   animation: navbarFadeIn 0.6s ease-out forwards;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
 }
 
 /* Specific rule for navbar when it has page-dark class */
@@ -96,4 +99,21 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Fix vertical alignment for SIGN OUT button without changing its appearance */
+.navbar-nav .nav-item .btn {
+  vertical-align: top;
+  margin-top: 5px !important  ;
+  margin-bottom: 0;
+}
+
+/* Add marbleGold outline that fades away on hover */
+.navbar-nav .nav-item .btn.btn-outline-light {
+  border-color: var(--marbleGold) !important;
+  transition: border-color 0.3s ease, background-color 0.3s ease !important;
+}
+
+.navbar-nav .nav-item .btn.btn-outline-light:hover {
+  border-color: transparent !important;
 }
