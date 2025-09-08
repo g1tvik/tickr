@@ -257,6 +257,7 @@ router.post('/google', async (req, res) => {
     
     // Check if user exists
     let user = Object.values(users).find(u => u.email === email);
+    const isNewUser = !user;
     console.log('🔍 User lookup result:', user ? 'EXISTING USER' : 'NEW USER');
     
     if (!user) {

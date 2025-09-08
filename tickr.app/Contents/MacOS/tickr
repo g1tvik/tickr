@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Get the directory where this app bundle is located
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+# Change to the tickr directory
+cd "$APP_DIR"
+
+# Check if we're in the right directory
+if [ ! -f "start-tickr.sh" ]; then
+    osascript -e 'display dialog "Error: Cannot find start-tickr.sh in the current directory" buttons {"OK"} default button "OK" with icon stop'
+    exit 1
+fi
+
+# Launch the main tickr script
+osascript -e 'tell application "Terminal" to do script "cd '"'"'"$APP_DIR"'"'"' && ./start-tickr.sh"; tell application "Terminal" to activate'

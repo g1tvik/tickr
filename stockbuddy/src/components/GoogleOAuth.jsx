@@ -21,7 +21,7 @@ const GoogleOAuth = ({ setIsLoggedIn, onError }) => {
       if (window.google) {
         console.log('✅ Google object available');
         
-        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || process.env.REACT_APP_GOOGLE_CLIENT_ID;
+        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
         console.log('🔍 Using client ID:', clientId);
         
         if (!clientId || clientId === 'your_google_client_id_here') {
