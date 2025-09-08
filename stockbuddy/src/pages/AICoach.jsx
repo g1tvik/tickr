@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SuperChart } from '../components/SuperChart';
 import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
-import { fontHeading, fontBody } from '../fontPalette';
+import { fontHeading, fontBody, fontMono } from '../fontPalette';
 
 // Enhanced historical trading scenarios with detailed analysis
 const HISTORICAL_SCENARIOS = [
@@ -17,7 +17,7 @@ const HISTORICAL_SCENARIOS = [
     // Explicit puzzle framing for clarity
     puzzleType: 'sell', // buy | sell | hold
     scenario: {
-      context: "Context: In Feb 2020 TSLA peaked near ~$900 pre‑split (≈$180 split‑adjusted), then during the March crash fell to ~\$70 (split‑adjusted). This scenario assumes an entry around $70 on 2020‑03‑01 and asks you to think about when to exit as price recovered into year‑end (Dec 2020 near ~$705 split‑adjusted).",
+      context: "You already own Tesla shares that you bought at $70 during the March 2020 crash. Now the stock is recovering and you need to decide: when do you sell? Do you sell early to lock in profits, or hold longer for bigger gains? The stock eventually reaches $705 by December, but you don't know that will happen. This challenge teaches you about profit-taking strategies and risk management.",
       keyEvents: [
         "March 2020: COVID-19 crash hits markets",
         "May 2020: Tesla announces strong Q1 delivery numbers",
@@ -48,7 +48,7 @@ const HISTORICAL_SCENARIOS = [
     finalPrice: 325,
     puzzleType: 'sell',
     scenario: {
-      context: "GameStop was heavily shorted by hedge funds. Reddit's WallStreetBets community discovered this and began buying shares, causing a massive short squeeze.",
+      context: "You already own GameStop shares at $20. Reddit users are rallying to buy the stock to squeeze hedge funds who bet against it. The stock is skyrocketing - do you sell now to lock in profits, or hold for even bigger gains? This challenge teaches you about momentum trading and knowing when to exit.",
       keyEvents: [
         "January 2021: Reddit users discover high short interest",
         "January 27: Robinhood restricts buying",
@@ -78,7 +78,7 @@ const HISTORICAL_SCENARIOS = [
     finalPrice: 180,
     puzzleType: 'buy',
     scenario: {
-      context: "Apple was launching the iPhone, a revolutionary product that would change mobile computing forever. Many analysts were skeptical.",
+      context: "You have cash and Apple is launching the revolutionary iPhone at $150 per share. Many analysts think it's overpriced, but you see potential. Do you buy now, wait for a better price, or skip it entirely? This challenge teaches you about evaluating new technology and entry timing.",
       keyEvents: [
         "June 2007: iPhone announced",
         "September 2007: iPhone launches",
@@ -108,7 +108,7 @@ const HISTORICAL_SCENARIOS = [
     finalPrice: 20000,
     puzzleType: 'sell',
     scenario: {
-      context: "Bitcoin had an incredible bull run in 2017, going from $1,000 to $20,000. Many called it a bubble, others saw it as the future of money.",
+      context: "You already own Bitcoin that you bought at $1,000. It's now at $20,000 and everyone is talking about it. Some say it's a bubble about to pop, others say it's just getting started. Do you sell to lock in your 20x gains, or hold for even more? This challenge teaches you about profit-taking and bubble recognition.",
       keyEvents: [
         "January 2017: Bitcoin at $1,000",
         "June 2017: Major adoption announcements",
@@ -145,6 +145,8 @@ function AICoach() {
   const [chartScenarioIndex, setChartScenarioIndex] = useState(null);
   const [asOfDate, setAsOfDate] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [showPLCalculation, setShowPLCalculation] = useState(false);
+  const [showSharesCalculation, setShowSharesCalculation] = useState(false);
   const chatEndRef = useRef(null);
   const didBounceScenarioRef = useRef(false);
   const bounceInProgressRef = useRef(false);
@@ -349,7 +351,7 @@ function AICoach() {
     const decision = {
       type: orderType,
       price: parseFloat(orderPrice),
-      shares: orderType === 'buy' ? Math.floor(10000 / parseFloat(orderPrice)) : 0,
+      shares: orderType === 'buy' ? Math.floor(BEGINNER_BUDGET / parseFloat(orderPrice)) : 0,
       reasoning: orderReasoning,
       timestamp: Date.now()
     };
@@ -435,90 +437,302 @@ function AICoach() {
           flexDirection: 'column',
           gap: '16px'
         }}>
-          {/* Top Bar - compact header + chips */}
+          {/* Enhanced Scenario Header */}
           <div style={{
             backgroundColor: marbleLightGray,
-            borderRadius: '20px',
-            padding: '16px'
+            borderRadius: '24px',
+            padding: '24px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-              <div>
-                <h2 style={{
-                  fontSize: '22px',
-                  fontWeight: 'bold',
-                  color: marbleDarkGray,
-                  margin: 0,
-                  fontFamily: fontHeading
+            {/* Header Row */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'flex-start', 
+              marginBottom: '20px' 
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '12px', 
+                  marginBottom: '8px' 
                 }}>
-                  {scenario.title}
-                </h2>
-                <div style={{ color: marbleGray, fontSize: '12px', marginTop: '4px' }}>
+                  <h2 style={{
+                    fontSize: '28px',
+                    fontWeight: '700',
+                    color: marbleDarkGray,
+                    margin: 0,
+                    fontFamily: fontHeading,
+                    letterSpacing: '-0.5px'
+                  }}>
+                    {scenario.title}
+                  </h2>
+                  {scenarioCompleted && (
+                    <div style={{
+                      backgroundColor: '#22c55e',
+                      color: 'white',
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}>
+                      ✅ Complete
+                    </div>
+                  )}
+                </div>
+                <div style={{ 
+                  color: marbleGray, 
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  marginBottom: '8px',
+                  fontFamily: fontBody
+                }}>
                   Scenario {currentScenario + 1} of {HISTORICAL_SCENARIOS.length}
-                  {scenarioCompleted && <span style={{ color: '#22c55e', marginLeft: 8 }}>✅ Complete</span>}
+                </div>
+                <div style={{
+                  backgroundColor: marbleWhite,
+                  borderRadius: '12px',
+                  padding: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  marginTop: '8px'
+                }}>
+                  <div style={{
+                    color: marbleDarkGray,
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    marginBottom: '4px',
+                    fontFamily: fontBody
+                  }}>
+                    🎯 Challenge Goal:
+                  </div>
+                  <div style={{
+                    color: marbleGray,
+                    fontSize: '12px',
+                    lineHeight: '1.4',
+                    fontFamily: fontBody
+                  }}>
+                    {scenario.puzzleType === 'buy' ? 
+                      'You have cash and need to decide when to buy shares. Watch the price action and make your entry decision.' :
+                      scenario.puzzleType === 'sell' ? 
+                      'You already own shares and need to decide when to sell them. Choose your exit strategy based on market conditions.' :
+                      'You need to decide whether to buy, sell, or wait. Analyze the situation and make your trading decision.'
+                    }
+                  </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <button onClick={() => setShowDetails(v => !v)} style={{
-                  padding: '6px 10px', borderRadius: 8, border: '1px solid #e5e7eb', background: marbleWhite,
-                  color: marbleDarkGray, fontSize: 12, cursor: 'pointer'
-                }}>{showDetails ? 'Hide Details' : 'Show Details'}</button>
+              
+              <button 
+                onClick={() => setShowDetails(v => !v)} 
+                style={{
+                  padding: '10px 16px', 
+                  borderRadius: '12px', 
+                  border: '2px solid rgba(255, 255, 255, 0.2)', 
+                  background: showDetails ? marbleGold : marbleWhite,
+                  color: showDetails ? marbleDarkGray : marbleDarkGray, 
+                  fontSize: '13px', 
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+                }}
+              >
+                {showDetails ? 'Hide Details' : 'Show Details'}
+              </button>
+            </div>
+
+            {/* Enhanced Info Cards */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              marginBottom: '20px'
+            }}>
+              <div style={{
+                backgroundColor: marbleWhite,
+                borderRadius: '16px',
+                padding: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.05)'
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  marginBottom: '8px' 
+                }}>
+                  <span style={{ fontSize: '16px' }}>🎯</span>
+                  <span style={{ 
+                    fontSize: '12px', 
+                    fontWeight: '600', 
+                    color: marbleGray,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    fontFamily: fontBody
+                  }}>
+                    Challenge Type
+                  </span>
+                </div>
+                <div style={{ 
+                  fontSize: '16px', 
+                  fontWeight: '700', 
+                  color: marbleDarkGray,
+                  fontFamily: fontBody
+                }}>
+                  {scenario.puzzleType === 'buy' ? 'When to BUY (Entry Decision)' : 
+                   scenario.puzzleType === 'sell' ? 'When to SELL (Exit Decision)' : 'When to HOLD (Wait Decision)'}
+                </div>
+              </div>
+
+              <div style={{
+                backgroundColor: marbleWhite,
+                borderRadius: '16px',
+                padding: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.05)'
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  marginBottom: '8px' 
+                }}>
+                  <span style={{ fontSize: '16px' }}>📅</span>
+                  <span style={{ 
+                    fontSize: '12px', 
+                    fontWeight: '600', 
+                    color: marbleGray,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    fontFamily: fontBody
+                  }}>
+                    Current Date
+                  </span>
+                </div>
+                <div style={{ 
+                  fontSize: '16px', 
+                  fontWeight: '700', 
+                  color: marbleDarkGray,
+                  fontFamily: fontBody
+                }}>
+                  {asOfDate}
+                </div>
+              </div>
+
+              <div style={{
+                backgroundColor: marbleWhite,
+                borderRadius: '16px',
+                padding: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.05)'
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  marginBottom: '8px' 
+                }}>
+                  <span style={{ fontSize: '16px' }}>🪙</span>
+                  <span style={{ 
+                    fontSize: '12px', 
+                    fontWeight: '600', 
+                    color: marbleGray,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    fontFamily: fontBody
+                  }}>
+                    Symbol
+                  </span>
+                </div>
+                <div style={{ 
+                  fontSize: '16px', 
+                  fontWeight: '700', 
+                  color: marbleDarkGray,
+                  fontFamily: fontBody
+                }}>
+                  {scenario.symbol}
+                </div>
               </div>
             </div>
 
-            {/* Compact chips */}
-            <div style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '8px',
-              marginTop: '12px'
-            }}>
-              <span style={{
-                backgroundColor: marbleWhite,
-                borderRadius: '9999px',
-                padding: '6px 12px',
-                color: marbleDarkGray,
-                fontSize: '12px',
-                fontWeight: 'bold',
-                border: '1px solid #e5e7eb'
-              }}>
-                🎯 Puzzle: {scenario.puzzleType === 'buy' ? 'When to BUY' : scenario.puzzleType === 'sell' ? 'When to SELL' : 'When to HOLD'}
-              </span>
-              <span style={{
-                backgroundColor: marbleWhite,
-                borderRadius: '9999px',
-                padding: '6px 12px',
-                color: marbleDarkGray,
-                fontSize: '12px',
-                border: '1px solid #e5e7eb'
-              }}>
-                📅 As of: {asOfDate}
-              </span>
-              <span style={{
-                backgroundColor: marbleWhite,
-                borderRadius: '9999px',
-                padding: '6px 12px',
-                color: marbleDarkGray,
-                fontSize: '12px',
-                border: '1px solid #e5e7eb'
-              }}>
-                🪙 Symbol: {scenario.symbol}
-              </span>
-            </div>
-
-            {/* Collapsible details */}
+            {/* Enhanced Collapsible Details */}
             {showDetails && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
-                <div style={{ backgroundColor: marbleWhite, borderRadius: 12, padding: 16 }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 'bold', color: marbleDarkGray, marginBottom: 8 }}>📊 Market Context</h3>
-                  <p style={{ color: marbleGray, fontSize: 13, lineHeight: 1.5, margin: 0 }}>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '20px',
+                marginTop: '8px'
+              }}>
+                <div style={{ 
+                  backgroundColor: marbleWhite, 
+                  borderRadius: '16px', 
+                  padding: '20px',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 2px 12px rgba(0, 0, 0, 0.05)'
+                }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px', 
+                    marginBottom: '12px' 
+                  }}>
+                    <span style={{ fontSize: '18px' }}>📊</span>
+                    <h3 style={{ 
+                      fontSize: '18px', 
+                      fontWeight: '700', 
+                      color: marbleDarkGray, 
+                      margin: 0,
+                      fontFamily: fontHeading
+                    }}>
+                      Market Context
+                    </h3>
+                  </div>
+                  <p style={{ 
+                    color: marbleGray, 
+                    fontSize: '14px', 
+                    lineHeight: '1.6', 
+                    margin: 0,
+                    fontFamily: fontBody
+                  }}>
                     {scenario.scenario.context}
                   </p>
                 </div>
-                <div style={{ backgroundColor: marbleWhite, borderRadius: 12, padding: 16 }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 'bold', color: marbleDarkGray, marginBottom: 8 }}>📅 Key Events</h3>
-                  <ul style={{ color: marbleGray, fontSize: 13, lineHeight: 1.5, paddingLeft: 18, margin: 0 }}>
+                
+                <div style={{ 
+                  backgroundColor: marbleWhite, 
+                  borderRadius: '16px', 
+                  padding: '20px',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 2px 12px rgba(0, 0, 0, 0.05)'
+                }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px', 
+                    marginBottom: '12px' 
+                  }}>
+                    <span style={{ fontSize: '18px' }}>📅</span>
+                    <h3 style={{ 
+                      fontSize: '18px', 
+                      fontWeight: '700', 
+                      color: marbleDarkGray, 
+                      margin: 0,
+                      fontFamily: fontHeading
+                    }}>
+                      Key Events
+                    </h3>
+                  </div>
+                  <ul style={{ 
+                    color: marbleGray, 
+                    fontSize: '14px', 
+                    lineHeight: '1.6', 
+                    paddingLeft: '20px', 
+                    margin: 0,
+                    fontFamily: fontBody
+                  }}>
                     {scenario.scenario.keyEvents.map((event, index) => (
-                      <li key={index} style={{ marginBottom: 6 }}>{event}</li>
+                      <li key={index} style={{ marginBottom: '8px' }}>{event}</li>
                     ))}
                   </ul>
                 </div>
@@ -559,46 +773,449 @@ function AICoach() {
             />
           </div>
 
-          {/* Example beginner position & P/L under the chart */}
+          {/* Portfolio Balance for Buy Challenges */}
+          {scenario.puzzleType === 'buy' && (
+            <div style={{
+              backgroundColor: marbleLightGray,
+              borderRadius: '24px',
+              padding: '24px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                marginBottom: '20px'
+              }}>
+                <span style={{ fontSize: '24px' }}>💰</span>
+                <h3 style={{
+                  fontSize: '20px',
+                  fontWeight: '700',
+                  color: marbleDarkGray,
+                  margin: 0,
+                  fontFamily: fontHeading
+                }}>
+                  Your Portfolio
+                </h3>
+              </div>
+
+              <div style={{
+                backgroundColor: marbleWhite,
+                borderRadius: '16px',
+                padding: '20px',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.05)'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px'
+                }}>
+                  <span style={{ color: marbleGray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
+                    Available Cash
+                  </span>
+                  <span style={{ 
+                    color: marbleDarkGray, 
+                    fontSize: '24px', 
+                    fontWeight: '700',
+                    fontFamily: fontBody
+                  }}>
+                    ${BEGINNER_BUDGET.toLocaleString()}
+                  </span>
+                </div>
+                
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '12px'
+                }}>
+                  <span style={{ color: marbleGray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
+                    Current Price ({asOfDate})
+                  </span>
+                  <span style={{ 
+                    color: marbleDarkGray, 
+                    fontSize: '18px', 
+                    fontWeight: '700',
+                    fontFamily: fontBody
+                  }}>
+                    ${scenario.initialPrice.toFixed(2)}
+                  </span>
+                </div>
+
+                <div style={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  border: '1px solid rgba(0, 0, 0, 0.1)'
+                }}>
+                  <div style={{
+                    color: marbleGray,
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    marginBottom: '4px',
+                    fontFamily: fontBody
+                  }}>
+                    Maximum Shares You Can Buy:
+                  </div>
+                  <div style={{
+                    color: marbleDarkGray,
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    fontFamily: fontMono
+                  }}>
+                    {Math.floor(BEGINNER_BUDGET / scenario.initialPrice)} shares
+                  </div>
+                  <div style={{
+                    color: marbleGray,
+                    fontSize: '11px',
+                    marginTop: '4px',
+                    fontStyle: 'italic',
+                    fontFamily: fontBody
+                  }}>
+                    * This assumes you use all available cash
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Enhanced Position Calculator */}
           {scenario.puzzleType !== 'buy' && position.hasPosition && (
             <div style={{
               backgroundColor: marbleLightGray,
-              borderRadius: '16px',
-              padding: '12px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
+              borderRadius: '24px',
+              padding: '24px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
             }}>
-              <div style={{ color: marbleDarkGray, fontSize: 13 }}>
-                <div style={{ fontWeight: 'bold', marginBottom: 4 }}>Example beginner position</div>
-                <div style={{ color: marbleGray }}>Budget: ${BEGINNER_BUDGET.toLocaleString()} • Entry: {position.entryDate} @ ${position.entryPrice.toFixed(2)}</div>
-                <div>Holding: {position.shares} shares</div>
-                <div style={{ color: marbleGray, fontSize: 12, marginTop: 4 }}>
-                  Shares = floor(Budget ÷ Entry) = floor(${BEGINNER_BUDGET} ÷ ${position.entryPrice.toFixed(2)}) = {position.shares}
-                </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                marginBottom: '20px'
+              }}>
+                <span style={{ fontSize: '24px' }}>💼</span>
+                <h3 style={{
+                  fontSize: '20px',
+                  fontWeight: '700',
+                  color: marbleDarkGray,
+                  margin: 0,
+                  fontFamily: fontHeading
+                }}>
+                  Example Beginner Position
+                </h3>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                {(() => {
-                  const pl = getPL();
-                  if (!pl) return <div style={{ color: marbleGray, fontSize: 13 }}>Loading P/L…</div>;
-                  const plColor = pl.value >= 0 ? '#22c55e' : '#ef4444';
-                  const delta = (pl.currentPrice - position.entryPrice);
-                  return (
-                    <div>
-                      <div style={{ color: marbleGray, fontSize: 12 }}>As-of price ({asOfDate})</div>
-                      <div style={{ color: marbleDarkGray, fontWeight: 'bold' }}>${pl.currentPrice.toFixed(2)}</div>
-                      <div style={{ color: plColor, fontWeight: 'bold' }}>P/L: ${pl.value.toFixed(2)} ({pl.pct.toFixed(2)}%)</div>
-                      <div style={{ color: marbleGray, fontSize: 12, marginTop: 4 }}>
-                        Calculation: {position.shares} × (${pl.currentPrice.toFixed(2)} − ${position.entryPrice.toFixed(2)}) = ${
-                          (position.shares * delta).toFixed(2)
-                        }
-                      </div>
-                      <div style={{ color: marbleGray, fontSize: 12 }}>
-                        As-of price uses the official historical close on that date.
-                      </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '24px',
+                alignItems: 'start'
+              }}>
+                {/* Position Details */}
+                <div style={{
+                  backgroundColor: marbleWhite,
+                  borderRadius: '16px',
+                  padding: '20px',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 2px 12px rgba(0, 0, 0, 0.05)'
+                }}>
+                  <h4 style={{
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: marbleDarkGray,
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    📊 Position Details
+                  </h4>
+                  
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '8px'
+                    }}>
+                      <span style={{ color: marbleGray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
+                        Budget
+                      </span>
+                      <span style={{ color: marbleDarkGray, fontSize: '16px', fontWeight: '700', fontFamily: fontBody }}>
+                        ${BEGINNER_BUDGET.toLocaleString()}
+                      </span>
                     </div>
-                  );
-                })()}
+                    
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '8px'
+                    }}>
+                      <span style={{ color: marbleGray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
+                        Entry Date
+                      </span>
+                      <span style={{ color: marbleDarkGray, fontSize: '16px', fontWeight: '700', fontFamily: fontBody }}>
+                        {position.entryDate}
+                      </span>
+                    </div>
+                    
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '8px'
+                    }}>
+                      <span style={{ color: marbleGray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
+                        Entry Price
+                      </span>
+                      <span style={{ color: marbleDarkGray, fontSize: '16px', fontWeight: '700', fontFamily: fontBody }}>
+                        ${position.entryPrice.toFixed(2)}
+                      </span>
+                    </div>
+                    
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '12px'
+                    }}>
+                      <span style={{ color: marbleGray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
+                        Shares Owned
+                      </span>
+                      <span style={{ color: marbleDarkGray, fontSize: '16px', fontWeight: '700', fontFamily: fontBody }}>
+                        {position.shares}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                    overflow: 'hidden'
+                  }}>
+                    <button
+                      onClick={() => setShowSharesCalculation(!showSharesCalculation)}
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        textAlign: 'left'
+                      }}
+                    >
+                      <span style={{
+                        color: marbleGray,
+                        fontSize: '12px',
+                        fontWeight: '500'
+                      }}>
+                        Calculation:
+                      </span>
+                      <span style={{
+                        color: marbleGray,
+                        fontSize: '14px',
+                        transform: showSharesCalculation ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.2s ease'
+                      }}>
+                        ▼
+                      </span>
+                    </button>
+                    
+                    {showSharesCalculation && (
+                      <div style={{
+                        padding: '0 12px 12px 12px',
+                        borderTop: '1px solid rgba(0, 0, 0, 0.1)'
+                      }}>
+                        <div style={{
+                          color: marbleDarkGray,
+                          fontSize: '13px',
+                          fontFamily: fontMono,
+                          lineHeight: '1.4'
+                        }}>
+                          Shares = floor(Budget ÷ Entry)<br/>
+                          = floor(${BEGINNER_BUDGET} ÷ ${position.entryPrice.toFixed(2)})<br/>
+                          = {position.shares}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* P&L Performance */}
+                <div style={{
+                  backgroundColor: marbleWhite,
+                  borderRadius: '16px',
+                  padding: '20px',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 2px 12px rgba(0, 0, 0, 0.05)'
+                }}>
+                  <h4 style={{
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: marbleDarkGray,
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    📈 Performance as of {asOfDate}
+                  </h4>
+                  
+                  {(() => {
+                    const pl = getPL();
+                    if (!pl) {
+                      return (
+                        <div style={{
+                          textAlign: 'center',
+                          color: marbleGray,
+                          fontSize: '14px',
+                          padding: '20px'
+                        }}>
+                          Loading P&L calculation...
+                        </div>
+                      );
+                    }
+                    
+                    const plColor = pl.value >= 0 ? '#22c55e' : '#ef4444';
+                    const delta = (pl.currentPrice - position.entryPrice);
+                    
+                    return (
+                      <div>
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '12px'
+                        }}>
+                          <span style={{ color: marbleGray, fontSize: '14px', fontWeight: '500' }}>
+                            Current Price
+                          </span>
+                          <span style={{ 
+                            color: marbleDarkGray, 
+                            fontSize: '18px', 
+                            fontWeight: '700' 
+                          }}>
+                            ${pl.currentPrice.toFixed(2)}
+                          </span>
+                        </div>
+                        
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '12px'
+                        }}>
+                          <span style={{ color: marbleGray, fontSize: '14px', fontWeight: '500' }}>
+                            Price Change
+                          </span>
+                          <span style={{ 
+                            color: plColor, 
+                            fontSize: '16px', 
+                            fontWeight: '700' 
+                          }}>
+                            ${delta.toFixed(2)} ({pl.pct.toFixed(2)}%)
+                          </span>
+                        </div>
+                        
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '16px',
+                          padding: '12px',
+                          backgroundColor: plColor === '#22c55e' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                          borderRadius: '8px',
+                          border: `1px solid ${plColor}20`
+                        }}>
+                          <span style={{ color: marbleDarkGray, fontSize: '14px', fontWeight: '600' }}>
+                            Total P&L
+                          </span>
+                          <span style={{ 
+                            color: plColor, 
+                            fontSize: '18px', 
+                            fontWeight: '700' 
+                          }}>
+                            ${pl.value.toFixed(2)}
+                          </span>
+                        </div>
+
+                        <div style={{
+                          backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(0, 0, 0, 0.1)',
+                          overflow: 'hidden'
+                        }}>
+                          <button
+                            onClick={() => setShowPLCalculation(!showPLCalculation)}
+                            style={{
+                              width: '100%',
+                              padding: '12px',
+                              backgroundColor: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              textAlign: 'left'
+                            }}
+                          >
+                            <span style={{
+                              color: marbleGray,
+                              fontSize: '12px',
+                              fontWeight: '500'
+                            }}>
+                              P&L Calculation:
+                            </span>
+                            <span style={{
+                              color: marbleGray,
+                              fontSize: '14px',
+                              transform: showPLCalculation ? 'rotate(180deg)' : 'rotate(0deg)',
+                              transition: 'transform 0.2s ease'
+                            }}>
+                              ▼
+                            </span>
+                          </button>
+                          
+                          {showPLCalculation && (
+                            <div style={{
+                              padding: '0 12px 12px 12px',
+                              borderTop: '1px solid rgba(0, 0, 0, 0.1)'
+                            }}>
+                              <div style={{
+                                color: marbleDarkGray,
+                                fontSize: '13px',
+                                fontFamily: fontMono,
+                                lineHeight: '1.4'
+                              }}>
+                                {position.shares} × (${pl.currentPrice.toFixed(2)} − ${position.entryPrice.toFixed(2)})<br/>
+                                = {position.shares} × ${delta.toFixed(2)}<br/>
+                                = ${pl.value.toFixed(2)}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div style={{
+                          marginTop: '12px',
+                          color: marbleGray,
+                          fontSize: '11px',
+                          fontStyle: 'italic'
+                        }}>
+                          * As-of price uses the official historical close on {asOfDate}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
               </div>
             </div>
           )}
@@ -652,7 +1269,8 @@ function AICoach() {
                     color: message.type === 'user' ? marbleDarkGray : marbleDarkGray,
                     fontSize: '14px',
                     lineHeight: '1.4',
-                    whiteSpace: 'pre-wrap'
+                    whiteSpace: 'pre-wrap',
+                    fontFamily: fontBody
                   }}>
                     {message.content}
                   </div>
@@ -669,7 +1287,8 @@ function AICoach() {
                     borderRadius: '12px',
                     backgroundColor: marbleLightGray,
                     color: marbleDarkGray,
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    fontFamily: fontBody
                   }}>
                     🤖 AI is thinking...
                   </div>
@@ -695,7 +1314,8 @@ function AICoach() {
                     padding: '8px 12px',
                     borderRadius: '8px',
                     border: '2px solid #e0e0e0',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    fontFamily: fontBody
                   }}
                 />
                 <button
@@ -709,7 +1329,8 @@ function AICoach() {
                     color: marbleDarkGray,
                     fontWeight: 'bold',
                     cursor: isLoading || !userInput.trim() ? 'not-allowed' : 'pointer',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    fontFamily: fontBody
                   }}
                 >
                   Send
@@ -740,90 +1361,105 @@ function AICoach() {
                   flexDirection: 'column',
                   gap: '12px'
                 }}>
-                  <button
-                    onClick={() => {
-                      setOrderType('buy');
-                      setOrderPrice(scenario.initialPrice.toString());
-                      setShowOrderForm(true);
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      backgroundColor: '#22c55e',
-                      color: 'white',
+                  {/* Buy buttons - only show for 'buy' challenges */}
+                  {scenario.puzzleType === 'buy' && (
+                    <>
+                      <button
+                        onClick={() => {
+                          setOrderType('buy');
+                          setOrderPrice(scenario.initialPrice.toString());
+                          setShowOrderForm(true);
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          backgroundColor: '#22c55e',
+                          color: 'white',
                       fontWeight: 'bold',
                       cursor: 'pointer',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      fontFamily: fontBody
                     }}
                   >
                     📈 Buy Now
-                  </button>
-                  
-                  <button
-                    onClick={() => {
-                      setOrderType('limit-buy');
-                      setOrderPrice('');
-                      setShowOrderForm(true);
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      backgroundColor: '#3b82f6',
-                      color: 'white',
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          setOrderType('limit-buy');
+                          setOrderPrice('');
+                          setShowOrderForm(true);
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          backgroundColor: '#3b82f6',
+                          color: 'white',
                       fontWeight: 'bold',
                       cursor: 'pointer',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      fontFamily: fontBody
                     }}
                   >
                     📋 Buy When Price Hits...
-                  </button>
-                  
-                  <button
-                    onClick={() => {
-                      setOrderType('sell');
-                      setOrderPrice(scenario.initialPrice.toString());
-                      setShowOrderForm(true);
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      backgroundColor: '#ef4444',
-                      color: 'white',
+                      </button>
+                    </>
+                  )}
+
+                  {/* Sell buttons - only show for 'sell' challenges */}
+                  {scenario.puzzleType === 'sell' && (
+                    <>
+                      <button
+                        onClick={() => {
+                          setOrderType('sell');
+                          setOrderPrice(scenario.initialPrice.toString());
+                          setShowOrderForm(true);
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          backgroundColor: '#ef4444',
+                          color: 'white',
                       fontWeight: 'bold',
                       cursor: 'pointer',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      fontFamily: fontBody
                     }}
                   >
                     📉 Sell Now
-                  </button>
-                  
-                  <button
-                    onClick={() => {
-                      setOrderType('limit-sell');
-                      setOrderPrice('');
-                      setShowOrderForm(true);
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      backgroundColor: '#f59e0b',
-                      color: 'white',
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          setOrderType('limit-sell');
+                          setOrderPrice('');
+                          setShowOrderForm(true);
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          backgroundColor: '#f59e0b',
+                          color: 'white',
                       fontWeight: 'bold',
                       cursor: 'pointer',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      fontFamily: fontBody
                     }}
                   >
                     📋 Sell When Price Hits...
-                  </button>
-                  
+                      </button>
+                    </>
+                  )}
+
+                  {/* Hold button - always available */}
                   <button
                     onClick={() => {
                       setOrderType('hold');
@@ -839,11 +1475,98 @@ function AICoach() {
                       color: marbleDarkGray,
                       fontWeight: 'bold',
                       cursor: 'pointer',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      fontFamily: fontBody
                     }}
                   >
                     ⏸️ Hold (Wait and Watch)
                   </button>
+
+                  {/* Disabled buy buttons for sell challenges */}
+                  {scenario.puzzleType === 'sell' && (
+                    <>
+                      <button
+                        disabled
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          backgroundColor: '#9ca3af',
+                          color: '#6b7280',
+                          fontWeight: 'bold',
+                          cursor: 'not-allowed',
+                          fontSize: '14px',
+                          opacity: 0.6,
+                          fontFamily: fontBody
+                        }}
+                      >
+                        📈 Buy Now (Not Available)
+                      </button>
+                      
+                      <button
+                        disabled
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          backgroundColor: '#9ca3af',
+                          color: '#6b7280',
+                          fontWeight: 'bold',
+                          cursor: 'not-allowed',
+                          fontSize: '14px',
+                          opacity: 0.6,
+                          fontFamily: fontBody
+                        }}
+                      >
+                        📋 Buy When Price Hits... (Not Available)
+                      </button>
+                    </>
+                  )}
+
+                  {/* Disabled sell buttons for buy challenges */}
+                  {scenario.puzzleType === 'buy' && (
+                    <>
+                      <button
+                        disabled
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          backgroundColor: '#9ca3af',
+                          color: '#6b7280',
+                          fontWeight: 'bold',
+                          cursor: 'not-allowed',
+                          fontSize: '14px',
+                          opacity: 0.6,
+                          fontFamily: fontBody
+                        }}
+                      >
+                        📉 Sell Now (Not Available)
+                      </button>
+                      
+                      <button
+                        disabled
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          backgroundColor: '#9ca3af',
+                          color: '#6b7280',
+                          fontWeight: 'bold',
+                          cursor: 'not-allowed',
+                          fontSize: '14px',
+                          opacity: 0.6,
+                          fontFamily: fontBody
+                        }}
+                      >
+                        📋 Sell When Price Hits... (Not Available)
+                      </button>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div style={{
@@ -869,6 +1592,52 @@ function AICoach() {
                     flexDirection: 'column',
                     gap: '12px'
                   }}>
+                    {/* Portfolio info for buy orders */}
+                    {(orderType === 'buy' || orderType === 'limit-buy') && (
+                      <div style={{
+                        backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        border: '1px solid rgba(0, 0, 0, 0.1)',
+                        marginBottom: '8px'
+                      }}>
+                        <div style={{
+                          color: marbleGray,
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          marginBottom: '4px',
+                          fontFamily: fontBody
+                        }}>
+                          Portfolio Info:
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '4px'
+                        }}>
+                          <span style={{ color: marbleGray, fontSize: '12px', fontFamily: fontBody }}>
+                            Available Cash:
+                          </span>
+                          <span style={{ color: marbleDarkGray, fontSize: '14px', fontWeight: '600', fontFamily: fontBody }}>
+                            ${BEGINNER_BUDGET.toLocaleString()}
+                          </span>
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}>
+                          <span style={{ color: marbleGray, fontSize: '12px', fontFamily: fontBody }}>
+                            Max Shares at ${orderPrice || scenario.initialPrice}:
+                          </span>
+                          <span style={{ color: marbleDarkGray, fontSize: '14px', fontWeight: '600', fontFamily: fontBody }}>
+                            {Math.floor(BEGINNER_BUDGET / parseFloat(orderPrice || scenario.initialPrice))} shares
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
                     <div>
                       <label style={{
                         fontSize: '14px',
@@ -889,7 +1658,8 @@ function AICoach() {
                           padding: '8px',
                           borderRadius: '6px',
                           border: '2px solid #e0e0e0',
-                          fontSize: '14px'
+                          fontSize: '14px',
+                          fontFamily: fontBody
                         }}
                       />
                     </div>
@@ -915,7 +1685,8 @@ function AICoach() {
                           border: '2px solid #e0e0e0',
                           fontSize: '14px',
                           minHeight: '60px',
-                          resize: 'vertical'
+                          resize: 'vertical',
+                          fontFamily: fontBody
                         }}
                       />
                     </div>
@@ -936,7 +1707,8 @@ function AICoach() {
                           color: marbleDarkGray,
                           fontWeight: '500',
                           cursor: !orderPrice || !orderReasoning.trim() ? 'not-allowed' : 'pointer',
-                          fontSize: '12px'
+                          fontSize: '12px',
+                          fontFamily: fontBody
                         }}
                       >
                         ✅ Submit Decision
@@ -952,7 +1724,8 @@ function AICoach() {
                           color: 'white',
                           fontWeight: '500',
                           cursor: 'pointer',
-                          fontSize: '12px'
+                          fontSize: '12px',
+                          fontFamily: fontBody
                         }}
                       >
                         ❌ Cancel
@@ -1000,7 +1773,8 @@ function AICoach() {
                     fontWeight: currentScenario === index ? 'bold' : 'normal',
                     cursor: 'pointer',
                     fontSize: '14px',
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    fontFamily: fontBody
                   }}
                 >
                   {scenario.title}
