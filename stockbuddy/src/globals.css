@@ -26,10 +26,30 @@ body {
 
 body.page-dark {
   background-color: var(--marbleDarkGray);
+  min-height: 100vh;
+  min-width: 100vw;
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+html.page-dark {
+  background-color: var(--marbleDarkGray);
+}
+
+html.page-dark body {
+  background-color: var(--marbleDarkGray);
+  background-attachment: fixed;
+  background-size: 100% 100%;
+}
+
+html.page-light {
+  background-color: var(--marbleWhite);
+}
+
+html.page-light body {
+  background-color: var(--marbleWhite);
 }
 
 /* App container structure */

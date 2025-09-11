@@ -26,6 +26,7 @@ function AppContent() {
     const mainContent = document.querySelector('.main-content');
     const pageTransition = document.querySelector('.page-transition');
     const body = document.body;
+    const html = document.documentElement;
     
     if (mainContent && pageTransition) {
       // Determine page type based on route
@@ -36,10 +37,20 @@ function AppContent() {
         mainContent.classList.add('page-dark');
         pageTransition.classList.add('page-dark');
         body.classList.add('page-dark');
+        html.classList.add('page-dark');
+        mainContent.classList.remove('page-light');
+        pageTransition.classList.remove('page-light');
+        body.classList.remove('page-light');
+        html.classList.remove('page-light');
       } else {
         mainContent.classList.remove('page-dark');
         pageTransition.classList.remove('page-dark');
         body.classList.remove('page-dark');
+        html.classList.remove('page-dark');
+        mainContent.classList.add('page-light');
+        pageTransition.classList.add('page-light');
+        body.classList.add('page-light');
+        html.classList.add('page-light');
       }
     }
   }, [location.pathname]);

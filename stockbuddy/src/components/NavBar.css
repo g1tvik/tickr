@@ -69,6 +69,13 @@
   .navbar-section {
     margin: 0.5rem 0;
   }
+  .navbar-color {
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    border-radius: 0 0 15px 15px;
+    padding: 0 1rem;
+  }
 } 
 .navbar-color {
   background-color: var(--marbleWhite);
@@ -83,11 +90,23 @@
   min-height: 70px;
   display: flex;
   align-items: center;
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 0 2rem;
 }
 
 /* Specific rule for navbar when it has page-dark class */
 .navbar-color.page-dark {
   background-color: var(--marbleDarkGray) !important;
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Specific rule for navbar when it has page-light class */
+.navbar-color.page-light {
+  background-color: var(--marbleWhite) !important;
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 @keyframes navbarFadeIn {

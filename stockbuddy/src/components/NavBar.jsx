@@ -12,7 +12,8 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
     navigate('/');
   };
 
-  // Check if we're on the Trade page or AI Coach page
+  // Check if we're on the Trade page or AI Coach page (dark theme)
+  // Updated to fix isOnLightPage error
   const isOnTradePage = location.pathname === '/trade' || location.pathname === '/ai-coach';
 
   useEffect(() => {
@@ -20,42 +21,26 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
     const body = document.body;
     
     if (navbar) {
-      // Add a data attribute to track the current page
-      navbar.setAttribute('data-current-page', isOnTradePage ? 'trade' : 'other');
-      
       if (isOnTradePage) {
-        // Use CSS classes instead of inline styles for seamless transitions
+        // Dark theme for Trade and AI Coach pages
         navbar.classList.add('page-dark');
         navbar.classList.remove('page-light');
         
-        // Set scrollbar background to match Trade page
+        // Set scrollbar background to match dark pages
         body.style.setProperty('--scrollbar-track-bg', '#222222', 'important');
         body.style.setProperty('--scrollbar-thumb-bg', '#B0B0B0', 'important');
         body.style.setProperty('--scrollbar-thumb-hover-bg', '#E6C87A', 'important');
       } else {
-        // Use CSS classes for other pages
+        // Light theme for all other pages
         navbar.classList.remove('page-dark');
         navbar.classList.add('page-light');
         
-        // Set scrollbar background to match other pages
+        // Set scrollbar background to match light pages
         body.style.setProperty('--scrollbar-track-bg', '#F4F1E9', 'important');
         body.style.setProperty('--scrollbar-thumb-bg', '#B0B0B0', 'important');
         body.style.setProperty('--scrollbar-thumb-hover-bg', '#E6C87A', 'important');
       }
     }
-
-    // Cleanup function to reset background when component unmounts
-    return () => {
-      if (navbar) {
-        const currentPage = navbar.getAttribute('data-current-page');
-        // Only reset if we're not on the trade page
-        if (currentPage !== 'trade') {
-          navbar.classList.remove('page-dark');
-          navbar.classList.add('page-light');
-          body.style.setProperty('--scrollbar-track-bg', '#F4F1E9', 'important');
-        }
-      }
-    };
   }, [isOnTradePage]);
 
 
@@ -86,7 +71,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                 <Link 
                   className="nav-link" 
                   to="/dashboard"
-                  style={{ color: isOnTradePage ? '#F4F1E9' : undefined }}
+                  style={{ color: isOnTradePage ? '#F4F1E9' : '#2C2C2C' }}
                 >
                   DASHBOARD
                 </Link>
@@ -95,7 +80,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                 <Link 
                   className="nav-link" 
                   to="/trade"
-                  style={{ color: isOnTradePage ? '#F4F1E9' : undefined }}
+                  style={{ color: isOnTradePage ? '#F4F1E9' : '#2C2C2C' }}
                 >
                   TRADE
                 </Link>
@@ -104,7 +89,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                 <Link 
                   className="nav-link" 
                   to="/learn"
-                  style={{ color: isOnTradePage ? '#F4F1E9' : undefined }}
+                  style={{ color: isOnTradePage ? '#F4F1E9' : '#2C2C2C' }}
                 >
                   LEARN
                 </Link>
@@ -113,7 +98,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                 <Link 
                   className="nav-link" 
                   to="/ai-coach"
-                  style={{ color: isOnTradePage ? '#F4F1E9' : undefined }}
+                  style={{ color: isOnTradePage ? '#F4F1E9' : '#2C2C2C' }}
                 >
                   AI COACH
                 </Link>
@@ -122,13 +107,23 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                 <Link 
                   className="nav-link" 
                   to="/settings"
-                  style={{ color: isOnTradePage ? '#F4F1E9' : undefined }}
+                  style={{ color: isOnTradePage ? '#F4F1E9' : '#2C2C2C' }}
                 >
                   SETTINGS
                 </Link>
               </li>
               <li className="nav-item">
-                <button className="btn btn-outline-light ms-2" onClick={handleSignOut}>SIGN OUT</button>
+                <button 
+                  className="btn btn-outline-light ms-2" 
+                  onClick={handleSignOut}
+                  style={{
+                    backgroundColor: isOnTradePage ? undefined : '#2C2C2C',
+                    color: isOnTradePage ? undefined : '#F4F1E9',
+                    borderColor: isOnTradePage ? undefined : '#2C2C2C'
+                  }}
+                >
+                  SIGN OUT
+                </button>
               </li>
             </>
           ) : (
@@ -137,7 +132,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                 <Link 
                   className="nav-link" 
                   to="/signin"
-                  style={{ color: isOnTradePage ? '#F4F1E9' : undefined }}
+                  style={{ color: isOnTradePage ? '#F4F1E9' : '#2C2C2C' }}
                 >
                   Sign In
                 </Link>

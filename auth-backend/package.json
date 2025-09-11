@@ -25,5 +25,5 @@
   "devDependencies": {
     "nodemon": "^3.0.0"
   },
-  "description": "StockBuddy Backend API with file-based storage and Alpaca integration"
+  "description": "tickr Backend API with file-based storage and Alpaca integration"
 }
