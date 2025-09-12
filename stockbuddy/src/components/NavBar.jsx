@@ -17,29 +17,19 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
   const isOnTradePage = location.pathname === '/trade' || location.pathname === '/ai-coach';
 
   useEffect(() => {
-    const navbar = document.querySelector('.navbar-color');
     const body = document.body;
     
-    if (navbar) {
-      if (isOnTradePage) {
-        // Dark theme for Trade and AI Coach pages
-        navbar.classList.add('page-dark');
-        navbar.classList.remove('page-light');
-        
-        // Set scrollbar background to match dark pages
-        body.style.setProperty('--scrollbar-track-bg', '#222222', 'important');
-        body.style.setProperty('--scrollbar-thumb-bg', '#B0B0B0', 'important');
-        body.style.setProperty('--scrollbar-thumb-hover-bg', '#E6C87A', 'important');
-      } else {
-        // Light theme for all other pages
-        navbar.classList.remove('page-dark');
-        navbar.classList.add('page-light');
-        
-        // Set scrollbar background to match light pages
-        body.style.setProperty('--scrollbar-track-bg', '#F4F1E9', 'important');
-        body.style.setProperty('--scrollbar-thumb-bg', '#B0B0B0', 'important');
-        body.style.setProperty('--scrollbar-thumb-hover-bg', '#E6C87A', 'important');
-      }
+    // Set scrollbar background to match page theme
+    if (isOnTradePage) {
+      // Dark theme scrollbar for Trade and AI Coach pages
+      body.style.setProperty('--scrollbar-track-bg', '#222222', 'important');
+      body.style.setProperty('--scrollbar-thumb-bg', '#B0B0B0', 'important');
+      body.style.setProperty('--scrollbar-thumb-hover-bg', '#E6C87A', 'important');
+    } else {
+      // Light theme scrollbar for all other pages
+      body.style.setProperty('--scrollbar-track-bg', '#F4F1E9', 'important');
+      body.style.setProperty('--scrollbar-thumb-bg', '#B0B0B0', 'important');
+      body.style.setProperty('--scrollbar-thumb-hover-bg', '#E6C87A', 'important');
     }
   }, [isOnTradePage]);
 

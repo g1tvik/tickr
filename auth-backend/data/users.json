@@ -76,18 +76,19 @@
     "password": "$2b$10$oP4bqNvS6SPfivfZLmIyh.lTs3mTJo/OkEL2wFO55C9KC4hLvkyle",
     "name": "Ritvik Vudatha",
     "createdAt": "2025-08-01T06:02:17.929Z",
-    "lastLogin": "2025-09-09T05:34:40.009Z",
+    "lastLogin": "2025-09-12T06:05:04.666Z",
     "portfolio": {
       "balance": 10000,
       "positions": [],
       "totalValue": 10000
     },
     "learningProgress": {
-      "xp": 44,
-      "coins": 28,
+      "xp": 80,
+      "coins": 50,
       "completedLessons": [
         1,
-        2
+        2,
+        3
       ],
       "completedUnitTests": [],
       "finalTestCompleted": false,
@@ -95,20 +96,28 @@
       "unitTestAttempts": {},
       "lessonAttempts": {
         "1": {
+          "attempts": 6,
+          "completed": true,
+          "bestScore": 100,
+          "lastAttempt": "2025-09-12T05:57:42.131Z"
+        },
+        "2": {
           "attempts": 4,
           "completed": true,
           "bestScore": 100,
-          "lastAttempt": "2025-08-08T02:54:36.257Z"
+          "lastAttempt": "2025-09-12T05:59:07.914Z"
         },
-        "2": {
+        "3": {
           "attempts": 2,
           "completed": true,
-          "bestScore": 66.66666666666666,
-          "lastAttempt": "2025-08-08T02:55:12.173Z"
+          "bestScore": 100,
+          "lastAttempt": "2025-09-12T06:00:54.104Z"
         }
       },
       "lessonRewards": {
-        "1": true
+        "1": true,
+        "2": true,
+        "3": true
       },
       "lessonEarnedRewards": {
         "1": {
@@ -116,8 +125,12 @@
           "coins": 15
         },
         "2": {
-          "xp": 19,
-          "coins": 13
+          "xp": 30,
+          "coins": 20
+        },
+        "3": {
+          "xp": 25,
+          "coins": 15
         }
       }
     },

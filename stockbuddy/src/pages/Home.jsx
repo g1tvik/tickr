@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Typewriter from "../components/Typewriter";
 import StockTicker from "../components/StockTicker";
 import FadeInSection from "../components/FadeInSection";
 import CascadeText from "../components/CascadeText";
 import { fetchStockData } from "../utils/stockCache";
+import { useNavbarBackground } from "../hooks/useNavbarBackground";
 
 // Helper function to get formatted timestamp
 const getTimestamp = () => {
@@ -19,6 +20,8 @@ const getTimestamp = () => {
 
 function Home({ isLoggedIn }) {
   const [preloadedStocks, setPreloadedStocks] = useState([]);
+  const location = useLocation();
+  const { setNavbarBackground, resetNavbarBackground } = useNavbarBackground();
 
   // Preload stock data immediately when component mounts
   useEffect(() => {
@@ -47,7 +50,53 @@ function Home({ isLoggedIn }) {
   }, []);
 
   useEffect(() => {
+    console.log(`Home: useEffect triggered for route ${location.pathname}`);
+    // Only run this effect when on Home page
+    if (location.pathname !== '/') {
+      console.log('Home: Not on Home page, skipping effect');
+      return;
+    }
+    console.log('Home: On Home page, setting up scroll listeners');
+
     let isBottomHalf = false; // Use local variable instead of state
+    
+    const updateBackground = (useBottomColor) => {
+      console.log(`Home: updateBackground called with useBottomColor = ${useBottomColor}`);
+      const pageTransition = document.querySelector('.page-transition');
+      const mainContent = document.querySelector('.main-content');
+      const appContainer = document.querySelector('.app-container');
+      const body = document.body;
+      const html = document.documentElement;
+      
+      const backgroundColor = useBottomColor ? '#E5E5E5' : '#F4F1E9';
+      const cssVar = useBottomColor ? 'var(--marbleLightGray)' : '#F4F1E9';
+      
+      if (pageTransition) {
+        pageTransition.style.backgroundColor = backgroundColor;
+      }
+      if (mainContent) {
+        mainContent.style.backgroundColor = cssVar;
+      }
+      if (appContainer) {
+        appContainer.style.backgroundColor = cssVar;
+      }
+      // Update navbar background using the centralized system
+      if (useBottomColor) {
+        setNavbarBackground('#E5E5E5'); // marbleLightGray
+        console.log('Navbar: Setting to marbleLightGray (#E5E5E5)');
+      } else {
+        setNavbarBackground('#F4F1E9'); // marbleWhite
+        console.log('Navbar: Setting to marbleWhite (#F4F1E9)');
+      }
+      if (body) {
+        body.style.backgroundColor = backgroundColor;
+      }
+      if (html) {
+        html.style.backgroundColor = backgroundColor;
+      }
+      // Update scrollbar to match the background
+      body.style.setProperty('--scrollbar-track-bg', backgroundColor, 'important');
+    };
     
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
@@ -55,56 +104,38 @@ function Home({ isLoggedIn }) {
       const documentHeight = document.documentElement.scrollHeight;
       const scrollPercentage = scrollPosition / (documentHeight - windowHeight);
       
-      // Change background when we're in the bottom half of the page
-      if (scrollPercentage > 0.5) {
+      // More aggressive detection for bottom area
+      const isAtBottom = scrollPosition + windowHeight >= documentHeight - 10; // 10px threshold
+      const isInBottomHalf = scrollPercentage > 0.4; // Lowered threshold
+      
+      // Change background when we're in the bottom area
+      if (isInBottomHalf || isAtBottom) {
         if (!isBottomHalf) {
           isBottomHalf = true;
-          // Try multiple selectors to find the right element
-          const pageTransition = document.querySelector('.page-transition');
-          const mainContent = document.querySelector('.main-content');
-          const appContainer = document.querySelector('.app-container');
-          const navbar = document.querySelector('.navbar-color');
-          const body = document.body;
-          
-          if (pageTransition) {
-            pageTransition.style.backgroundColor = '#E5E5E5'; // marbleLightGray
-          }
-          if (mainContent) {
-            mainContent.style.backgroundColor = 'var(--marbleLightGray)'; // marbleLightGray
-          }
-          if (appContainer) {
-            appContainer.style.backgroundColor = 'var(--marbleLightGray)'; // marbleLightGray
-          }
-          if (navbar) {
-            navbar.style.backgroundColor = 'var(--marbleLightGray)'; // marbleLightGray
-          }
-          // Update scrollbar to match the new background
-          body.style.setProperty('--scrollbar-track-bg', '#E5E5E5', 'important');
+          console.log('Switching to bottom background (marbleLightGray)');
+          updateBackground(true);
         }
       } else {
         if (isBottomHalf) {
           isBottomHalf = false;
-          // Try multiple selectors to find the right element
-          const pageTransition = document.querySelector('.page-transition');
-          const mainContent = document.querySelector('.main-content');
-          const appContainer = document.querySelector('.app-container');
-          const navbar = document.querySelector('.navbar-color');
-          const body = document.body;
-          
-          if (pageTransition) {
-            pageTransition.style.backgroundColor = '#F4F1E9';
-          }
-          if (mainContent) {
-            mainContent.style.backgroundColor = '#F4F1E9';
-          }
-          if (appContainer) {
-            appContainer.style.backgroundColor = '#F4F1E9';
-          }
-          if (navbar) {
-            navbar.style.backgroundColor = '#F4F1E9';
-          }
-          // Update scrollbar to match the original background
-          body.style.setProperty('--scrollbar-track-bg', '#F4F1E9', 'important');
+          console.log('Switching to top background (marbleWhite)');
+          updateBackground(false);
+        }
+      }
+    };
+    
+    // Handle touch events for mobile overscroll
+    const handleTouchMove = (e) => {
+      const scrollPosition = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      
+      // Check if we're at the bottom and trying to scroll further
+      if (scrollPosition + windowHeight >= documentHeight - 5) {
+        if (!isBottomHalf) {
+          isBottomHalf = true;
+          console.log('Touch: Switching to bottom background (marbleLightGray)');
+          updateBackground(true);
         }
       }
     };
@@ -118,24 +149,42 @@ function Home({ isLoggedIn }) {
       }
     });
     
-    window.addEventListener('scroll', handleScroll);
+    // Add event listeners
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
     
     // Cleanup
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      // Reset background color when component unmounts
-      const elements = ['.page-transition', '.main-content', '.app-container', '.navbar-color'];
+      document.removeEventListener('touchmove', handleTouchMove);
+      // Only reset page background, don't touch navbar (let App handle it)
+      const pageTransition = document.querySelector('.page-transition');
+      const mainContent = document.querySelector('.main-content');
+      const appContainer = document.querySelector('.app-container');
       const body = document.body;
-      elements.forEach(selector => {
-        const element = document.querySelector(selector);
-        if (element) {
-          element.style.backgroundColor = '#F4F1E9';
-        }
-      });
-      // Reset scrollbar to default
+      const html = document.documentElement;
+      
+      if (pageTransition) {
+        pageTransition.style.backgroundColor = '#F4F1E9';
+      }
+      if (mainContent) {
+        mainContent.style.backgroundColor = '#F4F1E9';
+      }
+      if (appContainer) {
+        appContainer.style.backgroundColor = '#F4F1E9';
+      }
+      if (body) {
+        body.style.backgroundColor = '#F4F1E9';
+      }
+      if (html) {
+        html.style.backgroundColor = '#F4F1E9';
+      }
       body.style.setProperty('--scrollbar-track-bg', '#F4F1E9', 'important');
+      
+      console.log('Home page cleanup: Page background reset, navbar left for App to handle');
     };
-  }, []); // Remove isBottomHalf dependency
+  }, [location.pathname, setNavbarBackground, resetNavbarBackground]); // Include dependencies
+
 
   return (
     <div>

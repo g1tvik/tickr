@@ -14,23 +14,28 @@ import Discover from './pages/Discover';
 import AICoach from './pages/AICoach';
 import Shop from './pages/Shop';
 import ArticleReader from './components/ArticleReader';
+import { useNavbarBackground } from './hooks/useNavbarBackground';
 
 function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentLocation, setCurrentLocation] = useState(null);
   const location = useLocation();
+  const { setNavbarBackground } = useNavbarBackground();
 
-  // Handle page background transitions
+  // Handle page background transitions and navbar coordination
   useEffect(() => {
+    console.log(`App: Route changed to ${location.pathname}`);
     const mainContent = document.querySelector('.main-content');
     const pageTransition = document.querySelector('.page-transition');
     const body = document.body;
     const html = document.documentElement;
+    const navbar = document.querySelector('.navbar-color');
     
     if (mainContent && pageTransition) {
       // Determine page type based on route
       const isDarkPage = location.pathname === '/trade' || location.pathname === '/ai-coach';
+      console.log(`App: isDarkPage = ${isDarkPage} for route ${location.pathname}`);
       
       // Add appropriate classes
       if (isDarkPage) {
@@ -42,6 +47,14 @@ function AppContent() {
         pageTransition.classList.remove('page-light');
         body.classList.remove('page-light');
         html.classList.remove('page-light');
+        
+        // Set navbar to dark theme
+        if (navbar) {
+          navbar.classList.add('page-dark');
+          navbar.classList.remove('page-light');
+          setNavbarBackground('var(--marbleDarkGray)');
+          console.log('App: Setting navbar to dark theme for Trade/AI Coach page');
+        }
       } else {
         mainContent.classList.remove('page-dark');
         pageTransition.classList.remove('page-dark');
@@ -51,9 +64,17 @@ function AppContent() {
         pageTransition.classList.add('page-light');
         body.classList.add('page-light');
         html.classList.add('page-light');
+        
+        // Set navbar to light theme (will be overridden by Home page if needed)
+        if (navbar) {
+          navbar.classList.remove('page-dark');
+          navbar.classList.add('page-light');
+          setNavbarBackground('var(--marbleWhite)');
+          console.log('App: Setting navbar to light theme for other pages');
+        }
       }
     }
-  }, [location.pathname]);
+  }, [location.pathname, setNavbarBackground]);
 
   useEffect(() => {
     setIsTransitioning(true);

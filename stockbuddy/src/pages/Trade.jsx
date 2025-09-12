@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import StockTicker from '../components/StockTicker';
 import StockSearch from '../components/StockSearch';
 import { SuperChart } from '../components/SuperChart';
@@ -7,8 +8,12 @@ import { getPositionValue, calculateOrderTotal } from '../utils/tradeUtils';
 import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 import { api } from '../services/api';
+import { useNavbarBackground } from '../hooks/useNavbarBackground';
 
 function Trade() {
+  const location = useLocation();
+  const { setNavbarBackground } = useNavbarBackground();
+  
   const {
     selectedStock,
     orderType,
@@ -40,6 +45,105 @@ function Trade() {
       loadChartData(selectedStock.symbol, timeframe);
     }
   }, [selectedStock?.symbol, timeframe]);
+
+  // Handle overscroll behavior for Trade page
+  useEffect(() => {
+    // Only run this effect when on Trade page
+    if (location.pathname !== '/trade') {
+      return;
+    }
+
+    console.log('Trade: Setting up overscroll behavior for dark theme');
+    
+    // Get the current setNavbarBackground function
+    const currentSetNavbarBackground = setNavbarBackground;
+
+    const updateBackground = (useDarkColor) => {
+      const pageTransition = document.querySelector('.page-transition');
+      const mainContent = document.querySelector('.main-content');
+      const appContainer = document.querySelector('.app-container');
+      const body = document.body;
+      const html = document.documentElement;
+      
+      const backgroundColor = 'var(--marbleDarkGray)'; // Always dark for Trade page
+      const cssVar = 'var(--marbleDarkGray)';
+      
+      if (pageTransition) {
+        pageTransition.style.backgroundColor = backgroundColor;
+      }
+      if (mainContent) {
+        mainContent.style.backgroundColor = cssVar;
+      }
+      if (appContainer) {
+        appContainer.style.backgroundColor = cssVar;
+      }
+      // Update navbar background using the centralized system
+      currentSetNavbarBackground('var(--marbleDarkGray)'); // Use CSS variable for consistency
+      console.log('Trade: Navbar set to dark theme (var(--marbleDarkGray))');
+      
+      if (body) {
+        body.style.backgroundColor = backgroundColor;
+      }
+      if (html) {
+        html.style.backgroundColor = backgroundColor;
+      }
+      // Update scrollbar to match the background
+      body.style.setProperty('--scrollbar-track-bg', 'var(--marbleDarkGray)', 'important');
+    };
+    
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      
+      // Check for overscroll at top (negative scroll position)
+      const isOverscrollingTop = scrollPosition < 0;
+      // Check for overscroll at bottom
+      const isOverscrollingBottom = scrollPosition + windowHeight > documentHeight;
+      
+      // Always maintain dark theme for Trade page
+      if (isOverscrollingTop || isOverscrollingBottom) {
+        console.log('Trade: Overscroll detected, maintaining dark theme');
+        updateBackground(true);
+      }
+    };
+    
+    // Handle touch events for mobile overscroll
+    const handleTouchMove = (e) => {
+      const scrollPosition = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      
+      // Check for overscroll
+      const isOverscrollingTop = scrollPosition < 0;
+      const isOverscrollingBottom = scrollPosition + windowHeight > documentHeight;
+      
+      if (isOverscrollingTop || isOverscrollingBottom) {
+        console.log('Trade: Touch overscroll detected, maintaining dark theme');
+        updateBackground(true);
+      }
+    };
+
+    // Add smooth transition to multiple elements
+    const elements = ['.page-transition', '.main-content', '.app-container', '.navbar-color'];
+    elements.forEach(selector => {
+      const element = document.querySelector(selector);
+      if (element) {
+        element.style.transition = 'background-color 0.5s ease';
+      }
+    });
+    
+    // Add event listeners
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('touchmove', handleTouchMove);
+      console.log('Trade: Cleanup - overscroll listeners removed');
+    };
+  }, [location.pathname]); // Remove setNavbarBackground from dependencies
 
   const loadChartData = async (symbol, tf) => {
     setChartLoading(true);

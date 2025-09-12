@@ -109,6 +109,11 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
+/* Override for dynamic background changes from Home page */
+.navbar-color[style*="background-color"] {
+  background-color: var(--navbar-bg-override, var(--marbleWhite)) !important;
+}
+
 @keyframes navbarFadeIn {
   from {
     opacity: 0;
