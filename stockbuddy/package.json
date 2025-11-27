@@ -23,7 +23,7 @@
     "axios": "^1.10.0",
     "bootstrap": "^5.3.7",
     "bootstrap-icons": "^1.11.3",
-    "lightweight-charts": "^5.0.8",
+    "lightweight-charts": "^5.0.9",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.3",
