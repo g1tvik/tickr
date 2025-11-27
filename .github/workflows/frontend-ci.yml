@@ -44,7 +44,7 @@ jobs:
           VITE_LOCKDOWN: 'false'
       
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: stockbuddy-dist
           path: stockbuddy/dist
