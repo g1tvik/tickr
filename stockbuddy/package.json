@@ -30,7 +30,7 @@
     "styled-components": "^6.1.19",
     "three": "^0.178.0",
     "webgl": "^0.0.7",
-    "zustand": "^5.0.7"
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",
