@@ -1,6 +1,8 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import styled, { keyframes, css } from "styled-components";
+import Lenis from "lenis";
+import "lenis/dist/lenis.css";
 import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleBlack, marbleGold } from "../marblePalette";
 
 // ============ ANIMATIONS ============
@@ -20,6 +22,111 @@ const shimmerSweep = keyframes`
   }
   100% {
     background-position: 0% 0%;
+  }
+`;
+
+// Mask reveal for hero text words
+const maskReveal = keyframes`
+  from {
+    transform: translateY(110%);
+  }
+  to {
+    transform: translateY(0%);
+  }
+`;
+
+// Film grain overlay
+const grainShift = keyframes`
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -10%); }
+  20% { transform: translate(-15%, 5%); }
+  30% { transform: translate(7%, -25%); }
+  40% { transform: translate(-5%, 25%); }
+  50% { transform: translate(-15%, 10%); }
+  60% { transform: translate(15%, 0%); }
+  70% { transform: translate(0%, 15%); }
+  80% { transform: translate(3%, 35%); }
+  90% { transform: translate(-10%, 10%); }
+`;
+
+const FilmGrain = styled.div`
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  right: -50%;
+  bottom: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.035;
+  animation: ${grainShift} 8s steps(10) infinite;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+`;
+
+// Custom cursor
+const CursorDot = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  background: ${marbleGold};
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99999;
+  mix-blend-mode: difference;
+  transition: width 0.25s ease, height 0.25s ease, opacity 0.25s ease;
+
+  &.hovering {
+    width: 40px;
+    height: 40px;
+  }
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const CursorRing = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid ${marbleGold};
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99998;
+  opacity: 0.5;
+  transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease, border-color 0.3s ease;
+
+  &.hovering {
+    width: 60px;
+    height: 60px;
+    opacity: 0.3;
+    border-color: ${marbleWhite};
+  }
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+// Hero text mask reveal wrapper
+const MaskWord = styled.span`
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 4px;
+
+  & > span {
+    display: inline-block;
+    transform: translateY(110%);
+    animation: ${maskReveal} 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: ${props => props.$delay || '0s'};
   }
 `;
 
@@ -168,7 +275,6 @@ const HeroContent = styled.div`
   z-index: 10;
   max-width: 900px;
   padding: 0 20px;
-  animation: ${slideUp} 1s ease-out;
 `;
 
 const Badge = styled.div`
@@ -181,7 +287,9 @@ const Badge = styled.div`
   border-radius: 50px;
   font-size: 0.85rem;
   margin-bottom: 24px;
-  
+  opacity: 0;
+  animation: ${slideUp} 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0s forwards;
+
   span {
     color: ${marbleDarkGray};
     font-weight: 600;
@@ -202,6 +310,8 @@ const HeroSubtitle = styled.p`
   max-width: 600px;
   margin: 0 auto 40px;
   line-height: 1.6;
+  opacity: 0;
+  animation: ${slideUp} 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.7s forwards;
 `;
 
 const CTAGroup = styled.div`
@@ -209,6 +319,8 @@ const CTAGroup = styled.div`
   gap: 16px;
   justify-content: center;
   flex-wrap: wrap;
+  opacity: 0;
+  animation: ${slideUp} 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.9s forwards;
 `;
 
 const PrimaryButton = styled(Link)`
@@ -499,13 +611,121 @@ const CTACard = styled.div`
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
 `;
 
+// ============ MAGNETIC BUTTON WRAPPER ============
+function MagneticButton({ children, className, ...props }) {
+  const ref = useRef(null);
+
+  const handleMouseMove = useCallback((e) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    el.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.transform = 'translate(0px, 0px)';
+  }, []);
+
+  return React.cloneElement(children, {
+    ref,
+    onMouseMove: handleMouseMove,
+    onMouseLeave: handleMouseLeave,
+    style: { ...children.props.style, transition: 'transform 0.35s cubic-bezier(0.23, 1, 0.32, 1)' },
+  });
+}
+
 // ============ COMPONENT ============
 function Home({ isLoggedIn }) {
   const containerRef = useRef(null);
   const statsRef = useRef(null);
+  const cursorDotRef = useRef(null);
+  const cursorRingRef = useRef(null);
+  const cursorPos = useRef({ x: 0, y: 0 });
+  const cursorTarget = useRef({ x: 0, y: 0 });
   const [scrollY, setScrollY] = useState(0);
   const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 800);
   const [statsVisible, setStatsVisible] = useState(false);
+  const [cursorHovering, setCursorHovering] = useState(false);
+
+  // ---- Lenis smooth scroll ----
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    return () => lenis.destroy();
+  }, []);
+
+  // ---- Custom cursor ----
+  useEffect(() => {
+    const isTouchDevice = 'ontouchstart' in window;
+    if (isTouchDevice) return;
+
+    // Hide default cursor
+    document.body.style.cursor = 'none';
+    const styleTag = document.createElement('style');
+    styleTag.textContent = 'a, button, [role="button"], input, select, textarea, label { cursor: none !important; }';
+    document.head.appendChild(styleTag);
+
+    const handleMouseMove = (e) => {
+      cursorTarget.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleMouseOver = (e) => {
+      const el = e.target.closest('a, button, [role="button"], input, select, textarea, label');
+      if (el) setCursorHovering(true);
+    };
+
+    const handleMouseOut = (e) => {
+      const el = e.target.closest('a, button, [role="button"], input, select, textarea, label');
+      if (el) setCursorHovering(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseover', handleMouseOver);
+    document.addEventListener('mouseout', handleMouseOut);
+
+    let animId;
+    const lerp = (a, b, n) => a + (b - a) * n;
+
+    const animateCursor = () => {
+      cursorPos.current.x = lerp(cursorPos.current.x, cursorTarget.current.x, 0.15);
+      cursorPos.current.y = lerp(cursorPos.current.y, cursorTarget.current.y, 0.15);
+
+      if (cursorDotRef.current) {
+        const dotSize = cursorDotRef.current.classList.contains('hovering') ? 40 : 12;
+        cursorDotRef.current.style.transform = `translate(${cursorTarget.current.x - dotSize / 2}px, ${cursorTarget.current.y - dotSize / 2}px)`;
+      }
+      if (cursorRingRef.current) {
+        const ringSize = cursorRingRef.current.classList.contains('hovering') ? 60 : 40;
+        cursorRingRef.current.style.transform = `translate(${cursorPos.current.x - ringSize / 2}px, ${cursorPos.current.y - ringSize / 2}px)`;
+      }
+
+      animId = requestAnimationFrame(animateCursor);
+    };
+    animId = requestAnimationFrame(animateCursor);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseover', handleMouseOver);
+      document.removeEventListener('mouseout', handleMouseOut);
+      cancelAnimationFrame(animId);
+      document.body.style.cursor = '';
+      styleTag.remove();
+    };
+  }, []);
 
   // Track scroll for 3D parallax effects
   useEffect(() => {
@@ -523,10 +743,10 @@ function Home({ isLoggedIn }) {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleResize);
-    
+
     // Initial call
     handleScroll();
-    
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
@@ -606,6 +826,13 @@ function Home({ isLoggedIn }) {
 
   return (
     <PageWrapper ref={containerRef}>
+      {/* ============ FILM GRAIN OVERLAY ============ */}
+      <FilmGrain />
+
+      {/* ============ CUSTOM CURSOR ============ */}
+      <CursorDot ref={cursorDotRef} className={cursorHovering ? 'hovering' : ''} />
+      <CursorRing ref={cursorRingRef} className={cursorHovering ? 'hovering' : ''} />
+
       {/* ============ CASCADING ELEMENTS ============ */}
       <CascadeContainer>
         {cascadeElements.map((el, i) => {
@@ -739,8 +966,12 @@ function Home({ isLoggedIn }) {
           </Badge>
           
           <HeroTitle>
-            Master the Markets.<br />
-            Risk Nothing.
+            <MaskWord $delay="0.1s"><span>Master</span></MaskWord>{' '}
+            <MaskWord $delay="0.2s"><span>the</span></MaskWord>{' '}
+            <MaskWord $delay="0.3s"><span>Markets.</span></MaskWord>
+            <br />
+            <MaskWord $delay="0.5s"><span>Risk</span></MaskWord>{' '}
+            <MaskWord $delay="0.65s"><span>Nothing.</span></MaskWord>
           </HeroTitle>
           
           <HeroSubtitle>
@@ -749,12 +980,16 @@ function Home({ isLoggedIn }) {
           </HeroSubtitle>
           
           <CTAGroup>
-            <PrimaryButton to={isLoggedIn ? "/dashboard" : "/signup"}>
-              Start Trading Free
-            </PrimaryButton>
-            <SecondaryButton to={isLoggedIn ? "/learn" : "/signin"}>
-              Explore Lessons
-            </SecondaryButton>
+            <MagneticButton>
+              <PrimaryButton to={isLoggedIn ? "/dashboard" : "/signup"}>
+                Start Trading Free
+              </PrimaryButton>
+            </MagneticButton>
+            <MagneticButton>
+              <SecondaryButton to={isLoggedIn ? "/learn" : "/signin"}>
+                Explore Lessons
+              </SecondaryButton>
+            </MagneticButton>
           </CTAGroup>
         </HeroContent>
 
@@ -1200,9 +1435,11 @@ function Home({ isLoggedIn }) {
             Join thousands of aspiring traders learning the smart way.
           </SectionSubtitle>
           <CTAGroup>
-            <PrimaryButton to={isLoggedIn ? "/dashboard" : "/signup"}>
-              Get Started — It's Free
-            </PrimaryButton>
+            <MagneticButton>
+              <PrimaryButton to={isLoggedIn ? "/dashboard" : "/signup"}>
+                Get Started — It's Free
+              </PrimaryButton>
+            </MagneticButton>
           </CTAGroup>
         </CTACard>
       </CTASection>
