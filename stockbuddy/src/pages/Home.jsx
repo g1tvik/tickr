@@ -4,6 +4,7 @@ import styled, { keyframes, css } from "styled-components";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleBlack, marbleGold } from "../marblePalette";
+import { fontHeading } from "../fontPalette";
 
 // ============ ANIMATIONS ============
 const pulse = keyframes`
@@ -297,8 +298,9 @@ const Badge = styled.div`
 `;
 
 const HeroTitle = styled.h1`
-  font-size: clamp(2.5rem, 8vw, 5rem);
-  font-weight: 800;
+  font-family: 'Poetsen One', sans-serif;
+  font-size: clamp(2rem, 6vw, 3rem);
+  font-weight: 400;
   line-height: 1.1;
   margin-bottom: 24px;
   color: ${marbleDarkGray};
@@ -966,17 +968,12 @@ function Home({ isLoggedIn }) {
           </Badge>
           
           <HeroTitle>
-            <MaskWord $delay="0.1s"><span>Master</span></MaskWord>{' '}
-            <MaskWord $delay="0.2s"><span>the</span></MaskWord>{' '}
-            <MaskWord $delay="0.3s"><span>Markets.</span></MaskWord>
-            <br />
-            <MaskWord $delay="0.5s"><span>Risk</span></MaskWord>{' '}
-            <MaskWord $delay="0.65s"><span>Nothing.</span></MaskWord>
+            <MaskWord $delay="0.1s"><span>investing,</span></MaskWord>{' '}
+            <MaskWord $delay="0.2s"><span>explained.</span></MaskWord>
           </HeroTitle>
           
           <HeroSubtitle>
-            Learn trading through interactive lessons, practice with $10,000 in virtual funds, 
-            and get AI-powered insights — all without risking a single dollar.
+            (text here)
           </HeroSubtitle>
           
           <CTAGroup>

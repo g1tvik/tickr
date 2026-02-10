@@ -1,6 +1,23 @@
 /* Import minimal Bootstrap utilities */
 @import "bootstrap/dist/css/bootstrap.min.css";
 
+/* Hero fonts */
+@font-face {
+  font-family: 'Creato Display';
+  src: url('/fonts/CreatoDisplay-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Poetsen One';
+  src: url('/fonts/PoetsenOne-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --marbleWhite: #F4F1E9;
   --marbleLightGray: #E5E5E5;
