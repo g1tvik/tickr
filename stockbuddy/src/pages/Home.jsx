@@ -5,6 +5,7 @@ import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleBlack, marbleGold } from "../marblePalette";
 import { fontHeading } from "../fontPalette";
+import { useNavbar } from "../context/NavbarContext";
 
 // ============ ANIMATIONS ============
 const pulse = keyframes`
@@ -15,6 +16,16 @@ const pulse = keyframes`
 const slideUp = keyframes`
   from { opacity: 0; transform: translateY(60px); }
   to { opacity: 1; transform: translateY(0); }
+`;
+
+const blink = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+`;
+
+const dotBlinkGlow = keyframes`
+  0%, 100% { opacity: 1; box-shadow: 0 0 10px rgba(214, 26, 60, 0.7); }
+  50% { opacity: 0.25; box-shadow: 0 0 4px rgba(214, 26, 60, 0.35); }
 `;
 
 const shimmerSweep = keyframes`
@@ -251,12 +262,51 @@ const CascadeElement = styled.div`
   transition: transform 0.05s linear;
 `;
 
+const ScreenCascadeWrapper = styled.div`
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+`;
+
 // ============ STYLED COMPONENTS ============
+// Polka dots: ~3x bigger, scattered, less frequent (large tile, fewer dots)
+const polkaDotPatternSvg = (() => {
+  const w = 220, h = 220;
+  const r = 5;
+  const dots = [
+    [30, 45, marbleBlack], [120, 25, marbleGray], [180, 90, marbleGold],
+    [55, 150, marbleGold], [200, 60, marbleBlack], [15, 110, marbleGray],
+    [160, 180, marbleBlack], [85, 15, marbleGold], [140, 140, marbleGray],
+    [10, 75, marbleGold], [95, 195, marbleBlack],
+  ];
+  const circles = dots.map(([cx, cy, fill]) =>
+    `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}"/>`
+  ).join('');
+  const raw = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">${circles}</svg>`;
+  const encoded = encodeURIComponent(raw).replace(/'/g, '%27');
+  return `url("data:image/svg+xml,${encoded}")`;
+})();
+
 const PageWrapper = styled.div`
   min-height: 100vh;
-  background: ${marbleWhite};
+  background-color: ${marbleWhite};
   overflow-x: hidden;
   color: ${marbleDarkGray};
+`;
+
+const PolkaDotOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: ${polkaDotPatternSvg};
+  background-repeat: repeat;
+  background-position: 0 0;
+  transition: opacity 0.25s ease-out;
+  opacity: ${props => props.$opacity};
 `;
 
 const HeroSection = styled.section`
@@ -268,7 +318,8 @@ const HeroSection = styled.section`
   position: relative;
   perspective: 1000px;
   overflow: hidden;
-  background: ${marbleWhite};
+  background-color: ${marbleWhite};
+  z-index: 1;
 `;
 
 const HeroContent = styled.div`
@@ -278,35 +329,66 @@ const HeroContent = styled.div`
   padding: 0 20px;
 `;
 
+const BadgeDot = styled.span`
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #D61A3C;
+  flex-shrink: 0;
+  align-self: center;
+  transform: translateY(-0.2px);
+  animation: ${dotBlinkGlow} 1.2s ease-in-out 3 forwards;
+`;
+
+const BadgeBullet = styled.span`
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: ${marbleGold};
+  flex-shrink: 0;
+  vertical-align: middle;
+  margin: 0 4px;
+  transform: translateY(-0.5px);
+`;
+
+const BadgeText = styled.span`
+  color: ${marbleDarkGray};
+  font-weight: 600;
+  ${props => props.$blink && css`animation: ${blink} 0.5s ease-in-out infinite;`}
+`;
+
 const Badge = styled.div`
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  text-transform: lowercase;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   background: ${marbleLightGray};
   border: 1px solid ${marbleGray};
-  padding: 8px 16px;
+  padding: 8px 15px;
   border-radius: 50px;
-  font-size: 0.85rem;
-  margin-bottom: 24px;
+  font-size: 0.8rem;
+  margin-bottom: 23px;
   opacity: 0;
   animation: ${slideUp} 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0s forwards;
-
-  span {
-    color: ${marbleDarkGray};
-    font-weight: 600;
-  }
+  transform: scale(1.05);
 `;
 
 const HeroTitle = styled.h1`
-  font-family: 'Poetsen One', sans-serif;
+  font-family: 'Creato Display', Helvetica, Arial, sans-serif;
   font-size: clamp(2rem, 6vw, 3rem);
   font-weight: 400;
   line-height: 1.1;
   margin-bottom: 24px;
   color: ${marbleDarkGray};
+  -webkit-text-stroke: 0.025em ${marbleWhite};
+  paint-order: stroke fill;
 `;
 
 const HeroSubtitle = styled.p`
+  font-family: 'Creato Display', Helvetica, Arial, sans-serif;
   font-size: clamp(1rem, 2.5vw, 1.35rem);
   color: ${marbleGray};
   max-width: 600px;
@@ -326,6 +408,7 @@ const CTAGroup = styled.div`
 `;
 
 const PrimaryButton = styled(Link)`
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   background: ${marbleDarkGray};
   color: ${marbleWhite};
   padding: 16px 32px;
@@ -338,13 +421,14 @@ const PrimaryButton = styled(Link)`
   
   &:hover {
     transform: translateY(-3px);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: none;
     color: ${marbleWhite};
     background: ${marbleBlack};
   }
 `;
 
 const SecondaryButton = styled(Link)`
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   background: ${marbleLightGray};
   color: ${marbleDarkGray};
   padding: 16px 32px;
@@ -360,45 +444,6 @@ const SecondaryButton = styled(Link)`
     transform: translateY(-3px);
     color: ${marbleDarkGray};
       }
-`;
-
-// 3D Floating Elements Container
-const FloatingElements = styled.div`
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  transform-style: preserve-3d;
-`;
-
-const FloatingImage = styled.img`
-  position: absolute;
-  border-radius: 0;
-  box-shadow: none;
-  transition: transform 0.15s ease-out;
-  will-change: transform;
-  clip-path: inset(0 0 20% 0); /* crops 12% from bottom to hide shadow */
-  
-  ${props => props.$size === 'large' && `
-    width: 280px;
-    height: 280px;
-    object-fit: cover;
-  `}
-  
-  ${props => props.$size === 'medium' && `
-    width: 180px;
-    height: 180px;
-    object-fit: cover;
-  `}
-  
-  ${props => props.$size === 'small' && `
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-  `}
-  
-  @media (max-width: 768px) {
-    display: none;
-    }
 `;
 
 const GlowOrb = styled.div`
@@ -431,7 +476,7 @@ const FeatureGrid = styled.div`
 
 const FeatureCard = styled.div`
   background: ${marbleWhite};
-  border: 1px solid ${marbleGray};
+  border: 2px solid ${marbleGold};
   border-radius: 24px;
   padding: 40px;
   transition: all 0.4s ease;
@@ -449,6 +494,7 @@ const FeatureIcon = styled.div`
   height: 64px;
   border-radius: 16px;
   background: ${marbleDarkGray};
+  border: 2px solid ${marbleGold};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -457,26 +503,34 @@ const FeatureIcon = styled.div`
 `;
 
 const FeatureTitle = styled.h3`
+  font-family: ${fontHeading};
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 300;
   margin-bottom: 12px;
   color: ${marbleDarkGray};
+  -webkit-text-stroke: 0.018em ${marbleWhite};
+  paint-order: stroke fill;
 `;
 
 const FeatureDesc = styled.p`
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   color: ${marbleGray};
   line-height: 1.6;
 `;
 
 const SectionTitle = styled.h2`
+  font-family: ${fontHeading};
   font-size: clamp(2rem, 5vw, 3rem);
-  font-weight: 800;
+  font-weight: 300;
   text-align: center;
   margin-bottom: 20px;
   color: ${marbleDarkGray};
+  -webkit-text-stroke: 0.02em ${marbleWhite};
+  paint-order: stroke fill;
 `;
 
 const SectionSubtitle = styled.p`
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   text-align: center;
   color: ${marbleGray};
   font-size: 1.2rem;
@@ -488,7 +542,7 @@ const SectionSubtitle = styled.p`
 const PhoneSection = styled.section`
   position: relative;
   min-height: 100vh;
-  padding: 100px 20px;
+  padding: 80px 20px 100px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -540,24 +594,25 @@ const PhoneScreen = styled.div`
 `;
 
 const PhoneContent = styled.div`
+  position: relative;
+  z-index: 1;
   text-align: center;
   
   img {
-    width: 80px;
-    height: 80px;
-    border-radius: 16px;
-    margin-bottom: 16px;
-  }
-  
-  h4 {
-    color: ${marbleWhite};
-    font-size: 1.2rem;
-    margin-bottom: 8px;
+    display: block;
+    max-width: 160px;
+    max-height: 80px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    margin: 0 auto 16px;
   }
   
   p {
-    color: ${marbleGray};
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: ${marbleWhite} !important;
     font-size: 0.9rem;
+    margin-bottom: 8px;
   }
 `;
 
@@ -565,11 +620,10 @@ const FloatingStats = styled.div`
   position: absolute;
   background: ${marbleWhite};
   border: 1px solid ${marbleGray};
-  border-radius: 16px;
+  border-radius: 32px;
   padding: 16px 24px;
   transform-style: preserve-3d;
-  transition: transform 0.08s ease-out, opacity 0.15s ease-out;
-  will-change: transform, opacity;
+  transition: opacity 0.15s ease-out;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   
   ${props => props.$position === 'left' && `
@@ -641,10 +695,19 @@ function MagneticButton({ children, className, ...props }) {
 }
 
 // ============ COMPONENT ============
+const NAVBAR_HEIGHT = 80;
+
 function Home({ isLoggedIn }) {
   const containerRef = useRef(null);
   const statsRef = useRef(null);
+  const heroRef = useRef(null);
+  const featuresRef = useRef(null);
+  const phoneRef = useRef(null);
+  const testimonialsRef = useRef(null);
+  const ctaRef = useRef(null);
+  const footerRef = useRef(null);
   const cursorDotRef = useRef(null);
+  const { setNavbarBackground } = useNavbar();
   const cursorRingRef = useRef(null);
   const cursorPos = useRef({ x: 0, y: 0 });
   const cursorTarget = useRef({ x: 0, y: 0 });
@@ -652,6 +715,57 @@ function Home({ isLoggedIn }) {
   const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 800);
   const [statsVisible, setStatsVisible] = useState(false);
   const [cursorHovering, setCursorHovering] = useState(false);
+  const BADGE_FULL_TEXT = "now in beta • live paper trading";
+  const [badgeText, setBadgeText] = useState("");
+  const [badgeTypingDone, setBadgeTypingDone] = useState(false);
+  const [badgeBlinking, setBadgeBlinking] = useState(false);
+
+  // Badge typing: phase 1 "now in beta • ", pause (with blink), phase 2 "live paper trading"
+  useEffect(() => {
+    const startDelayMs = 350;
+    const full = BADGE_FULL_TEXT;
+    const afterBulletIndex = 14; // "now in beta • ".length — pause after the bullet
+    const phase1Ms = 400;   // type "now in beta • "
+    const pauseMs = 350;   // pause after bullet, text blinks during this
+    const phase2Ms = 600;   // type "live paper trading"
+    const totalTypingMs = phase1Ms + pauseMs + phase2Ms;
+
+    let timeoutId;
+    let rafId;
+
+    timeoutId = setTimeout(() => {
+      const start = performance.now();
+      const tick = (now) => {
+        const elapsed = now - start;
+        if (elapsed >= totalTypingMs) {
+          setBadgeText(full);
+          setBadgeTypingDone(true);
+          setBadgeBlinking(false);
+          return;
+        }
+        let len;
+        if (elapsed < phase1Ms) {
+          setBadgeBlinking(false);
+          len = Math.round((elapsed / phase1Ms) * afterBulletIndex);
+        } else if (elapsed < phase1Ms + pauseMs) {
+          setBadgeBlinking(true);
+          len = afterBulletIndex;
+        } else {
+          setBadgeBlinking(false);
+          const phase2Elapsed = elapsed - phase1Ms - pauseMs;
+          len = afterBulletIndex + Math.round((phase2Elapsed / phase2Ms) * (full.length - afterBulletIndex));
+        }
+        len = Math.min(len, full.length);
+        setBadgeText(full.slice(0, len));
+        rafId = requestAnimationFrame(tick);
+      };
+      rafId = requestAnimationFrame(tick);
+    }, startDelayMs);
+    return () => {
+      clearTimeout(timeoutId);
+      if (rafId != null) cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   // ---- Lenis smooth scroll ----
   useEffect(() => {
@@ -756,6 +870,32 @@ function Home({ isLoggedIn }) {
     };
   }, []);
 
+  // Navbar background: match the section under the navbar for seamless transition
+  const sectionConfig = useRef([
+    { ref: heroRef, bg: marbleWhite },
+    { ref: featuresRef, bg: marbleLightGray },
+    { ref: phoneRef, bg: marbleWhite },
+    { ref: statsRef, bg: marbleDarkGray },
+    { ref: testimonialsRef, bg: marbleLightGray },
+    { ref: ctaRef, bg: marbleLightGray },
+    { ref: footerRef, bg: marbleBlack },
+  ]).current;
+
+  useEffect(() => {
+    const y = NAVBAR_HEIGHT;
+    let currentBg = marbleWhite;
+    for (const { ref, bg } of sectionConfig) {
+      const el = ref.current;
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      if (rect.top <= y && rect.bottom >= y) {
+        currentBg = bg;
+        break;
+      }
+    }
+    setNavbarBackground(currentBg, { theme: (currentBg === marbleDarkGray || currentBg === marbleBlack) ? 'dark' : 'light' });
+  }, [scrollY, setNavbarBackground]);
+
   useEffect(() => {
     if (!statsRef.current || typeof IntersectionObserver === 'undefined') return;
     const observer = new IntersectionObserver(
@@ -826,8 +966,12 @@ function Home({ isLoggedIn }) {
     { x: 90, size: 7, speed: 1.25, delay: 0.07 },
   ];
 
+  const polkaDotOpacity = Math.max(0, 1 - scrollY / 550);
+
   return (
     <PageWrapper ref={containerRef}>
+      {/* Polka dots: scattered, fade out as you scroll so content clears into view */}
+      <PolkaDotOverlay $opacity={polkaDotOpacity} />
       {/* ============ FILM GRAIN OVERLAY ============ */}
       <FilmGrain />
 
@@ -863,7 +1007,7 @@ function Home({ isLoggedIn }) {
       </CascadeContainer>
 
       {/* ============ HERO SECTION ============ */}
-      <HeroSection>
+      <HeroSection ref={heroRef}>
         {/* Glow Orbs */}
         <GlowOrb 
           style={{ width: 600, height: 600, top: '-200px', left: '-200px' }}
@@ -875,86 +1019,6 @@ function Home({ isLoggedIn }) {
           $color="radial-gradient(circle, rgba(118, 75, 162, 0.2), transparent 70%)"
           $duration="8s"
         />
-        
-        {/* Floating 3D Images - Transforms based on scroll */}
-        <FloatingElements>
-          <FloatingImage 
-            src="/money-icon.png" 
-            alt="tickr"
-            $size="large"
-            style={{ 
-              top: '15%', 
-              left: '5%',
-              transform: `
-                perspective(1000px)
-                translateY(${scrollProgress * -150}px)
-                translateX(${scrollProgress * 50}px)
-                rotateY(${scrollProgress * 45}deg) 
-                rotateX(${scrollProgress * -20}deg)
-                rotateZ(${-15 + scrollProgress * 30}deg)
-                scale(${1 - scrollProgress * 0.3})
-              `,
-              opacity: Math.max(0.9 - scrollProgress * 0.9, 0)
-            }}
-          />
-          <FloatingImage 
-            src="/candlestick-icon.png" 
-            alt="tickr"
-            $size="medium"
-            style={{ 
-              top: '20%', 
-              right: '8%',
-              transform: `
-                perspective(1000px)
-                translateY(${scrollProgress * -200}px)
-                translateX(${scrollProgress * -80}px)
-                rotateY(${scrollProgress * -60}deg) 
-                rotateX(${scrollProgress * 15}deg)
-                rotateZ(${10 + scrollProgress * -40}deg)
-                scale(${1 - scrollProgress * 0.4})
-              `,
-              opacity: Math.max(0.85 - scrollProgress * 0.85, 0)
-            }}
-          />
-          <FloatingImage 
-            src="/brain-icon.png" 
-            alt="tickr"
-            $size="small"
-            style={{ 
-              bottom: '25%', 
-              left: '12%',
-              transform: `
-                perspective(1000px)
-                translateY(${scrollProgress * -100}px)
-                translateX(${scrollProgress * 100}px)
-                rotateY(${scrollProgress * 90}deg) 
-                rotateX(${scrollProgress * -30}deg)
-                rotateZ(${20 + scrollProgress * 60}deg)
-                scale(${1 - scrollProgress * 0.5})
-              `,
-              opacity: Math.max(0.8 - scrollProgress * 0.8, 0)
-            }}
-          />
-          <FloatingImage 
-            src="/wallet-icon.png" 
-            alt="tickr"
-            $size="medium"
-            style={{ 
-              bottom: '15%', 
-              right: '10%',
-              transform: `
-                perspective(1000px)
-                translateY(${scrollProgress * -180}px)
-                translateX(${scrollProgress * -60}px)
-                rotateY(${scrollProgress * -50}deg) 
-                rotateX(${scrollProgress * 25}deg)
-                rotateZ(${-8 + scrollProgress * -50}deg)
-                scale(${1 - scrollProgress * 0.35})
-              `,
-              opacity: Math.max(0.85 - scrollProgress * 0.85, 0)
-            }}
-          />
-        </FloatingElements>
 
         {/* Hero Content */}
         <HeroContent style={{
@@ -962,9 +1026,17 @@ function Home({ isLoggedIn }) {
           opacity: Math.max(1 - scrollProgress * 1.5, 0)
         }}>
           <Badge>
-            <span>✨ Now in Beta</span>
-            <span>•</span>
-            <span>Paper Trading Live</span>
+            <BadgeText $blink={badgeBlinking}>
+              {(() => {
+                const parts = badgeText.split('•');
+                return parts.length > 1 ? (
+                  <>{parts[0]}<BadgeBullet aria-hidden />{parts.slice(1).join('•')}</>
+                ) : (
+                  badgeText
+                );
+              })()}
+            </BadgeText>
+            {badgeTypingDone && <BadgeDot aria-hidden />}
           </Badge>
           
           <HeroTitle>
@@ -973,18 +1045,18 @@ function Home({ isLoggedIn }) {
           </HeroTitle>
           
           <HeroSubtitle>
-            (text here)
+          interactive lessons and AI-guided market simulations
           </HeroSubtitle>
           
           <CTAGroup>
             <MagneticButton>
               <PrimaryButton to={isLoggedIn ? "/dashboard" : "/signup"}>
-                Start Trading Free
+                start here
               </PrimaryButton>
             </MagneticButton>
             <MagneticButton>
-              <SecondaryButton to={isLoggedIn ? "/learn" : "/signin"}>
-                Explore Lessons
+              <SecondaryButton to="/about">
+                about us
               </SecondaryButton>
             </MagneticButton>
           </CTAGroup>
@@ -993,17 +1065,17 @@ function Home({ isLoggedIn }) {
       </HeroSection>
 
       {/* ============ FEATURES SECTION ============ */}
-      <Section>
+      <Section ref={featuresRef}>
         <SectionInner>
-          <SectionTitle>Everything You Need to Learn Trading</SectionTitle>
+          <SectionTitle>test</SectionTitle>
           <SectionSubtitle>
-            From beginner lessons to advanced strategies, we've got you covered.
+            relax, we've got you covered.
           </SectionSubtitle>
           
           <FeatureGrid>
             <FeatureCard>
               <FeatureIcon>📊</FeatureIcon>
-              <FeatureTitle>Real-Time Charts</FeatureTitle>
+              <FeatureTitle>real time charts</FeatureTitle>
               <FeatureDesc>
                 Professional-grade charts with technical indicators, drawing tools, 
                 and real-time market data powered by Alpaca.
@@ -1012,7 +1084,7 @@ function Home({ isLoggedIn }) {
             
             <FeatureCard>
               <FeatureIcon>🎓</FeatureIcon>
-              <FeatureTitle>Interactive Lessons</FeatureTitle>
+              <FeatureTitle>interactive lessons</FeatureTitle>
               <FeatureDesc>
                 Learn at your own pace with gamified lessons, quizzes, and 
                 hands-on exercises. Earn XP and unlock achievements.
@@ -1021,7 +1093,7 @@ function Home({ isLoggedIn }) {
             
             <FeatureCard>
               <FeatureIcon>🤖</FeatureIcon>
-              <FeatureTitle>AI Trading Coach</FeatureTitle>
+              <FeatureTitle>AI trading coach</FeatureTitle>
               <FeatureDesc>
                 Get personalized guidance from our AI coach. Ask questions, 
                 analyze trades, and improve your strategy.
@@ -1030,7 +1102,7 @@ function Home({ isLoggedIn }) {
             
             <FeatureCard>
               <FeatureIcon>💰</FeatureIcon>
-              <FeatureTitle>Paper Trading</FeatureTitle>
+              <FeatureTitle>paper trading</FeatureTitle>
               <FeatureDesc>
                 Practice with $10,000 in virtual funds. Execute trades in 
                 real market conditions with zero risk.
@@ -1039,7 +1111,7 @@ function Home({ isLoggedIn }) {
             
             <FeatureCard>
               <FeatureIcon>🏆</FeatureIcon>
-              <FeatureTitle>Leaderboards</FeatureTitle>
+              <FeatureTitle>leaderboards</FeatureTitle>
               <FeatureDesc>
                 Compete with other traders. Climb the ranks and prove 
                 your skills on the global leaderboard.
@@ -1048,7 +1120,7 @@ function Home({ isLoggedIn }) {
             
             <FeatureCard>
               <FeatureIcon>🛒</FeatureIcon>
-              <FeatureTitle>Rewards Shop</FeatureTitle>
+              <FeatureTitle>rewards shop</FeatureTitle>
               <FeatureDesc>
                 Earn coins by learning and trading. Spend them on XP boosters, 
                 streak freezes, and exclusive items.
@@ -1059,7 +1131,7 @@ function Home({ isLoggedIn }) {
       </Section>
 
       {/* ============ 3D PHONE SECTION ============ */}
-      <PhoneSection>
+      <PhoneSection ref={phoneRef} style={{ position: 'relative', zIndex: 10 }}>
         <div style={{ position: 'relative', transformStyle: 'preserve-3d' }}>
           <PhoneMockup 
             style={{ 
@@ -1072,10 +1144,32 @@ function Home({ isLoggedIn }) {
             }}
           >
             <PhoneScreen>
+              <ScreenCascadeWrapper>
+                {cascadeElements.map((el, i) => {
+                  const screenCycle = 380;
+                  const fallDistance = (scrollY * el.speed + el.delay * 1000) % (screenCycle + 120);
+                  const top = fallDistance - 60;
+                  const opacity = top < 0 ? Math.max(0, 1 + top / 60) * 0.5 : top > screenCycle ? Math.max(0, 1 - (top - screenCycle) / 60) * 0.5 : 0.5;
+                  return (
+                    <CascadeElement
+                      key={`screen-${i}`}
+                      style={{
+                        left: `${el.x}%`,
+                        top: `${top}px`,
+                        width: `${el.size}px`,
+                        height: `${el.size}px`,
+                        borderRadius: '50%',
+                        background: marbleGold,
+                        opacity: opacity * 0.6,
+                        transform: `rotate(${scrollY * el.speed * 0.5}deg)`
+                      }}
+                    />
+                  );
+                })}
+              </ScreenCascadeWrapper>
               <PhoneContent>
-                <img src="/logo.png" alt="tickr" />
-                <h4>tickr</h4>
-                <p>Your pocket trading mentor</p>
+                <img src="/marbleWhitelogo.png" alt="tickr" />
+                <p style={{ color: marbleWhite }}>your personal trading mentor</p>
                 <div style={{ 
                   marginTop: '20px',
                   background: `${marbleGray}33`,
@@ -1085,7 +1179,7 @@ function Home({ isLoggedIn }) {
                   <div style={{ color: marbleGold, fontSize: '1.5rem', fontWeight: '700' }}>
                     +$1,247.32
                   </div>
-                  <div style={{ color: marbleGray, fontSize: '0.8rem' }}>
+                  <div style={{ color: marbleWhite, fontSize: '0.8rem' }}>
                     Today's P&L
                   </div>
                 </div>
@@ -1093,146 +1187,20 @@ function Home({ isLoggedIn }) {
             </PhoneScreen>
           </PhoneMockup>
           
-          <FloatingStats 
-            $position="left" 
-            style={{ 
-              transform: `
-                perspective(1000px)
-                translateX(${Math.sin(totalScrollProgress * Math.PI * 3) * 30}px)
-                translateY(${Math.cos(totalScrollProgress * Math.PI * 3) * 20}px)
-                rotateY(${Math.sin(totalScrollProgress * Math.PI * 2) * 10}deg)
-              `
-            }}
-          >
+          <FloatingStats $position="left">
             <h5>10K+</h5>
             <span>Virtual Trades</span>
           </FloatingStats>
           
-          <FloatingStats 
-            $position="right" 
-            style={{ 
-              transform: `
-                perspective(1000px)
-                translateX(${Math.cos(totalScrollProgress * Math.PI * 3) * 30}px)
-                translateY(${Math.sin(totalScrollProgress * Math.PI * 3) * 20}px)
-                rotateY(${Math.cos(totalScrollProgress * Math.PI * 2) * -10}deg)
-              `
-            }}
-          >
+          <FloatingStats $position="right">
             <h5>20+</h5>
             <span>Lessons</span>
           </FloatingStats>
         </div>
       </PhoneSection>
 
-      {/* ============ HOW IT WORKS SECTION ============ */}
-      <Section style={{ background: marbleWhite, position: 'relative', overflow: 'hidden' }}>
-        {/* Floating accents */}
-        <GoldDot 
-          $size="12px" 
-          style={{ 
-            top: '15%', 
-            left: '8%',
-            transform: `translateY(${Math.sin(totalScrollProgress * Math.PI * 2) * 20}px)`
-          }} 
-        />
-        <GoldDot 
-          $size="6px" 
-          $opacity={0.4}
-          style={{ 
-            top: '25%', 
-            right: '12%',
-            transform: `translateY(${Math.cos(totalScrollProgress * Math.PI * 2) * 15}px)`
-          }} 
-        />
-        <GoldLine 
-          $width="80px"
-          style={{ 
-            bottom: '20%', 
-            left: '5%',
-            transform: `translateX(${Math.sin(totalScrollProgress * Math.PI * 3) * 10}px) rotate(${totalScrollProgress * 20}deg)`
-          }} 
-        />
-        <GoldRing 
-          $size="30px"
-          style={{ 
-            top: '60%', 
-            right: '8%',
-            transform: `rotate(${totalScrollProgress * 90}deg) scale(${0.9 + Math.sin(totalScrollProgress * Math.PI * 2) * 0.1})`
-          }} 
-        />
-        
-        <SectionInner>
-          <SectionTitle>How It Works</SectionTitle>
-          <SectionSubtitle>
-            Start trading in minutes, not months. Three simple steps to begin your journey.
-          </SectionSubtitle>
-          
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-            gap: '40px', 
-            marginTop: '60px' 
-          }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ 
-                width: '80px', 
-                height: '80px', 
-                borderRadius: '50%', 
-                background: marbleDarkGray, 
-                color: marbleWhite,
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                fontSize: '2rem',
-                fontWeight: '700',
-                margin: '0 auto 20px'
-              }}>1</div>
-              <h3 style={{ color: marbleDarkGray, marginBottom: '12px' }}>Sign Up Free</h3>
-              <p style={{ color: marbleGray }}>Create your account in seconds. No credit card required.</p>
-      </div>
-
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ 
-                width: '80px', 
-                height: '80px', 
-                borderRadius: '50%', 
-                background: marbleDarkGray, 
-                color: marbleWhite,
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                fontSize: '2rem',
-                fontWeight: '700',
-                margin: '0 auto 20px'
-              }}>2</div>
-              <h3 style={{ color: marbleDarkGray, marginBottom: '12px' }}>Learn & Practice</h3>
-              <p style={{ color: marbleGray }}>Complete interactive lessons and trade with virtual money.</p>
-            </div>
-            
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ 
-                width: '80px', 
-                height: '80px', 
-                borderRadius: '50%', 
-                background: marbleDarkGray, 
-                color: marbleWhite,
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                fontSize: '2rem',
-                fontWeight: '700',
-                margin: '0 auto 20px'
-              }}>3</div>
-              <h3 style={{ color: marbleDarkGray, marginBottom: '12px' }}>Master the Markets</h3>
-              <p style={{ color: marbleGray }}>Build confidence and skills before risking real capital.</p>
-            </div>
-          </div>
-        </SectionInner>
-      </Section>
-
       {/* ============ STATS SECTION ============ */}
-      <Section ref={statsRef} style={{ background: marbleDarkGray, position: 'relative', overflow: 'hidden' }}>
+      <Section ref={statsRef} style={{ background: marbleDarkGray, position: 'relative', overflow: 'hidden', padding: '160px 20px' }}>
         {/* Subtle light accents on dark background */}
         <GoldDot 
           $size="10px" 
@@ -1298,7 +1266,7 @@ function Home({ isLoggedIn }) {
       </Section>
 
       {/* ============ TESTIMONIALS SECTION ============ */}
-      <Section style={{ background: marbleLightGray, position: 'relative', overflow: 'hidden' }}>
+      <Section ref={testimonialsRef} style={{ background: marbleLightGray, position: 'relative', overflow: 'hidden' }}>
         {/* Floating accents */}
         <GoldRing 
           $size="50px"
@@ -1307,15 +1275,6 @@ function Home({ isLoggedIn }) {
             top: '10%', 
             right: '10%',
             transform: `rotate(${totalScrollProgress * 120}deg)`
-          }} 
-        />
-        <GoldDot 
-          $size="14px" 
-          $opacity={0.5}
-          style={{ 
-            bottom: '15%', 
-            left: '8%',
-            transform: `translateY(${Math.sin(totalScrollProgress * Math.PI * 2) * 30}px)`
           }} 
         />
         <GoldDot 
@@ -1403,27 +1362,7 @@ function Home({ isLoggedIn }) {
       </Section>
 
       {/* ============ CTA SECTION ============ */}
-      <CTASection style={{ position: 'relative', overflow: 'hidden' }}>
-        {/* Final accents */}
-        <GoldDot 
-          $size="10px" 
-          $opacity={0.5}
-          style={{ 
-            top: '20%', 
-            left: '10%',
-            transform: `translateY(${Math.sin(totalScrollProgress * Math.PI * 2) * 15}px)`
-          }} 
-        />
-        <GoldRing 
-          $size="35px"
-          $opacity={0.25}
-          style={{ 
-            bottom: '25%', 
-            right: '12%',
-            transform: `rotate(${totalScrollProgress * 180}deg)`
-          }} 
-        />
-        
+      <CTASection ref={ctaRef} style={{ position: 'relative', overflow: 'hidden' }}>
         <CTACard>
           <SectionTitle style={{ marginBottom: '16px' }}>
             Ready to Start Your Journey?
@@ -1442,13 +1381,13 @@ function Home({ isLoggedIn }) {
       </CTASection>
 
       {/* Footer */}
-      <footer style={{ 
+      <footer ref={footerRef} style={{ 
         padding: '40px 20px', 
         textAlign: 'center', 
         borderTop: `1px solid ${marbleGray}`,
-        background: marbleWhite
+        background: marbleBlack
       }}>
-        <p style={{ color: marbleGray, fontSize: '0.9rem' }}>
+        <p style={{ color: marbleLightGray, fontSize: '0.9rem' }}>
           © {new Date().getFullYear()} tickr. Learn responsibly. Paper trading only.
         </p>
       </footer>

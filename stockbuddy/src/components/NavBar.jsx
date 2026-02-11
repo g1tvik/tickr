@@ -3,7 +3,9 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { isAuthenticated } from '../services/api';
 import './NavBar.css';
 
-function NavBar({ isLoggedIn, setIsLoggedIn }) {
+const MARBLE_WHITE = '#F4F1E9';
+
+function NavBar({ isLoggedIn, setIsLoggedIn, navbarTheme = 'light' }) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -25,9 +27,8 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
     navigate('/');
   };
 
-  // Check if we're on the Trade page or AI Coach page (dark theme)
-  // Updated to fix isOnLightPage error
   const isOnTradePage = location.pathname === '/trade' || location.pathname === '/ai-coach';
+  const isNavbarDark = navbarTheme === 'dark' || isOnTradePage;
 
   useEffect(() => {
     const body = document.body;
@@ -55,7 +56,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
       <div className="navbar-left" style={{ display: 'flex', alignItems: 'center' }}>
         <Link className="navbar-brand" to="/">
           <img 
-            src={isOnTradePage ? "/marbleWhitelogo.png" : "/logo.png"} 
+            src={isNavbarDark ? "/marbleWhitelogo.png" : "/logo.png"} 
             alt="Tickr Logo" 
             style={{ 
               height: '50px', 
@@ -74,7 +75,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                 <Link 
                   className="nav-link" 
                   to="/dashboard"
-                  style={{ color: isOnTradePage ? '#F4F1E9' : '#2C2C2C' }}
+                  style={{ color: isNavbarDark ? MARBLE_WHITE : '#2C2C2C', transition: 'color 0.35s ease' }}
                 >
                   DASHBOARD
                 </Link>
@@ -83,7 +84,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                 <Link 
                   className="nav-link" 
                   to="/trade"
-                  style={{ color: isOnTradePage ? '#F4F1E9' : '#2C2C2C' }}
+                  style={{ color: isNavbarDark ? MARBLE_WHITE : '#2C2C2C', transition: 'color 0.35s ease' }}
                 >
                   TRADE
                 </Link>
@@ -92,7 +93,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                 <Link 
                   className="nav-link" 
                   to="/learn"
-                  style={{ color: isOnTradePage ? '#F4F1E9' : '#2C2C2C' }}
+                  style={{ color: isNavbarDark ? MARBLE_WHITE : '#2C2C2C', transition: 'color 0.35s ease' }}
                 >
                   LEARN
                 </Link>
@@ -101,7 +102,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                 <Link 
                   className="nav-link" 
                   to="/ai-coach"
-                  style={{ color: isOnTradePage ? '#F4F1E9' : '#2C2C2C' }}
+                  style={{ color: isNavbarDark ? MARBLE_WHITE : '#2C2C2C', transition: 'color 0.35s ease' }}
                 >
                   AI COACH
                 </Link>
@@ -110,7 +111,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                 <Link 
                   className="nav-link" 
                   to="/shop"
-                  style={{ color: isOnTradePage ? '#F4F1E9' : '#2C2C2C' }}
+                  style={{ color: isNavbarDark ? MARBLE_WHITE : '#2C2C2C', transition: 'color 0.35s ease' }}
                 >
                   SHOP
                 </Link>
@@ -119,7 +120,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                 <Link 
                   className="nav-link" 
                   to="/inventory"
-                  style={{ color: isOnTradePage ? '#F4F1E9' : '#2C2C2C' }}
+                  style={{ color: isNavbarDark ? MARBLE_WHITE : '#2C2C2C', transition: 'color 0.35s ease' }}
                 >
                   INVENTORY
                 </Link>
@@ -128,7 +129,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                 <Link 
                   className="nav-link" 
                   to="/settings"
-                  style={{ color: isOnTradePage ? '#F4F1E9' : '#2C2C2C' }}
+                  style={{ color: isNavbarDark ? MARBLE_WHITE : '#2C2C2C', transition: 'color 0.35s ease' }}
                 >
                   SETTINGS
                 </Link>
@@ -138,9 +139,10 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                   className="btn btn-outline-light ms-2" 
                   onClick={handleSignOut}
                   style={{
-                    backgroundColor: isOnTradePage ? undefined : '#2C2C2C',
-                    color: isOnTradePage ? undefined : '#F4F1E9',
-                    borderColor: isOnTradePage ? undefined : '#2C2C2C'
+                    backgroundColor: isNavbarDark ? undefined : '#2C2C2C',
+                    color: isNavbarDark ? undefined : '#F4F1E9',
+                    borderColor: isNavbarDark ? undefined : '#2C2C2C',
+                    transition: 'color 0.35s ease, border-color 0.35s ease, background-color 0.35s ease'
                   }}
                 >
                   SIGN OUT
@@ -153,7 +155,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn }) {
                 <Link 
                   className="nav-link" 
                   to="/signin"
-                  style={{ color: isOnTradePage ? '#F4F1E9' : '#2C2C2C' }}
+                  style={{ color: isNavbarDark ? MARBLE_WHITE : '#2C2C2C', transition: 'color 0.35s ease' }}
                 >
                   Sign In
                 </Link>

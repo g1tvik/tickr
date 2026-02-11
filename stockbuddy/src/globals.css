@@ -25,6 +25,11 @@
   --marbleDarkGray: #222222;
   --marbleBlack: #111111;
   --marbleGold: #E6C87A;
+
+  /* Fonts – defined here so they apply before JS; main.jsx can override to match fontPalette */
+  --fontHeading: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --fontBody: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --fontMono: 'Helvetica Neue', Helvetica, Arial, monospace;
   
   /* Scrollbar CSS custom properties */
   --scrollbar-track-bg: #F4F1E9;
@@ -33,7 +38,9 @@
 }
 
 body {
-  background-color: var(--marbleWhite);
+  font-family: var(--fontBody);
+  background-color: #F4F1E9;
+  background-color: var(--marbleWhite, #F4F1E9);
   color: var(--marbleDarkGray);
   margin: 0;
   padding: 0;

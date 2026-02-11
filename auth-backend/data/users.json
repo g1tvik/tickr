@@ -254,7 +254,7 @@
     "password": "$2b$10$V5vsr28i7YNT8DyzS79qbuEdR4EyPRe83HmwklhZl8xAwqxK.2S4W",
     "name": "ritvik v",
     "createdAt": "2025-10-22T05:23:11.394Z",
-    "lastLogin": "2025-11-27T11:32:06.185Z",
+    "lastLogin": "2026-02-11T00:17:31.771Z",
     "portfolio": {
       "balance": 10000,
       "positions": [],
@@ -324,6 +324,37 @@
     "name": "ritvik v",
     "createdAt": "2025-10-22T05:29:32.112Z",
     "lastLogin": "2025-10-22T05:29:32.112Z",
+    "portfolio": {
+      "balance": 10000,
+      "positions": [],
+      "totalValue": 10000
+    },
+    "learningProgress": {
+      "xp": 0,
+      "coins": 0,
+      "completedLessons": [],
+      "completedUnitTests": [],
+      "finalTestCompleted": false,
+      "finalTestLastAttempt": null,
+      "unitTestAttempts": {},
+      "lessonAttempts": {}
+    },
+    "purchasedItems": [],
+    "learningPreferences": {
+      "dailyGoal": 3,
+      "notifications": true,
+      "difficulty": "auto"
+    }
+  },
+  "user_1770773180253_ex810ktuj": {
+    "id": "user_1770773180253_ex810ktuj",
+    "email": "jointickr@gmail.com",
+    "username": "user_1770773180253_ak7q9v",
+    "name": "tickr",
+    "picture": "https://lh3.googleusercontent.com/a/ACg8ocJgjjMtW3sbqzuHpn6WKIyMFuXSFROJh8mOxIluCWUq-acPGHQ=s96-c",
+    "googleId": "105747784792548863704",
+    "createdAt": "2026-02-11T01:26:20.253Z",
+    "lastLogin": "2026-02-11T01:26:36.236Z",
     "portfolio": {
       "balance": 10000,
       "positions": [],

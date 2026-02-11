@@ -17,8 +17,9 @@ import Inventory from './pages/Inventory';
 import ArticleReader from './components/ArticleReader';
 import Waitlist from './pages/Waitlist';
 import NotFound from './pages/NotFound';
+import About from './pages/About';
 import Protected from './routes/Protected';
-import { useNavbarBackground } from './hooks/useNavbarBackground';
+import { NavbarProvider, useNavbar } from './context/NavbarContext';
 import { isAuthenticated } from './services/api';
 import { useUser } from './store/user';
 
@@ -30,7 +31,7 @@ function AppContent() {
   const [currentLocation, setCurrentLocation] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { setNavbarBackground } = useNavbarBackground();
+  const { setNavbarBackground, navbarTheme } = useNavbar();
   const fetchUser = useUser((state) => state.fetchUser);
 
   // Check token validity on mount and when location changes
@@ -95,7 +96,7 @@ function AppContent() {
         if (navbar) {
           navbar.classList.add('page-dark');
           navbar.classList.remove('page-light');
-          setNavbarBackground('var(--marbleDarkGray)');
+          setNavbarBackground('var(--marbleDarkGray)', { theme: 'dark' });
           console.log('App: Setting navbar to dark theme for Trade/AI Coach page');
         }
       } else {
@@ -112,7 +113,7 @@ function AppContent() {
         if (navbar) {
           navbar.classList.remove('page-dark');
           navbar.classList.add('page-light');
-          setNavbarBackground('var(--marbleWhite)');
+          setNavbarBackground('var(--marbleWhite)', { theme: 'light' });
           console.log('App: Setting navbar to light theme for other pages');
         }
       }
@@ -130,7 +131,7 @@ function AppContent() {
 
   return (
     <div className="app-container">
-      {!LOCKDOWN && <NavBar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />}
+      {!LOCKDOWN && <NavBar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} navbarTheme={navbarTheme} />}
       <main className="main-content">
         <PageTransition isVisible={!isTransitioning}>
           <div className="page-content">
@@ -148,6 +149,7 @@ function AppContent() {
                   <Route path="/signin" element={<SignIn setIsLoggedIn={setIsLoggedIn} />} />
                   <Route path="/signup" element={<SignUp setIsLoggedIn={setIsLoggedIn} />} />
                   <Route path="/waitlist" element={<Waitlist />} />
+                  <Route path="/about" element={<About />} />
                   
                   {/* Protected routes */}
                   <Route path="/dashboard" element={
@@ -212,7 +214,9 @@ function App() {
   return (
     <ErrorBoundary>
       <Router>
-        <AppContent />
+        <NavbarProvider>
+          <AppContent />
+        </NavbarProvider>
       </Router>
     </ErrorBoundary>
   );

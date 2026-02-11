@@ -211,6 +211,7 @@ function AICoach() {
   const [chartScenarioIndex, setChartScenarioIndex] = useState(null);
   const [asOfDate, setAsOfDate] = useState(null);
   const [showInfo, setShowInfo] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const [showPLCalculation, setShowPLCalculation] = useState(false);
   const [showSharesCalculation, setShowSharesCalculation] = useState(false);
   const didBounceScenarioRef = useRef(false);
@@ -220,7 +221,11 @@ function AICoach() {
   const [bouncePhase, setBouncePhase] = useState('idle'); // idle | toAlt | back | done
   const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'decide'
 
-  const scenario = HISTORICAL_SCENARIOS[currentScenario];
+  // Derive scenario from a safe index so we never read undefined
+  const safeIndex = HISTORICAL_SCENARIOS.length > 0
+    ? Math.max(0, Math.min(currentScenario, HISTORICAL_SCENARIOS.length - 1))
+    : 0;
+  const scenario = HISTORICAL_SCENARIOS[safeIndex];
 
   // Use chat hook for state management (needed for bounce logic and decision analysis)
   // Disable chat during bounce to prevent premature welcome message
@@ -278,10 +283,12 @@ function AICoach() {
       setBouncePhase('done');
       bounceInProgressRef.current = false;
       if (chatMessages.length === 0) {
+        const defaultScenario = HISTORICAL_SCENARIOS[defaultScenarioIndexRef.current];
+        const title = defaultScenario?.title ?? 'Trading';
         setChatMessages([
           {
             type: 'ai',
-            content: `Welcome to the ${HISTORICAL_SCENARIOS[defaultScenarioIndexRef.current].title} trading challenge! 🎯\n\nI'm your AI trading coach. I can help you understand market concepts, explain trading strategies, and provide educational insights.\n\nWhat would you like to know about this scenario?`,
+            content: `Welcome to the ${title} trading challenge! 🎯\n\nI'm your AI trading coach. I can help you understand market concepts, explain trading strategies, and provide educational insights.\n\nWhat would you like to know about this scenario?`,
             timestamp: Date.now()
           }
         ]);
@@ -502,6 +509,16 @@ function AICoach() {
       resetScenario();
     }
   };
+
+  if (!scenario) {
+    return (
+      <div className="page-dark" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ textAlign: 'center', color: marbleWhite }}>
+          <p>No scenarios available. Please try again later.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-dark" style={{

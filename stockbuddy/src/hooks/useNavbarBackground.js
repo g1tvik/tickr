@@ -1,13 +1,18 @@
-import { useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 // Global navbar background management
 let navbarBackgroundListeners = [];
 let currentNavbarBackground = null;
 
+const MARBLE_DARK_GRAY = '#222222';
+
 export const useNavbarBackground = () => {
-  const setNavbarBackground = useCallback((backgroundColor, isImportant = true) => {
+  const [navbarTheme, setNavbarTheme] = useState('light'); // 'light' | 'dark'
+
+  const setNavbarBackground = useCallback((backgroundColor, options = {}) => {
+    const isImportant = options.isImportant !== false;
+    const theme = options.theme ?? (backgroundColor === MARBLE_DARK_GRAY || (typeof backgroundColor === 'string' && backgroundColor.includes('222')) ? 'dark' : 'light');
     const navbar = document.querySelector('.navbar-color');
-    console.log(`useNavbarBackground: Setting navbar to ${backgroundColor} (important: ${isImportant})`);
     if (navbar) {
       if (isImportant) {
         navbar.style.setProperty('background-color', backgroundColor, 'important');
@@ -15,39 +20,25 @@ export const useNavbarBackground = () => {
         navbar.style.backgroundColor = backgroundColor;
       }
       currentNavbarBackground = backgroundColor;
-      console.log(`useNavbarBackground: Successfully set navbar background to ${backgroundColor}`);
-      
-      // Notify all listeners
+      setNavbarTheme(theme);
       navbarBackgroundListeners.forEach(listener => listener(backgroundColor));
-    } else {
-      console.log('useNavbarBackground: Navbar element not found!');
     }
-  }, []);
-
-  const resetNavbarBackground = useCallback(() => {
-    const navbar = document.querySelector('.navbar-color');
-    console.log('useNavbarBackground: Resetting navbar background');
-    if (navbar) {
-      navbar.style.removeProperty('background-color');
-      navbar.style.removeProperty('--navbar-bg-override');
-      currentNavbarBackground = null;
-      console.log('useNavbarBackground: Successfully reset navbar background');
-      
-      // Notify all listeners
-      navbarBackgroundListeners.forEach(listener => listener(null));
-    } else {
-      console.log('useNavbarBackground: Navbar element not found during reset!');
-    }
-  }, []);
-
-  const getCurrentNavbarBackground = useCallback(() => {
-    return currentNavbarBackground;
   }, []);
 
   return {
     setNavbarBackground,
-    resetNavbarBackground,
-    getCurrentNavbarBackground
+    navbarTheme,
+    resetNavbarBackground: useCallback(() => {
+      const navbar = document.querySelector('.navbar-color');
+      if (navbar) {
+        navbar.style.removeProperty('background-color');
+        navbar.style.removeProperty('--navbar-bg-override');
+        currentNavbarBackground = null;
+        setNavbarTheme('light');
+        navbarBackgroundListeners.forEach(listener => listener(null));
+      }
+    }, []),
+    getCurrentNavbarBackground: useCallback(() => currentNavbarBackground, []),
   };
 };
 

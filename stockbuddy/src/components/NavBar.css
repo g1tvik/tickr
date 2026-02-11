@@ -73,24 +73,25 @@
     left: 0 !important;
     right: 0 !important;
     top: 0 !important;
-    border-radius: 0 0 15px 15px;
+    border-radius: 0;
     padding: 0 1rem;
   }
-} 
+}
 .navbar-color {
-  background-color: var(--marbleWhite);
+  background-color: #F4F1E9; /* marbleWhite – avoids grey flash before CSS vars */
+  background-color: var(--marbleWhite, #F4F1E9);
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
   right: 0 !important;
+  width: 100% !important;
   z-index: 1030 !important;
   transition: background-color 0.5s ease !important;
-  opacity: 0;
-  animation: navbarFadeIn 0.6s ease-out forwards;
+  animation: navbarSlideIn 0.4s ease-out forwards;
   min-height: 70px;
   display: flex;
   align-items: center;
-  border-radius: 0 0 20px 20px;
+  border-radius: 0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   padding: 0 2rem;
 }
@@ -98,14 +99,14 @@
 /* Specific rule for navbar when it has page-dark class */
 .navbar-color.page-dark {
   background-color: var(--marbleDarkGray) !important;
-  border-radius: 0 0 20px 20px;
+  border-radius: 0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 /* Specific rule for navbar when it has page-light class */
 .navbar-color.page-light {
   background-color: var(--marbleWhite) !important;
-  border-radius: 0 0 20px 20px;
+  border-radius: 0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -114,13 +115,11 @@
   background-color: var(--navbar-bg-override, var(--marbleWhite)) !important;
 }
 
-@keyframes navbarFadeIn {
+@keyframes navbarSlideIn {
   from {
-    opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(-12px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
