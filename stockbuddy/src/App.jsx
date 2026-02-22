@@ -87,6 +87,8 @@ function AppContent() {
         pageTransition.classList.add('page-dark');
         body.classList.add('page-dark');
         html.classList.add('page-dark');
+        body.classList.remove('home-shell');
+        html.classList.remove('home-shell');
         mainContent.classList.remove('page-light');
         pageTransition.classList.remove('page-light');
         body.classList.remove('page-light');
@@ -111,6 +113,8 @@ function AppContent() {
         pageTransition.classList.add(isHomePage ? 'page-dark' : 'page-light');
         body.classList.add(isHomePage ? 'page-dark' : 'page-light');
         html.classList.add(isHomePage ? 'page-dark' : 'page-light');
+        body.classList.toggle('home-shell', isHomePage);
+        html.classList.toggle('home-shell', isHomePage);
 
         // Home controls navbar dynamically; avoid forcing light on initial load
         if (navbar) {
@@ -118,7 +122,7 @@ function AppContent() {
           navbar.classList.add(isHomePage ? 'page-dark' : 'page-light');
 
           if (isHomePage) {
-            setNavbarBackground('rgba(17, 24, 39, 0.7)', { theme: 'dark' });
+            setNavbarBackground('transparent', { theme: 'dark' });
             console.log('App: Leaving navbar dark on Home for hero sync');
           } else {
             setNavbarBackground('var(--color-gray-100)', { theme: 'light' });

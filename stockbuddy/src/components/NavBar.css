@@ -91,8 +91,8 @@
   display: flex;
   align-items: center;
   border-radius: 0;
-  box-shadow: none;
-  border-bottom: 1px solid rgba(42, 69, 128, 0.35);
+  box-shadow: none !important;
+  border-bottom: none !important;
   padding: 0 2rem;
 }
 
@@ -100,19 +100,26 @@
 .navbar-color.page-dark {
   background-color: rgba(17, 24, 39, 0.82) !important;
   border-radius: 0;
-  box-shadow: none;
+  box-shadow: none !important;
+  border-bottom: none !important;
 }
 
 /* Specific rule for navbar when it has page-light class */
 .navbar-color.page-light {
   background-color: rgba(17, 24, 39, 0.82) !important;
   border-radius: 0;
-  box-shadow: none;
+  box-shadow: none !important;
+  border-bottom: none !important;
 }
 
 /* Override for dynamic background changes from Home page */
 .navbar-color[style*="background-color"] {
   background-color: rgba(17, 24, 39, 0.82) !important;
+}
+
+.navbar.navbar-color {
+  box-shadow: none !important;
+  border-bottom: none !important;
 }
 
 .navbar-color .navbar-brand img {
