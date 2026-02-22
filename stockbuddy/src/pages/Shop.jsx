@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 
 export default function Shop() {
@@ -135,11 +135,11 @@ export default function Shop() {
 
   const getRarityColor = (rarity) => {
     switch (rarity) {
-      case 'common': return marbleGray;
+      case 'common': return gray;
       case 'rare': return '#4A90E2';
       case 'epic': return '#9B59B6';
       case 'legendary': return marbleGold;
-      default: return marbleGray;
+      default: return gray;
     }
   };
 
@@ -147,7 +147,7 @@ export default function Shop() {
     return (
       <div style={{
         minHeight: "100vh",
-        backgroundColor: marbleWhite,
+        backgroundColor: white,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -162,7 +162,7 @@ export default function Shop() {
     return (
       <div style={{
         minHeight: "100vh",
-        backgroundColor: marbleWhite,
+        backgroundColor: white,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -193,14 +193,14 @@ export default function Shop() {
   return (
     <div style={{
       minHeight: "100vh",
-      backgroundColor: marbleWhite,
+      backgroundColor: white,
       fontFamily: fontBody
     }}>
       {/* Header */}
       <div style={{
-        backgroundColor: marbleLightGray,
+        backgroundColor: lightGray,
         padding: "24px",
-        borderBottom: `1px solid ${marbleGray}`
+        borderBottom: `1px solid ${gray}`
       }}>
         <div style={{
           maxWidth: "1200px",
@@ -235,7 +235,7 @@ export default function Shop() {
           
           <p style={{
             fontSize: "18px",
-            color: marbleGray,
+            color: gray,
             marginBottom: "24px"
           }}>
             Spend your coins on upgrades and exclusive content
@@ -243,7 +243,7 @@ export default function Shop() {
 
           {/* User Balance */}
           <div style={{
-            backgroundColor: marbleWhite,
+            backgroundColor: white,
             borderRadius: "12px",
             padding: "16px",
             display: "flex",
@@ -271,7 +271,7 @@ export default function Shop() {
                 </div>
                 <div style={{
                   fontSize: "14px",
-                  color: marbleGray
+                  color: gray
                 }}>
                   Available Balance
                 </div>
@@ -325,7 +325,7 @@ export default function Shop() {
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
               style={{
-                backgroundColor: selectedCategory === category.id ? marbleGold : marbleLightGray,
+                backgroundColor: selectedCategory === category.id ? marbleGold : lightGray,
                 color: selectedCategory === category.id ? marbleDarkGray : marbleDarkGray,
                 border: "none",
                 padding: "12px 20px",
@@ -351,7 +351,7 @@ export default function Shop() {
             <div
               key={item.id}
               style={{
-                backgroundColor: marbleLightGray,
+                backgroundColor: lightGray,
                 borderRadius: "20px",
                 padding: "24px",
                 border: `2px solid ${getRarityColor(item.rarity)}`,
@@ -408,7 +408,7 @@ export default function Shop() {
 
               <p style={{
                 fontSize: "14px",
-                color: marbleGray,
+                color: gray,
                 marginBottom: "20px",
                 lineHeight: "1.5"
               }}>
@@ -443,8 +443,8 @@ export default function Shop() {
                   <button
                     disabled
                     style={{
-                      backgroundColor: marbleGray,
-                      color: marbleWhite,
+                      backgroundColor: gray,
+                      color: white,
                       border: "none",
                       padding: "8px 16px",
                       borderRadius: "8px",
@@ -460,8 +460,8 @@ export default function Shop() {
                     onClick={() => handlePurchase(item)}
                     disabled={userCoins < item.price}
                     style={{
-                      backgroundColor: userCoins >= item.price ? marbleGold : marbleGray,
-                      color: userCoins >= item.price ? marbleDarkGray : marbleWhite,
+                      backgroundColor: userCoins >= item.price ? marbleGold : gray,
+                      color: userCoins >= item.price ? marbleDarkGray : white,
                       border: "none",
                       padding: "8px 16px",
                       borderRadius: "8px",
@@ -483,7 +483,7 @@ export default function Shop() {
           <div style={{
             textAlign: "center",
             padding: "48px",
-            color: marbleGray
+            color: gray
           }}>
             <div style={{
               fontSize: "48px",
@@ -519,7 +519,7 @@ export default function Shop() {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: marbleWhite,
+            backgroundColor: white,
             borderRadius: "20px",
             padding: "32px",
             maxWidth: "400px",
@@ -544,7 +544,7 @@ export default function Shop() {
             
             <p style={{
               fontSize: "16px",
-              color: marbleGray,
+              color: gray,
               marginBottom: "24px"
             }}>
               Purchase <strong>{selectedItem.name}</strong> for <strong>{selectedItem.price} coins</strong>?
@@ -558,8 +558,8 @@ export default function Shop() {
               <button
                 onClick={() => setShowPurchaseModal(false)}
                 style={{
-                  backgroundColor: marbleGray,
-                  color: marbleWhite,
+                  backgroundColor: gray,
+                  color: white,
                   border: "none",
                   padding: "12px 24px",
                   borderRadius: "12px",

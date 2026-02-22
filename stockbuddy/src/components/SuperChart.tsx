@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { createChart, IChartApi, CandlestickSeries } from 'lightweight-charts';
 import { useChartStore } from '../stores/chartStore';
 import { useChartData } from '../hooks/useChartData';
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 
 export interface SuperChartProps {
@@ -343,11 +343,11 @@ export const SuperChart: React.FC<SuperChartProps> = ({
     return (
       <div className="d-flex align-items-center justify-content-center" 
            style={{ 
-             backgroundColor: marbleLightGray, 
+             backgroundColor: lightGray, 
              borderRadius: '20px', 
              padding: '24px', 
              height: height,
-             color: marbleGray,
+             color: gray,
              fontSize: '16px'
            }}>
         Select a stock to view the chart
@@ -359,7 +359,7 @@ export const SuperChart: React.FC<SuperChartProps> = ({
     return (
       <div className="d-flex align-items-center justify-content-center flex-column" 
            style={{ 
-             backgroundColor: marbleLightGray, 
+             backgroundColor: lightGray, 
              borderRadius: '20px', 
              padding: '24px', 
              height: height,
@@ -368,7 +368,7 @@ export const SuperChart: React.FC<SuperChartProps> = ({
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
-        <div style={{ color: marbleGray, fontSize: '14px' }}>
+        <div style={{ color: gray, fontSize: '14px' }}>
           Loading chart data...
         </div>
       </div>
@@ -379,7 +379,7 @@ export const SuperChart: React.FC<SuperChartProps> = ({
     return (
       <div className="d-flex align-items-center justify-content-center flex-column" 
            style={{ 
-             backgroundColor: marbleLightGray, 
+             backgroundColor: lightGray, 
              borderRadius: '20px', 
              padding: '24px', 
              height: height,
@@ -479,7 +479,7 @@ export const SuperChart: React.FC<SuperChartProps> = ({
               minWidth: '200px',
               padding: '12px',
               fontSize: '12px',
-              border: `1px solid ${theme === 'dark' ? marbleGray : marbleLightGray}`,
+              border: `1px solid ${theme === 'dark' ? gray : lightGray}`,
               transform: 'translateY(-50%)',
               pointerEvents: 'none',
             }}

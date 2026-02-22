@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
 import { UTCTimestamp } from 'lightweight-charts';
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 
 interface ChartTooltipProps {
   data: {
@@ -73,7 +73,7 @@ export const ChartTooltip = forwardRef<HTMLDivElement, ChartTooltipProps>(
           minWidth: '200px',
           padding: '12px',
           fontSize: '12px',
-          border: `1px solid ${theme === 'dark' ? marbleGray : marbleLightGray}`,
+          border: `1px solid ${theme === 'dark' ? gray : lightGray}`,
           transform: 'translateY(-50%)',
           pointerEvents: 'none',
         }}
@@ -129,7 +129,7 @@ export const ChartTooltip = forwardRef<HTMLDivElement, ChartTooltipProps>(
             height: 0,
             borderTop: '6px solid transparent',
             borderBottom: '6px solid transparent',
-            borderRight: `6px solid ${theme === 'dark' ? marbleDarkGray : marbleWhite}`,
+            borderRight: `6px solid ${theme === 'dark' ? marbleDarkGray : white}`,
           }}
         />
       </div>

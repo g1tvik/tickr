@@ -18,30 +18,55 @@
   font-display: swap;
 }
 
+/* ============ BRAND TOKENS (YC fintech) ============ */
+/* Change these three to update black, blue, and gold site-wide: */
 :root {
-  --marbleWhite: #F4F1E9;
-  --marbleLightGray: #E5E5E5;
-  --marbleGray: #B0B0B0;
-  --marbleDarkGray: #222222;
-  --marbleBlack: #111111;
-  --marbleGold: #E6C87A;
+  --color-black: #2C2C2C;   /* dark buttons, dark text, navbar dark */
+  --color-blue: #2A4580;    /* primary blue, links, focus */
+  --color-gold: #B69C60;    /* accent, cursor dot, highlights, CTAs */
 
-  /* Fonts – defined here so they apply before JS; main.jsx can override to match fontPalette */
+  --color-primary: var(--color-blue);
+  --color-primary-hover: #223a6b;
+  --color-primary-focus: rgba(42, 69, 128, 0.2);
+  --color-ink: var(--color-black);
+  --color-accent: var(--color-gold);
+  --color-accent-hover: #a08b52;
+
+  /* Cool gray scale */
+  --color-gray-50: #F9FAFB;
+  --color-gray-100: #F6F7F9;
+  --color-gray-200: #E5E7EB;
+  --color-gray-300: #D1D5DB;
+  --color-gray-400: #9CA3AF;
+  --color-gray-500: #6B7280;
+  --color-gray-600: #4B5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1F2937;
+  --color-gray-900: #111827;
+
+  /* Legacy aliases for compatibility */
+  --marbleWhite: #FFFFFF;
+  --marbleLightGray: #F0F0F0;
+  --marbleGray: #6B6B6B;
+  --marbleDarkGray: var(--color-black);
+  --marbleBlack: #111827;
+  --marbleGold: var(--color-gold);
+
+  /* Fonts */
   --fontHeading: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --fontBody: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --fontMono: 'Helvetica Neue', Helvetica, Arial, monospace;
-  
-  /* Scrollbar CSS custom properties */
-  --scrollbar-track-bg: #F4F1E9;
-  --scrollbar-thumb-bg: #B0B0B0;
-  --scrollbar-thumb-hover-bg: #E6C87A;
+
+  /* Scrollbar */
+  --scrollbar-track-bg: transparent;
+  --scrollbar-thumb-bg: #9CA3AF;
+  --scrollbar-thumb-hover-bg: #B69C60;
 }
 
 body {
   font-family: var(--fontBody);
-  background-color: #F4F1E9;
-  background-color: var(--marbleWhite, #F4F1E9);
-  color: var(--marbleDarkGray);
+  background-color: var(--color-gray-100);
+  color: var(--color-ink);
   margin: 0;
   padding: 0;
   overflow-x: hidden;
@@ -49,7 +74,7 @@ body {
 }
 
 body.page-dark {
-  background-color: var(--marbleDarkGray);
+  background-color: var(--color-ink);
   min-height: 100vh;
   min-width: 100vw;
 }
@@ -59,21 +84,21 @@ html {
 }
 
 html.page-dark {
-  background-color: var(--marbleDarkGray);
+  background-color: var(--color-ink);
 }
 
 html.page-dark body {
-  background-color: var(--marbleDarkGray);
+  background-color: var(--color-ink);
   background-attachment: fixed;
   background-size: 100% 100%;
 }
 
 html.page-light {
-  background-color: var(--marbleWhite);
+  background-color: var(--color-gray-100);
 }
 
 html.page-light body {
-  background-color: var(--marbleWhite);
+  background-color: var(--color-gray-100);
 }
 
 /* App container structure */
@@ -83,6 +108,11 @@ html.page-light body {
   flex-direction: column;
   padding-top: 60px;
   transition: background-color 0.5s ease;
+}
+
+/* Home hero should sit directly under transparent navbar */
+.app-container.app-container-home {
+  padding-top: 0;
 }
 
 .main-content {
@@ -103,7 +133,7 @@ html.page-light body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--scrollbar-track-bg) !important;
+  background: transparent !important;
   border-radius: 999px;
   transition: background 0.3s ease;
 }
@@ -128,60 +158,83 @@ body {
   transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
-/* Enhanced button transitions */
+/* Button system: Primary (blue), Secondary (outline), Tertiary (text) */
 .btn {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   position: relative;
-  overflow: hidden;
-  background: var(--marbleGold);
-  color: var(--marbleDarkGray);
-  border: none;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(230, 200, 122, 0.08);
+  border-radius: 12px;
+  font-weight: 600;
 }
 
-.btn:hover {
-  background: #fffbe9;
-  color: var(--marbleBlack);
-  box-shadow: 0 4px 16px rgba(230, 200, 122, 0.18);
-  transform: translateY(-2px);
+.btn-primary,
+.btn.btn-primary {
+  background: var(--color-primary) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  box-shadow: 0 1px 3px rgba(42, 69, 128, 0.2);
 }
 
-.btn:active {
-  transform: translateY(0);
+.btn-primary:hover,
+.btn.btn-primary:hover {
+  background: var(--color-primary-hover) !important;
+  color: #FFFFFF !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(42, 69, 128, 0.25);
 }
 
-/* Sign out button specific styling */
+.btn-primary:focus-visible,
+.btn.btn-primary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.btn-secondary,
+.btn.btn-secondary {
+  background: transparent !important;
+  color: var(--color-primary) !important;
+  border: 2px solid var(--color-primary) !important;
+}
+
+.btn-secondary:hover,
+.btn.btn-secondary:hover {
+  background: rgba(42, 69, 128, 0.05) !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+.btn-tertiary,
+.btn.btn-tertiary,
 .btn-outline-light {
-  background: var(--marbleDarkGray) !important;
-  color: var(--marbleWhite) !important;
-  border: 1px solid var(--marbleDarkGray) !important;
-  box-shadow: 0 2px 8px rgba(34, 34, 34, 0.3) !important;
-  font-weight: 600 !important;
-  padding: 4px 12px !important;
-  border-radius: 4px !important;
+  background: transparent !important;
+  color: var(--color-ink) !important;
+  border: 1px solid var(--color-gray-300) !important;
+  font-weight: 500 !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
   font-size: 0.9rem !important;
+  box-shadow: none !important;
 }
 
+.btn-tertiary:hover,
+.btn.btn-tertiary:hover,
 .btn-outline-light:hover {
-  background: var(--marbleBlack) !important;
-  color: var(--marbleWhite) !important;
-  border-color: var(--marbleBlack) !important;
-  box-shadow: 0 4px 16px rgba(34, 34, 34, 0.4) !important;
-  transform: translateY(-2px);
+  background: var(--color-gray-100) !important;
+  color: var(--color-ink) !important;
+  border-color: var(--color-gray-300) !important;
+  transform: none;
 }
 
 /* Smooth form transitions */
 .form-control {
   transition: all 0.2s ease;
-  background: var(--marbleWhite);
-  color: var(--marbleDarkGray);
-  border: 1px solid var(--marbleLightGray);
+  background: #FFFFFF;
+  color: var(--color-ink);
+  border: 1px solid var(--color-gray-300);
 }
 
 .form-control:focus {
-  box-shadow: 0 4px 12px rgba(230, 200, 122, 0.10);
-  border-color: var(--marbleGold);
+  box-shadow: 0 0 0 3px var(--color-primary-focus);
+  border-color: var(--color-primary);
 }
 
 /* Card hover effects */
@@ -224,11 +277,11 @@ body {
   margin-left: auto;
   margin-right: auto;
   color: var(--marbleGray);
+/* Example: override Bootstrap primary color */
 }
 
-/* Example: override Bootstrap primary color */
 :root {
-  --bs-primary: var(--marbleGold);
+  --bs-primary: var(--color-primary);
 }
 
 /* You can add more custom classes or overrides here */
@@ -243,7 +296,7 @@ body {
 
 /* Trade page background transition */
 .trade-page {
-  background-color: var(--marbleWhite);
+  background-color: var(--color-ink);
   transition: background-color 0.5s ease;
 }
 
@@ -259,7 +312,7 @@ body {
 }
 
 .page-light-transitioning {
-  background-color: var(--marbleDarkGray);
+  background-color: var(--color-ink);
 }
 
 .navbar-brand {
@@ -267,13 +320,13 @@ body {
 }
 
 .navbar-brand:hover {
-  transform: scale(1.05);
+  opacity: 0.9;
 }
 
 .nav-link {
   transition: all 0.2s ease;
   position: relative;
-  color: var(--marbleDarkGray);
+  color: inherit;
 }
 
 .nav-link::after {
@@ -281,30 +334,27 @@ body {
   position: absolute;
   width: 0;
   height: 2px;
-  bottom: 0;
-  left: 50%;
-  background-color: var(--marbleGold);
-  transition: all 0.3s ease;
-  transform: translateX(-50%);
+  bottom: -4px;
+  left: 0;
+  background-color: var(--color-primary);
+  transition: width 0.2s ease;
 }
 
-.nav-link:hover::after {
+.nav-link:hover:not(.active)::after {
   width: 100%;
 }
 
 .learn-more-btn {
-  background: var(--marbleGray) !important;
-  color: var(--marbleDarkGray) !important;
+  background: var(--color-gray-200) !important;
+  color: var(--color-ink) !important;
   border: none !important;
-  border-radius: 8px !important;
-  box-shadow: 0 2px 8px rgba(176, 176, 176, 0.10);
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  border-radius: 10px !important;
+  transition: all 0.2s ease;
 }
 .learn-more-btn:hover, .learn-more-btn:focus {
-  background: #A0A0A0 !important;
-  color: var(--marbleDarkGray) !important;
-  box-shadow: 0 4px 16px rgba(176, 176, 176, 0.18);
-  transform: translateY(-2px);
+  background: var(--color-gray-300) !important;
+  color: var(--color-ink) !important;
+  transform: translateY(-1px);
 }
 
 /* Chart animations */

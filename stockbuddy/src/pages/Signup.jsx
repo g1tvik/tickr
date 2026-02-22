@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { api } from "../services/api";
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from "../marblePalette";
+import { white, gray, marbleDarkGray, marbleGold } from "../marblePalette";
 import { fontHeading, fontBody } from "../fontPalette";
 import GoogleOAuth from "../components/GoogleOAuth";
 import './SignIn.css';
@@ -116,7 +116,7 @@ const SignUp = ({ setIsLoggedIn }) => {
               pattern="[a-zA-Z0-9_]{3,20}"
               title="Username must be 3-20 characters long and contain only letters, numbers, and underscores"
             />
-            <small style={{ color: marbleGray, fontSize: '12px', marginTop: '4px' }}>
+            <small style={{ color: gray, fontSize: '12px', marginTop: '4px' }}>
               Only letters, numbers, and underscores allowed
             </small>
           </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, getCurrentUser, logout } from '../services/api';
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 
 const Settings = () => {
@@ -211,7 +211,7 @@ const Settings = () => {
     return (
       <div style={{
         minHeight: '100vh',
-        backgroundColor: marbleWhite,
+        backgroundColor: white,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -226,7 +226,7 @@ const Settings = () => {
     return (
       <div style={{
         minHeight: '100vh',
-        backgroundColor: marbleWhite,
+        backgroundColor: white,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -235,7 +235,7 @@ const Settings = () => {
         <div style={{
           textAlign: 'center',
           padding: '48px',
-          backgroundColor: marbleLightGray,
+          backgroundColor: lightGray,
           borderRadius: '20px',
           maxWidth: '500px'
         }}>
@@ -250,7 +250,7 @@ const Settings = () => {
           </h2>
           <p style={{
             fontSize: '16px',
-            color: marbleGray,
+            color: gray,
             marginBottom: '24px'
           }}>
             You need to be logged in to access your settings.
@@ -278,14 +278,14 @@ const Settings = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: marbleWhite,
+      backgroundColor: white,
       fontFamily: fontBody
     }}>
       {/* Header */}
       <div style={{
-        backgroundColor: marbleLightGray,
+        backgroundColor: lightGray,
         padding: '24px',
-        borderBottom: `1px solid ${marbleGray}`
+        borderBottom: `1px solid ${gray}`
       }}>
         <div style={{
           maxWidth: '1200px',
@@ -320,7 +320,7 @@ const Settings = () => {
           
           <p style={{
             fontSize: '18px',
-            color: marbleGray,
+            color: gray,
             marginBottom: '16px'
           }}>
             Manage your account preferences and settings
@@ -342,7 +342,7 @@ const Settings = () => {
         }}>
           {/* Account Settings */}
           <div style={{
-            backgroundColor: marbleLightGray,
+            backgroundColor: lightGray,
             borderRadius: '20px',
             padding: '32px'
           }}>
@@ -376,7 +376,7 @@ const Settings = () => {
                 </h3>
                 <p style={{
                   fontSize: '14px',
-                  color: marbleGray
+                  color: gray
                 }}>
                   Manage your profile information
                 </p>
@@ -384,7 +384,7 @@ const Settings = () => {
             </div>
             
             <div style={{
-              backgroundColor: marbleWhite,
+              backgroundColor: white,
               borderRadius: '12px',
               padding: '24px',
               marginBottom: '16px'
@@ -395,7 +395,7 @@ const Settings = () => {
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
-                <span style={{ color: marbleGray }}>Name</span>
+                <span style={{ color: gray }}>Name</span>
                 <span style={{ color: marbleDarkGray, fontWeight: '500' }}>
                   {userProfile?.name || 'Not set'}
                 </span>
@@ -406,7 +406,7 @@ const Settings = () => {
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
-                <span style={{ color: marbleGray }}>Username</span>
+                <span style={{ color: gray }}>Username</span>
                 <span style={{ color: marbleDarkGray, fontWeight: '500' }}>
                   @{userProfile?.username || 'Not set'}
                 </span>
@@ -416,7 +416,7 @@ const Settings = () => {
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
-                <span style={{ color: marbleGray }}>Email</span>
+                <span style={{ color: gray }}>Email</span>
                 <span style={{ color: marbleDarkGray, fontWeight: '500' }}>
                   {userProfile?.email || 'Not set'}
                 </span>
@@ -427,7 +427,7 @@ const Settings = () => {
               onClick={() => setShowEditProfile(true)}
               style={{
                 backgroundColor: marbleDarkGray,
-                color: marbleWhite,
+                color: white,
                 border: 'none',
                 padding: '12px 24px',
                 borderRadius: '12px',
@@ -443,7 +443,7 @@ const Settings = () => {
 
           {/* Learning Preferences */}
           <div style={{
-            backgroundColor: marbleLightGray,
+            backgroundColor: lightGray,
             borderRadius: '20px',
             padding: '32px'
           }}>
@@ -477,7 +477,7 @@ const Settings = () => {
                 </h3>
                 <p style={{
                   fontSize: '14px',
-                  color: marbleGray
+                  color: gray
                 }}>
                   Customize your learning experience
                 </p>
@@ -485,7 +485,7 @@ const Settings = () => {
             </div>
             
             <div style={{
-              backgroundColor: marbleWhite,
+              backgroundColor: white,
               borderRadius: '12px',
               padding: '24px',
               marginBottom: '16px'
@@ -496,7 +496,7 @@ const Settings = () => {
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
-                <span style={{ color: marbleGray }}>Daily Goal</span>
+                <span style={{ color: gray }}>Daily Goal</span>
                 <span style={{ color: marbleDarkGray, fontWeight: '500' }}>
                   {learningPreferences.dailyGoal} lessons
                 </span>
@@ -507,7 +507,7 @@ const Settings = () => {
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
-                <span style={{ color: marbleGray }}>Notifications</span>
+                <span style={{ color: gray }}>Notifications</span>
                 <span style={{ color: marbleDarkGray, fontWeight: '500' }}>
                   {learningPreferences.notifications ? 'Enabled' : 'Disabled'}
                 </span>
@@ -524,7 +524,7 @@ const Settings = () => {
                 onClick={() => setShowPreferences(true)}
                 style={{
                   backgroundColor: marbleDarkGray,
-                  color: marbleWhite,
+                  color: white,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',
@@ -558,7 +558,7 @@ const Settings = () => {
 
           {/* Privacy & Security */}
           <div style={{
-            backgroundColor: marbleLightGray,
+            backgroundColor: lightGray,
             borderRadius: '20px',
             padding: '32px'
           }}>
@@ -592,7 +592,7 @@ const Settings = () => {
                 </h3>
                 <p style={{
                   fontSize: '14px',
-                  color: marbleGray
+                  color: gray
                 }}>
                   Manage your account security
                 </p>
@@ -600,7 +600,7 @@ const Settings = () => {
             </div>
             
             <div style={{
-              backgroundColor: marbleWhite,
+              backgroundColor: white,
               borderRadius: '12px',
               padding: '24px',
               marginBottom: '16px'
@@ -611,8 +611,8 @@ const Settings = () => {
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
-                <span style={{ color: marbleGray }}>Two-Factor Auth</span>
-                <span style={{ color: marbleGray, fontWeight: '500' }}>Not enabled</span>
+                <span style={{ color: gray }}>Two-Factor Auth</span>
+                <span style={{ color: gray, fontWeight: '500' }}>Not enabled</span>
               </div>
               <div style={{
                 display: 'flex',
@@ -620,7 +620,7 @@ const Settings = () => {
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
-                <span style={{ color: marbleGray }}>Last Login</span>
+                <span style={{ color: gray }}>Last Login</span>
                 <span style={{ color: marbleDarkGray, fontWeight: '500' }}>
                   {userProfile?.lastLogin ? new Date(userProfile.lastLogin).toLocaleDateString() : 'Unknown'}
                 </span>
@@ -630,7 +630,7 @@ const Settings = () => {
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
-                <span style={{ color: marbleGray }}>Account Created</span>
+                <span style={{ color: gray }}>Account Created</span>
                 <span style={{ color: marbleDarkGray, fontWeight: '500' }}>
                   {userProfile?.createdAt ? new Date(userProfile.createdAt).toLocaleDateString() : 'Unknown'}
                 </span>
@@ -641,7 +641,7 @@ const Settings = () => {
               onClick={() => setShowSecurity(true)}
               style={{
                 backgroundColor: marbleDarkGray,
-                color: marbleWhite,
+                color: white,
                 border: 'none',
                 padding: '12px 24px',
                 borderRadius: '12px',
@@ -657,7 +657,7 @@ const Settings = () => {
 
           {/* Data Management */}
           <div style={{
-            backgroundColor: marbleLightGray,
+            backgroundColor: lightGray,
             borderRadius: '20px',
             padding: '32px'
           }}>
@@ -691,7 +691,7 @@ const Settings = () => {
                 </h3>
                 <p style={{
                   fontSize: '14px',
-                  color: marbleGray
+                  color: gray
                 }}>
                   Manage your data and progress
                 </p>
@@ -699,7 +699,7 @@ const Settings = () => {
             </div>
             
             <div style={{
-              backgroundColor: marbleWhite,
+              backgroundColor: white,
               borderRadius: '12px',
               padding: '24px',
               marginBottom: '16px'
@@ -710,7 +710,7 @@ const Settings = () => {
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
-                <span style={{ color: marbleGray }}>Export Data</span>
+                <span style={{ color: gray }}>Export Data</span>
                 <span style={{ color: marbleDarkGray, fontWeight: '500' }}>Available</span>
               </div>
               <div style={{
@@ -719,7 +719,7 @@ const Settings = () => {
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
-                <span style={{ color: marbleGray }}>Delete Account</span>
+                <span style={{ color: gray }}>Delete Account</span>
                 <span style={{ color: '#ef4444', fontWeight: '500' }}>Danger Zone</span>
               </div>
               <div style={{
@@ -727,7 +727,7 @@ const Settings = () => {
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
-                <span style={{ color: marbleGray }}>Reset Progress</span>
+                <span style={{ color: gray }}>Reset Progress</span>
                 <span style={{ color: '#f59e0b', fontWeight: '500' }}>Warning</span>
               </div>
             </div>
@@ -741,7 +741,7 @@ const Settings = () => {
                 onClick={handleExportData}
                 style={{
                   backgroundColor: marbleDarkGray,
-                  color: marbleWhite,
+                  color: white,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',
@@ -757,7 +757,7 @@ const Settings = () => {
                 onClick={() => setShowDeleteConfirm(true)}
                 style={{
                   backgroundColor: '#ef4444',
-                  color: marbleWhite,
+                  color: white,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',
@@ -774,7 +774,7 @@ const Settings = () => {
               onClick={() => setShowResetConfirm(true)}
               style={{
                 backgroundColor: '#f59e0b',
-                color: marbleWhite,
+                color: white,
                 border: 'none',
                 padding: '12px 24px',
                 borderRadius: '12px',
@@ -805,7 +805,7 @@ const Settings = () => {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: marbleWhite,
+            backgroundColor: white,
             borderRadius: '20px',
             padding: '32px',
             maxWidth: '500px',
@@ -838,7 +838,7 @@ const Settings = () => {
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: `1px solid ${marbleGray}`,
+                  border: `1px solid ${gray}`,
                   fontSize: '16px'
                 }}
               />
@@ -861,7 +861,7 @@ const Settings = () => {
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: `1px solid ${marbleGray}`,
+                  border: `1px solid ${gray}`,
                   fontSize: '16px'
                 }}
               />
@@ -884,7 +884,7 @@ const Settings = () => {
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: `1px solid ${marbleGray}`,
+                  border: `1px solid ${gray}`,
                   fontSize: '16px'
                 }}
               />
@@ -898,8 +898,8 @@ const Settings = () => {
               <button
                 onClick={() => setShowEditProfile(false)}
                 style={{
-                  backgroundColor: marbleGray,
-                  color: marbleWhite,
+                  backgroundColor: gray,
+                  color: white,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',
@@ -947,7 +947,7 @@ const Settings = () => {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: marbleWhite,
+            backgroundColor: white,
             borderRadius: '20px',
             padding: '32px',
             maxWidth: '500px',
@@ -979,7 +979,7 @@ const Settings = () => {
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: `1px solid ${marbleGray}`,
+                  border: `1px solid ${gray}`,
                   fontSize: '16px'
                 }}
               >
@@ -1007,7 +1007,7 @@ const Settings = () => {
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: `1px solid ${marbleGray}`,
+                  border: `1px solid ${gray}`,
                   fontSize: '16px'
                 }}
               >
@@ -1026,8 +1026,8 @@ const Settings = () => {
               <button
                 onClick={() => setShowPreferences(false)}
                 style={{
-                  backgroundColor: marbleGray,
-                  color: marbleWhite,
+                  backgroundColor: gray,
+                  color: white,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',
@@ -1075,7 +1075,7 @@ const Settings = () => {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: marbleWhite,
+            backgroundColor: white,
             borderRadius: '20px',
             padding: '32px',
             maxWidth: '500px',
@@ -1092,13 +1092,13 @@ const Settings = () => {
             </h3>
             
             <div style={{
-              backgroundColor: marbleLightGray,
+              backgroundColor: lightGray,
               borderRadius: '12px',
               padding: '20px',
               marginBottom: '24px'
             }}>
               <p style={{
-                color: marbleGray,
+                color: gray,
                 fontSize: '16px',
                 lineHeight: '1.5'
               }}>
@@ -1145,7 +1145,7 @@ const Settings = () => {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: marbleWhite,
+            backgroundColor: white,
             borderRadius: '20px',
             padding: '32px',
             maxWidth: '500px',
@@ -1177,7 +1177,7 @@ const Settings = () => {
             </h3>
             
             <p style={{
-              color: marbleGray,
+              color: gray,
               fontSize: '16px',
               lineHeight: '1.5',
               marginBottom: '24px'
@@ -1193,8 +1193,8 @@ const Settings = () => {
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 style={{
-                  backgroundColor: marbleGray,
-                  color: marbleWhite,
+                  backgroundColor: gray,
+                  color: white,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',
@@ -1210,7 +1210,7 @@ const Settings = () => {
                 disabled={saving}
                 style={{
                   backgroundColor: '#ef4444',
-                  color: marbleWhite,
+                  color: white,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',
@@ -1242,7 +1242,7 @@ const Settings = () => {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: marbleWhite,
+            backgroundColor: white,
             borderRadius: '20px',
             padding: '32px',
             maxWidth: '500px',
@@ -1274,7 +1274,7 @@ const Settings = () => {
             </h3>
             
             <p style={{
-              color: marbleGray,
+              color: gray,
               fontSize: '16px',
               lineHeight: '1.5',
               marginBottom: '24px'
@@ -1290,8 +1290,8 @@ const Settings = () => {
               <button
                 onClick={() => setShowResetConfirm(false)}
                 style={{
-                  backgroundColor: marbleGray,
-                  color: marbleWhite,
+                  backgroundColor: gray,
+                  color: white,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',
@@ -1307,7 +1307,7 @@ const Settings = () => {
                 disabled={saving}
                 style={{
                   backgroundColor: '#f59e0b',
-                  color: marbleWhite,
+                  color: white,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',

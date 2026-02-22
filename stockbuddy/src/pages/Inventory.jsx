@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 
 const defaultInventoryState = {
@@ -293,7 +293,7 @@ export default function Inventory() {
     return (
       <div style={{
         minHeight: "100vh",
-        backgroundColor: marbleWhite,
+        backgroundColor: white,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -308,7 +308,7 @@ export default function Inventory() {
     return (
       <div style={{
         minHeight: "100vh",
-        backgroundColor: marbleWhite,
+        backgroundColor: white,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -344,14 +344,14 @@ export default function Inventory() {
   return (
     <div style={{
       minHeight: "100vh",
-      backgroundColor: marbleWhite,
+      backgroundColor: white,
       fontFamily: fontBody
     }}>
       {/* Header */}
       <div style={{
-        backgroundColor: marbleLightGray,
+        backgroundColor: lightGray,
         padding: "24px",
-        borderBottom: `1px solid ${marbleGray}`
+        borderBottom: `1px solid ${gray}`
       }}>
         <div style={{
           maxWidth: "1200px",
@@ -386,7 +386,7 @@ export default function Inventory() {
           
           <p style={{
             fontSize: "18px",
-            color: marbleGray,
+            color: gray,
             marginBottom: "24px"
           }}>
             Manage your purchased items and activate them when you're ready.
@@ -399,7 +399,7 @@ export default function Inventory() {
             flexWrap: "wrap"
           }}>
             <div style={{
-              backgroundColor: marbleWhite,
+              backgroundColor: white,
               borderRadius: "12px",
               padding: "16px",
               display: "flex",
@@ -417,7 +417,7 @@ export default function Inventory() {
                 </div>
                 <div style={{
                   fontSize: "14px",
-                  color: marbleGray
+                  color: gray
                 }}>
                   Skip Tokens
                 </div>
@@ -425,7 +425,7 @@ export default function Inventory() {
             </div>
 
             <div style={{
-              backgroundColor: marbleWhite,
+              backgroundColor: white,
               borderRadius: "12px",
               padding: "16px",
               display: "flex",
@@ -443,7 +443,7 @@ export default function Inventory() {
                 </div>
                 <div style={{
                   fontSize: "14px",
-                  color: marbleGray
+                  color: gray
                 }}>
                   Streak Freeze Days
                 </div>
@@ -451,7 +451,7 @@ export default function Inventory() {
             </div>
 
             <div style={{
-              backgroundColor: marbleWhite,
+              backgroundColor: white,
               borderRadius: "12px",
               padding: "16px",
               display: "flex",
@@ -469,7 +469,7 @@ export default function Inventory() {
                 </div>
                 <div style={{
                   fontSize: "14px",
-                  color: marbleGray
+                  color: gray
                 }}>
                   Current XP
                 </div>
@@ -507,7 +507,7 @@ export default function Inventory() {
               gridColumn: "1 / -1",
               textAlign: "center",
               padding: "48px",
-              color: marbleGray
+              color: gray
             }}>
               <div style={{
                 fontSize: "48px",
@@ -548,10 +548,10 @@ export default function Inventory() {
               <div
                 key={resolvePurchaseId(item) || `${item.itemId}-${item.purchasedAt}`}
                 style={{
-                  backgroundColor: marbleLightGray,
+                  backgroundColor: lightGray,
                   borderRadius: "20px",
                   padding: "24px",
-                  border: `2px solid ${marbleGray}`,
+                  border: `2px solid ${gray}`,
                   position: "relative"
                 }}
               >
@@ -577,7 +577,7 @@ export default function Inventory() {
                     </div>
                     <div style={{
                       fontSize: "12px",
-                      color: marbleGray,
+                      color: gray,
                       fontWeight: "600",
                       textTransform: "uppercase"
                     }}>
@@ -588,7 +588,7 @@ export default function Inventory() {
 
                 <p style={{
                   fontSize: "14px",
-                  color: marbleGray,
+                  color: gray,
                   marginBottom: "20px",
                   lineHeight: "1.5"
                 }}>
@@ -641,7 +641,7 @@ export default function Inventory() {
                   top: "12px",
                   right: "12px",
                   fontSize: "11px",
-                  color: marbleGray,
+                  color: gray,
                   textAlign: "right",
                   lineHeight: "1.4"
                 }}>

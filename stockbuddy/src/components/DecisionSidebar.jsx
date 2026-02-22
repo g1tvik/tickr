@@ -1,5 +1,5 @@
 import React from 'react';
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontBody } from '../fontPalette';
 
 /**
@@ -92,7 +92,7 @@ export function DecisionSidebar({
 
   return (
     <div style={{
-      backgroundColor: marbleLightGray,
+      backgroundColor: lightGray,
       borderRadius: '20px',
       padding: '16px'
     }}>
@@ -301,7 +301,7 @@ export function DecisionSidebar({
         </div>
       ) : (
         <div style={{
-          backgroundColor: marbleWhite,
+          backgroundColor: white,
           borderRadius: '12px',
           padding: '16px'
         }}>
@@ -330,7 +330,7 @@ export function DecisionSidebar({
                 marginBottom: '8px'
               }}>
                 <div style={{
-                  color: marbleGray,
+                  color: gray,
                   fontSize: '12px',
                   fontWeight: '500',
                   marginBottom: '4px',
@@ -344,7 +344,7 @@ export function DecisionSidebar({
                   alignItems: 'center',
                   marginBottom: '4px'
                 }}>
-                  <span style={{ color: marbleGray, fontSize: '12px', fontFamily: fontBody }}>
+                  <span style={{ color: gray, fontSize: '12px', fontFamily: fontBody }}>
                     Available Cash:
                   </span>
                   <span style={{ color: marbleDarkGray, fontSize: '14px', fontWeight: '600', fontFamily: fontBody }}>
@@ -356,7 +356,7 @@ export function DecisionSidebar({
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
-                  <span style={{ color: marbleGray, fontSize: '12px', fontFamily: fontBody }}>
+                  <span style={{ color: gray, fontSize: '12px', fontFamily: fontBody }}>
                     Max Shares at ${orderPrice || scenario?.initialPrice}:
                   </span>
                   <span style={{ color: marbleDarkGray, fontSize: '14px', fontWeight: '600', fontFamily: fontBody }}>
@@ -451,7 +451,7 @@ export function DecisionSidebar({
                   padding: '8px',
                   borderRadius: '6px',
                   border: 'none',
-                  backgroundColor: marbleGray,
+                  backgroundColor: gray,
                   color: 'white',
                   fontWeight: '500',
                   cursor: 'pointer',

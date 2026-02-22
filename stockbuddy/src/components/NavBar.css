@@ -78,8 +78,7 @@
   }
 }
 .navbar-color {
-  background-color: #F4F1E9; /* marbleWhite – avoids grey flash before CSS vars */
-  background-color: var(--marbleWhite, #F4F1E9);
+  background-color: rgba(17, 24, 39, 0.82);
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -92,29 +91,61 @@
   display: flex;
   align-items: center;
   border-radius: 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+  border-bottom: 1px solid rgba(42, 69, 128, 0.35);
   padding: 0 2rem;
 }
 
 /* Specific rule for navbar when it has page-dark class */
 .navbar-color.page-dark {
-  background-color: var(--marbleDarkGray) !important;
+  background-color: rgba(17, 24, 39, 0.82) !important;
   border-radius: 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
 }
 
 /* Specific rule for navbar when it has page-light class */
 .navbar-color.page-light {
-  background-color: var(--marbleWhite) !important;
+  background-color: rgba(17, 24, 39, 0.82) !important;
   border-radius: 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
 }
 
 /* Override for dynamic background changes from Home page */
 .navbar-color[style*="background-color"] {
-  background-color: var(--navbar-bg-override, var(--marbleWhite)) !important;
+  background-color: rgba(17, 24, 39, 0.82) !important;
 }
 
+.navbar-color .navbar-brand img {
+  filter: drop-shadow(0 0 8px rgba(182, 156, 96, 0.12));
+}
+
+.navbar-color .nav-link {
+  color: #EDEDED !important;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  padding-bottom: 4px;
+}
+
+.navbar-color .nav-link:hover {
+  color: #FFFFFF !important;
+}
+
+.navbar-color .nav-link.active {
+  color: #FFFFFF !important;
+  border-bottom-color: var(--color-primary, #2A4580);
+  font-weight: 600;
+}
+
+.navbar-color .btn.btn-tertiary {
+  background: var(--color-primary, #2A4580);
+  color: #FFFFFF;
+  border: 1px solid var(--color-primary, #2A4580) !important;
+}
+
+.navbar-color .btn.btn-tertiary:hover {
+  background: #223a6b;
+  color: #FFFFFF;
+}
 @keyframes navbarSlideIn {
   from {
     transform: translateY(-12px);

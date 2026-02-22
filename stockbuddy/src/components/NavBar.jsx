@@ -3,11 +3,12 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { isAuthenticated } from '../services/api';
 import './NavBar.css';
 
-const MARBLE_WHITE = '#F4F1E9';
+const WHITE = '#FFFFFF';
 
 function NavBar({ isLoggedIn, setIsLoggedIn, navbarTheme = 'light' }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const isActive = (path) => location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
 
   // Check authentication status on mount and route changes
   useEffect(() => {
@@ -29,21 +30,19 @@ function NavBar({ isLoggedIn, setIsLoggedIn, navbarTheme = 'light' }) {
 
   const isOnTradePage = location.pathname === '/trade' || location.pathname === '/ai-coach';
   const isNavbarDark = navbarTheme === 'dark' || isOnTradePage;
+    
+    // Set scrollbar background to match page theme
 
   useEffect(() => {
     const body = document.body;
-    
-    // Set scrollbar background to match page theme
     if (isOnTradePage) {
-      // Dark theme scrollbar for Trade and AI Coach pages
-      body.style.setProperty('--scrollbar-track-bg', '#222222', 'important');
-      body.style.setProperty('--scrollbar-thumb-bg', '#B0B0B0', 'important');
-      body.style.setProperty('--scrollbar-thumb-hover-bg', '#E6C87A', 'important');
+      body.style.setProperty('--scrollbar-track-bg', '#2C2C2C', 'important');
+      body.style.setProperty('--scrollbar-thumb-bg', '#6B7280', 'important');
+      body.style.setProperty('--scrollbar-thumb-hover-bg', '#B69C60', 'important');
     } else {
-      // Light theme scrollbar for all other pages
-      body.style.setProperty('--scrollbar-track-bg', '#F4F1E9', 'important');
-      body.style.setProperty('--scrollbar-thumb-bg', '#B0B0B0', 'important');
-      body.style.setProperty('--scrollbar-thumb-hover-bg', '#E6C87A', 'important');
+      body.style.setProperty('--scrollbar-track-bg', '#F6F7F9', 'important');
+      body.style.setProperty('--scrollbar-thumb-bg', '#9CA3AF', 'important');
+      body.style.setProperty('--scrollbar-thumb-hover-bg', '#B69C60', 'important');
     }
   }, [isOnTradePage]);
 
@@ -57,12 +56,12 @@ function NavBar({ isLoggedIn, setIsLoggedIn, navbarTheme = 'light' }) {
         <Link className="navbar-brand" to="/">
           <img 
             src={isNavbarDark ? "/marbleWhitelogo.png" : "/logo.png"} 
-            alt="Tickr Logo" 
+            alt="Tickr" 
             style={{ 
               height: '50px', 
+              transition: 'opacity 0.3s ease',
               width: 'auto', 
               display: 'block',
-              transition: 'opacity 0.3s ease'
             }} 
           />
         </Link>
@@ -72,93 +71,34 @@ function NavBar({ isLoggedIn, setIsLoggedIn, navbarTheme = 'light' }) {
           {isLoggedIn ? (
             <>
               <li className="nav-item">
-                <Link 
-                  className="nav-link" 
-                  to="/dashboard"
-                  style={{ color: isNavbarDark ? MARBLE_WHITE : '#2C2C2C', transition: 'color 0.35s ease' }}
-                >
-                  DASHBOARD
-                </Link>
+                <Link className={`nav-link ${isActive('/dashboard') ? 'active' : ''}`} to="/dashboard">Dashboard</Link>
               </li>
               <li className="nav-item">
-                <Link 
-                  className="nav-link" 
-                  to="/trade"
-                  style={{ color: isNavbarDark ? MARBLE_WHITE : '#2C2C2C', transition: 'color 0.35s ease' }}
-                >
-                  TRADE
-                </Link>
+                <Link className={`nav-link ${isActive('/trade') ? 'active' : ''}`} to="/trade">Trade</Link>
               </li>
               <li className="nav-item">
-                <Link 
-                  className="nav-link" 
-                  to="/learn"
-                  style={{ color: isNavbarDark ? MARBLE_WHITE : '#2C2C2C', transition: 'color 0.35s ease' }}
-                >
-                  LEARN
-                </Link>
+                <Link className={`nav-link ${isActive('/learn') ? 'active' : ''}`} to="/learn">Learn</Link>
               </li>
               <li className="nav-item">
-                <Link 
-                  className="nav-link" 
-                  to="/ai-coach"
-                  style={{ color: isNavbarDark ? MARBLE_WHITE : '#2C2C2C', transition: 'color 0.35s ease' }}
-                >
-                  AI COACH
-                </Link>
+                <Link className={`nav-link ${isActive('/ai-coach') ? 'active' : ''}`} to="/ai-coach">AI Coach</Link>
               </li>
               <li className="nav-item">
-                <Link 
-                  className="nav-link" 
-                  to="/shop"
-                  style={{ color: isNavbarDark ? MARBLE_WHITE : '#2C2C2C', transition: 'color 0.35s ease' }}
-                >
-                  SHOP
-                </Link>
+                <Link className={`nav-link ${isActive('/shop') ? 'active' : ''}`} to="/shop">Shop</Link>
               </li>
               <li className="nav-item">
-                <Link 
-                  className="nav-link" 
-                  to="/inventory"
-                  style={{ color: isNavbarDark ? MARBLE_WHITE : '#2C2C2C', transition: 'color 0.35s ease' }}
-                >
-                  INVENTORY
-                </Link>
+                <Link className={`nav-link ${isActive('/inventory') ? 'active' : ''}`} to="/inventory">Inventory</Link>
               </li>
               <li className="nav-item">
-                <Link 
-                  className="nav-link" 
-                  to="/settings"
-                  style={{ color: isNavbarDark ? MARBLE_WHITE : '#2C2C2C', transition: 'color 0.35s ease' }}
-                >
-                  SETTINGS
-                </Link>
+                <Link className={`nav-link ${isActive('/settings') ? 'active' : ''}`} to="/settings">Settings</Link>
               </li>
               <li className="nav-item">
-                <button 
-                  className="btn btn-outline-light ms-2" 
-                  onClick={handleSignOut}
-                  style={{
-                    backgroundColor: isNavbarDark ? undefined : '#2C2C2C',
-                    color: isNavbarDark ? undefined : '#F4F1E9',
-                    borderColor: isNavbarDark ? undefined : '#2C2C2C',
-                    transition: 'color 0.35s ease, border-color 0.35s ease, background-color 0.35s ease'
-                  }}
-                >
-                  SIGN OUT
-                </button>
+                <button className="btn btn-tertiary" onClick={handleSignOut}>Sign out</button>
               </li>
             </>
           ) : (
             <>
               <li className="nav-item">
-                <Link 
-                  className="nav-link" 
-                  to="/signin"
-                  style={{ color: isNavbarDark ? MARBLE_WHITE : '#2C2C2C', transition: 'color 0.35s ease' }}
-                >
-                  Sign In
-                </Link>
+                <Link className="nav-link" to="/signin">Sign in</Link>
               </li>
             </>
           )}

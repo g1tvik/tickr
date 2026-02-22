@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { IChartApi } from 'lightweight-charts';
 import { Drawing } from '../../stores/chartStore';
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../../marblePalette';
+import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../../marblePalette';
 
 interface DrawingToolsProps {
   chart: IChartApi | null;

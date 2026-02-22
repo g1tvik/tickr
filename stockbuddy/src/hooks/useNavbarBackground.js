@@ -4,14 +4,14 @@ import { useState, useCallback, useEffect } from 'react';
 let navbarBackgroundListeners = [];
 let currentNavbarBackground = null;
 
-const MARBLE_DARK_GRAY = '#222222';
+const DARK_BGS = ['#222222', '#2c2c2c', '#2a4580', '#1e3260', '#111111'];
 
 export const useNavbarBackground = () => {
   const [navbarTheme, setNavbarTheme] = useState('light'); // 'light' | 'dark'
 
   const setNavbarBackground = useCallback((backgroundColor, options = {}) => {
     const isImportant = options.isImportant !== false;
-    const theme = options.theme ?? (backgroundColor === MARBLE_DARK_GRAY || (typeof backgroundColor === 'string' && backgroundColor.includes('222')) ? 'dark' : 'light');
+    const theme = options.theme ?? (typeof backgroundColor === 'string' && DARK_BGS.includes(backgroundColor.toLowerCase()) ? 'dark' : 'light');
     const navbar = document.querySelector('.navbar-color');
     if (navbar) {
       if (isImportant) {

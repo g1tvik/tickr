@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 
 const SimpleChart = ({ 
@@ -25,12 +25,12 @@ const SimpleChart = ({
     ctx.clearRect(0, 0, width, height);
 
     // Set background
-    ctx.fillStyle = theme === 'dark' ? marbleDarkGray : marbleWhite;
+    ctx.fillStyle = theme === 'dark' ? marbleDarkGray : white;
     ctx.fillRect(0, 0, width, height);
 
     if (!stockData.candles || stockData.candles.length === 0) {
       // Draw placeholder
-      ctx.fillStyle = marbleGray;
+      ctx.fillStyle = gray;
       ctx.font = '16px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('No chart data available', width / 2, height / 2);
@@ -52,7 +52,7 @@ const SimpleChart = ({
     const priceRange = maxPrice - minPrice;
 
     // Draw grid
-    ctx.strokeStyle = marbleGray;
+    ctx.strokeStyle = gray;
     ctx.lineWidth = 1;
     for (let i = 0; i <= 5; i++) {
       const y = padding + (i * chartHeight / 5);
@@ -96,7 +96,7 @@ const SimpleChart = ({
     });
 
     // Draw price labels
-    ctx.fillStyle = theme === 'dark' ? marbleWhite : marbleDarkGray;
+    ctx.fillStyle = theme === 'dark' ? white : marbleDarkGray;
     ctx.font = '12px Arial';
     ctx.textAlign = 'right';
     for (let i = 0; i <= 5; i++) {
@@ -106,7 +106,7 @@ const SimpleChart = ({
     }
 
     // Draw title
-    ctx.fillStyle = theme === 'dark' ? marbleWhite : marbleDarkGray;
+    ctx.fillStyle = theme === 'dark' ? white : marbleDarkGray;
     ctx.font = '16px Arial';
     ctx.textAlign = 'center';
     ctx.fillText(`${symbol} Chart (${timeframe})`, width / 2, 20);
@@ -116,14 +116,14 @@ const SimpleChart = ({
   if (!symbol) {
     return (
       <div style={{
-        backgroundColor: marbleLightGray,
+        backgroundColor: lightGray,
         borderRadius: '20px',
         padding: '24px',
         height: height,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: marbleGray,
+        color: gray,
         fontSize: '16px'
       }}>
         Select a stock to view the chart
@@ -134,7 +134,7 @@ const SimpleChart = ({
   if (isLoading) {
     return (
       <div style={{
-        backgroundColor: marbleLightGray,
+        backgroundColor: lightGray,
         borderRadius: '20px',
         padding: '24px',
         height: height,
@@ -147,13 +147,13 @@ const SimpleChart = ({
         <div style={{
           width: '32px',
           height: '32px',
-          border: `3px solid ${marbleGray}`,
+          border: `3px solid ${gray}`,
           borderTop: `3px solid ${marbleGold}`,
           borderRadius: '50%',
           animation: 'spin 1s linear infinite'
         }}></div>
         <div style={{
-          color: marbleGray,
+          color: gray,
           fontSize: '14px'
         }}>
           Loading chart...
@@ -165,7 +165,7 @@ const SimpleChart = ({
   if (error) {
     return (
       <div style={{
-        backgroundColor: marbleLightGray,
+        backgroundColor: lightGray,
         borderRadius: '20px',
         padding: '24px',
         height: height,
@@ -203,7 +203,7 @@ const SimpleChart = ({
 
   return (
     <div style={{
-      backgroundColor: marbleLightGray,
+      backgroundColor: lightGray,
       borderRadius: '20px',
       padding: '24px'
     }}>
@@ -236,8 +236,8 @@ const SimpleChart = ({
               className="chart-timeframe-btn"
               style={{
                 backgroundColor: timeframe === tf ? marbleGold : 'transparent',
-                color: timeframe === tf ? marbleDarkGray : marbleGray,
-                border: `1px solid ${timeframe === tf ? marbleGold : marbleGray}`,
+                color: timeframe === tf ? marbleDarkGray : gray,
+                border: `1px solid ${timeframe === tf ? marbleGold : gray}`,
                 padding: '6px 12px',
                 borderRadius: '6px',
                 fontSize: '12px',
@@ -258,7 +258,7 @@ const SimpleChart = ({
         height: height,
         borderRadius: '12px',
         overflow: 'hidden',
-        backgroundColor: theme === 'dark' ? marbleDarkGray : marbleWhite
+        backgroundColor: theme === 'dark' ? marbleDarkGray : white
       }}>
         <canvas
           ref={canvasRef}

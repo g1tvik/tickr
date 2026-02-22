@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCoachChat } from '../hooks/useCoachChat';
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 
 const escapeHtml = (text = '') =>
@@ -142,7 +142,7 @@ export function CoachChat({
 
   return (
     <div style={{
-      backgroundColor: marbleLightGray,
+      backgroundColor: lightGray,
       borderRadius: '20px',
       padding: '16px',
       height: '500px',
@@ -167,7 +167,7 @@ export function CoachChat({
         overflowY: 'auto',
         marginBottom: '16px',
         padding: '8px',
-        backgroundColor: marbleWhite,
+        backgroundColor: white,
         borderRadius: '12px'
       }}>
         {displayMessages.map((message, index) => (
@@ -181,7 +181,7 @@ export function CoachChat({
               maxWidth: '80%',
               padding: '8px 12px',
               borderRadius: '12px',
-              backgroundColor: message.type === 'user' ? marbleGold : marbleLightGray,
+              backgroundColor: message.type === 'user' ? marbleGold : lightGray,
               color: message.type === 'user' ? marbleDarkGray : marbleDarkGray,
               fontSize: '14px',
               lineHeight: '1.4',
@@ -204,7 +204,7 @@ export function CoachChat({
               display: 'inline-block',
               padding: '8px 12px',
               borderRadius: '12px',
-              backgroundColor: marbleLightGray,
+              backgroundColor: lightGray,
               color: marbleDarkGray,
               fontSize: '14px',
               fontFamily: fontBody

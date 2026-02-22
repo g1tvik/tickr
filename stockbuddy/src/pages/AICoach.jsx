@@ -4,7 +4,7 @@ import { CoachChat } from '../components/CoachChat';
 import { DecisionSidebar } from '../components/DecisionSidebar';
 import { useCoachChat } from '../hooks/useCoachChat';
 import { api } from '../services/api';
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody, fontMono } from '../fontPalette';
 
 // Enhanced historical trading scenarios with detailed analysis
@@ -513,7 +513,7 @@ function AICoach() {
   if (!scenario) {
     return (
       <div className="page-dark" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-        <div style={{ textAlign: 'center', color: marbleWhite }}>
+        <div style={{ textAlign: 'center', color: white }}>
           <p>No scenarios available. Please try again later.</p>
         </div>
       </div>
@@ -541,7 +541,7 @@ function AICoach() {
         }}>
           {/* Enhanced Scenario Header */}
           <div style={{
-            backgroundColor: marbleLightGray,
+            backgroundColor: lightGray,
             borderRadius: '24px',
             padding: '24px',
             border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -585,7 +585,7 @@ function AICoach() {
                   )}
                 </div>
                 <div style={{ 
-                  color: marbleGray, 
+                  color: gray, 
                   fontSize: '14px',
                   fontWeight: '500',
                   marginBottom: '8px',
@@ -594,7 +594,7 @@ function AICoach() {
                   Scenario {currentScenario + 1} of {HISTORICAL_SCENARIOS.length}
                 </div>
                 <div style={{
-                  backgroundColor: marbleWhite,
+                  backgroundColor: white,
                   borderRadius: '12px',
                   padding: '12px',
                   border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -610,7 +610,7 @@ function AICoach() {
                     🎯 Challenge Goal:
                   </div>
                   <div style={{
-                    color: marbleGray,
+                    color: gray,
                     fontSize: '12px',
                     lineHeight: '1.4',
                     fontFamily: fontBody
@@ -631,7 +631,7 @@ function AICoach() {
                   padding: '10px 16px', 
                   borderRadius: '12px', 
                   border: '2px solid rgba(255, 255, 255, 0.2)', 
-                  background: showDetails ? marbleGold : marbleWhite,
+                  background: showDetails ? marbleGold : white,
                   color: showDetails ? marbleDarkGray : marbleDarkGray, 
                   fontSize: '13px', 
                   fontWeight: '600',
@@ -652,7 +652,7 @@ function AICoach() {
               marginBottom: '20px'
             }}>
               <div style={{
-                backgroundColor: marbleWhite,
+                backgroundColor: white,
                 borderRadius: '16px',
                 padding: '16px',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -668,7 +668,7 @@ function AICoach() {
                   <span style={{ 
                     fontSize: '12px', 
                     fontWeight: '600', 
-                    color: marbleGray,
+                    color: gray,
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
                     fontFamily: fontBody
@@ -688,7 +688,7 @@ function AICoach() {
               </div>
 
               <div style={{
-                backgroundColor: marbleWhite,
+                backgroundColor: white,
                 borderRadius: '16px',
                 padding: '16px',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -704,7 +704,7 @@ function AICoach() {
                   <span style={{ 
                     fontSize: '12px', 
                     fontWeight: '600', 
-                    color: marbleGray,
+                    color: gray,
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
                     fontFamily: fontBody
@@ -723,7 +723,7 @@ function AICoach() {
               </div>
 
               <div style={{
-                backgroundColor: marbleWhite,
+                backgroundColor: white,
                 borderRadius: '16px',
                 padding: '16px',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -739,7 +739,7 @@ function AICoach() {
                   <span style={{ 
                     fontSize: '12px', 
                     fontWeight: '600', 
-                    color: marbleGray,
+                    color: gray,
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
                     fontFamily: fontBody
@@ -767,7 +767,7 @@ function AICoach() {
                 marginTop: '8px'
               }}>
                 <div style={{ 
-                  backgroundColor: marbleWhite, 
+                  backgroundColor: white, 
                   borderRadius: '16px', 
                   padding: '20px',
                   border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -791,7 +791,7 @@ function AICoach() {
                     </h3>
                   </div>
                   <p style={{ 
-                    color: marbleGray, 
+                    color: gray, 
                     fontSize: '14px', 
                     lineHeight: '1.6', 
                     margin: 0,
@@ -802,7 +802,7 @@ function AICoach() {
                 </div>
                 
                 <div style={{ 
-                  backgroundColor: marbleWhite, 
+                  backgroundColor: white, 
                   borderRadius: '16px', 
                   padding: '20px',
                   border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -826,7 +826,7 @@ function AICoach() {
                     </h3>
                   </div>
                   <ul style={{ 
-                    color: marbleGray, 
+                    color: gray, 
                     fontSize: '14px', 
                     lineHeight: '1.6', 
                     paddingLeft: '20px', 
@@ -844,7 +844,7 @@ function AICoach() {
 
           {/* Chart */}
           <div style={{
-            backgroundColor: marbleLightGray,
+            backgroundColor: lightGray,
             borderRadius: '20px',
             padding: '16px'
           }}>
@@ -852,7 +852,7 @@ function AICoach() {
               <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: marbleDarkGray, margin: 0 }}>
                 📈 {scenario.symbol} Chart
               </h3>
-              <div style={{ color: marbleGray, fontSize: '12px', marginTop: '4px' }}>
+              <div style={{ color: gray, fontSize: '12px', marginTop: '4px' }}>
                 Loading historical data for {scenario.startDate} to {scenario.endDate}...
               </div>
             </div>
@@ -878,7 +878,7 @@ function AICoach() {
           {/* Portfolio Balance for Buy Challenges */}
           {scenario.puzzleType === 'buy' && (
             <div style={{
-              backgroundColor: marbleLightGray,
+              backgroundColor: lightGray,
               borderRadius: '24px',
               padding: '24px',
               border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -903,7 +903,7 @@ function AICoach() {
               </div>
 
               <div style={{
-                backgroundColor: marbleWhite,
+                backgroundColor: white,
                 borderRadius: '16px',
                 padding: '20px',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -915,7 +915,7 @@ function AICoach() {
                   alignItems: 'center',
                   marginBottom: '16px'
                 }}>
-                  <span style={{ color: marbleGray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
+                  <span style={{ color: gray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
                     Available Cash
                   </span>
                   <span style={{ 
@@ -934,7 +934,7 @@ function AICoach() {
                   alignItems: 'center',
                   marginBottom: '12px'
                 }}>
-                  <span style={{ color: marbleGray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
+                  <span style={{ color: gray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
                     Current Price ({asOfDate})
                   </span>
                   <span style={{ 
@@ -954,7 +954,7 @@ function AICoach() {
                   border: '1px solid rgba(0, 0, 0, 0.1)'
                 }}>
                   <div style={{
-                    color: marbleGray,
+                    color: gray,
                     fontSize: '12px',
                     fontWeight: '500',
                     marginBottom: '4px',
@@ -971,7 +971,7 @@ function AICoach() {
                     {Math.floor(BEGINNER_BUDGET / scenario.initialPrice)} shares
                   </div>
                   <div style={{
-                    color: marbleGray,
+                    color: gray,
                     fontSize: '11px',
                     marginTop: '4px',
                     fontStyle: 'italic',
@@ -987,7 +987,7 @@ function AICoach() {
           {/* Enhanced Position Calculator */}
           {scenario.puzzleType !== 'buy' && position.hasPosition && (
             <div style={{
-              backgroundColor: marbleLightGray,
+              backgroundColor: lightGray,
               borderRadius: '24px',
               padding: '24px',
               border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -1019,7 +1019,7 @@ function AICoach() {
               }}>
                 {/* Position Details */}
                 <div style={{
-                  backgroundColor: marbleWhite,
+                  backgroundColor: white,
                   borderRadius: '16px',
                   padding: '20px',
                   border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -1044,7 +1044,7 @@ function AICoach() {
                       alignItems: 'center',
                       marginBottom: '8px'
                     }}>
-                      <span style={{ color: marbleGray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
+                      <span style={{ color: gray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
                         Budget
                       </span>
                       <span style={{ color: marbleDarkGray, fontSize: '16px', fontWeight: '700', fontFamily: fontBody }}>
@@ -1058,7 +1058,7 @@ function AICoach() {
                       alignItems: 'center',
                       marginBottom: '8px'
                     }}>
-                      <span style={{ color: marbleGray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
+                      <span style={{ color: gray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
                         Entry Date
                       </span>
                       <span style={{ color: marbleDarkGray, fontSize: '16px', fontWeight: '700', fontFamily: fontBody }}>
@@ -1072,7 +1072,7 @@ function AICoach() {
                       alignItems: 'center',
                       marginBottom: '8px'
                     }}>
-                      <span style={{ color: marbleGray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
+                      <span style={{ color: gray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
                         Entry Price
                       </span>
                       <span style={{ color: marbleDarkGray, fontSize: '16px', fontWeight: '700', fontFamily: fontBody }}>
@@ -1086,7 +1086,7 @@ function AICoach() {
                       alignItems: 'center',
                       marginBottom: '12px'
                     }}>
-                      <span style={{ color: marbleGray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
+                      <span style={{ color: gray, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
                         Shares Owned
                       </span>
                       <span style={{ color: marbleDarkGray, fontSize: '16px', fontWeight: '700', fontFamily: fontBody }}>
@@ -1116,14 +1116,14 @@ function AICoach() {
                       }}
                     >
                       <span style={{
-                        color: marbleGray,
+                        color: gray,
                         fontSize: '12px',
                         fontWeight: '500'
                       }}>
                         Calculation:
                       </span>
                       <span style={{
-                        color: marbleGray,
+                        color: gray,
                         fontSize: '14px',
                         transform: showSharesCalculation ? 'rotate(180deg)' : 'rotate(0deg)',
                         transition: 'transform 0.2s ease'
@@ -1154,7 +1154,7 @@ function AICoach() {
 
                 {/* P&L Performance */}
                 <div style={{
-                  backgroundColor: marbleWhite,
+                  backgroundColor: white,
                   borderRadius: '16px',
                   padding: '20px',
                   border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -1178,7 +1178,7 @@ function AICoach() {
                       return (
                         <div style={{
                           textAlign: 'center',
-                          color: marbleGray,
+                          color: gray,
                           fontSize: '14px',
                           padding: '20px'
                         }}>
@@ -1198,7 +1198,7 @@ function AICoach() {
                           alignItems: 'center',
                           marginBottom: '12px'
                         }}>
-                          <span style={{ color: marbleGray, fontSize: '14px', fontWeight: '500' }}>
+                          <span style={{ color: gray, fontSize: '14px', fontWeight: '500' }}>
                             Current Price
                           </span>
                           <span style={{ 
@@ -1216,7 +1216,7 @@ function AICoach() {
                           alignItems: 'center',
                           marginBottom: '12px'
                         }}>
-                          <span style={{ color: marbleGray, fontSize: '14px', fontWeight: '500' }}>
+                          <span style={{ color: gray, fontSize: '14px', fontWeight: '500' }}>
                             Price Change
                           </span>
                           <span style={{ 
@@ -1271,14 +1271,14 @@ function AICoach() {
                             }}
                           >
                             <span style={{
-                              color: marbleGray,
+                              color: gray,
                               fontSize: '12px',
                               fontWeight: '500'
                             }}>
                               P&L Calculation:
                             </span>
                             <span style={{
-                              color: marbleGray,
+                              color: gray,
                               fontSize: '14px',
                               transform: showPLCalculation ? 'rotate(180deg)' : 'rotate(0deg)',
                               transition: 'transform 0.2s ease'
@@ -1308,7 +1308,7 @@ function AICoach() {
                         
                         <div style={{
                           marginTop: '12px',
-                          color: marbleGray,
+                          color: gray,
                           fontSize: '11px',
                           fontStyle: 'italic'
                         }}>
@@ -1359,7 +1359,7 @@ function AICoach() {
 
           {/* Navigation */}
           <div style={{
-            backgroundColor: marbleLightGray,
+            backgroundColor: lightGray,
             borderRadius: '20px',
             padding: '16px'
           }}>
@@ -1388,7 +1388,7 @@ function AICoach() {
                     padding: '12px',
                     borderRadius: '8px',
                     border: 'none',
-                    backgroundColor: currentScenario === index ? marbleGold : marbleWhite,
+                    backgroundColor: currentScenario === index ? marbleGold : white,
                     color: currentScenario === index ? marbleDarkGray : marbleDarkGray,
                     fontWeight: currentScenario === index ? 'bold' : 'normal',
                     cursor: 'pointer',
@@ -1415,7 +1415,7 @@ function AICoach() {
                     padding: '8px',
                     borderRadius: '6px',
                     border: 'none',
-                    backgroundColor: marbleGray,
+                    backgroundColor: gray,
                     color: 'white',
                     fontWeight: '500',
                     cursor: 'pointer',

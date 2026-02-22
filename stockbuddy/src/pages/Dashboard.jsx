@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "../globals.css";
 import { useNavigate } from "react-router-dom";
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 import { api, isAuthenticated, getCurrentUser } from '../services/api';
 import { getLevelProgress, lessonStructure } from '../data/lessonStructure';
@@ -58,14 +58,14 @@ const WeeklyProgressChart = ({ userData }) => {
           <div
             style={{
               height: `${(day.lessons / maxLessons) * 100}%`,
-              backgroundColor: day.lessons > 0 ? marbleGold : marbleGray,
+              backgroundColor: day.lessons > 0 ? marbleGold : gray,
               borderRadius: '4px 4px 0 0',
               marginBottom: '8px',
               minHeight: '4px',
               transition: 'all 0.3s ease'
             }}
           />
-          <div style={{ fontSize: '12px', color: marbleGray, marginBottom: '2px' }}>
+          <div style={{ fontSize: '12px', color: gray, marginBottom: '2px' }}>
             {day.date}
           </div>
           <div style={{ fontSize: '10px', color: marbleDarkGray, fontWeight: '600' }}>
@@ -165,7 +165,7 @@ const TradingMilestones = ({ userData, portfolio }) => {
         return (
           <div style={{
             backgroundColor: marbleDarkGray,
-            color: marbleWhite,
+            color: white,
             padding: '4px 12px',
             borderRadius: '12px',
             fontSize: '12px',
@@ -175,8 +175,8 @@ const TradingMilestones = ({ userData, portfolio }) => {
       default:
         return (
           <div style={{
-            backgroundColor: marbleGray,
-            color: marbleWhite,
+            backgroundColor: gray,
+            color: white,
             padding: '4px 12px',
             borderRadius: '12px',
             fontSize: '12px',
@@ -194,7 +194,7 @@ const TradingMilestones = ({ userData, portfolio }) => {
     }}>
       {milestones.map((milestone, index) => (
         <div key={milestone.id} style={{
-          backgroundColor: marbleWhite,
+          backgroundColor: white,
           borderRadius: '16px',
           padding: '20px',
           display: 'flex',
@@ -214,7 +214,7 @@ const TradingMilestones = ({ userData, portfolio }) => {
             }}>{milestone.title}</div>
             <div style={{
               fontSize: '14px',
-              color: marbleGray,
+              color: gray,
               marginBottom: '12px'
             }}>{milestone.xp} XP</div>
             {renderMilestoneStatus(milestone.status)}
@@ -303,7 +303,7 @@ const RecentActivity = ({ userData, portfolio }) => {
             <div style={{
               width: '40px',
               height: '40px',
-              backgroundColor: marbleLightGray,
+              backgroundColor: lightGray,
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
@@ -316,7 +316,7 @@ const RecentActivity = ({ userData, portfolio }) => {
               <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '2px' }}>
                 {activity.title}
               </div>
-              <div style={{ fontSize: '12px', color: marbleGray }}>
+              <div style={{ fontSize: '12px', color: gray }}>
                 {formatTimeAgo(activity.timestamp)}
                 {activity.xp && ` • +${activity.xp} XP`}
                 {activity.amount && ` • $${activity.amount.toFixed(2)}`}
@@ -328,7 +328,7 @@ const RecentActivity = ({ userData, portfolio }) => {
         <div style={{
           textAlign: 'center',
           padding: '20px',
-          color: marbleGray
+          color: gray
         }}>
           No recent activity. Start learning or trading!
         </div>
@@ -392,7 +392,7 @@ const Leaderboard = ({ userData }) => {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '20px', color: marbleGray }}>
+      <div style={{ textAlign: 'center', padding: '20px', color: gray }}>
         Loading leaderboard...
       </div>
     );
@@ -411,7 +411,7 @@ const Leaderboard = ({ userData }) => {
       {totalUsers > 0 && (
         <div style={{
           fontSize: '12px',
-          color: marbleGray,
+          color: gray,
           marginBottom: '16px',
           textAlign: 'center'
         }}>
@@ -435,15 +435,15 @@ const Leaderboard = ({ userData }) => {
               width: '40px',
               height: '40px',
               backgroundColor: user.rank === 1 ? marbleGold : 
-                             user.rank === 2 ? marbleGray : 
-                             user.rank === 3 ? '#cd7f32' : marbleLightGray,
+                             user.rank === 2 ? gray : 
+                             user.rank === 3 ? '#cd7f32' : lightGray,
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '14px',
               fontWeight: 'bold',
-              color: user.rank <= 3 ? marbleWhite : marbleDarkGray,
+              color: user.rank <= 3 ? white : marbleDarkGray,
               flexShrink: 0
             }}>
               {user.rank || index + 1}
@@ -461,7 +461,7 @@ const Leaderboard = ({ userData }) => {
               </div>
               <div style={{ 
                 fontSize: '11px', 
-                color: marbleGray,
+                color: gray,
                 display: 'flex',
                 gap: '8px'
               }}>
@@ -485,7 +485,7 @@ const Leaderboard = ({ userData }) => {
         <div style={{
           textAlign: 'center',
           padding: '20px',
-          color: marbleGray
+          color: gray
         }}>
           No leaderboard data available
         </div>
@@ -619,7 +619,7 @@ export default function Dashboard() {
 
   // Helper function to get color for change
   const getChangeColor = (change) => {
-    if (!change) return marbleGray;
+    if (!change) return gray;
     return change >= 0 ? '#22c55e' : '#ef4444';
   };
 
@@ -665,7 +665,7 @@ export default function Dashboard() {
   return (
     <div className="dashboard-container" style={{
       minHeight: '100vh',
-      backgroundColor: marbleWhite,
+      backgroundColor: white,
       padding: '24px',
       maxWidth: '1200px',
       margin: '0 auto',
@@ -693,7 +693,7 @@ export default function Dashboard() {
               marginBottom: '4px'
             }}>Welcome back, {userDisplayName}!</h1>
             <div style={{ 
-              color: marbleGray,
+              color: gray,
               fontSize: '16px' 
             }}>{userDisplayUsername}</div>
           </div>
@@ -706,7 +706,7 @@ export default function Dashboard() {
               alignItems: 'center'
             }}>
               <div style={{
-                backgroundColor: marbleLightGray,
+                backgroundColor: lightGray,
                 borderRadius: '12px',
                 padding: '12px 16px',
                 display: 'flex',
@@ -724,7 +724,7 @@ export default function Dashboard() {
                   </div>
                   <div style={{
                     fontSize: '12px',
-                    color: marbleGray
+                    color: gray
                   }}>
                     Level {levelInfo.currentLevel}
                   </div>
@@ -732,7 +732,7 @@ export default function Dashboard() {
               </div>
               
               <div style={{
-                backgroundColor: marbleLightGray,
+                backgroundColor: lightGray,
                 borderRadius: '12px',
                 padding: '12px 16px',
                 display: 'flex',
@@ -750,7 +750,7 @@ export default function Dashboard() {
                   </div>
                   <div style={{
                     fontSize: '12px',
-                    color: marbleGray
+                    color: gray
                   }}>
                     Coins
                   </div>
@@ -776,7 +776,7 @@ export default function Dashboard() {
           )}
           <div style={{ 
             color: marbleDarkGray,
-            backgroundColor: marbleLightGray,
+            backgroundColor: lightGray,
             padding: '8px 16px',
             borderRadius: '20px',
             fontSize: '14px',
@@ -793,7 +793,7 @@ export default function Dashboard() {
         }}>
           {/* Current Progress Card */}
           <div style={{
-            backgroundColor: marbleLightGray,
+            backgroundColor: lightGray,
             borderRadius: '20px',
             padding: '32px',
             display: 'flex',
@@ -817,7 +817,7 @@ export default function Dashboard() {
               }}>Current Progress</div>
               <div style={{ 
                 fontSize: '16px',
-                color: marbleGray,
+                color: gray,
                 marginBottom: '12px'
               }}>Level {levelInfo.currentLevel} - {levelInfo.currentLevel < 5 ? 'Beginner' : levelInfo.currentLevel < 10 ? 'Intermediate' : 'Advanced'}</div>
               <div style={{
@@ -831,7 +831,7 @@ export default function Dashboard() {
 
           {/* Daily Goal Card */}
           <div style={{
-            backgroundColor: marbleLightGray,
+            backgroundColor: lightGray,
             borderRadius: '20px',
             padding: '32px',
             display: 'flex',
@@ -855,7 +855,7 @@ export default function Dashboard() {
               }}>Daily Goal</div>
               <div style={{ 
                 fontSize: '16px',
-                color: marbleGray,
+                color: gray,
                 marginBottom: '12px'
               }}>{dailyGoal.completed}/{dailyGoal.total} Lessons Complete</div>
               <div style={{
@@ -882,7 +882,7 @@ export default function Dashboard() {
           }}>
             {/* Portfolio Section */}
             <div style={{
-              backgroundColor: marbleLightGray,
+              backgroundColor: lightGray,
               borderRadius: '20px',
               padding: '24px'
             }}>
@@ -906,7 +906,7 @@ export default function Dashboard() {
                     }}
                     style={{
                       backgroundColor: marbleDarkGray,
-                      color: marbleWhite,
+                      color: white,
                       border: 'none',
                       padding: '8px 12px',
                       borderRadius: '12px',
@@ -939,7 +939,7 @@ export default function Dashboard() {
                 <div style={{
                   textAlign: 'center',
                   padding: '40px',
-                  color: marbleGray
+                  color: gray
                 }}>
                   Loading portfolio...
                 </div>
@@ -955,7 +955,7 @@ export default function Dashboard() {
                 <div style={{
                   textAlign: 'center',
                   padding: '40px',
-                  color: marbleGray
+                  color: gray
                 }}>
                   <div style={{ marginBottom: '16px' }}>No portfolio data available</div>
                   <button 
@@ -984,14 +984,14 @@ export default function Dashboard() {
                     marginBottom: '24px'
                   }}>
                     <div style={{
-                      backgroundColor: marbleWhite,
+                      backgroundColor: white,
                       borderRadius: '12px',
                       padding: '16px',
                       textAlign: 'center'
                     }}>
                       <div style={{
                         fontSize: '14px',
-                        color: marbleGray,
+                        color: gray,
                         marginBottom: '4px'
                       }}>Total Value</div>
                       <div style={{
@@ -1001,14 +1001,14 @@ export default function Dashboard() {
                       }}>{formatCurrency(portfolio.totalValue)}</div>
                     </div>
                     <div style={{
-                      backgroundColor: marbleWhite,
+                      backgroundColor: white,
                       borderRadius: '12px',
                       padding: '16px',
                       textAlign: 'center'
                     }}>
                       <div style={{
                         fontSize: '14px',
-                        color: marbleGray,
+                        color: gray,
                         marginBottom: '4px'
                       }}>Cash</div>
                       <div style={{
@@ -1018,14 +1018,14 @@ export default function Dashboard() {
                       }}>{formatCurrency(portfolio.cash)}</div>
                     </div>
                     <div style={{
-                      backgroundColor: marbleWhite,
+                      backgroundColor: white,
                       borderRadius: '12px',
                       padding: '16px',
                       textAlign: 'center'
                     }}>
                       <div style={{
                         fontSize: '14px',
-                        color: marbleGray,
+                        color: gray,
                         marginBottom: '4px'
                       }}>Total Return</div>
                       <div style={{
@@ -1052,7 +1052,7 @@ export default function Dashboard() {
                       }}>
                         {portfolio.positions.map((holding, index) => (
                           <div key={index} style={{
-                            backgroundColor: marbleWhite,
+                            backgroundColor: white,
                             borderRadius: '12px',
                             padding: '16px',
                             display: 'flex',
@@ -1068,7 +1068,7 @@ export default function Dashboard() {
                               }}>{holding.symbol}</div>
                               <div style={{
                                 fontSize: '14px',
-                                color: marbleGray
+                                color: gray
                               }}>{holding.shares} shares</div>
                             </div>
                             <div style={{ textAlign: 'right' }}>
@@ -1093,7 +1093,7 @@ export default function Dashboard() {
                     <div style={{
                       textAlign: 'center',
                       padding: '20px',
-                      color: marbleGray
+                      color: gray
                     }}>
                       No holdings yet. Start trading to build your portfolio!
                     </div>
@@ -1104,7 +1104,7 @@ export default function Dashboard() {
 
             {/* Weekly Progress */}
             <div style={{
-              backgroundColor: marbleLightGray,
+              backgroundColor: lightGray,
               borderRadius: '20px',
               padding: '24px'
             }}>
@@ -1120,7 +1120,7 @@ export default function Dashboard() {
 
             {/* Learning Path */}
             <div style={{
-              backgroundColor: marbleLightGray,
+              backgroundColor: lightGray,
               borderRadius: '20px',
               padding: '24px'
             }}>
@@ -1153,7 +1153,7 @@ export default function Dashboard() {
 
             {/* Current Lesson */}
             <div style={{
-              backgroundColor: marbleLightGray,
+              backgroundColor: lightGray,
               borderRadius: '20px',
               padding: '24px'
             }}>
@@ -1167,7 +1167,7 @@ export default function Dashboard() {
               <div style={{
                 textAlign: 'center',
                 padding: '20px',
-                color: marbleGray
+                color: gray
               }}>
                 <div style={{ marginBottom: '16px' }}>Ready to learn?</div>
                 <button 
@@ -1197,7 +1197,7 @@ export default function Dashboard() {
           }}>
             {/* Leaderboard */}
             <div style={{
-              backgroundColor: marbleLightGray,
+              backgroundColor: lightGray,
               borderRadius: '20px',
               padding: '24px'
             }}>
@@ -1213,7 +1213,7 @@ export default function Dashboard() {
 
             {/* Recent Activity */}
             <div style={{
-              backgroundColor: marbleLightGray,
+              backgroundColor: lightGray,
               borderRadius: '20px',
               padding: '24px'
             }}>

@@ -96,25 +96,34 @@ function AppContent() {
         if (navbar) {
           navbar.classList.add('page-dark');
           navbar.classList.remove('page-light');
-          setNavbarBackground('var(--marbleDarkGray)', { theme: 'dark' });
+          setNavbarBackground('var(--color-ink)', { theme: 'dark' });
           console.log('App: Setting navbar to dark theme for Trade/AI Coach page');
         }
       } else {
-        mainContent.classList.remove('page-dark');
-        pageTransition.classList.remove('page-dark');
-        body.classList.remove('page-dark');
-        html.classList.remove('page-dark');
-        mainContent.classList.add('page-light');
-        pageTransition.classList.add('page-light');
-        body.classList.add('page-light');
-        html.classList.add('page-light');
-        
-        // Set navbar to light theme (will be overridden by Home page if needed)
+        const isHomePage = location.pathname === '/';
+        // Home uses the lunar dark shell; other non-dark routes remain light.
+        mainContent.classList.remove('page-dark', 'page-light');
+        pageTransition.classList.remove('page-dark', 'page-light');
+        body.classList.remove('page-dark', 'page-light');
+        html.classList.remove('page-dark', 'page-light');
+
+        mainContent.classList.add(isHomePage ? 'page-dark' : 'page-light');
+        pageTransition.classList.add(isHomePage ? 'page-dark' : 'page-light');
+        body.classList.add(isHomePage ? 'page-dark' : 'page-light');
+        html.classList.add(isHomePage ? 'page-dark' : 'page-light');
+
+        // Home controls navbar dynamically; avoid forcing light on initial load
         if (navbar) {
-          navbar.classList.remove('page-dark');
-          navbar.classList.add('page-light');
-          setNavbarBackground('var(--marbleWhite)', { theme: 'light' });
-          console.log('App: Setting navbar to light theme for other pages');
+          navbar.classList.remove('page-dark', 'page-light');
+          navbar.classList.add(isHomePage ? 'page-dark' : 'page-light');
+
+          if (isHomePage) {
+            setNavbarBackground('transparent', { theme: 'dark' });
+            console.log('App: Leaving navbar dark on Home for hero sync');
+          } else {
+            setNavbarBackground('var(--color-gray-100)', { theme: 'light' });
+            console.log('App: Setting navbar to light theme for non-home light pages');
+          }
         }
       }
     }
@@ -129,8 +138,10 @@ function AppContent() {
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
+  const isHomePage = location.pathname === '/';
+
   return (
-    <div className="app-container">
+    <div className={`app-container${isHomePage ? ' app-container-home' : ''}`}>
       {!LOCKDOWN && <NavBar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} navbarTheme={navbarTheme} />}
       <main className="main-content">
         <PageTransition isVisible={!isTransitioning}>

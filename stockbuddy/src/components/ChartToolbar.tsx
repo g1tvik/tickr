@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Indicator } from '../stores/chartStore';
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 
 interface ChartToolbarProps {
@@ -59,7 +59,7 @@ export const ChartToolbar: React.FC<ChartToolbarProps> = ({
 
   return (
     <div className={`chart-toolbar ${theme === 'dark' ? 'bg-dark' : 'bg-light'} p-3 mb-3 rounded`}
-         style={{ border: `1px solid ${theme === 'dark' ? marbleGray : marbleLightGray}` }}>
+         style={{ border: `1px solid ${theme === 'dark' ? gray : lightGray}` }}>
       
       <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
         
@@ -162,7 +162,7 @@ export const ChartToolbar: React.FC<ChartToolbarProps> = ({
       {/* Drawing Tools Panel */}
       {showDrawingTools && (
         <div className={`mt-3 p-3 rounded ${theme === 'dark' ? 'bg-secondary' : 'bg-light'}`}
-             style={{ border: `1px solid ${theme === 'dark' ? marbleGray : marbleLightGray}` }}>
+             style={{ border: `1px solid ${theme === 'dark' ? gray : lightGray}` }}>
           <div className="d-flex align-items-center gap-2 mb-2">
             <span className={`small ${theme === 'dark' ? 'text-light' : 'text-dark'}`}>
               Drawing Tools:

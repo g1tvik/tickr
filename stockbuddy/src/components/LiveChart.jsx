@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createChart } from 'lightweight-charts';
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 
 const LiveChart = ({ 
@@ -30,41 +30,41 @@ const LiveChart = ({
     dark: {
       layout: {
         background: { color: marbleDarkGray },
-        textColor: marbleWhite,
+        textColor: white,
       },
       grid: {
-        vertLines: { color: marbleGray },
-        horzLines: { color: marbleGray },
+        vertLines: { color: gray },
+        horzLines: { color: gray },
       },
       crosshair: {
         mode: 1,
       },
       rightPriceScale: {
-        borderColor: marbleGray,
+        borderColor: gray,
       },
       timeScale: {
-        borderColor: marbleGray,
+        borderColor: gray,
         timeVisible: true,
         secondsVisible: false,
       },
     },
     light: {
       layout: {
-        background: { color: marbleWhite },
+        background: { color: white },
         textColor: marbleDarkGray,
       },
       grid: {
-        vertLines: { color: marbleLightGray },
-        horzLines: { color: marbleLightGray },
+        vertLines: { color: lightGray },
+        horzLines: { color: lightGray },
       },
       crosshair: {
         mode: 1,
       },
       rightPriceScale: {
-        borderColor: marbleGray,
+        borderColor: gray,
       },
       timeScale: {
-        borderColor: marbleGray,
+        borderColor: gray,
         timeVisible: true,
         secondsVisible: false,
       },
@@ -89,7 +89,7 @@ const LiveChart = ({
       height: height,
       ...chartTheme[theme],
       watermark: {
-        color: marbleGray,
+        color: gray,
         visible: true,
         fontSize: 24,
         text: symbol,
@@ -328,14 +328,14 @@ const LiveChart = ({
   if (!symbol) {
     return (
       <div style={{
-        backgroundColor: marbleLightGray,
+        backgroundColor: lightGray,
         borderRadius: '20px',
         padding: '24px',
         height: height,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: marbleGray,
+        color: gray,
         fontSize: '16px'
       }}>
         Select a stock to view the chart
@@ -346,7 +346,7 @@ const LiveChart = ({
   if (isLoading) {
     return (
       <div style={{
-        backgroundColor: marbleLightGray,
+        backgroundColor: lightGray,
         borderRadius: '20px',
         padding: '24px',
         height: height,
@@ -359,13 +359,13 @@ const LiveChart = ({
         <div style={{
           width: '32px',
           height: '32px',
-          border: `3px solid ${marbleGray}`,
+          border: `3px solid ${gray}`,
           borderTop: `3px solid ${marbleGold}`,
           borderRadius: '50%',
           animation: 'spin 1s linear infinite'
         }}></div>
         <div style={{
-          color: marbleGray,
+          color: gray,
           fontSize: '14px'
         }}>
           Loading chart...
@@ -377,7 +377,7 @@ const LiveChart = ({
   if (error) {
     return (
       <div style={{
-        backgroundColor: marbleLightGray,
+        backgroundColor: lightGray,
         borderRadius: '20px',
         padding: '24px',
         height: height,
@@ -415,7 +415,7 @@ const LiveChart = ({
 
   return (
     <div style={{
-      backgroundColor: marbleLightGray,
+      backgroundColor: lightGray,
       borderRadius: '20px',
       padding: '24px'
     }}>
@@ -448,8 +448,8 @@ const LiveChart = ({
               className="chart-timeframe-btn"
               style={{
                 backgroundColor: timeframe === tf ? marbleGold : 'transparent',
-                color: timeframe === tf ? marbleDarkGray : marbleGray,
-                border: `1px solid ${timeframe === tf ? marbleGold : marbleGray}`,
+                color: timeframe === tf ? marbleDarkGray : gray,
+                border: `1px solid ${timeframe === tf ? marbleGold : gray}`,
                 padding: '6px 12px',
                 borderRadius: '6px',
                 fontSize: '12px',
@@ -478,8 +478,8 @@ const LiveChart = ({
             className="chart-indicator-btn"
             style={{
               backgroundColor: enabled ? marbleGold : 'transparent',
-              color: enabled ? marbleDarkGray : marbleGray,
-              border: `1px solid ${enabled ? marbleGold : marbleGray}`,
+              color: enabled ? marbleDarkGray : gray,
+              border: `1px solid ${enabled ? marbleGold : gray}`,
               padding: '4px 8px',
               borderRadius: '4px',
               fontSize: '10px',

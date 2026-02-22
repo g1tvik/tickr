@@ -3,9 +3,8 @@ import { Link } from "react-router-dom";
 import styled, { keyframes, css } from "styled-components";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleBlack, marbleGold } from "../marblePalette";
+import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleBlack, marbleGold, primary } from "../marblePalette";
 import { fontHeading } from "../fontPalette";
-import { useNavbar } from "../context/NavbarContext";
 
 // ============ ANIMATIONS ============
 const pulse = keyframes`
@@ -26,6 +25,39 @@ const blink = keyframes`
 const dotBlinkGlow = keyframes`
   0%, 100% { opacity: 1; box-shadow: 0 0 10px rgba(214, 26, 60, 0.7); }
   50% { opacity: 0.25; box-shadow: 0 0 4px rgba(214, 26, 60, 0.35); }
+`;
+
+// Starfield texture: small varied stars for a night-sky feel
+const polkaDotPatternSvg = (() => {
+  const w = 220, h = 220;
+  const starColor = '238, 230, 208'; // warm lunar white
+  const stars = [
+    [18, 26, 1.2, 0.38], [52, 44, 1.6, 0.55], [88, 22, 1.1, 0.32],
+    [130, 36, 1.7, 0.62], [176, 18, 1.3, 0.41], [208, 42, 1.0, 0.28],
+    [30, 102, 1.5, 0.48], [72, 84, 1.1, 0.33], [116, 112, 1.8, 0.66],
+    [162, 96, 1.2, 0.4], [198, 118, 1.4, 0.5], [42, 168, 1.0, 0.27],
+    [96, 182, 1.6, 0.58], [148, 172, 1.2, 0.36], [188, 196, 1.7, 0.63],
+    [214, 162, 1.1, 0.31],
+  ];
+  const circles = stars.map(([cx, cy, r, a]) =>
+    `<circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(${starColor}, ${a})"/>`
+  ).join('');
+  const raw = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">${circles}</svg>`;
+  const encoded = encodeURIComponent(raw).replace(/'/g, '%27');
+  return `url("data:image/svg+xml,${encoded}")`;
+})();
+
+const PolkaDotOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: ${polkaDotPatternSvg};
+  background-repeat: repeat;
+  background-position: 0 0;
+  filter: blur(0.65px);
+  transition: opacity 0.25s ease-out;
+  opacity: ${props => props.$opacity};
 `;
 
 const shimmerSweep = keyframes`
@@ -71,7 +103,7 @@ const FilmGrain = styled.div`
   height: 200%;
   pointer-events: none;
   z-index: 9999;
-  opacity: 0.035;
+  opacity: 0.012;
   animation: ${grainShift} 8s steps(10) infinite;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   background-repeat: repeat;
@@ -126,6 +158,33 @@ const CursorRing = styled.div`
     display: none;
   }
 `;
+
+// ============ MAGNETIC BUTTON WRAPPER ============
+function MagneticButton({ children, className, ...props }) {
+  const ref = useRef(null);
+
+  const handleMouseMove = useCallback((e) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    el.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.transform = 'translate(0px, 0px)';
+  }, []);
+
+  return React.cloneElement(children, {
+    ref,
+    onMouseMove: handleMouseMove,
+    onMouseLeave: handleMouseLeave,
+    style: { ...children.props.style, transition: 'transform 0.35s cubic-bezier(0.23, 1, 0.32, 1)' },
+  });
+}
 
 // Hero text mask reveal wrapper
 const MaskWord = styled.span`
@@ -272,53 +331,27 @@ const ScreenCascadeWrapper = styled.div`
 `;
 
 // ============ STYLED COMPONENTS ============
-// Polka dots: ~3x bigger, scattered, less frequent (large tile, fewer dots)
-const polkaDotPatternSvg = (() => {
-  const w = 220, h = 220;
-  const r = 5;
-  const dots = [
-    [30, 45, marbleBlack], [120, 25, marbleGray], [180, 90, marbleGold],
-    [55, 150, marbleGold], [200, 60, marbleBlack], [15, 110, marbleGray],
-    [160, 180, marbleBlack], [85, 15, marbleGold], [140, 140, marbleGray],
-    [10, 75, marbleGold], [95, 195, marbleBlack],
-  ];
-  const circles = dots.map(([cx, cy, fill]) =>
-    `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}"/>`
-  ).join('');
-  const raw = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">${circles}</svg>`;
-  const encoded = encodeURIComponent(raw).replace(/'/g, '%27');
-  return `url("data:image/svg+xml,${encoded}")`;
-})();
-
 const PageWrapper = styled.div`
   min-height: 100vh;
-  background-color: ${marbleWhite};
+  background:
+    radial-gradient(circle at 84% 8%, rgba(201, 168, 90, 0.62) 0%, rgba(201, 168, 90, 0.28) 18%, rgba(201, 168, 90, 0.08) 32%, transparent 44%),
+    linear-gradient(180deg, rgba(42, 69, 128, 0.96) 0%, rgba(61, 83, 140, 0.88) 30%, rgba(68, 72, 90, 0.8) 54%, ${marbleDarkGray} 72%, ${marbleBlack} 100%);
+  background-repeat: no-repeat;
+  background-size: 100% 115vh, 100% 115vh;
+  background-color: ${marbleBlack};
   overflow-x: hidden;
   color: ${marbleDarkGray};
 `;
 
-const PolkaDotOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background-image: ${polkaDotPatternSvg};
-  background-repeat: repeat;
-  background-position: 0 0;
-  transition: opacity 0.25s ease-out;
-  opacity: ${props => props.$opacity};
-`;
-
 const HeroSection = styled.section`
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
   position: relative;
   perspective: 1000px;
   overflow: hidden;
-  background-color: ${marbleWhite};
+  background: transparent;
   z-index: 1;
 `;
 
@@ -354,7 +387,7 @@ const BadgeBullet = styled.span`
 `;
 
 const BadgeText = styled.span`
-  color: ${marbleDarkGray};
+  color: ${marbleWhite};
   font-weight: 600;
   ${props => props.$blink && css`animation: ${blink} 0.5s ease-in-out infinite;`}
 `;
@@ -365,8 +398,8 @@ const Badge = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: ${marbleLightGray};
-  border: 1px solid ${marbleGray};
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   padding: 8px 15px;
   border-radius: 50px;
   font-size: 0.8rem;
@@ -382,15 +415,15 @@ const HeroTitle = styled.h1`
   font-weight: 400;
   line-height: 1.1;
   margin-bottom: 24px;
-  color: ${marbleDarkGray};
-  -webkit-text-stroke: 0.025em ${marbleWhite};
+  color: ${marbleWhite};
+  -webkit-text-stroke: 0.025em ${marbleDarkGray};
   paint-order: stroke fill;
 `;
 
 const HeroSubtitle = styled.p`
   font-family: 'Creato Display', Helvetica, Arial, sans-serif;
   font-size: clamp(1rem, 2.5vw, 1.35rem);
-  color: ${marbleGray};
+  color: ${marbleLightGray};
   max-width: 600px;
   margin: 0 auto 40px;
   line-height: 1.6;
@@ -425,25 +458,30 @@ const PrimaryButton = styled(Link)`
     color: ${marbleWhite};
     background: ${marbleBlack};
   }
+  
+  span {
+    color: ${marbleGray};
+    font-size: 0.85rem;
+  }
 `;
 
 const SecondaryButton = styled(Link)`
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  background: ${marbleLightGray};
-  color: ${marbleDarkGray};
+  background: transparent;
+  color: ${marbleWhite};
   padding: 16px 32px;
   border-radius: 12px;
   font-weight: 600;
   font-size: 1.1rem;
   text-decoration: none;
-  border: 1px solid ${marbleGray};
+  border: 2px solid ${marbleWhite};
   transition: all 0.3s ease;
   
   &:hover {
-    background: ${marbleGray};
+    background: ${marbleWhite};
     transform: translateY(-3px);
     color: ${marbleDarkGray};
-      }
+  }
 `;
 
 const GlowOrb = styled.div`
@@ -459,63 +497,12 @@ const Section = styled.section`
   padding: 120px 20px;
   position: relative;
   overflow: hidden;
-  background: ${marbleLightGray};
+  background: transparent;
 `;
 
 const SectionInner = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-`;
-
-const FeatureGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 32px;
-  margin-top: 60px;
-`;
-
-const FeatureCard = styled.div`
-  background: ${marbleWhite};
-  border: 2px solid ${marbleGold};
-  border-radius: 24px;
-  padding: 40px;
-  transition: all 0.4s ease;
-  transform-style: preserve-3d;
-  
-  &:hover {
-    transform: translateY(-10px);
-    border-color: ${marbleGold};
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
-  }
-`;
-
-const FeatureIcon = styled.div`
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  background: ${marbleDarkGray};
-  border: 2px solid ${marbleGold};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  margin-bottom: 24px;
-`;
-
-const FeatureTitle = styled.h3`
-  font-family: ${fontHeading};
-  font-size: 1.5rem;
-  font-weight: 300;
-  margin-bottom: 12px;
-  color: ${marbleDarkGray};
-  -webkit-text-stroke: 0.018em ${marbleWhite};
-  paint-order: stroke fill;
-`;
-
-const FeatureDesc = styled.p`
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  color: ${marbleGray};
-  line-height: 1.6;
 `;
 
 const SectionTitle = styled.h2`
@@ -524,15 +511,13 @@ const SectionTitle = styled.h2`
   font-weight: 300;
   text-align: center;
   margin-bottom: 20px;
-  color: ${marbleDarkGray};
-  -webkit-text-stroke: 0.02em ${marbleWhite};
-  paint-order: stroke fill;
+  color: ${marbleWhite};
 `;
 
 const SectionSubtitle = styled.p`
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   text-align: center;
-  color: ${marbleGray};
+  color: ${marbleLightGray};
   font-size: 1.2rem;
   max-width: 600px;
   margin: 0 auto;
@@ -546,7 +531,7 @@ const PhoneSection = styled.section`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${marbleWhite};
+  background: transparent;
   perspective: 2000px;
 `;
 
@@ -560,6 +545,7 @@ const PhoneMockup = styled.div`
     0 50px 100px rgba(0, 0, 0, 0.3),
     inset 0 1px 1px rgba(255, 255, 255, 0.1);
   position: relative;
+  z-index: 10;
   transform-style: preserve-3d;
   transition: transform 0.08s ease-out, opacity 0.15s ease-out;
   will-change: transform, opacity;
@@ -618,11 +604,13 @@ const PhoneContent = styled.div`
 
 const FloatingStats = styled.div`
   position: absolute;
-  background: ${marbleWhite};
-  border: 1px solid ${marbleGray};
+  z-index: 30;
+  background: rgba(17, 24, 39, 0.72);
+  border: 1px solid rgba(182, 156, 96, 0.55);
   border-radius: 32px;
   padding: 16px 24px;
   transform-style: preserve-3d;
+  transform: translateZ(140px);
   transition: opacity 0.15s ease-out;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   
@@ -637,77 +625,27 @@ const FloatingStats = styled.div`
   `}
   
   h5 {
-    color: ${marbleDarkGray};
+    color: ${marbleWhite};
     font-size: 1.5rem;
     font-weight: 700;
     margin: 0;
   }
-  
+
   span {
-    color: ${marbleGray};
-    font-size: 0.85rem;
+    color: ${marbleLightGray};
   }
 `;
 
 // CTA Section
-const CTASection = styled.section`
-  padding: 120px 20px;
-  text-align: center;
-  position: relative;
-  background: ${marbleLightGray};
-`;
-
-const CTACard = styled.div`
-  max-width: 800px;
-  margin: 0 auto;
-  background: ${marbleWhite};
-  border: 1px solid ${marbleGray};
-  border-radius: 32px;
-  padding: 60px 40px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-`;
-
-// ============ MAGNETIC BUTTON WRAPPER ============
-function MagneticButton({ children, className, ...props }) {
-  const ref = useRef(null);
-
-  const handleMouseMove = useCallback((e) => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-    el.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.style.transform = 'translate(0px, 0px)';
-  }, []);
-
-  return React.cloneElement(children, {
-    ref,
-    onMouseMove: handleMouseMove,
-    onMouseLeave: handleMouseLeave,
-    style: { ...children.props.style, transition: 'transform 0.35s cubic-bezier(0.23, 1, 0.32, 1)' },
-  });
-}
 
 // ============ COMPONENT ============
-const NAVBAR_HEIGHT = 80;
-
 function Home({ isLoggedIn }) {
   const containerRef = useRef(null);
   const statsRef = useRef(null);
   const heroRef = useRef(null);
-  const featuresRef = useRef(null);
   const phoneRef = useRef(null);
-  const testimonialsRef = useRef(null);
-  const ctaRef = useRef(null);
   const footerRef = useRef(null);
   const cursorDotRef = useRef(null);
-  const { setNavbarBackground } = useNavbar();
   const cursorRingRef = useRef(null);
   const cursorPos = useRef({ x: 0, y: 0 });
   const cursorTarget = useRef({ x: 0, y: 0 });
@@ -817,8 +755,8 @@ function Home({ isLoggedIn }) {
     const lerp = (a, b, n) => a + (b - a) * n;
 
     const animateCursor = () => {
-      cursorPos.current.x = lerp(cursorPos.current.x, cursorTarget.current.x, 0.15);
-      cursorPos.current.y = lerp(cursorPos.current.y, cursorTarget.current.y, 0.15);
+      cursorPos.current.x = lerp(cursorPos.current.x, cursorTarget.current.x, 0.1725);
+      cursorPos.current.y = lerp(cursorPos.current.y, cursorTarget.current.y, 0.1725);
 
       if (cursorDotRef.current) {
         const dotSize = cursorDotRef.current.classList.contains('hovering') ? 40 : 12;
@@ -870,32 +808,6 @@ function Home({ isLoggedIn }) {
     };
   }, []);
 
-  // Navbar background: match the section under the navbar for seamless transition
-  const sectionConfig = useRef([
-    { ref: heroRef, bg: marbleWhite },
-    { ref: featuresRef, bg: marbleLightGray },
-    { ref: phoneRef, bg: marbleWhite },
-    { ref: statsRef, bg: marbleDarkGray },
-    { ref: testimonialsRef, bg: marbleLightGray },
-    { ref: ctaRef, bg: marbleLightGray },
-    { ref: footerRef, bg: marbleBlack },
-  ]).current;
-
-  useEffect(() => {
-    const y = NAVBAR_HEIGHT;
-    let currentBg = marbleWhite;
-    for (const { ref, bg } of sectionConfig) {
-      const el = ref.current;
-      if (!el) continue;
-      const rect = el.getBoundingClientRect();
-      if (rect.top <= y && rect.bottom >= y) {
-        currentBg = bg;
-        break;
-      }
-    }
-    setNavbarBackground(currentBg, { theme: (currentBg === marbleDarkGray || currentBg === marbleBlack) ? 'dark' : 'light' });
-  }, [scrollY, setNavbarBackground]);
-
   useEffect(() => {
     if (!statsRef.current || typeof IntersectionObserver === 'undefined') return;
     const observer = new IntersectionObserver(
@@ -915,37 +827,6 @@ function Home({ isLoggedIn }) {
   // Global scroll progress for continuous animations
   const totalScrollProgress = scrollY / (document.body.scrollHeight - windowHeight || 1);
   
-  // Testimonials section fade-in - triggers at 78% scroll (when testimonials are in view)
-  const testimonialProgress = Math.max(0, Math.min((totalScrollProgress - 0.68) * 8, 1));
-
-  const smoothStep = (t) => {
-    if (t <= 0) return 0;
-    if (t >= 1) return 1;
-    return t * t * (3 - 2 * t);
-  };
-
-  const testimonialCardBaseStyle = {
-    background: marbleWhite,
-    padding: '32px',
-    borderRadius: '20px',
-    border: `1px solid ${marbleGray}`,
-    transition: 'box-shadow 0.4s ease, transform 0.9s cubic-bezier(0.23, 1, 0.32, 1)',
-  };
-
-  const getTestimonialCardStyle = (offset = 0, spread = 0.18) => {
-    const raw = (testimonialProgress - offset) / spread;
-    const easedProgress = smoothStep(Math.max(0, Math.min(raw, 1)));
-    const translateX = (1 - easedProgress) * -110;
-    const translateY = (1 - easedProgress) * 35;
-    const scale = 0.92 + easedProgress * 0.08;
-
-    return {
-      ...testimonialCardBaseStyle,
-      opacity: easedProgress,
-      transform: `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`,
-      boxShadow: easedProgress > 0.85 ? '0 15px 45px rgba(0,0,0,0.08)' : 'none',
-    };
-  };
 
   // Cascading elements data - different sizes, positions, and speeds
   const cascadeElements = [
@@ -966,7 +847,7 @@ function Home({ isLoggedIn }) {
     { x: 90, size: 7, speed: 1.25, delay: 0.07 },
   ];
 
-  const polkaDotOpacity = Math.max(0, 1 - scrollY / 550);
+  const polkaDotOpacity = Math.max(0, 0.16 - scrollY / 420);
 
   return (
     <PageWrapper ref={containerRef}>
@@ -1011,12 +892,12 @@ function Home({ isLoggedIn }) {
         {/* Glow Orbs */}
         <GlowOrb 
           style={{ width: 600, height: 600, top: '-200px', left: '-200px' }}
-          $color="radial-gradient(circle, rgba(102, 126, 234, 0.2), transparent 70%)"
+          $color={`radial-gradient(circle, ${marbleGold}33, transparent 70%)`}
           $duration="6s"
         />
         <GlowOrb 
           style={{ width: 500, height: 500, bottom: '-150px', right: '-150px' }}
-          $color="radial-gradient(circle, rgba(118, 75, 162, 0.2), transparent 70%)"
+          $color={`radial-gradient(circle, ${primary}44, transparent 70%)`}
           $duration="8s"
         />
 
@@ -1063,72 +944,6 @@ function Home({ isLoggedIn }) {
         </HeroContent>
 
       </HeroSection>
-
-      {/* ============ FEATURES SECTION ============ */}
-      <Section ref={featuresRef}>
-        <SectionInner>
-          <SectionTitle>test</SectionTitle>
-          <SectionSubtitle>
-            relax, we've got you covered.
-          </SectionSubtitle>
-          
-          <FeatureGrid>
-            <FeatureCard>
-              <FeatureIcon>📊</FeatureIcon>
-              <FeatureTitle>real time charts</FeatureTitle>
-              <FeatureDesc>
-                Professional-grade charts with technical indicators, drawing tools, 
-                and real-time market data powered by Alpaca.
-              </FeatureDesc>
-            </FeatureCard>
-            
-            <FeatureCard>
-              <FeatureIcon>🎓</FeatureIcon>
-              <FeatureTitle>interactive lessons</FeatureTitle>
-              <FeatureDesc>
-                Learn at your own pace with gamified lessons, quizzes, and 
-                hands-on exercises. Earn XP and unlock achievements.
-              </FeatureDesc>
-            </FeatureCard>
-            
-            <FeatureCard>
-              <FeatureIcon>🤖</FeatureIcon>
-              <FeatureTitle>AI trading coach</FeatureTitle>
-              <FeatureDesc>
-                Get personalized guidance from our AI coach. Ask questions, 
-                analyze trades, and improve your strategy.
-              </FeatureDesc>
-            </FeatureCard>
-            
-            <FeatureCard>
-              <FeatureIcon>💰</FeatureIcon>
-              <FeatureTitle>paper trading</FeatureTitle>
-              <FeatureDesc>
-                Practice with $10,000 in virtual funds. Execute trades in 
-                real market conditions with zero risk.
-              </FeatureDesc>
-            </FeatureCard>
-            
-            <FeatureCard>
-              <FeatureIcon>🏆</FeatureIcon>
-              <FeatureTitle>leaderboards</FeatureTitle>
-              <FeatureDesc>
-                Compete with other traders. Climb the ranks and prove 
-                your skills on the global leaderboard.
-              </FeatureDesc>
-            </FeatureCard>
-            
-            <FeatureCard>
-              <FeatureIcon>🛒</FeatureIcon>
-              <FeatureTitle>rewards shop</FeatureTitle>
-              <FeatureDesc>
-                Earn coins by learning and trading. Spend them on XP boosters, 
-                streak freezes, and exclusive items.
-              </FeatureDesc>
-            </FeatureCard>
-          </FeatureGrid>
-        </SectionInner>
-      </Section>
 
       {/* ============ 3D PHONE SECTION ============ */}
       <PhoneSection ref={phoneRef} style={{ position: 'relative', zIndex: 10 }}>
@@ -1200,7 +1015,7 @@ function Home({ isLoggedIn }) {
       </PhoneSection>
 
       {/* ============ STATS SECTION ============ */}
-      <Section ref={statsRef} style={{ background: marbleDarkGray, position: 'relative', overflow: 'hidden', padding: '160px 20px' }}>
+      <Section ref={statsRef} style={{ background: 'transparent', position: 'relative', overflow: 'hidden', padding: '160px 20px' }}>
         {/* Subtle light accents on dark background */}
         <GoldDot 
           $size="10px" 
@@ -1247,138 +1062,23 @@ function Home({ isLoggedIn }) {
           }}>
             <div>
               <StatValue $isGold $animate={statsVisible}>$10K</StatValue>
-              <p style={{ color: marbleGray }}>Virtual Trading Balance</p>
+              <p style={{ color: marbleLightGray }}>Virtual Trading Balance</p>
             </div>
             <div>
               <StatValue>50+</StatValue>
-              <p style={{ color: marbleGray }}>Interactive Lessons</p>
+              <p style={{ color: marbleLightGray }}>Interactive Lessons</p>
             </div>
             <div>
               <StatValue $isGold $animate={statsVisible}>24/7</StatValue>
-              <p style={{ color: marbleGray }}>AI Coach Access</p>
+              <p style={{ color: marbleLightGray }}>AI Coach Access</p>
             </div>
             <div>
               <StatValue>$0</StatValue>
-              <p style={{ color: marbleGray }}>Risk While Learning</p>
+              <p style={{ color: marbleLightGray }}>Risk While Learning</p>
             </div>
           </div>
         </SectionInner>
       </Section>
-
-      {/* ============ TESTIMONIALS SECTION ============ */}
-      <Section ref={testimonialsRef} style={{ background: marbleLightGray, position: 'relative', overflow: 'hidden' }}>
-        {/* Floating accents */}
-        <GoldRing 
-          $size="50px"
-          $opacity={0.25}
-          style={{ 
-            top: '10%', 
-            right: '10%',
-            transform: `rotate(${totalScrollProgress * 120}deg)`
-          }} 
-        />
-        <GoldDot 
-          $size="6px" 
-          $opacity={0.35}
-          style={{ 
-            top: '40%', 
-            left: '5%',
-            transform: `translateX(${Math.cos(totalScrollProgress * Math.PI * 3) * 15}px)`
-          }} 
-        />
-        <GoldLine 
-          $width="70px"
-          $opacity={0.35}
-          style={{ 
-            bottom: '30%', 
-            right: '6%',
-            transform: `rotate(${45 + totalScrollProgress * 25}deg)`
-          }} 
-        />
-        <SubtleCross 
-          $opacity={0.2}
-          style={{ 
-            top: '65%', 
-            right: '15%',
-            transform: `rotate(${totalScrollProgress * 60}deg)`
-          }} 
-        />
-        
-        <SectionInner>
-          <SectionTitle>What Our Users Say</SectionTitle>
-          <SectionSubtitle>
-            Join thousands who've started their trading journey with tickr.
-          </SectionSubtitle>
-          
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-            gap: '32px', 
-            marginTop: '60px' 
-          }}>
-            {/* Testimonial 1 - First to fade in */}
-            <div style={getTestimonialCardStyle(0.25, 0.35)}>
-              <p style={{ color: marbleDarkGray, fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '20px' }}>
-                "Finally, a platform that doesn't throw you into the deep end. The paper trading feature let me make mistakes without losing real money."
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: marbleGray }} />
-                <div>
-                  <strong style={{ color: marbleDarkGray }}>Alex M.</strong>
-                  <p style={{ color: marbleGray, fontSize: '0.85rem' }}>Computer Science Student</p>
-                </div>
-              </div>
-            </div>
-            
-            {/* Testimonial 2 - Slight delay */}
-            <div style={getTestimonialCardStyle(0.4, 0.35)}>
-              <p style={{ color: marbleDarkGray, fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '20px' }}>
-                "The AI coach is like having a mentor available 24/7. It explained concepts I'd struggled with for months in just minutes."
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: marbleGray }} />
-                <div>
-                  <strong style={{ color: marbleDarkGray }}>Sarah K.</strong>
-                  <p style={{ color: marbleGray, fontSize: '0.85rem' }}>Marketing Professional</p>
-                </div>
-              </div>
-            </div>
-            
-            {/* Testimonial 3 - Last to fade in */}
-            <div style={getTestimonialCardStyle(0.65, 0.35)}>
-              <p style={{ color: marbleDarkGray, fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '20px' }}>
-                "The gamification keeps me coming back. I've learned more about investing in 2 weeks than I did in 2 years of reading."
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: marbleGray }} />
-                <div>
-                  <strong style={{ color: marbleDarkGray }}>James L.</strong>
-                  <p style={{ color: marbleGray, fontSize: '0.85rem' }}>Recent Graduate</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </SectionInner>
-      </Section>
-
-      {/* ============ CTA SECTION ============ */}
-      <CTASection ref={ctaRef} style={{ position: 'relative', overflow: 'hidden' }}>
-        <CTACard>
-          <SectionTitle style={{ marginBottom: '16px' }}>
-            Ready to Start Your Journey?
-          </SectionTitle>
-          <SectionSubtitle style={{ marginBottom: '32px' }}>
-            Join thousands of aspiring traders learning the smart way.
-          </SectionSubtitle>
-          <CTAGroup>
-            <MagneticButton>
-              <PrimaryButton to={isLoggedIn ? "/dashboard" : "/signup"}>
-                Get Started — It's Free
-              </PrimaryButton>
-            </MagneticButton>
-          </CTAGroup>
-        </CTACard>
-      </CTASection>
 
       {/* Footer */}
       <footer ref={footerRef} style={{ 

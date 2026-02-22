@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleBlack, marbleGold } from '../marblePalette';
+import { white, gray, marbleDarkGray, marbleBlack, marbleGold } from '../marblePalette';
 import { fontHeading } from '../fontPalette';
 
 const Wrapper = styled.div`
   min-height: 100vh;
-  background-color: ${marbleWhite};
+  background-color: ${white};
   color: ${marbleDarkGray};
 `;
 
@@ -26,7 +26,7 @@ const Title = styled.h1`
 
 const Lead = styled.p`
   font-size: 1.2rem;
-  color: ${marbleGray};
+  color: ${gray};
   line-height: 1.6;
   margin-bottom: 32px;
 `;
@@ -43,7 +43,7 @@ const BackLink = styled(Link)`
   margin-top: 40px;
   padding: 12px 24px;
   background: ${marbleDarkGray};
-  color: ${marbleWhite};
+  color: ${white};
   text-decoration: none;
   font-weight: 600;
   border-radius: 12px;
@@ -51,7 +51,7 @@ const BackLink = styled(Link)`
 
   &:hover {
     background: ${marbleBlack};
-    color: ${marbleWhite};
+    color: ${white};
     transform: translateY(-1px);
   }
 `;

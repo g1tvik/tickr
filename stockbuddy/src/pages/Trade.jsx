@@ -5,7 +5,7 @@ import StockSearch from '../components/StockSearch';
 import { SuperChart } from '../components/SuperChart';
 import { useTrading } from '../hooks/useTrading';
 import { getPositionValue, calculateOrderTotal } from '../utils/tradeUtils';
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 import { api } from '../services/api';
 import { useNavbarBackground } from '../hooks/useNavbarBackground';
@@ -247,7 +247,7 @@ function Trade() {
           </div>
           <div style={{
             fontSize: '16px',
-            color: marbleGray
+            color: gray
           }}>
             Please sign in to access the trading features.
           </div>
@@ -277,7 +277,7 @@ function Trade() {
         }}>
           {/* Header */}
           <div style={{
-            backgroundColor: marbleLightGray,
+            backgroundColor: lightGray,
             borderRadius: '20px',
             padding: '16px'
           }}>
@@ -301,7 +301,7 @@ function Trade() {
                 alignItems: 'center',
                 gap: '8px',
                 fontSize: '14px',
-                color: marbleGray
+                color: gray
               }}>
                 <div style={{
                   width: '8px',
@@ -313,7 +313,7 @@ function Trade() {
               </div>
             </div>
             <p style={{
-              color: marbleGray,
+              color: gray,
               fontSize: '14px',
               margin: 0
             }}>
@@ -333,7 +333,7 @@ function Trade() {
 
           {/* Stock Search */}
           <div style={{
-            backgroundColor: marbleLightGray,
+            backgroundColor: lightGray,
             borderRadius: '20px',
             padding: '16px'
           }}>
@@ -355,7 +355,7 @@ function Trade() {
           {/* Chart and Trading Section */}
           {selectedStock && (
             <div style={{
-              backgroundColor: marbleLightGray,
+              backgroundColor: lightGray,
               borderRadius: '20px',
               padding: '16px'
             }}>
@@ -387,7 +387,7 @@ function Trade() {
 
                 {/* Trading Panel */}
                 <div style={{
-                  backgroundColor: marbleWhite,
+                  backgroundColor: white,
                   borderRadius: '16px',
                   padding: '16px',
                   height: 'fit-content'
@@ -413,7 +413,7 @@ function Trade() {
                           {selectedStock.symbol}
                         </div>
                         <div style={{
-                          color: marbleGray,
+                          color: gray,
                           fontSize: '12px'
                         }}>
                           {selectedStock.name}
@@ -440,7 +440,7 @@ function Trade() {
                     </div>
                     {selectedStock.volume && (
                       <div style={{
-                        color: marbleGray,
+                        color: gray,
                         fontSize: '12px'
                       }}>
                         Volume: {selectedStock.volume.toLocaleString()}
@@ -474,7 +474,7 @@ function Trade() {
                             color: 'white',
                             fontWeight: '500',
                             cursor: 'pointer',
-                            backgroundColor: orderType === 'buy' ? '#22c55e' : marbleGray,
+                            backgroundColor: orderType === 'buy' ? '#22c55e' : gray,
                             transition: 'opacity 0.2s',
                             fontSize: '14px'
                           }}
@@ -491,7 +491,7 @@ function Trade() {
                             color: 'white',
                             fontWeight: '500',
                             cursor: 'pointer',
-                            backgroundColor: orderType === 'sell' ? '#ef4444' : marbleGray,
+                            backgroundColor: orderType === 'sell' ? '#ef4444' : gray,
                             transition: 'opacity 0.2s',
                             fontSize: '14px'
                           }}
@@ -528,7 +528,7 @@ function Trade() {
 
                     <div style={{
                       padding: '12px',
-                      backgroundColor: marbleLightGray,
+                      backgroundColor: lightGray,
                       borderRadius: '6px',
                       marginBottom: '16px',
                       fontSize: '12px'
@@ -538,7 +538,7 @@ function Trade() {
                         justifyContent: 'space-between',
                         marginBottom: '4px'
                       }}>
-                        <span style={{ color: marbleGray }}>Price per share</span>
+                        <span style={{ color: gray }}>Price per share</span>
                         <span style={{ fontWeight: '500' }}>${selectedStock.price?.toFixed(2) || 'N/A'}</span>
                       </div>
                       <div style={{
@@ -546,7 +546,7 @@ function Trade() {
                         justifyContent: 'space-between',
                         marginBottom: '4px'
                       }}>
-                        <span style={{ color: marbleGray }}>Number of shares</span>
+                        <span style={{ color: gray }}>Number of shares</span>
                         <span style={{ fontWeight: '500' }}>{shares}</span>
                       </div>
                       <div style={{
@@ -620,7 +620,7 @@ function Trade() {
         }}>
           {/* Account Balance */}
           <div style={{
-            backgroundColor: marbleLightGray,
+            backgroundColor: lightGray,
             borderRadius: '20px',
             padding: '16px'
           }}>
@@ -642,7 +642,7 @@ function Trade() {
               ${portfolio?.balance?.toFixed(2) || '0.00'}
             </div>
             <div style={{
-              color: marbleGray,
+              color: gray,
               fontSize: '14px'
             }}>
               Available for trading
@@ -651,7 +651,7 @@ function Trade() {
 
           {/* Portfolio */}
           <div style={{
-            backgroundColor: marbleLightGray,
+            backgroundColor: lightGray,
             borderRadius: '20px',
             padding: '16px'
           }}>
@@ -666,7 +666,7 @@ function Trade() {
             </h3>
             {!portfolio?.positions || portfolio.positions.length === 0 ? (
               <div style={{
-                color: marbleGray,
+                color: gray,
                 textAlign: 'center',
                 padding: '20px'
               }}>
@@ -680,7 +680,7 @@ function Trade() {
               }}>
                 {portfolio.positions.map((position, index) => (
                   <div key={index} style={{
-                    backgroundColor: marbleWhite,
+                    backgroundColor: white,
                     borderRadius: '12px',
                     padding: '16px'
                   }}>
@@ -699,7 +699,7 @@ function Trade() {
                       </div>
                       <div style={{
                         fontSize: '14px',
-                        color: marbleGray
+                        color: gray
                       }}>
                         {position.shares} shares
                       </div>
@@ -711,7 +711,7 @@ function Trade() {
                     }}>
                       <div style={{
                         fontSize: '14px',
-                        color: marbleGray
+                        color: gray
                       }}>
                         Avg: ${(position.avgPrice ?? position.avgCost)?.toFixed(2) || '0.00'}
                       </div>
@@ -731,7 +731,7 @@ function Trade() {
 
           {/* Market Watch */}
           <div style={{
-            backgroundColor: marbleLightGray,
+            backgroundColor: lightGray,
             borderRadius: '20px',
             padding: '16px'
           }}>
@@ -745,7 +745,7 @@ function Trade() {
               Market Watch
             </h3>
             <div style={{
-              color: marbleGray,
+              color: gray,
               fontSize: '14px',
               marginBottom: '16px'
             }}>
