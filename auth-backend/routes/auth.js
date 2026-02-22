@@ -78,6 +78,8 @@ const generateUserId = () => {
   return 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 };
 
+const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
+
 // Validate username format
 const validateUsername = (username) => {
   const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
@@ -88,8 +90,9 @@ const validateUsername = (username) => {
 router.post('/register', authLimiter, async (req, res) => {
   try {
     const { email, password, name, username } = req.body;
+    const normalizedEmail = normalizeEmail(email);
     
-    if (!email || !password || !name || !username) {
+    if (!normalizedEmail || !password || !name || !username) {
       return res.status(400).json({
         success: false,
         message: 'Email, password, name, and username are required'
@@ -107,7 +110,7 @@ router.post('/register', authLimiter, async (req, res) => {
     const users = getUsers(req);
     
     // Check if user already exists by email or username
-    const existingUserByEmail = Object.values(users).find(user => user.email === email);
+    const existingUserByEmail = Object.values(users).find(user => normalizeEmail(user.email) === normalizedEmail);
     if (existingUserByEmail) {
       return res.status(400).json({
         success: false,
@@ -130,7 +133,7 @@ router.post('/register', authLimiter, async (req, res) => {
     const userId = generateUserId();
     const newUser = {
       id: userId,
-      email,
+      email: normalizedEmail,
       username,
       password: hashedPassword,
       name,
@@ -173,7 +176,7 @@ router.post('/register', authLimiter, async (req, res) => {
     logAuthAttempt(req, {
       action: 'register',
       success: true,
-      identifier: email
+      identifier: normalizedEmail
     });
 
     res.json({
@@ -192,7 +195,7 @@ router.post('/register', authLimiter, async (req, res) => {
     logAuthAttempt(req, {
       action: 'register',
       success: false,
-      identifier: req.body?.email,
+      identifier: normalizeEmail(req.body?.email),
       message: error.message
     });
     res.status(500).json({
@@ -206,12 +209,14 @@ router.post('/register', authLimiter, async (req, res) => {
 router.post('/login', authLimiter, async (req, res) => {
   try {
     const { emailOrUsername, password } = req.body;
+    const normalizedIdentity = String(emailOrUsername || '').trim();
+    const normalizedEmailIdentity = normalizeEmail(emailOrUsername);
     
-    if (!emailOrUsername || !password) {
+    if (!normalizedIdentity || !password) {
       logAuthAttempt(req, {
         action: 'login',
         success: false,
-        identifier: emailOrUsername || 'unknown',
+        identifier: normalizedIdentity || 'unknown',
         message: 'Missing credentials'
       });
       return res.status(400).json({
@@ -224,14 +229,14 @@ router.post('/login', authLimiter, async (req, res) => {
     
     // Find user by email or username
     const user = Object.values(users).find(u => 
-      u.email === emailOrUsername || u.username === emailOrUsername
+      normalizeEmail(u.email) === normalizedEmailIdentity || u.username === normalizedIdentity
     );
     
     if (!user) {
       logAuthAttempt(req, {
         action: 'login',
         success: false,
-        identifier: emailOrUsername,
+        identifier: normalizedIdentity,
         message: 'User not found'
       });
       return res.status(401).json({
@@ -246,7 +251,7 @@ router.post('/login', authLimiter, async (req, res) => {
       logAuthAttempt(req, {
         action: 'login',
         success: false,
-        identifier: emailOrUsername,
+        identifier: normalizedIdentity,
         message: 'Invalid password'
       });
       return res.status(401).json({
@@ -270,7 +275,7 @@ router.post('/login', authLimiter, async (req, res) => {
     logAuthAttempt(req, {
       action: 'login',
       success: true,
-      identifier: emailOrUsername
+      identifier: normalizedIdentity
     });
 
     res.json({
@@ -289,7 +294,7 @@ router.post('/login', authLimiter, async (req, res) => {
     logAuthAttempt(req, {
       action: 'login',
       success: false,
-      identifier: req.body?.emailOrUsername || 'unknown',
+      identifier: String(req.body?.emailOrUsername || '').trim() || 'unknown',
       message: error.message
     });
     res.status(500).json({
@@ -325,11 +330,12 @@ router.post('/google', authLimiter, async (req, res) => {
 
     const payload = ticket.getPayload();
     const { email, name, picture } = payload;
+    const normalizedEmail = normalizeEmail(email);
 
     const users = getUsers(req);
     
     // Check if user exists
-    let user = Object.values(users).find(u => u.email === email);
+    let user = Object.values(users).find(u => normalizeEmail(u.email) === normalizedEmail);
     const isNewUser = !user;
     
     if (!user) {
@@ -339,7 +345,7 @@ router.post('/google', authLimiter, async (req, res) => {
       
       user = {
         id: userId,
-        email,
+        email: normalizedEmail,
         username,
         name,
         picture,
@@ -369,7 +375,7 @@ router.post('/google', authLimiter, async (req, res) => {
       logAuthAttempt(req, {
         action: 'google-auth',
         success: true,
-        identifier: email,
+        identifier: normalizedEmail,
         message: 'Registered via Google'
       });
     } else {
@@ -381,7 +387,7 @@ router.post('/google', authLimiter, async (req, res) => {
       logAuthAttempt(req, {
         action: 'google-auth',
         success: true,
-        identifier: email,
+        identifier: normalizedEmail,
         message: 'Login via Google'
       });
     }
