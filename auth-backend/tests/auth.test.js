@@ -38,6 +38,33 @@ describe('Auth routes', () => {
     expect(loginResponse.body.token).toBeDefined();
     expect(loginResponse.body.user.email).toBe(email);
   });
+
+  it('treats email login as case-insensitive', async () => {
+    const email = `caseuser-${Date.now()}@example.com`;
+    const password = 'Password123!';
+    const username = `caseuser${Math.floor(Math.random() * 10000)}`;
+
+    await request(app)
+      .post('/api/auth/register')
+      .send({
+        email,
+        password,
+        name: 'Case User',
+        username
+      })
+      .expect(200);
+
+    const loginResponse = await request(app)
+      .post('/api/auth/login')
+      .send({
+        emailOrUsername: email.toUpperCase(),
+        password
+      })
+      .expect(200);
+
+    expect(loginResponse.body.success).toBe(true);
+    expect(loginResponse.body.user.email).toBe(email);
+  });
 });
 
 describe('Health check', () => {
@@ -50,4 +77,3 @@ describe('Health check', () => {
     expect(response.body.port).toBeDefined();
   });
 });
-
