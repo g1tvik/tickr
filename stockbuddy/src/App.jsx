@@ -118,7 +118,7 @@ function AppContent() {
           navbar.classList.add(isHomePage ? 'page-dark' : 'page-light');
 
           if (isHomePage) {
-            setNavbarBackground('transparent', { theme: 'dark' });
+            setNavbarBackground('rgba(17, 24, 39, 0.7)', { theme: 'dark' });
             console.log('App: Leaving navbar dark on Home for hero sync');
           } else {
             setNavbarBackground('var(--color-gray-100)', { theme: 'light' });

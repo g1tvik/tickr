@@ -36,11 +36,11 @@ function NavBar({ isLoggedIn, setIsLoggedIn, navbarTheme = 'light' }) {
   useEffect(() => {
     const body = document.body;
     if (isOnTradePage) {
-      body.style.setProperty('--scrollbar-track-bg', '#2C2C2C', 'important');
+      body.style.setProperty('--scrollbar-track-bg', 'transparent', 'important');
       body.style.setProperty('--scrollbar-thumb-bg', '#6B7280', 'important');
       body.style.setProperty('--scrollbar-thumb-hover-bg', '#B69C60', 'important');
     } else {
-      body.style.setProperty('--scrollbar-track-bg', '#F6F7F9', 'important');
+      body.style.setProperty('--scrollbar-track-bg', 'transparent', 'important');
       body.style.setProperty('--scrollbar-thumb-bg', '#9CA3AF', 'important');
       body.style.setProperty('--scrollbar-thumb-hover-bg', '#B69C60', 'important');
     }

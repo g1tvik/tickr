@@ -130,12 +130,17 @@ html.page-light body {
 /* Custom vertical scrollbar with dynamic properties */
 ::-webkit-scrollbar {
   width: 8px;
+  background: transparent !important;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--scrollbar-track-bg) !important;
+  background: transparent !important;
   border-radius: 999px;
   transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent !important;
 }
 
 ::-webkit-scrollbar-thumb {
