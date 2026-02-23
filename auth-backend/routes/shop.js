@@ -20,6 +20,13 @@ const getTimestamp = () => {
 const getUsers = (req) => req.app.locals.fileStorage.getUsers();
 const saveUsers = (req, users) => req.app.locals.fileStorage.saveUsers(users);
 
+
+const generatePurchaseId = (userId) => {
+  const timestamp = Date.now().toString(36);
+  const randomPart = Math.random().toString(36).slice(2, 8);
+  return `${userId || 'purchase'}_${timestamp}_${randomPart}`;
+};
+
 // Shop items definition (synced with frontend)
 // Only includes items that are fully implemented
 const SHOP_ITEMS = [
@@ -230,7 +237,7 @@ router.post('/purchase', authenticateToken, (req, res) => {
 
     // Create purchase record
     const purchase = {
-      id: Date.now().toString(),
+      id: generatePurchaseId(req.user.userId),
       itemId: item.id,
       itemName: item.name,
       itemType: item.type,
@@ -316,7 +323,7 @@ router.post('/use', authenticateToken, (req, res) => {
     }
 
     if (!purchase.id) {
-      purchase.id = Date.now().toString();
+      purchase.id = generatePurchaseId(req.user.userId);
     }
 
     if (purchase.consumed) {
