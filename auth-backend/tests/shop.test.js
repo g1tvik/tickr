@@ -176,6 +176,35 @@ describe('Shop routes - Integration tests', () => {
       expect(user.purchasedItems.every(p => p.itemId === 1)).toBe(true);
       expect(user.learningProgress.coins).toBe(50); // 100 - 25 - 25
     });
+
+
+    it('should generate unique purchase IDs for rapid purchases in the same millisecond', async () => {
+      updateTestUser({
+        learningProgress: { xp: 0, coins: 100 }
+      });
+
+      const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(1700000000000);
+
+      const firstPurchase = await request(app)
+        .post('/api/shop/purchase')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ itemId: 1 });
+
+      const secondPurchase = await request(app)
+        .post('/api/shop/purchase')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ itemId: 1 });
+
+      nowSpy.mockRestore();
+
+      expect(firstPurchase.status).toBe(200);
+      expect(secondPurchase.status).toBe(200);
+      expect(firstPurchase.body.purchase.id).not.toBe(secondPurchase.body.purchase.id);
+
+      const user = getTestUser();
+      const uniqueIds = new Set(user.purchasedItems.map(p => p.id));
+      expect(uniqueIds.size).toBe(user.purchasedItems.length);
+    });
   });
 
   describe('POST /api/shop/use', () => {
