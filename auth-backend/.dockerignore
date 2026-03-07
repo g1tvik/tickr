@@ -1,0 +1,8 @@
+node_modules
+npm-debug.log
+.env
+data/users.json
+data/portfolios.json
+data/transactions.json
+data/invites.json
+data/waitlist.json

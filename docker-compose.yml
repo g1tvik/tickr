@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: ./auth-backend
+    ports:
+      - "5001:5001"
+    env_file:
+      - auth-backend/.env
+    volumes:
+      - ./auth-backend/data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./stockbuddy
+      args:
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
+        VITE_LOCKDOWN: ${VITE_LOCKDOWN:-false}
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
