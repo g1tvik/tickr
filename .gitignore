@@ -48,3 +48,9 @@ auth-backend/data/backups/
 Documentation/Codebase.md
 /auth-backend/node_modules
 .cursor/
+
+# Internal files
+AGENTS.md
+buglog.csv
+auth-backend/data/invites.json
+auth-backend/data/waitlist.json
