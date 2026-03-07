@@ -1,0 +1,7 @@
+<!-- .cursor/index.mdc -->
+# Rule Type: Always
+- Before acting, read `buglog.csv` if it exists; if not, create it with the header.
+- When the task involves a bug or fix:
+  - reference prior rows by short_id/area/files
+  - after proposing a patch, output ONE CSV row to append to `buglog.csv` (use ISO timestamp)
+- Never create extra docs; stick to current stack and minimal diffs.
