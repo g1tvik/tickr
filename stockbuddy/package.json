@@ -19,7 +19,7 @@
     "@react-oauth/google": "^0.12.2",
     "@react-three/drei": "^10.5.0",
     "@react-three/fiber": "^9.2.0",
-    "@tabler/icons-react": "^3.34.1",
+    "@tabler/icons-react": "^3.35.0",
     "axios": "^1.10.0",
     "bootstrap": "^5.3.7",
     "bootstrap-icons": "^1.11.3",
