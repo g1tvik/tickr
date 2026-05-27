@@ -1031,9 +1031,8 @@ function Home({ isLoggedIn }) {
   const changeColor = liveChange >= 0 ? '#22A55C' : '#E04848';
 
   // ─── AI coach message that fits whatever NVDA is doing right now ──────────
-  // Neutral framing — no assumption that the viewer is buying or holding.
-  // Each tier ends on a real concept worth learning, with the key idea
-  // wrapped in <span class="accent"> for the gold highlight.
+  // Neutral framing (no assumption the viewer is buying or holding) and
+  // written like a person talking, not a chatbot.
   const renderCoachMessage = () => {
     const pct = liveChange;
     const abs = Math.abs(pct).toFixed(2);
@@ -1041,34 +1040,34 @@ function Home({ isLoggedIn }) {
     if (pct >= 3) {
       return (
         <>
-          NVDA's up <span className="accent">{abs}%</span> today — a strong session. on big green days, the real debate is <span className="accent">taking profits</span> vs letting winners run. there's no single right answer.
+          NVDA's up <span className="accent">{abs}%</span> today. big green days are when traders wrestle with whether to <span className="accent">take profits</span> or let it ride. honestly, both can be the right call.
         </>
       );
     }
     if (pct >= 0.5) {
       return (
         <>
-          NVDA's quietly green today. small moves are easy to ignore, but <span className="accent">time in the market</span> tends to matter more than timing it.
+          NVDA's up a touch today. not flashy, but quiet days like this are <span className="accent">where most real wealth gets built</span>. boring weeks compound.
         </>
       );
     }
     if (pct > -0.5) {
       return (
         <>
-          NVDA's basically flat today. quiet sessions are the best ones for <span className="accent">studying the chart</span> — patterns show up clearer without the noise.
+          NVDA's barely moving today. flat days are actually the best for <span className="accent">learning the chart</span>. patterns are way easier to spot when nothing's screaming for your attention.
         </>
       );
     }
     if (pct > -3) {
       return (
         <>
-          NVDA's red today. days like this test discipline — <span className="accent">why you'd own it</span> matters more than the daily tick.
+          NVDA's red today. red days are when conviction gets tested. is <span className="accent">the bull case</span> still intact? that's what matters more than the daily move.
         </>
       );
     }
     return (
       <>
-        NVDA's down <span className="accent">{abs}%</span> today — a rough session. before reacting, check <span className="accent">the news</span>. one day rarely changes a long-term thesis.
+        NVDA's down <span className="accent">{abs}%</span> today. ugly session. before doing anything reactive, <span className="accent">find out why</span>. nine times out of ten it's noise, but the tenth time matters.
       </>
     );
   };
