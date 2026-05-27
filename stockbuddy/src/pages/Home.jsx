@@ -6,6 +6,7 @@ import "lenis/dist/lenis.css";
 import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleBlack, marbleGold, primary } from "../marblePalette";
 import { fontHeading } from "../fontPalette";
 import { useNavbar } from "../context/NavbarContext";
+import { api } from "../services/api";
 
 // ============ ANIMATIONS ============
 const pulse = keyframes`
@@ -756,29 +757,33 @@ const CoachCard = styled(PreviewCard)`
   }
 `;
 
-// Inline candlestick SVG — stylized NVDA-like uptrend.
-// Update these numbers with current NVDA price action if you want it tighter.
-const CHART_CANDLES = [
+// Fallback NVDA-like uptrend if the live API is unreachable (e.g. backend down).
+// Stored as full OHLC objects to match the live shape.
+const PLACEHOLDER_CANDLES = [
   [120, 122], [122, 121], [121, 124], [124, 126], [126, 125],
   [125, 128], [128, 127], [127, 131], [131, 129], [129, 132],
   [132, 134], [134, 133], [133, 136], [136, 135], [135, 138],
   [138, 137], [137, 140], [140, 138], [138, 141], [141, 143],
   [143, 142], [142, 144], [144, 143], [143, 145],
-];
+].map(([o, c], i) => ({
+  o, c,
+  h: Math.max(o, c) + 1.5 + (i % 3) * 0.4,
+  l: Math.min(o, c) - 1.5 - ((i + 1) % 3) * 0.4,
+}));
 
-function MiniCandleChart() {
+function MiniCandleChart({ candles = PLACEHOLDER_CANDLES }) {
   const W = 460;
   const H = 130;
   const padX = 8;
   const padY = 10;
-  const slotW = (W - padX * 2) / CHART_CANDLES.length;
+  const slotW = (W - padX * 2) / Math.max(candles.length, 1);
   const bodyW = slotW * 0.6;
 
-  // Find min/max for y-scaling, with small wick padding
-  const allValues = CHART_CANDLES.flatMap(([o, c]) => [o - 2, c + 2]);
+  const allValues = candles.flatMap(c => [c.l, c.h]);
   const minV = Math.min(...allValues);
   const maxV = Math.max(...allValues);
-  const yScale = (v) => H - padY - ((v - minV) / (maxV - minV)) * (H - padY * 2);
+  const range = maxV - minV || 1;
+  const yScale = (v) => H - padY - ((v - minV) / range) * (H - padY * 2);
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="130" style={{ display: 'block' }}>
@@ -794,23 +799,20 @@ function MiniCandleChart() {
           strokeWidth="1"
         />
       ))}
-      {CHART_CANDLES.map(([o, c], i) => {
+      {candles.map((cd, i) => {
         const x = padX + i * slotW + (slotW - bodyW) / 2;
-        const isUp = c >= o;
-        const high = Math.max(o, c) + 1.5 + (i % 3) * 0.4;
-        const low = Math.min(o, c) - 1.5 - ((i + 1) % 3) * 0.4;
-        const bodyTop = yScale(Math.max(o, c));
-        const bodyBottom = yScale(Math.min(o, c));
-        const wickColor = isUp ? '#22A55C' : '#E04848';
-        const bodyColor = isUp ? '#22A55C' : '#E04848';
+        const isUp = cd.c >= cd.o;
+        const bodyTop = yScale(Math.max(cd.o, cd.c));
+        const bodyBottom = yScale(Math.min(cd.o, cd.c));
+        const color = isUp ? '#22A55C' : '#E04848';
         return (
           <g key={i}>
             <line
               x1={x + bodyW / 2}
               x2={x + bodyW / 2}
-              y1={yScale(high)}
-              y2={yScale(low)}
-              stroke={wickColor}
+              y1={yScale(cd.h)}
+              y2={yScale(cd.l)}
+              stroke={color}
               strokeWidth="1.2"
             />
             <rect
@@ -818,7 +820,7 @@ function MiniCandleChart() {
               y={bodyTop}
               width={bodyW}
               height={Math.max(bodyBottom - bodyTop, 1.5)}
-              fill={bodyColor}
+              fill={color}
               rx="0.5"
             />
           </g>
@@ -995,6 +997,38 @@ function Home({ isLoggedIn }) {
   const [badgeText, setBadgeText] = useState("");
   const [badgeTypingDone, setBadgeTypingDone] = useState(false);
   const [badgeBlinking, setBadgeBlinking] = useState(false);
+
+  // ─── Live NVDA preview data (falls back to placeholders if API unreachable) ──
+  const [livePrice, setLivePrice] = useState(138.55);
+  const [liveChange, setLiveChange] = useState(2.85);
+  const [liveCandles, setLiveCandles] = useState(PLACEHOLDER_CANDLES);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.getChartData('NVDA', '1D', 30)
+      .then((res) => {
+        if (cancelled || !res?.success || !res?.chartData?.candles?.length) return;
+        const candles = res.chartData.candles;
+        const last = candles[candles.length - 1];
+        const prev = candles[candles.length - 2];
+        if (last?.close != null) {
+          setLivePrice(last.close);
+          if (prev?.close) {
+            setLiveChange(((last.close - prev.close) / prev.close) * 100);
+          }
+        }
+        const tail = candles.slice(-24).map(c => ({
+          o: c.open, c: c.close, h: c.high, l: c.low,
+        }));
+        if (tail.length) setLiveCandles(tail);
+      })
+      .catch(() => { /* keep placeholders */ });
+    return () => { cancelled = true; };
+  }, []);
+
+  const fmtPrice  = (n) => `$${Number(n).toFixed(2)}`;
+  const fmtChange = (n) => `${n >= 0 ? '+' : ''}${Number(n).toFixed(2)}%`;
+  const changeColor = liveChange >= 0 ? '#22A55C' : '#E04848';
 
   // Badge typing: phase 1 "now in beta • ", pause (with blink), phase 2 "live paper trading"
   useEffect(() => {
@@ -1329,11 +1363,11 @@ function Home({ isLoggedIn }) {
                 <span className="name">NVIDIA Corp.</span>
               </SymbolBlock>
               <PriceBlock>
-                <span className="price">$138.55</span>
-                <span className="change">+2.85%</span>
+                <span className="price">{fmtPrice(livePrice)}</span>
+                <span className="change" style={{ color: changeColor }}>{fmtChange(liveChange)}</span>
               </PriceBlock>
             </ChartCardHeader>
-            <MiniCandleChart />
+            <MiniCandleChart candles={liveCandles} />
             <TimeframeRow>
               <span>1D</span>
               <span className="active">1W</span>
@@ -1351,8 +1385,8 @@ function Home({ isLoggedIn }) {
             <div className="heading">buy NVDA</div>
             <div className="row"><span>shares</span><span>10</span></div>
             <div className="row"><span>type</span><span>market</span></div>
-            <div className="row"><span>est. price</span><span>$138.55</span></div>
-            <div className="total"><span>total</span><span>$1,385.50</span></div>
+            <div className="row"><span>est. price</span><span>{fmtPrice(livePrice)}</span></div>
+            <div className="total"><span>total</span><span>{fmtPrice(livePrice * 10)}</span></div>
             <button className="cta">review order →</button>
           </OrderCard>
 
