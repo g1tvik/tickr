@@ -54,15 +54,23 @@ function NavBar({ isLoggedIn, setIsLoggedIn, navbarTheme = 'light' }) {
     body.style.setProperty('--scrollbar-thumb-hover-bg', '#B69C60', 'important');
   }, [isOnTradePage]);
 
+  const themeClass =
+    navbarTheme === 'light'       ? 'navbar-color--light' :
+    navbarTheme === 'transparent' ? 'navbar-color--transparent' :
+                                     'navbar-color--dark';
+
+  // Light theme uses the dark logo so it reads on cream
+  const logoSrc = navbarTheme === 'light' ? '/logo.png' : '/marbleWhitelogo.png';
+
   return (
-    <nav className="navbar navbar-expand-lg navbar-color px-3">
+    <nav className={`navbar navbar-expand-lg navbar-color ${themeClass} px-3`}>
       {/* Logo */}
       <div className="navbar-left">
         <Link className="navbar-brand" to="/">
           <img
-            src="/marbleWhitelogo.png"
+            src={logoSrc}
             alt="tickr"
-            style={{ height: '44px', width: 'auto', display: 'block' }}
+            style={{ height: '44px', width: 'auto', display: 'block', transition: 'opacity 0.3s ease' }}
           />
         </Link>
       </div>

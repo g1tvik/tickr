@@ -5,6 +5,7 @@ import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleBlack, marbleGold, primary } from "../marblePalette";
 import { fontHeading } from "../fontPalette";
+import { useNavbar } from "../context/NavbarContext";
 
 // ============ ANIMATIONS ============
 const pulse = keyframes`
@@ -346,20 +347,33 @@ const PageWrapper = styled.div`
 const HeroSection = styled.section`
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
   align-items: center;
   position: relative;
   perspective: 1000px;
   overflow: hidden;
   background: transparent;
   z-index: 1;
+  gap: 40px;
+  padding: 0 8vw;
+
+  @media (max-width: 980px) {
+    grid-template-columns: 1fr;
+    padding: 80px 24px 60px;
+    gap: 60px;
+  }
 `;
 
 const HeroContent = styled.div`
-  text-align: center;
+  text-align: left;
   z-index: 10;
-  max-width: 900px;
-  padding: 0 20px;
+  max-width: 560px;
+  justify-self: start;
+
+  @media (max-width: 980px) {
+    text-align: center;
+    justify-self: center;
+  }
 `;
 
 const BadgeDot = styled.span`
@@ -424,20 +438,28 @@ const HeroSubtitle = styled.p`
   font-family: 'Creato Display', Helvetica, Arial, sans-serif;
   font-size: clamp(1rem, 2.5vw, 1.35rem);
   color: ${marbleLightGray};
-  max-width: 600px;
-  margin: 0 auto 40px;
+  max-width: 520px;
+  margin: 0 0 40px;
   line-height: 1.6;
   opacity: 0;
   animation: ${slideUp} 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.7s forwards;
+
+  @media (max-width: 980px) {
+    margin: 0 auto 40px;
+  }
 `;
 
 const CTAGroup = styled.div`
   display: flex;
   gap: 16px;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
   opacity: 0;
   animation: ${slideUp} 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.9s forwards;
+
+  @media (max-width: 980px) {
+    justify-content: center;
+  }
 `;
 
 const PrimaryButton = styled(Link)`
@@ -491,6 +513,319 @@ const GlowOrb = styled.div`
   animation: ${pulse} ${props => props.$duration || '4s'} ease-in-out infinite;
   filter: blur(40px);
 `;
+
+// ─── HERO PREVIEW (Alpaca-style layered composition) ─────────────────────────
+const floatY = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+`;
+
+const HeroPreviewWrap = styled.div`
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  justify-self: center;
+  height: 480px;
+  perspective: 1600px;
+  opacity: 0;
+  animation: ${slideUp} 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+
+  @media (max-width: 980px) {
+    height: 440px;
+    max-width: 520px;
+  }
+
+  @media (max-width: 520px) {
+    height: 380px;
+    transform: scale(0.88);
+    transform-origin: center top;
+  }
+`;
+
+const PreviewCard = styled.div`
+  position: absolute;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+`;
+
+const ChartCard = styled(PreviewCard)`
+  top: 6%;
+  left: 4%;
+  width: 78%;
+  background: rgba(245, 243, 233, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 18px;
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.35),
+    0 1px 0 rgba(255, 255, 255, 0.5) inset;
+  padding: 18px 20px 14px;
+  color: ${marbleDarkGray};
+  animation: ${floatY} 6s ease-in-out infinite;
+`;
+
+const ChartCardHeader = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+`;
+
+const SymbolBlock = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+
+  .ticker {
+    font-family: 'Creato Display', Helvetica, Arial, sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: ${marbleDarkGray};
+  }
+  .name {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 0.7rem;
+    color: rgba(34, 34, 34, 0.55);
+    letter-spacing: 0.02em;
+  }
+`;
+
+const PriceBlock = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+
+  .price {
+    font-family: 'Creato Display', Helvetica, Arial, sans-serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: ${marbleDarkGray};
+  }
+  .change {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 0.72rem;
+    color: #22A55C;
+    font-weight: 600;
+  }
+`;
+
+const TimeframeRow = styled.div`
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+
+  span {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 6px;
+    color: rgba(34, 34, 34, 0.5);
+    letter-spacing: 0.04em;
+  }
+  span.active {
+    background: rgba(34, 34, 34, 0.08);
+    color: ${marbleDarkGray};
+    font-weight: 600;
+  }
+`;
+
+const OrderCard = styled(PreviewCard)`
+  bottom: 8%;
+  left: 0;
+  width: 56%;
+  background: linear-gradient(150deg, rgba(28, 32, 44, 0.96), rgba(20, 24, 36, 0.96));
+  border: 1px solid rgba(230, 200, 122, 0.22);
+  border-radius: 16px;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.45),
+    0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  padding: 16px 18px;
+  color: ${marbleWhite};
+  z-index: 2;
+  animation: ${floatY} 7s ease-in-out 0.6s infinite;
+
+  .label {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: rgba(245, 243, 233, 0.5);
+    margin-bottom: 6px;
+  }
+  .heading {
+    font-family: 'Creato Display', Helvetica, Arial, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: ${marbleWhite};
+    margin-bottom: 12px;
+  }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 0.72rem;
+  }
+  .row span:first-child {
+    color: rgba(245, 243, 233, 0.55);
+  }
+  .row span:last-child {
+    color: ${marbleWhite};
+    font-weight: 600;
+  }
+  .total {
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(230, 200, 122, 0.25);
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Creato Display', Helvetica, Arial, sans-serif;
+    font-size: 0.88rem;
+  }
+  .total span:first-child {
+    color: rgba(245, 243, 233, 0.6);
+  }
+  .total span:last-child {
+    color: ${marbleGold};
+    font-weight: 600;
+  }
+  .cta {
+    margin-top: 12px;
+    background: ${marbleGold};
+    color: ${marbleBlack};
+    border: none;
+    width: 100%;
+    padding: 8px 0;
+    border-radius: 10px;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+    cursor: default;
+  }
+`;
+
+const CoachCard = styled(PreviewCard)`
+  bottom: 0;
+  right: 0;
+  width: 50%;
+  background: rgba(245, 243, 233, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 14px;
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.32),
+    0 1px 0 rgba(255, 255, 255, 0.5) inset;
+  padding: 14px 16px;
+  color: ${marbleDarkGray};
+  z-index: 3;
+  animation: ${floatY} 8s ease-in-out 1.2s infinite;
+
+  .label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: rgba(34, 34, 34, 0.5);
+    margin-bottom: 8px;
+  }
+  .label .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: ${marbleGold};
+    box-shadow: 0 0 8px ${marbleGold};
+  }
+  .quote {
+    font-family: 'Creato Display', Helvetica, Arial, sans-serif;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: ${marbleDarkGray};
+    letter-spacing: -0.005em;
+  }
+  .quote .accent {
+    background: linear-gradient(90deg, transparent 0%, ${marbleGold}55 50%, transparent 100%);
+    padding: 0 2px;
+  }
+`;
+
+// Inline candlestick SVG — hardcoded OHLC for stable, polished look
+const CHART_CANDLES = [
+  [110, 108], [108, 112], [112, 111], [111, 115], [115, 114],
+  [114, 118], [118, 116], [116, 120], [120, 119], [119, 122],
+  [122, 125], [125, 123], [123, 127], [127, 126], [126, 130],
+  [130, 128], [128, 132], [132, 131], [131, 135], [135, 133],
+  [133, 137], [137, 136], [136, 140], [140, 142],
+];
+
+function MiniCandleChart() {
+  const W = 460;
+  const H = 130;
+  const padX = 8;
+  const padY = 10;
+  const slotW = (W - padX * 2) / CHART_CANDLES.length;
+  const bodyW = slotW * 0.6;
+
+  // Find min/max for y-scaling, with small wick padding
+  const allValues = CHART_CANDLES.flatMap(([o, c]) => [o - 2, c + 2]);
+  const minV = Math.min(...allValues);
+  const maxV = Math.max(...allValues);
+  const yScale = (v) => H - padY - ((v - minV) / (maxV - minV)) * (H - padY * 2);
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="130" style={{ display: 'block' }}>
+      {/* horizontal grid lines */}
+      {[0.25, 0.5, 0.75].map((p, i) => (
+        <line
+          key={i}
+          x1={padX}
+          x2={W - padX}
+          y1={padY + (H - padY * 2) * p}
+          y2={padY + (H - padY * 2) * p}
+          stroke="rgba(34, 34, 34, 0.06)"
+          strokeWidth="1"
+        />
+      ))}
+      {CHART_CANDLES.map(([o, c], i) => {
+        const x = padX + i * slotW + (slotW - bodyW) / 2;
+        const isUp = c >= o;
+        const high = Math.max(o, c) + 1.5 + (i % 3) * 0.4;
+        const low = Math.min(o, c) - 1.5 - ((i + 1) % 3) * 0.4;
+        const bodyTop = yScale(Math.max(o, c));
+        const bodyBottom = yScale(Math.min(o, c));
+        const wickColor = isUp ? '#22A55C' : '#E04848';
+        const bodyColor = isUp ? '#22A55C' : '#E04848';
+        return (
+          <g key={i}>
+            <line
+              x1={x + bodyW / 2}
+              x2={x + bodyW / 2}
+              y1={yScale(high)}
+              y2={yScale(low)}
+              stroke={wickColor}
+              strokeWidth="1.2"
+            />
+            <rect
+              x={x}
+              y={bodyTop}
+              width={bodyW}
+              height={Math.max(bodyBottom - bodyTop, 1.5)}
+              fill={bodyColor}
+              rx="0.5"
+            />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
 
 // Feature Sections
 const Section = styled.section`
@@ -640,10 +975,12 @@ const FloatingStats = styled.div`
 
 // ============ COMPONENT ============
 function Home({ isLoggedIn }) {
+  const { setNavbarBackground } = useNavbar();
   const containerRef = useRef(null);
   const statsRef = useRef(null);
   const heroRef = useRef(null);
   const phoneRef = useRef(null);
+  const featuresRef = useRef(null);
   const footerRef = useRef(null);
   const cursorDotRef = useRef(null);
   const cursorRingRef = useRef(null);
@@ -820,6 +1157,40 @@ function Home({ isLoggedIn }) {
     return () => observer.disconnect();
   }, []);
 
+  // ─── Adaptive navbar: switch theme based on the section directly under it ──
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return;
+
+    const sections = [
+      { ref: heroRef,     theme: 'dark'  },
+      { ref: phoneRef,    theme: 'dark'  },
+      { ref: featuresRef, theme: 'light' },
+      { ref: statsRef,    theme: 'dark'  },
+      { ref: footerRef,   theme: 'dark'  },
+    ].filter(s => s.ref.current);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Pick the section with the largest intersection — that's "under" the navbar
+        const top = entries
+          .filter(e => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (!top) return;
+        const theme = top.target.dataset.theme;
+        if (theme === 'light') {
+          setNavbarBackground('rgba(244, 241, 233, 0.92)', { theme: 'light' });
+        } else {
+          setNavbarBackground('transparent', { theme: 'dark' });
+        }
+      },
+      // Trigger when the section's TOP edge crosses just under the navbar
+      { rootMargin: '-64px 0px -60% 0px', threshold: [0, 0.1, 0.5] }
+    );
+
+    sections.forEach(s => observer.observe(s.ref.current));
+    return () => observer.disconnect();
+  }, [setNavbarBackground]);
+
   // Calculate scroll progress (0 to 1) for different sections
   // Hero fades over first screen
   const scrollProgress = Math.min(scrollY / windowHeight, 1);
@@ -888,7 +1259,7 @@ function Home({ isLoggedIn }) {
       </CascadeContainer>
 
       {/* ============ HERO SECTION ============ */}
-      <HeroSection ref={heroRef}>
+      <HeroSection ref={heroRef} data-theme="dark">
         {/* Glow Orbs */}
         <GlowOrb 
           style={{ width: 600, height: 600, top: '-200px', left: '-200px' }}
@@ -943,10 +1314,61 @@ function Home({ isLoggedIn }) {
           </CTAGroup>
         </HeroContent>
 
+        {/* ============ HERO PREVIEW (stacked floating cards) ============ */}
+        <HeroPreviewWrap style={{
+          transform: `translateY(${scrollProgress * 60}px)`,
+          opacity: Math.max(1 - scrollProgress * 1.4, 0),
+        }}>
+          <ChartCard style={{
+            transform: `perspective(1600px) rotateY(-6deg) rotateX(4deg) translateZ(0)`,
+          }}>
+            <ChartCardHeader>
+              <SymbolBlock>
+                <span className="ticker">AAPL</span>
+                <span className="name">Apple Inc.</span>
+              </SymbolBlock>
+              <PriceBlock>
+                <span className="price">$189.45</span>
+                <span className="change">+2.42%</span>
+              </PriceBlock>
+            </ChartCardHeader>
+            <MiniCandleChart />
+            <TimeframeRow>
+              <span>1D</span>
+              <span className="active">1W</span>
+              <span>1M</span>
+              <span>3M</span>
+              <span>1Y</span>
+              <span>ALL</span>
+            </TimeframeRow>
+          </ChartCard>
+
+          <OrderCard style={{
+            transform: `perspective(1600px) rotateY(8deg) rotateX(-2deg) translateZ(60px)`,
+          }}>
+            <div className="label">paper order</div>
+            <div className="heading">buy AAPL</div>
+            <div className="row"><span>shares</span><span>10</span></div>
+            <div className="row"><span>type</span><span>market</span></div>
+            <div className="row"><span>est. price</span><span>$189.45</span></div>
+            <div className="total"><span>total</span><span>$1,894.50</span></div>
+            <button className="cta">review order →</button>
+          </OrderCard>
+
+          <CoachCard style={{
+            transform: `perspective(1600px) rotateY(-4deg) rotateX(-3deg) translateZ(80px)`,
+          }}>
+            <div className="label"><span className="dot" />ai coach</div>
+            <div className="quote">
+              nice trade — but your portfolio is now <span className="accent">60% tech</span>. want to take a quick lesson on diversification?
+            </div>
+          </CoachCard>
+        </HeroPreviewWrap>
+
       </HeroSection>
 
       {/* ============ 3D PHONE SECTION ============ */}
-      <PhoneSection ref={phoneRef} style={{ position: 'relative', zIndex: 10 }}>
+      <PhoneSection ref={phoneRef} data-theme="dark" style={{ position: 'relative', zIndex: 10 }}>
         <div style={{ position: 'relative', transformStyle: 'preserve-3d' }}>
           <PhoneMockup 
             style={{ 
@@ -1014,8 +1436,112 @@ function Home({ isLoggedIn }) {
         </div>
       </PhoneSection>
 
+      {/* ============ FEATURES SECTION (light cream — navbar adapts) ============ */}
+      <section
+        ref={featuresRef}
+        data-theme="light"
+        style={{
+          position: 'relative',
+          zIndex: 5,
+          background: '#F4F1E9',
+          padding: '140px 20px',
+          color: marbleDarkGray,
+        }}
+      >
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <div style={{
+            fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+            fontSize: '0.75rem',
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: 'rgba(34,34,34,0.5)',
+            marginBottom: '20px',
+            textAlign: 'center',
+          }}>
+            why tickr
+          </div>
+          <h2 style={{
+            fontFamily: "'Creato Display', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+            fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
+            fontWeight: 400,
+            letterSpacing: '-0.02em',
+            textAlign: 'center',
+            margin: '0 0 18px',
+            color: marbleDarkGray,
+          }}>
+            built for the way you'd actually learn to invest.
+          </h2>
+          <p style={{
+            fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+            fontSize: '1.05rem',
+            lineHeight: 1.65,
+            color: 'rgba(34,34,34,0.65)',
+            maxWidth: '640px',
+            margin: '0 auto 80px',
+            textAlign: 'center',
+          }}>
+            real markets, fake money, real coaching. tickr meets you wherever you are and walks you through the rest.
+          </p>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: '36px 48px',
+            maxWidth: '880px',
+            margin: '0 auto',
+          }}>
+            {[
+              { title: 'real market data', desc: 'live prices and candles powered by Alpaca — same data the pros see.' },
+              { title: 'paper trading', desc: 'start with $10,000 in virtual money. every win and loss is real, only the dollars aren\'t.' },
+              { title: 'guided lessons', desc: 'short, interactive modules build from "what is a stock" to risk management.' },
+              { title: 'ai coach', desc: 'a personal tutor that reads your portfolio and suggests the next lesson.' },
+            ].map((f, i) => (
+              <div key={i} style={{ display: 'flex', gap: '14px' }}>
+                <div style={{
+                  flexShrink: 0,
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  background: marbleGold,
+                  color: marbleDarkGray,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  marginTop: '2px',
+                  boxShadow: '0 4px 14px rgba(230, 200, 122, 0.35)',
+                }}>
+                  ✓
+                </div>
+                <div>
+                  <div style={{
+                    fontFamily: "'Creato Display', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+                    fontSize: '1.15rem',
+                    fontWeight: 500,
+                    color: marbleDarkGray,
+                    marginBottom: '6px',
+                    letterSpacing: '-0.005em',
+                  }}>
+                    {f.title}
+                  </div>
+                  <div style={{
+                    fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                    fontSize: '0.95rem',
+                    lineHeight: 1.55,
+                    color: 'rgba(34,34,34,0.62)',
+                  }}>
+                    {f.desc}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ============ STATS SECTION ============ */}
-      <Section ref={statsRef} style={{ background: 'transparent', position: 'relative', overflow: 'hidden', padding: '160px 20px' }}>
+      <Section ref={statsRef} data-theme="dark" style={{ background: 'transparent', position: 'relative', overflow: 'hidden', padding: '160px 20px' }}>
         {/* Subtle light accents on dark background */}
         <GoldDot 
           $size="10px" 
@@ -1081,7 +1607,7 @@ function Home({ isLoggedIn }) {
       </Section>
 
       {/* Footer */}
-      <footer ref={footerRef} style={{ 
+      <footer ref={footerRef} data-theme="dark" style={{ 
         padding: '40px 20px', 
         textAlign: 'center', 
         borderTop: `1px solid ${marbleGray}`,
