@@ -756,13 +756,14 @@ const CoachCard = styled(PreviewCard)`
   }
 `;
 
-// Inline candlestick SVG — hardcoded OHLC for stable, polished look
+// Inline candlestick SVG — stylized NVDA-like uptrend.
+// Update these numbers with current NVDA price action if you want it tighter.
 const CHART_CANDLES = [
-  [110, 108], [108, 112], [112, 111], [111, 115], [115, 114],
-  [114, 118], [118, 116], [116, 120], [120, 119], [119, 122],
-  [122, 125], [125, 123], [123, 127], [127, 126], [126, 130],
-  [130, 128], [128, 132], [132, 131], [131, 135], [135, 133],
-  [133, 137], [137, 136], [136, 140], [140, 142],
+  [120, 122], [122, 121], [121, 124], [124, 126], [126, 125],
+  [125, 128], [128, 127], [127, 131], [131, 129], [129, 132],
+  [132, 134], [134, 133], [133, 136], [136, 135], [135, 138],
+  [138, 137], [137, 140], [140, 138], [138, 141], [141, 143],
+  [143, 142], [142, 144], [144, 143], [143, 145],
 ];
 
 function MiniCandleChart() {
@@ -1324,12 +1325,12 @@ function Home({ isLoggedIn }) {
           }}>
             <ChartCardHeader>
               <SymbolBlock>
-                <span className="ticker">AAPL</span>
-                <span className="name">Apple Inc.</span>
+                <span className="ticker">NVDA</span>
+                <span className="name">NVIDIA Corp.</span>
               </SymbolBlock>
               <PriceBlock>
-                <span className="price">$189.45</span>
-                <span className="change">+2.42%</span>
+                <span className="price">$138.55</span>
+                <span className="change">+2.85%</span>
               </PriceBlock>
             </ChartCardHeader>
             <MiniCandleChart />
@@ -1347,11 +1348,11 @@ function Home({ isLoggedIn }) {
             transform: `perspective(1600px) rotateY(8deg) rotateX(-2deg) translateZ(60px)`,
           }}>
             <div className="label">paper order</div>
-            <div className="heading">buy AAPL</div>
+            <div className="heading">buy NVDA</div>
             <div className="row"><span>shares</span><span>10</span></div>
             <div className="row"><span>type</span><span>market</span></div>
-            <div className="row"><span>est. price</span><span>$189.45</span></div>
-            <div className="total"><span>total</span><span>$1,894.50</span></div>
+            <div className="row"><span>est. price</span><span>$138.55</span></div>
+            <div className="total"><span>total</span><span>$1,385.50</span></div>
             <button className="cta">review order →</button>
           </OrderCard>
 
@@ -1360,7 +1361,7 @@ function Home({ isLoggedIn }) {
           }}>
             <div className="label"><span className="dot" />ai coach</div>
             <div className="quote">
-              nice trade — but your portfolio is now <span className="accent">60% tech</span>. want to take a quick lesson on diversification?
+              nice grab — heads up though, you're sitting at <span className="accent">60% tech</span> now. wanna go over spreading it out?
             </div>
           </CoachCard>
         </HeroPreviewWrap>
