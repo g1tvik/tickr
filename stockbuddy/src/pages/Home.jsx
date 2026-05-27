@@ -1030,6 +1030,49 @@ function Home({ isLoggedIn }) {
   const fmtChange = (n) => `${n >= 0 ? '+' : ''}${Number(n).toFixed(2)}%`;
   const changeColor = liveChange >= 0 ? '#22A55C' : '#E04848';
 
+  // ─── AI coach message that fits whatever NVDA is doing right now ──────────
+  // Neutral framing — no assumption that the viewer is buying or holding.
+  // Each tier ends on a real concept worth learning, with the key idea
+  // wrapped in <span class="accent"> for the gold highlight.
+  const renderCoachMessage = () => {
+    const pct = liveChange;
+    const abs = Math.abs(pct).toFixed(2);
+
+    if (pct >= 3) {
+      return (
+        <>
+          NVDA's up <span className="accent">{abs}%</span> today — a strong session. on big green days, the real debate is <span className="accent">taking profits</span> vs letting winners run. there's no single right answer.
+        </>
+      );
+    }
+    if (pct >= 0.5) {
+      return (
+        <>
+          NVDA's quietly green today. small moves are easy to ignore, but <span className="accent">time in the market</span> tends to matter more than timing it.
+        </>
+      );
+    }
+    if (pct > -0.5) {
+      return (
+        <>
+          NVDA's basically flat today. quiet sessions are the best ones for <span className="accent">studying the chart</span> — patterns show up clearer without the noise.
+        </>
+      );
+    }
+    if (pct > -3) {
+      return (
+        <>
+          NVDA's red today. days like this test discipline — <span className="accent">why you'd own it</span> matters more than the daily tick.
+        </>
+      );
+    }
+    return (
+      <>
+        NVDA's down <span className="accent">{abs}%</span> today — a rough session. before reacting, check <span className="accent">the news</span>. one day rarely changes a long-term thesis.
+      </>
+    );
+  };
+
   // Badge typing: phase 1 "now in beta • ", pause (with blink), phase 2 "live paper trading"
   useEffect(() => {
     const startDelayMs = 350;
@@ -1395,7 +1438,7 @@ function Home({ isLoggedIn }) {
           }}>
             <div className="label"><span className="dot" />ai coach</div>
             <div className="quote">
-              nice grab — heads up though, you're sitting at <span className="accent">60% tech</span> now. wanna go over spreading it out?
+              {renderCoachMessage()}
             </div>
           </CoachCard>
         </HeroPreviewWrap>
