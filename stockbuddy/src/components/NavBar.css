@@ -1,180 +1,208 @@
-.transparent-navbar {
-  width: 100vw;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1000;
-  background: rgba(249,249,248,0.95);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.5rem 3rem 1.5rem 3rem;
-  backdrop-filter: blur(8px);
-}
-
-.navbar-section {
-  display: flex;
-  align-items: center;
-}
-
-.navbar-left .nav-link {
-  margin-right: 2rem;
-  color: var(--marbleDarkGray);
-  font-weight: 500;
-  text-decoration: none;
-  font-size: 1.1rem;
-  transition: color 0.2s;
-}
-
-.navbar-left .nav-link:hover {
-  color: var(--marbleGold);
-}
-
-.navbar-center .navbar-brand {
-  font-size: 2rem;
-  font-weight: bold;
-  color: var(--marbleDarkGray);
-  text-decoration: none;
-  letter-spacing: 0.05em;
-  transition: color 0.2s;
-}
-
-.navbar-center .navbar-brand:hover {
-  color: var(--marbleGold);
-}
-
-.navbar-right .btn {
-  margin-left: 1rem;
-  font-weight: 600;
-  border-radius: 2rem;
-  padding: 0.5rem 1.5rem;
-  font-size: 1rem;
-  background: var(--marbleGold);
-  color: var(--marbleDarkGray);
-  border: none;
-  box-shadow: 0 2px 8px rgba(230, 200, 122, 0.08);
-  transition: background 0.2s, color 0.2s;
-}
-
-.navbar-right .btn:hover {
-  background: #fffbe9;
-  color: var(--marbleBlack);
-}
-
-@media (max-width: 900px) {
-  .transparent-navbar {
-    flex-direction: column;
-    padding: 1rem;
-  }
-  .navbar-section {
-    margin: 0.5rem 0;
-  }
-  .navbar-color {
-    left: 0 !important;
-    right: 0 !important;
-    top: 0 !important;
-    border-radius: 0;
-    padding: 0 1rem;
-  }
-}
+/* ── Base navbar ──────────────────────────────────────────── */
 .navbar-color {
-  background-color: rgba(17, 24, 39, 0.82);
+  background-color: rgba(17, 24, 39, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
   right: 0 !important;
   width: 100% !important;
   z-index: 1030 !important;
-  transition: background-color 0.5s ease !important;
-  animation: navbarSlideIn 0.4s ease-out forwards;
-  min-height: 70px;
+  min-height: 64px;
   display: flex;
   align-items: center;
-  border-radius: 0;
-  box-shadow: none !important;
-  border-bottom: none !important;
   padding: 0 2rem;
-}
-
-/* Specific rule for navbar when it has page-dark class */
-.navbar-color.page-dark {
-  background-color: rgba(17, 24, 39, 0.82) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  animation: navbarSlideIn 0.35s ease-out forwards;
   border-radius: 0;
   box-shadow: none !important;
-  border-bottom: none !important;
+  transition: background-color 0.4s ease !important;
 }
 
-/* Specific rule for navbar when it has page-light class */
-.navbar-color.page-light {
-  background-color: rgba(17, 24, 39, 0.82) !important;
-  border-radius: 0;
-  box-shadow: none !important;
-  border-bottom: none !important;
+@keyframes navbarSlideIn {
+  from { transform: translateY(-12px); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
 }
 
-/* Override for dynamic background changes from Home page */
+/* Force dark bg regardless of page-light / page-dark class overrides */
+.navbar-color.page-dark,
+.navbar-color.page-light,
 .navbar-color[style*="background-color"] {
-  background-color: rgba(17, 24, 39, 0.82) !important;
+  background-color: rgba(17, 24, 39, 0.88) !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
 }
 
 .navbar.navbar-color {
   box-shadow: none !important;
-  border-bottom: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ── Logo ─────────────────────────────────────────────────── */
+.navbar-left {
+  display: flex;
+  align-items: center;
 }
 
 .navbar-color .navbar-brand img {
-  filter: drop-shadow(0 0 8px rgba(182, 156, 96, 0.12));
+  filter: drop-shadow(0 0 8px rgba(182, 156, 96, 0.10));
+  transition: opacity 0.2s ease;
+}
+.navbar-color .navbar-brand:hover img {
+  opacity: 0.85;
+}
+
+/* ── Right group (links + more btn) ───────────────────────── */
+.navbar-right-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+/* ── Primary nav links ────────────────────────────────────── */
+.navbar-primary-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .navbar-color .nav-link {
-  color: #EDEDED !important;
+  color: rgba(237, 237, 237, 0.75) !important;
+  font-size: 0.875rem;
   font-weight: 500;
-  border-bottom: 2px solid transparent;
-  padding-bottom: 4px;
+  letter-spacing: 0.01em;
+  padding: 6px 12px !important;
+  border-radius: 8px;
+  transition: color 0.2s ease, background-color 0.2s ease !important;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .navbar-color .nav-link:hover {
   color: #FFFFFF !important;
+  background-color: rgba(255, 255, 255, 0.07);
 }
 
 .navbar-color .nav-link.active {
   color: #FFFFFF !important;
-  border-bottom-color: var(--color-primary, #2A4580);
+  background-color: rgba(255, 255, 255, 0.10);
   font-weight: 600;
 }
 
-.navbar-color .btn.btn-tertiary {
-  background: var(--color-primary, #2A4580);
+/* ── ⋯ More button ────────────────────────────────────────── */
+.navbar-more-menu {
+  position: relative;
+  margin-left: 8px;
+}
+
+.navbar-more-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  outline: none;
+}
+
+.navbar-more-btn:hover,
+.navbar-more-btn.open {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(182, 156, 96, 0.35);
+}
+
+.navbar-dot {
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(237, 237, 237, 0.7);
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+.navbar-more-btn:hover .navbar-dot,
+.navbar-more-btn.open .navbar-dot {
+  background: #FFFFFF;
+}
+
+/* ── Dropdown ─────────────────────────────────────────────── */
+.navbar-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 160px;
+  background: rgba(22, 28, 40, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(182, 156, 96, 0.08);
+  z-index: 2000;
+  animation: dropdownIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+.navbar-dropdown-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(237, 237, 237, 0.8);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  font-family: inherit;
+  letter-spacing: 0.01em;
+}
+
+.navbar-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
   color: #FFFFFF;
-  border: 1px solid var(--color-primary, #2A4580) !important;
 }
 
-.navbar-color .btn.btn-tertiary:hover {
-  background: #223a6b;
-  color: #FFFFFF;
+.navbar-dropdown-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 4px 0;
 }
-@keyframes navbarSlideIn {
-  from {
-    transform: translateY(-12px);
+
+.navbar-dropdown-signout {
+  color: rgba(239, 68, 68, 0.8);
+}
+.navbar-dropdown-signout:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .navbar-color {
+    padding: 0 1rem;
   }
-  to {
-    transform: translateY(0);
+  .navbar-primary-links {
+    display: none;
   }
 }
 
-/* Fix vertical alignment for SIGN OUT button without changing its appearance */
-.navbar-nav .nav-item .btn {
-  vertical-align: top;
-  margin-top: 5px !important  ;
-  margin-bottom: 0;
-}
-
-/* Add marbleGold outline that fades away on hover */
-.navbar-nav .nav-item .btn.btn-outline-light {
-  border-color: var(--marbleGold) !important;
-  transition: border-color 0.3s ease, background-color 0.3s ease !important;
-}
-
-.navbar-nav .nav-item .btn.btn-outline-light:hover {
-  border-color: transparent !important;
+/* ── Legacy classes — keep for compatibility ──────────────── */
+.transparent-navbar {
+  display: none;
 }

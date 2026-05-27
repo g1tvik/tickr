@@ -228,13 +228,16 @@ export default function Learn() {
     return (
       <div style={{
         minHeight: "100vh",
-        backgroundColor: white,
+        backgroundColor: "#F4F1E9",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily: fontBody
+        fontFamily: fontBody,
+        color: "#A0998A",
+        fontSize: "14px",
+        letterSpacing: "0.04em",
       }}>
-        <div>Loading learning content...</div>
+        loading…
       </div>
     );
   }
@@ -244,66 +247,80 @@ export default function Learn() {
   return (
     <div style={{
       minHeight: "100vh",
-      backgroundColor: white,
+      backgroundColor: "#F4F1E9",
       fontFamily: fontBody
     }}>
       {/* Header */}
       <div style={{
-        backgroundColor: lightGray,
-        padding: "24px",
-        borderBottom: `1px solid ${gray}`
+        backgroundColor: "#FFFFFF",
+        borderBottom: "1px solid rgba(230,200,122,0.18)",
+        padding: "28px 24px",
+        boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.05)",
       }}>
-        <div style={{
-          maxWidth: "1200px",
-          margin: "0 auto"
-        }}>
+        <div style={{ maxWidth: "560px", margin: "0 auto" }}>
           <button
             onClick={() => navigate('/dashboard')}
             style={{
               backgroundColor: "transparent",
               border: "none",
-              color: marbleDarkGray,
-              fontSize: "16px",
+              color: "#A0998A",
+              fontSize: "12px",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
               cursor: "pointer",
-              marginBottom: "16px",
+              marginBottom: "18px",
               display: "flex",
               alignItems: "center",
-              gap: "8px"
+              gap: "6px",
+              padding: "0",
+              fontWeight: "600",
             }}
           >
-            ← Back to Dashboard
+            ← Dashboard
           </button>
-          
+
           <h1 style={{
-            fontSize: "32px",
-            fontWeight: "bold",
-            color: marbleDarkGray,
+            fontSize: "26px",
+            fontWeight: "400",
+            color: "#222222",
             fontFamily: fontHeading,
-            marginBottom: "8px"
+            marginBottom: "6px",
+            letterSpacing: "-0.01em",
           }}>
-            Learning Path
+            learning path
           </h1>
-          
+
           <p style={{
-            fontSize: "18px",
-            color: gray,
-            marginBottom: "16px"
+            fontSize: "14px",
+            color: "#A0998A",
+            marginBottom: progress ? "20px" : "0",
+            lineHeight: "1.5",
           }}>
-            Master the fundamentals of trading through interactive lessons and quizzes
+            interactive lessons, quizzes, and real paper trades
           </p>
-          
-          {/* Progress Overview */}
+
+          {/* Progress pills */}
           {progress && (
-            <div style={{
-              display: "flex",
-              gap: "24px",
-              fontSize: "14px",
-              color: gray
-            }}>
-              <span>Lessons: {progress.completedLessons}/{progress.totalLessons}</span>
-              <span>Units: {progress.completedUnitTests}/{progress.totalUnits}</span>
-              <span>XP: {progress.xp}</span>
-              <span>Coins: {progress.coins}</span>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              {[
+                { label: `${progress.completedLessons} / ${progress.totalLessons} lessons` },
+                { label: `${progress.completedUnitTests} / ${progress.totalUnits} units` },
+                { label: `${progress.xp} XP`, gold: true },
+                { label: `${progress.coins} coins` },
+              ].map((p, i) => (
+                <span key={i} style={{
+                  display: "inline-block",
+                  padding: "4px 12px",
+                  borderRadius: "20px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  background: p.gold ? "rgba(230,200,122,0.15)" : "rgba(0,0,0,0.05)",
+                  color: p.gold ? "#B8860B" : "#6B6B6B",
+                  border: p.gold ? "1px solid rgba(230,200,122,0.3)" : "1px solid rgba(0,0,0,0.06)",
+                }}>
+                  {p.label}
+                </span>
+              ))}
             </div>
           )}
         </div>
@@ -313,7 +330,7 @@ export default function Learn() {
       <div style={{
         maxWidth: "480px",
         margin: "0 auto",
-        padding: "48px 24px",
+        padding: "40px 24px",
         position: "relative"
       }}>
         {/* Roadmap Path */}

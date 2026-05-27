@@ -2,28 +2,32 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {
+  const clearTokenAndRedirect = (reason) => {
+    console.warn(reason);
+    localStorage.removeItem('token');
+    window.location.href = '/signin';
+  };
+
   try {
     const data = await response.json();
     if (!response.ok) {
-      // Handle expired/invalid token (401 Unauthorized)
+      // Token expired / invalid
       if (response.status === 401) {
-        console.warn('Token expired or invalid, logging out...');
-        localStorage.removeItem('token');
-        // Redirect to sign-in page
-        window.location.href = '/signin';
+        clearTokenAndRedirect('Token expired or invalid, logging out...');
         throw new Error('Session expired. Please sign in again.');
+      }
+      // Stale JWT — references a userId that no longer exists (e.g. after data reset)
+      if (response.status === 404 && /user not found/i.test(data.message || '')) {
+        clearTokenAndRedirect('Stale session (user no longer exists), logging out...');
+        throw new Error('Your session is no longer valid. Please sign in again.');
       }
       throw new Error(data.message || 'API request failed');
     }
     return data;
   } catch (error) {
     if (!response.ok) {
-      // Handle expired/invalid token (401 Unauthorized)
       if (response.status === 401) {
-        console.warn('Token expired or invalid, logging out...');
-        localStorage.removeItem('token');
-        // Redirect to sign-in page
-        window.location.href = '/signin';
+        clearTokenAndRedirect('Token expired or invalid, logging out...');
         throw new Error('Session expired. Please sign in again.');
       }
       throw new Error(`Request failed with status ${response.status}`);

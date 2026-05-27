@@ -5,10 +5,10 @@
 // If you add a custom font file: add @font-face in globals.css, then put the
 // font name (same as in font-family) in one of the strings below.
 
-export const fontHeading = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+export const fontHeading = "'Creato Display', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 export const fontBody = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 export const fontMono = "'Helvetica Neue', Helvetica, Arial, monospace";
-export const fontAccent = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+export const fontAccent = "'Creato Display', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 
 export default {
   fontHeading,

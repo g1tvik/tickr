@@ -18,6 +18,7 @@ import ArticleReader from './components/ArticleReader';
 import Waitlist from './pages/Waitlist';
 import NotFound from './pages/NotFound';
 import About from './pages/About';
+import Profile from './pages/Profile';
 import Protected from './routes/Protected';
 import { NavbarProvider, useNavbar } from './context/NavbarContext';
 import { isAuthenticated } from './services/api';
@@ -54,7 +55,7 @@ function AppContent() {
       
       // If not in lockdown and user is on a protected route and not authenticated, redirect to sign in
       if (!LOCKDOWN) {
-        const protectedRoutes = ['/dashboard', '/trade', '/learn', '/ai-coach', '/shop', '/settings', '/inventory'];
+        const protectedRoutes = ['/dashboard', '/trade', '/learn', '/ai-coach', '/shop', '/settings', '/inventory', '/profile'];
         const isProtectedRoute = protectedRoutes.some(route => location.pathname.startsWith(route));
         
         if (isProtectedRoute && !authenticated) {
@@ -212,7 +213,12 @@ function AppContent() {
                       <Settings />
                     </Protected>
                   } />
-                  
+                  <Route path="/profile" element={
+                    <Protected>
+                      <Profile />
+                    </Protected>
+                  } />
+
                   {/* 404 catch-all */}
                   <Route path="*" element={<NotFound />} />
                 </>
