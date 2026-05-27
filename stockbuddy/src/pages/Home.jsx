@@ -1031,8 +1031,8 @@ function Home({ isLoggedIn }) {
   const changeColor = liveChange >= 0 ? '#22A55C' : '#E04848';
 
   // ─── AI coach message that fits whatever NVDA is doing right now ──────────
-  // Neutral framing (no assumption the viewer is buying or holding) and
-  // written like a person talking, not a chatbot.
+  // Voice: a finance professor explaining the moment. Neutral on direction,
+  // proper trading vocabulary, conversational but not slangy.
   const renderCoachMessage = () => {
     const pct = liveChange;
     const abs = Math.abs(pct).toFixed(2);
@@ -1040,34 +1040,34 @@ function Home({ isLoggedIn }) {
     if (pct >= 3) {
       return (
         <>
-          NVDA's up <span className="accent">{abs}%</span> today. big green days are when traders wrestle with whether to <span className="accent">take profits</span> or let it ride. honestly, both can be the right call.
+          NVDA is up <span className="accent">{abs}%</span> today. strong sessions raise one of the classic trading questions: <span className="accent">take profits</span>, or let the position run? both have a defensible case.
         </>
       );
     }
     if (pct >= 0.5) {
       return (
         <>
-          NVDA's up a touch today. not flashy, but quiet days like this are <span className="accent">where most real wealth gets built</span>. boring weeks compound.
+          NVDA is modestly higher today. these small moves rarely make headlines, but <span className="accent">compounding gains</span> of this size are what build long-term portfolios.
         </>
       );
     }
     if (pct > -0.5) {
       return (
         <>
-          NVDA's barely moving today. flat days are actually the best for <span className="accent">learning the chart</span>. patterns are way easier to spot when nothing's screaming for your attention.
+          NVDA is essentially flat today. low-volatility sessions are useful for <span className="accent">technical analysis</span>. patterns and support levels are easier to identify when price action is quiet.
         </>
       );
     }
     if (pct > -3) {
       return (
         <>
-          NVDA's red today. red days are when conviction gets tested. is <span className="accent">the bull case</span> still intact? that's what matters more than the daily move.
+          NVDA is down today. down days are where conviction is tested. the question worth asking is whether <span className="accent">the underlying thesis</span> has changed, or only the price.
         </>
       );
     }
     return (
       <>
-        NVDA's down <span className="accent">{abs}%</span> today. ugly session. before doing anything reactive, <span className="accent">find out why</span>. nine times out of ten it's noise, but the tenth time matters.
+        NVDA is down <span className="accent">{abs}%</span> today, a significant move. before reacting, it is worth <span className="accent">investigating the cause</span>. most large single-day moves prove to be noise, but the exceptions are the ones that matter.
       </>
     );
   };
