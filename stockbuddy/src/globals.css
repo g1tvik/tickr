@@ -32,10 +32,10 @@
   --color-accent: var(--color-gold);
   --color-accent-hover: #a08b52;
 
-  /* Cool gray scale */
-  --color-gray-50: #F9FAFB;
-  --color-gray-100: #F6F7F9;
-  --color-gray-200: #E5E7EB;
+  /* Warm marble scale — all inner pages breathe off the cream */
+  --color-gray-50: #FDFCFA;
+  --color-gray-100: #F4F1E9;
+  --color-gray-200: #EDE9DF;
   --color-gray-300: #D1D5DB;
   --color-gray-400: #9CA3AF;
   --color-gray-500: #6B7280;
@@ -53,7 +53,7 @@
   --marbleGold: var(--color-gold);
 
   /* Fonts */
-  --fontHeading: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --fontHeading: 'Creato Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --fontBody: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --fontMono: 'Helvetica Neue', Helvetica, Arial, monospace;
 
@@ -263,6 +263,22 @@ body {
   color: var(--color-ink) !important;
   border-color: var(--color-gray-300) !important;
   transform: none;
+}
+
+/* On dark pages (Trade / AI Coach), restore real outline-light behavior:
+   light text + light border on transparent — readable on charcoal. */
+.page-dark .btn-outline-light,
+.page-dark .btn.btn-outline-light {
+  background: transparent !important;
+  color: rgba(237, 237, 237, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+}
+
+.page-dark .btn-outline-light:hover,
+.page-dark .btn.btn-outline-light:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #FFFFFF !important;
+  border-color: rgba(182, 156, 96, 0.55) !important;
 }
 
 /* Smooth form transitions */

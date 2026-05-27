@@ -1,26 +1,38 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { isAuthenticated } from '../services/api';
 import './NavBar.css';
 
-const WHITE = '#FFFFFF';
-
 function NavBar({ isLoggedIn, setIsLoggedIn, navbarTheme = 'light' }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const isActive = (path) => location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
-  // Check authentication status on mount and route changes
+  const isActive = (path) =>
+    location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
+
   useEffect(() => {
     const checkAuth = () => {
       const authenticated = isAuthenticated();
-      if (isLoggedIn !== authenticated) {
-        setIsLoggedIn(authenticated);
-      }
+      if (isLoggedIn !== authenticated) setIsLoggedIn(authenticated);
     };
-    
     checkAuth();
   }, [location.pathname, isLoggedIn, setIsLoggedIn]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  // Close dropdown on route change
+  useEffect(() => { setMenuOpen(false); }, [location.pathname]);
 
   const handleSignOut = () => {
     localStorage.removeItem('token');
@@ -28,84 +40,130 @@ function NavBar({ isLoggedIn, setIsLoggedIn, navbarTheme = 'light' }) {
     navigate('/');
   };
 
-  const isOnTradePage = location.pathname === '/trade' || location.pathname === '/ai-coach';
-  const isNavbarDark = navbarTheme === 'dark' || isOnTradePage;
-    
-    // Set scrollbar background to match page theme
+  const isOnTradePage =
+    location.pathname === '/trade' || location.pathname === '/ai-coach';
 
   useEffect(() => {
     const body = document.body;
-    if (isOnTradePage) {
-      body.style.setProperty('--scrollbar-track-bg', 'transparent', 'important');
-      body.style.setProperty('--scrollbar-thumb-bg', '#6B7280', 'important');
-      body.style.setProperty('--scrollbar-thumb-hover-bg', '#B69C60', 'important');
-    } else {
-      body.style.setProperty('--scrollbar-track-bg', 'transparent', 'important');
-      body.style.setProperty('--scrollbar-thumb-bg', '#9CA3AF', 'important');
-      body.style.setProperty('--scrollbar-thumb-hover-bg', '#B69C60', 'important');
-    }
+    body.style.setProperty('--scrollbar-track-bg', 'transparent', 'important');
+    body.style.setProperty(
+      '--scrollbar-thumb-bg',
+      isOnTradePage ? '#6B7280' : '#9CA3AF',
+      'important'
+    );
+    body.style.setProperty('--scrollbar-thumb-hover-bg', '#B69C60', 'important');
   }, [isOnTradePage]);
 
+  const themeClass =
+    navbarTheme === 'light'       ? 'navbar-color--light' :
+    navbarTheme === 'transparent' ? 'navbar-color--transparent' :
+                                     'navbar-color--dark';
 
+  // Light theme uses the dark logo so it reads on cream
+  const logoSrc = navbarTheme === 'light' ? '/logo.png' : '/marbleWhitelogo.png';
 
   return (
-    <nav 
-      className="navbar navbar-expand-lg navbar-color px-3"
-    >
-      <div className="navbar-left" style={{ display: 'flex', alignItems: 'center' }}>
+    <nav className={`navbar navbar-expand-lg navbar-color ${themeClass} px-3`}>
+      {/* Logo */}
+      <div className="navbar-left">
         <Link className="navbar-brand" to="/">
-          <img 
-            src={isNavbarDark ? "/marbleWhitelogo.png" : "/logo.png"} 
-            alt="Tickr" 
-            style={{ 
-              height: '50px', 
-              transition: 'opacity 0.3s ease',
-              width: 'auto', 
-              display: 'block',
-            }} 
+          <img
+            src={logoSrc}
+            alt="tickr"
+            style={{ height: '44px', width: 'auto', display: 'block', transition: 'opacity 0.3s ease' }}
           />
         </Link>
       </div>
-      <div className="collapse navbar-collapse">
-        <ul className="navbar-nav ms-auto">
-          {isLoggedIn ? (
-            <>
+
+      {/* Right group */}
+      <div className="navbar-right-group">
+        {isLoggedIn ? (
+          <>
+            {/* Primary navigation links */}
+            <ul className="navbar-nav navbar-primary-links">
               <li className="nav-item">
-                <Link className={`nav-link ${isActive('/dashboard') ? 'active' : ''}`} to="/dashboard">Dashboard</Link>
+                <Link
+                  className={`nav-link ${isActive('/dashboard') ? 'active' : ''}`}
+                  to="/dashboard"
+                >
+                  Dashboard
+                </Link>
               </li>
               <li className="nav-item">
-                <Link className={`nav-link ${isActive('/trade') ? 'active' : ''}`} to="/trade">Trade</Link>
+                <Link
+                  className={`nav-link ${isActive('/trade') ? 'active' : ''}`}
+                  to="/trade"
+                >
+                  Trade
+                </Link>
               </li>
               <li className="nav-item">
-                <Link className={`nav-link ${isActive('/learn') ? 'active' : ''}`} to="/learn">Learn</Link>
+                <Link
+                  className={`nav-link ${isActive('/learn') ? 'active' : ''}`}
+                  to="/learn"
+                >
+                  Learn
+                </Link>
               </li>
               <li className="nav-item">
-                <Link className={`nav-link ${isActive('/ai-coach') ? 'active' : ''}`} to="/ai-coach">AI Coach</Link>
+                <Link
+                  className={`nav-link ${isActive('/ai-coach') ? 'active' : ''}`}
+                  to="/ai-coach"
+                >
+                  AI Coach
+                </Link>
               </li>
-              <li className="nav-item">
-                <Link className={`nav-link ${isActive('/shop') ? 'active' : ''}`} to="/shop">Shop</Link>
-              </li>
-              <li className="nav-item">
-                <Link className={`nav-link ${isActive('/inventory') ? 'active' : ''}`} to="/inventory">Inventory</Link>
-              </li>
-              <li className="nav-item">
-                <Link className={`nav-link ${isActive('/settings') ? 'active' : ''}`} to="/settings">Settings</Link>
-              </li>
-              <li className="nav-item">
-                <button className="btn btn-tertiary" onClick={handleSignOut}>Sign out</button>
-              </li>
-            </>
-          ) : (
-            <>
-              <li className="nav-item">
-                <Link className="nav-link" to="/signin">Sign in</Link>
-              </li>
-            </>
-          )}
-        </ul>
+            </ul>
+
+            {/* ⋯ more menu */}
+            <div className="navbar-more-menu" ref={menuRef}>
+              <button
+                className={`navbar-more-btn ${menuOpen ? 'open' : ''}`}
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-label="More options"
+              >
+                <span className="navbar-dot" />
+                <span className="navbar-dot" />
+                <span className="navbar-dot" />
+              </button>
+
+              {menuOpen && (
+                <div className="navbar-dropdown">
+                  <Link className="navbar-dropdown-item" to="/profile">
+                    Profile
+                  </Link>
+                  <Link className="navbar-dropdown-item" to="/shop">
+                    Shop
+                  </Link>
+                  <Link className="navbar-dropdown-item" to="/inventory">
+                    Inventory
+                  </Link>
+                  <Link className="navbar-dropdown-item" to="/settings">
+                    Settings
+                  </Link>
+                  <div className="navbar-dropdown-divider" />
+                  <button
+                    className="navbar-dropdown-item navbar-dropdown-signout"
+                    onClick={handleSignOut}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <ul className="navbar-nav">
+            <li className="nav-item">
+              <Link className="nav-link" to="/signin">
+                Sign in
+              </Link>
+            </li>
+          </ul>
+        )}
       </div>
     </nav>
   );
 }
 
-export default NavBar; 
+export default NavBar;
