@@ -28,16 +28,19 @@ export const useTrading = () => {
     }
   }, []);
 
-  // Auto-refresh portfolio and selected stock every 60 seconds
+  // Auto-refresh portfolio, market data, selected stock, and market status.
+  // 60s cadence keeps us well within Alpaca's 200 calls/min limit.
   useEffect(() => {
     if (!isAuthenticated) return;
-    
+
     const interval = setInterval(() => {
       loadPortfolio();
+      loadMarketData();
+      checkMarketStatusAndSet();
       if (selectedStock) {
         updateSelectedStockPrice();
       }
-    }, 60000); // Refresh every 60 seconds to stay within 200 calls/min limit
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [selectedStock, isAuthenticated]);

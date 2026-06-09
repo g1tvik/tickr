@@ -107,7 +107,6 @@ function Trade() {
     setShares,
     handleStockSelect,
     handleOrderSubmit,
-    loadMarketData,
     clearError,
   } = useTrading();
 
@@ -454,22 +453,6 @@ function Trade() {
                   <Icon name="dot" size={7} />
                   {marketStatus === 'open' ? 'Market open' : 'Market closed'}
                 </span>
-              </div>
-              <div className="trade-header__meta">
-                {lastUpdate && (
-                  <span style={{ fontSize: '12px', color: 'var(--trade-text-muted)' }}>
-                    Updated{' '}
-                    <span style={mono}>{new Date(lastUpdate).toLocaleTimeString()}</span>
-                  </span>
-                )}
-                <button
-                  type="button"
-                  className="trade-refresh-btn"
-                  onClick={loadMarketData}
-                  aria-label="Refresh market data"
-                >
-                  <Icon name="refresh" size={14} /> Refresh
-                </button>
               </div>
             </div>
 

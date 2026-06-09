@@ -1,24 +1,32 @@
 // Trade utility functions
 
 // Market status utilities
+// Evaluated against US Eastern time (NYSE/Nasdaq regular session 9:30 AM–4:00 PM ET),
+// regardless of the viewer's local timezone. Intl handles ET/EDT automatically.
+// Note: does not account for market holidays — only weekday + regular-session hours.
 export const checkMarketStatus = () => {
-  const now = new Date();
-  const day = now.getDay();
-  const hour = now.getHours();
-  const minute = now.getMinutes();
-  
-  // Check if it's a weekday (Monday = 1, Sunday = 0)
-  if (day === 0 || day === 6) {
-    return 'closed';
-  }
-  
-  // Check if it's during market hours (9:30 AM - 4:00 PM ET)
-  // Note: This is a simplified check. In production, you'd want to account for timezone
-  const marketOpen = 9 * 60 + 30; // 9:30 AM in minutes
-  const marketClose = 16 * 60; // 4:00 PM in minutes
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date());
+
+  const get = (type) => parts.find((p) => p.type === type)?.value;
+  const weekday = get('weekday'); // 'Mon' … 'Sun'
+  let hour = parseInt(get('hour'), 10);
+  if (hour === 24) hour = 0; // some engines emit 24 for midnight
+  const minute = parseInt(get('minute'), 10);
+
+  // Weekend
+  if (weekday === 'Sat' || weekday === 'Sun') return 'closed';
+
   const currentTime = hour * 60 + minute;
-  
-  return (currentTime >= marketOpen && currentTime <= marketClose) ? 'open' : 'closed';
+  const marketOpen = 9 * 60 + 30; // 9:30 AM ET
+  const marketClose = 16 * 60;    // 4:00 PM ET
+
+  return currentTime >= marketOpen && currentTime < marketClose ? 'open' : 'closed';
 };
 
 export const getMarketStatusColor = (marketStatus) => {
