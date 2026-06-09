@@ -1292,7 +1292,7 @@ function Home({ isLoggedIn }) {
       if (next === current) return;
       current = next;
       if (light) setNavbarBackground('rgba(244, 241, 233, 0.92)', { theme: 'light' });
-      else setNavbarBackground('transparent', { theme: 'dark' });
+      else setNavbarBackground('var(--tk-bg)', { theme: 'dark' });
     };
 
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(apply); };

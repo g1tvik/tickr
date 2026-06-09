@@ -98,9 +98,9 @@ function AppContent() {
       if (navbar) {
         navbar.classList.add('page-dark');
         navbar.classList.remove('page-light');
-        // Home: transparent so the hero shows through (its observer takes over).
-        // Everything else: solid charcoal matching the page background (--tk-bg).
-        setNavbarBackground(onHome ? 'transparent' : 'var(--tk-bg)', { theme: 'dark' });
+        // Solid charcoal matching the page background (--tk-bg) on every route.
+        // Home re-applies this (and the cream features band) via its own observer.
+        setNavbarBackground('var(--tk-bg)', { theme: 'dark' });
       }
     }
   }, [location.pathname, setNavbarBackground]);
