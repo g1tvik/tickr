@@ -7,7 +7,10 @@
 
 export const fontHeading = "'Creato Display', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 export const fontBody = "'Helvetica Neue', Helvetica, Arial, sans-serif";
-export const fontMono = "'Helvetica Neue', Helvetica, Arial, monospace";
+// Real monospace stack for tabular figures — the signature of the Terminal
+// Editorial look. Resolves to SF Mono (Apple), Cascadia/Consolas (Windows),
+// then generic mono. Pair with `font-variant-numeric: tabular-nums`.
+export const fontMono = "'SFMono-Regular', ui-monospace, 'Cascadia Mono', 'Cascadia Code', 'Consolas', 'Menlo', 'Liberation Mono', monospace";
 export const fontAccent = "'Creato Display', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 
 export default {
@@ -15,4 +18,4 @@ export default {
   fontBody,
   fontMono,
   fontAccent,
-}; 
+};

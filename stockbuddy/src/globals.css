@@ -55,7 +55,23 @@
   /* Fonts */
   --fontHeading: 'Creato Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --fontBody: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --fontMono: 'Helvetica Neue', Helvetica, Arial, monospace;
+  --fontMono: 'SFMono-Regular', ui-monospace, 'Cascadia Mono', 'Cascadia Code', 'Consolas', 'Menlo', 'Liberation Mono', monospace;
+
+  /* ── Terminal Editorial design tokens (mirror src/theme/terminal.js) ── */
+  --tk-bg: #1F1F1F;
+  --tk-surface: #262626;
+  --tk-raised: #2E2E2E;
+  --tk-inset: #191919;
+  --tk-text: #F4F1E9;
+  --tk-muted: #9A958B;
+  --tk-faint: #6B665E;
+  --tk-gold: #B69C60;
+  --tk-gold-bright: #E6C87A;
+  --tk-up: #4FB477;
+  --tk-down: #E0605A;
+  --tk-hair: rgba(244, 241, 233, 0.10);
+  --tk-hair-strong: rgba(244, 241, 233, 0.16);
+  --tk-gold-hair: rgba(182, 156, 96, 0.38);
 
   /* Scrollbar */
   --scrollbar-track-bg: transparent;
@@ -538,4 +554,77 @@ html[data-motion="reduce"] *::after {
   animation-iteration-count: 1 !important;
   transition-duration: 0.001ms !important;
   scroll-behavior: auto !important;
+}
+
+/* ===========================================================================
+   TERMINAL EDITORIAL — shared utility layer
+   Use these in CSS-file surfaces (NavBar.css, Trade.css, etc.). JSX surfaces
+   import tokens/helpers from src/theme/terminal.js and <Icon/> instead.
+   =========================================================================== */
+
+/* Deepen the dark-page base to the terminal background so gutters match. */
+body.page-dark,
+html.page-dark,
+html.page-dark body {
+  background-color: var(--tk-bg);
+}
+
+/* Monospace tabular numerals — the data signature. */
+.tk-mono {
+  font-family: var(--fontMono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Small-caps tracked label. */
+.tk-label {
+  font-family: var(--fontBody);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tk-muted);
+}
+
+/* Flat hairline panel (NOT a floating shadow-card). */
+.tk-panel {
+  background: var(--tk-surface);
+  border: 1px solid var(--tk-hair);
+  border-radius: 8px;
+}
+
+/* Hairline rule. */
+.tk-rule {
+  border: none;
+  border-top: 1px solid var(--tk-hair);
+  margin: 0;
+}
+
+/* A section header: small-caps label followed by a hairline rule that fills
+   the remaining width. Usage: <div class="tk-section"><span>label</span></div> */
+.tk-section {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.tk-section > .tk-section-label {
+  font-family: var(--fontBody);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tk-muted);
+  white-space: nowrap;
+}
+.tk-section::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--tk-hair);
+}
+
+/* Default-tabular numerals everywhere data lives on dark pages. */
+.page-dark {
+  font-feature-settings: "tnum" 1, "cv01" 1;
 }
