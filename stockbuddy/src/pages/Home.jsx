@@ -6,10 +6,9 @@ import "lenis/dist/lenis.css";
 import { marbleWhite, marbleDarkGray, marbleGold } from "../marblePalette";
 import { useNavbar } from "../context/NavbarContext";
 import { api } from "../services/api";
-import AppImage from "../components/AppImage";
 import useReducedMotion from "../hooks/useReducedMotion";
 import { useSEO, SEO_CONFIG } from "../lib/seo";
-import tk, { label, mono } from "../theme/terminal";
+import tk, { mono } from "../theme/terminal";
 import Icon from "../components/Icon";
 
 // ============ ANIMATIONS ============
@@ -204,79 +203,11 @@ const MaskWord = styled.span`
   }
 `;
 
-const StatValue = styled.h2`
-  font-family: ${tk.fontMono};
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-  font-size: clamp(2.4rem, 5vw, 3.2rem);
-  font-weight: 500;
-  line-height: 1;
-  margin: 0 0 10px;
-  color: ${props => (props.$isGold ? tk.goldBright : tk.text)};
-`;
-
 // Monospace tabular number — the data signature across the page.
 const Num = styled.span`
   font-family: ${tk.fontMono};
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
-`;
-
-// Floating accent elements
-const FloatingAccent = styled.div`
-  position: absolute;
-  pointer-events: none;
-  transition: transform 0.1s ease-out;
-  z-index: 1;
-`;
-
-const GoldDot = styled(FloatingAccent)`
-  width: ${props => props.$size || '8px'};
-  height: ${props => props.$size || '8px'};
-  border-radius: 50%;
-  background: ${marbleGold};
-  opacity: ${props => props.$opacity || 0.6};
-`;
-
-const GoldLine = styled(FloatingAccent)`
-  width: ${props => props.$width || '60px'};
-  height: 2px;
-  background: linear-gradient(90deg, transparent, ${marbleGold}, transparent);
-  opacity: ${props => props.$opacity || 0.4};
-`;
-
-const GoldRing = styled(FloatingAccent)`
-  width: ${props => props.$size || '40px'};
-  height: ${props => props.$size || '40px'};
-  border-radius: 50%;
-  border: 2px solid ${marbleGold};
-  opacity: ${props => props.$opacity || 0.3};
-`;
-
-const SubtleCross = styled(FloatingAccent)`
-  width: 20px;
-  height: 20px;
-  opacity: ${props => props.$opacity || 0.25};
-  
-  &::before, &::after {
-    content: '';
-    position: absolute;
-    background: ${marbleGold};
-  }
-  
-  &::before {
-    width: 100%;
-    height: 2px;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-  
-  &::after {
-    width: 2px;
-    height: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-  }
 `;
 
 // Cascading elements container - fixed position overlay
@@ -294,15 +225,6 @@ const CascadeContainer = styled.div`
 const CascadeElement = styled.div`
   position: absolute;
   transition: transform 0.05s linear;
-`;
-
-const ScreenCascadeWrapper = styled.div`
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
 `;
 
 // ============ STYLED COMPONENTS ============
@@ -819,120 +741,6 @@ const SectionSubtitle = styled.p`
   margin: 0;
 `;
 
-// 3D Phone Mockup Section
-const PhoneSection = styled.section`
-  position: relative;
-  min-height: 100vh;
-  padding: 80px 20px 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  perspective: 2000px;
-`;
-
-const PhoneMockup = styled.div`
-  width: 280px;
-  height: 560px;
-  background: ${tk.surface};
-  border-radius: 28px;
-  border: 1px solid ${tk.hairStrong};
-  position: relative;
-  z-index: 10;
-  transform-style: preserve-3d;
-  transition: transform 0.2s ease-out, opacity 0.15s ease-out;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px;
-    height: 22px;
-    background: ${tk.inset};
-    border-radius: 11px;
-  }
-`;
-
-const PhoneScreen = styled.div`
-  position: absolute;
-  top: 50px;
-  left: 12px;
-  right: 12px;
-  bottom: 50px;
-  background: linear-gradient(180deg, ${tk.surface}, ${tk.inset});
-  border-radius: 20px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-`;
-
-const PhoneContent = styled.div`
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  
-  img {
-    display: block;
-    max-width: 160px;
-    max-height: 80px;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-    margin: 0 auto 16px;
-  }
-  
-  p {
-    font-family: ${tk.fontBody};
-    color: ${tk.text} !important;
-    font-size: 0.9rem;
-    margin-bottom: 8px;
-  }
-`;
-
-const FloatingStats = styled.div`
-  position: absolute;
-  z-index: 30;
-  background: ${tk.surface};
-  border: 1px solid ${tk.hairStrong};
-  border-radius: ${tk.r}px;
-  padding: 14px 20px;
-  transform-style: preserve-3d;
-  transform: translateZ(60px);
-  transition: opacity 0.15s ease-out;
-
-  ${props => props.$position === 'left' && `
-    left: -90px;
-    top: 100px;
-  `}
-
-  ${props => props.$position === 'right' && `
-    right: -90px;
-    bottom: 150px;
-  `}
-
-  h5 {
-    font-family: ${tk.fontMono};
-    font-variant-numeric: tabular-nums;
-    color: ${tk.goldBright};
-    font-size: 1.4rem;
-    font-weight: 500;
-    margin: 0 0 2px;
-  }
-
-  span {
-    font-family: ${tk.fontBody};
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: ${tk.muted};
-  }
-`;
-
 // Subtle "Demo data" pill — shown when the preview is running on fallback data
 const DemoPill = styled.span`
   display: inline-flex;
@@ -1205,9 +1013,7 @@ function Home({ isLoggedIn }) {
   const reduceMotion = useReducedMotion();
   const { setNavbarBackground } = useNavbar();
   const containerRef = useRef(null);
-  const statsRef = useRef(null);
   const heroRef = useRef(null);
-  const phoneRef = useRef(null);
   const featuresRef = useRef(null);
   const footerRef = useRef(null);
   const cursorDotRef = useRef(null);
@@ -1216,7 +1022,6 @@ function Home({ isLoggedIn }) {
   const cursorTarget = useRef({ x: 0, y: 0 });
   const [scrollY, setScrollY] = useState(0);
   const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 800);
-  const [statsVisible, setStatsVisible] = useState(false);
   const [cursorHovering, setCursorHovering] = useState(false);
   const BADGE_FULL_TEXT = "now in beta • live paper trading";
   const [badgeText, setBadgeText] = useState("");
@@ -1229,17 +1034,6 @@ function Home({ isLoggedIn }) {
   const [liveCandles, setLiveCandles] = useState(PLACEHOLDER_CANDLES);
   // True while the preview is showing placeholder/demo data (no live market keys).
   const [isDemoData, setIsDemoData] = useState(true);
-
-  // Optional phone-screen artwork. We only mount the image once we've confirmed
-  // it actually loads, so the branded fallback content stays visible otherwise.
-  const [phoneArtReady, setPhoneArtReady] = useState(false);
-  useEffect(() => {
-    const img = new Image();
-    img.onload = () => setPhoneArtReady(true);
-    img.onerror = () => setPhoneArtReady(false);
-    img.src = '/images/phone-app.png';
-    return () => { img.onload = null; img.onerror = null; };
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -1475,27 +1269,13 @@ function Home({ isLoggedIn }) {
     };
   }, [reduceMotion]);
 
-  useEffect(() => {
-    if (!statsRef.current || typeof IntersectionObserver === 'undefined') return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setStatsVisible(entry.isIntersecting);
-      },
-      { threshold: 0.0 }
-    );
-    observer.observe(statsRef.current);
-    return () => observer.disconnect();
-  }, []);
-
   // ─── Adaptive navbar: switch theme based on the section directly under it ──
   useEffect(() => {
     if (typeof IntersectionObserver === 'undefined') return;
 
     const sections = [
       { ref: heroRef,     theme: 'dark'  },
-      { ref: phoneRef,    theme: 'dark'  },
       { ref: featuresRef, theme: 'light' },
-      { ref: statsRef,    theme: 'dark'  },
       { ref: footerRef,   theme: 'dark'  },
     ].filter(s => s.ref.current);
 
@@ -1524,10 +1304,6 @@ function Home({ isLoggedIn }) {
   // Calculate scroll progress (0 to 1) for different sections
   // Hero fades over first screen
   const scrollProgress = Math.min(scrollY / windowHeight, 1);
-  
-  // Global scroll progress for continuous animations
-  const totalScrollProgress = scrollY / (document.body.scrollHeight - windowHeight || 1);
-  
 
   // Cascading elements data - different sizes, positions, and speeds
   const cascadeElements = [
@@ -1704,93 +1480,6 @@ function Home({ isLoggedIn }) {
 
       </HeroSection>
 
-      {/* ============ 3D PHONE SECTION ============ */}
-      <PhoneSection ref={phoneRef} data-theme="dark" style={{ position: 'relative', zIndex: 10 }}>
-        <div style={{ position: 'relative', transformStyle: 'preserve-3d' }}>
-          <PhoneMockup
-            style={{
-              transform: 'perspective(1200px) rotateX(2deg)'
-            }}
-          >
-            <PhoneScreen>
-              {!reduceMotion && (
-                <ScreenCascadeWrapper>
-                  {cascadeElements.map((el, i) => {
-                    const screenCycle = 380;
-                    const fallDistance = (scrollY * el.speed + el.delay * 1000) % (screenCycle + 120);
-                    const top = fallDistance - 60;
-                    const opacity = top < 0 ? Math.max(0, 1 + top / 60) * 0.5 : top > screenCycle ? Math.max(0, 1 - (top - screenCycle) / 60) * 0.5 : 0.5;
-                    return (
-                      <CascadeElement
-                        key={`screen-${i}`}
-                        style={{
-                          left: `${el.x}%`,
-                          top: `${top}px`,
-                          width: `${el.size}px`,
-                          height: `${el.size}px`,
-                          borderRadius: '50%',
-                          background: marbleGold,
-                          opacity: opacity * 0.6,
-                          transform: `rotate(${scrollY * el.speed * 0.5}deg)`
-                        }}
-                      />
-                    );
-                  })}
-                </ScreenCascadeWrapper>
-              )}
-              {/* Optional real app screenshot — only mounts once it has loaded,
-                  so the branded content below is the graceful default. */}
-              {phoneArtReady && (
-                <AppImage
-                  src="/images/phone-app.png"
-                  alt="tickr mobile app preview"
-                  rounded={0}
-                  objectFit="cover"
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    width: '100%',
-                    height: '100%',
-                    aspectRatio: 'auto',
-                    borderRadius: 0,
-                    background: 'transparent',
-                    zIndex: 2,
-                  }}
-                />
-              )}
-              <PhoneContent>
-                <img src="/marbleWhitelogo.png" alt="tickr logo" />
-                <p style={{ color: tk.text }}>your personal trading mentor</p>
-                <div style={{
-                  marginTop: '20px',
-                  background: tk.inset,
-                  border: `1px solid ${tk.hair}`,
-                  borderRadius: `${tk.rSm}px`,
-                  padding: '12px'
-                }}>
-                  <Num style={{ color: tk.goldBright, fontSize: '1.5rem', fontWeight: 500, display: 'block' }}>
-                    $10K
-                  </Num>
-                  <div style={{ ...label, marginTop: 4, color: tk.muted }}>
-                    Starting balance
-                  </div>
-                </div>
-              </PhoneContent>
-            </PhoneScreen>
-          </PhoneMockup>
-          
-          <FloatingStats $position="left">
-            <h5>$10K</h5>
-            <span>Starting balance</span>
-          </FloatingStats>
-
-          <FloatingStats $position="right">
-            <h5>25+</h5>
-            <span>Lessons</span>
-          </FloatingStats>
-        </div>
-      </PhoneSection>
-
       {/* ============ FEATURES SECTION (light cream — navbar adapts) ============ */}
       <section
         ref={featuresRef}
@@ -1909,80 +1598,6 @@ function Home({ isLoggedIn }) {
           </div>
         </div>
       </section>
-
-      {/* ============ STATS SECTION ============ */}
-      <Section ref={statsRef} data-theme="dark" style={{ background: 'transparent', position: 'relative', overflow: 'hidden', padding: '160px 20px' }}>
-        {/* Subtle accents — decorative; only render when motion is allowed */}
-        {!reduceMotion && (
-          <>
-            <GoldDot
-              $size="10px"
-              $opacity={0.4}
-              style={{
-                top: '20%',
-                left: '15%',
-                transform: `translateY(${Math.cos(totalScrollProgress * Math.PI * 2.5) * 25}px)`
-              }}
-            />
-            <GoldDot
-              $size="8px"
-              $opacity={0.25}
-              style={{
-                bottom: '25%',
-                right: '10%',
-                transform: `translateY(${Math.sin(totalScrollProgress * Math.PI * 2.5) * 20}px)`
-              }}
-            />
-            <GoldLine
-              $width="100px"
-              $opacity={0.25}
-              style={{
-                top: '50%',
-                right: '5%',
-                transform: `translateY(${Math.sin(totalScrollProgress * Math.PI * 3) * 15}px) rotate(${-30 + totalScrollProgress * 15}deg)`
-              }}
-            />
-            <SubtleCross
-              $opacity={0.18}
-              style={{
-                top: '30%',
-                left: '6%',
-                transform: `rotate(${totalScrollProgress * 45}deg)`
-              }}
-            />
-          </>
-        )}
-
-        <SectionInner>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
-            <span style={label}>by the numbers</span>
-            <span style={{ flex: 1, height: 1, background: tk.hair }} />
-          </div>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '40px',
-            textAlign: 'left'
-          }}>
-            <div>
-              <StatValue $isGold $animate={statsVisible}>$10K</StatValue>
-              <p style={{ ...label, margin: 0 }}>Virtual Trading Balance</p>
-            </div>
-            <div>
-              <StatValue>25+</StatValue>
-              <p style={{ ...label, margin: 0 }}>Interactive Lessons</p>
-            </div>
-            <div>
-              <StatValue $isGold $animate={statsVisible}>24/7</StatValue>
-              <p style={{ ...label, margin: 0 }}>AI Coach Access</p>
-            </div>
-            <div>
-              <StatValue>$0</StatValue>
-              <p style={{ ...label, margin: 0 }}>Risk While Learning</p>
-            </div>
-          </div>
-        </SectionInner>
-      </Section>
 
       {/* ============ HOW IT WORKS ============ */}
       <Section data-theme="dark" style={{ background: 'transparent', padding: '120px 20px 100px' }}>

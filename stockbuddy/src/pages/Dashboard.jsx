@@ -762,9 +762,9 @@ export default function Dashboard() {
         {/* ── Top stat row ── */}
         <div className="dash-stat-row" style={{ marginBottom: '24px' }}>
           {[
-            { label: 'level', value: `${levelInfo?.currentLevel ?? 1}`, sub: `${num(learningProg.xp, 0)} XP total`, loading: false },
             { label: 'daily goal', value: `${dg.completed} / ${dg.total}`, sub: `${dg.pct}% complete`, loading: false },
-            { label: 'xp to next level', value: `${Math.max(num(levelInfo?.xpNeeded, 0) - num(levelInfo?.xpIntoLevel, 0), 0)} XP`, sub: `to level ${(levelInfo?.currentLevel ?? 1) + 1}`, loading: false },
+            { label: 'lessons done', value: `${Array.isArray(learningProg.completedLessons) ? learningProg.completedLessons.length : 0}`, sub: 'all-time', loading: false },
+            { label: 'day streak', value: `${num(learningProg.currentStreak ?? learningProg.streak, 0)}`, sub: 'days in a row', loading: false },
           ].map((s, i) => (
             <div key={i} style={card}>
               <div style={sectionLabel}>{s.label}</div>
