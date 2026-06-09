@@ -6,6 +6,8 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useUser } from '../store/user';
+import { tk } from '../theme/terminal';
+import Icon from '../components/Icon';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
 
@@ -14,39 +16,38 @@ const Container = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #2C2C2C 0%, #1c1c1c 100%);
+  background: ${tk.bg};
   padding: 20px;
   margin-top: -60px;
   padding-top: 80px;
 `;
 
 const Card = styled.div`
-  background: #343434;
-  color: #F4F1E9;
-  border: 1px solid rgba(182, 156, 96, 0.22);
-  border-radius: 20px;
+  background: ${tk.surface};
+  color: ${tk.text};
+  border: 1px solid ${tk.hair};
+  border-radius: ${tk.r}px;
   padding: 40px;
   max-width: 480px;
   width: 100%;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
 `;
 
 const Logo = styled.h1`
-  font-size: 2.5rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #C9A961 0%, #B69C60 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-family: ${tk.fontHeading};
+  font-size: 2.2rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: ${tk.gold};
   text-align: center;
   margin-bottom: 8px;
 `;
 
 const Subtitle = styled.p`
-  color: #b8b4a8;
+  font-family: ${tk.fontBody};
+  color: ${tk.muted};
   text-align: center;
   margin-bottom: 32px;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
 `;
 
 const Form = styled.form`
@@ -62,83 +63,94 @@ const InputGroup = styled.div`
 `;
 
 const Label = styled.label`
-  font-weight: 500;
-  color: #F4F1E9;
-  font-size: 0.9rem;
+  font-family: ${tk.fontBody};
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: ${tk.muted};
 `;
 
 const Input = styled.input`
-  padding: 14px 16px;
-  border: 2px solid rgba(182, 156, 96, 0.22);
-  border-radius: 12px;
-  font-size: 1rem;
-  background: #2f2f2f;
-  color: #F4F1E9;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  padding: 11px 14px;
+  border: 1px solid ${tk.hair};
+  border-radius: ${tk.rSm}px;
+  font-size: 14px;
+  font-family: ${tk.fontBody};
+  background: ${tk.inset};
+  color: ${tk.text};
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
 
   &:focus {
     outline: none;
-    border-color: #B69C60;
-    box-shadow: 0 0 0 3px rgba(182, 156, 96, 0.15);
+    border-color: ${tk.gold};
+    box-shadow: 0 0 0 2px ${tk.goldHairFaint};
   }
 
   &::placeholder {
-    color: #b8b4a8;
+    color: ${tk.faint};
   }
 `;
 
 const Button = styled.button`
-  padding: 16px;
+  padding: 12px 16px;
   border: none;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  font-weight: 600;
+  border-radius: ${tk.rSm}px;
+  font-family: ${tk.fontBody};
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  background: linear-gradient(135deg, #C9A961 0%, #B69C60 100%);
-  color: #2C2C2C;
+  transition: background 0.15s;
+  background: ${tk.gold};
+  color: #1F1F1F;
   margin-top: 8px;
 
   &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(182, 156, 96, 0.3);
+    background: ${tk.goldBright};
   }
-  
+
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 `;
 
 const Message = styled.div`
-  padding: 14px;
-  border-radius: 10px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border-radius: ${tk.rSm}px;
+  font-family: ${tk.fontBody};
+  font-size: 13px;
   font-weight: 500;
-  
+
   &.success {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+    background: ${tk.upBg};
+    color: ${tk.up};
+    border: 1px solid rgba(79, 180, 119, 0.4);
   }
-  
+
   &.error {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+    background: ${tk.downBg};
+    color: ${tk.down};
+    border: 1px solid rgba(224, 96, 90, 0.4);
   }
 `;
 
 const Footer = styled.div`
   margin-top: 24px;
   text-align: center;
-  color: #b8b4a8;
-  font-size: 0.85rem;
+  font-family: ${tk.fontBody};
+  color: ${tk.muted};
+  font-size: 0.8rem;
 
   a {
-    color: #B69C60;
+    color: ${tk.gold};
     text-decoration: none;
-    
+
     &:hover {
       text-decoration: underline;
     }
@@ -148,19 +160,20 @@ const Footer = styled.div`
 const InviteSection = styled.div`
   margin-top: 24px;
   padding-top: 24px;
-  border-top: 1px solid rgba(244, 241, 233, 0.12);
+  border-top: 1px solid ${tk.hair};
 `;
 
 const InviteInput = styled.div`
   display: flex;
   gap: 10px;
-  
+  margin-top: 8px;
+
   input {
     flex: 1;
   }
-  
+
   button {
-    padding: 14px 20px;
+    padding: 11px 18px;
     margin-top: 0;
   }
 `;
@@ -192,7 +205,7 @@ export default function Waitlist() {
       const data = await response.json();
       
       if (data.ok) {
-        setMessage({ type: 'success', text: "You're on the list! We'll email you when it's your turn. 🎉" });
+        setMessage({ type: 'success', text: "You're on the list! We'll email you when it's your turn." });
         setEmail('');
         setName('');
       } else {
@@ -251,7 +264,10 @@ export default function Waitlist() {
         <Subtitle>Join the waitlist for early access</Subtitle>
         
         {message && (
-          <Message className={message.type}>{message.text}</Message>
+          <Message className={message.type}>
+            <Icon name={message.type === 'success' ? 'check' : 'alert'} size={15} />
+            {message.text}
+          </Message>
         )}
         
         <Form onSubmit={handleSubmit}>

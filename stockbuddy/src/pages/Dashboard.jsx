@@ -1,30 +1,31 @@
 import React, { useState, useEffect } from "react";
 import "../globals.css";
 import { useNavigate } from "react-router-dom";
-import { fontHeading, fontBody } from '../fontPalette';
+import { fontBody } from '../fontPalette';
 import { api, isAuthenticated, getCurrentUser } from '../services/api';
 import { getLevelProgress, lessonStructure } from '../data/lessonStructure';
 import useReducedMotion from '../hooks/useReducedMotion';
 import { useSEO, SEO_CONFIG } from '../lib/seo';
+import tk, { label, mono, panel, heading, btnPrimary, btnGhost, tag } from '../theme/terminal';
+import Icon from '../components/Icon';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
-const BG        = '#2C2C2C';
-const SURFACE   = '#343434';
-const INSET     = '#2f2f2f';
-const BORDER    = 'rgba(182, 156, 96, 0.22)';
-const SHADOW    = '0 8px 24px rgba(0,0,0,0.28)';
-const GOLD      = '#E6C87A';
-const DEMO_GOLD = '#B69C60'; // muted gold for "Demo data" labels
-const DARK      = '#F4F1E9'; // primary text (cream) on dark surfaces
-const MUTED     = '#b8b4a8';
-const MUTED2    = '#b8b4a8';
-const FAINT_SEP = 'rgba(244, 241, 233, 0.12)';
+// Mapped onto the shared Terminal Editorial palette (theme/terminal.js).
+const BG        = tk.bg;
+const SURFACE   = tk.surface;
+const INSET     = tk.inset;
+const BORDER    = tk.hair;
+const SHADOW    = 'none';
+const GOLD      = tk.goldBright;
+const DEMO_GOLD = tk.gold; // muted gold for "Demo data" labels
+const DARK      = tk.text; // primary text (cream) on dark surfaces
+const MUTED     = tk.muted;
+const MUTED2    = tk.muted;
+const FAINT_SEP = tk.hair;
 
+// Flat hairline panel (no shadow/glow) — replaces the old shadowed rounded card.
 const card = {
-  background: SURFACE,
-  border: `1px solid ${BORDER}`,
-  borderRadius: '16px',
-  boxShadow: SHADOW,
+  ...panel,
   padding: '24px',
 };
 
@@ -40,23 +41,17 @@ const DemoPill = ({ style }) => (
   <span
     title="Showing sample data — live data is unavailable right now."
     style={{
+      ...tag,
       display: 'inline-flex',
       alignItems: 'center',
-      gap: '4px',
-      fontFamily: fontBody,
-      fontSize: '10px',
-      fontWeight: '600',
-      letterSpacing: '0.06em',
-      textTransform: 'uppercase',
+      gap: '5px',
       color: DEMO_GOLD,
       background: 'rgba(182, 156, 96, 0.10)',
-      border: `1px solid rgba(182, 156, 96, 0.35)`,
-      borderRadius: '20px',
-      padding: '2px 9px',
+      borderColor: 'rgba(182, 156, 96, 0.35)',
       ...style,
     }}
   >
-    <span aria-hidden="true">●</span>
+    <Icon name="dot" size={7} />
     Demo data
   </span>
 );
@@ -89,12 +84,7 @@ const SkeletonCard = ({ reduced, lines = 3 }) => (
 );
 
 const sectionLabel = {
-  fontFamily: fontBody,
-  fontSize: '10px',
-  fontWeight: '600',
-  color: MUTED,
-  letterSpacing: '0.12em',
-  textTransform: 'uppercase',
+  ...label,
   marginBottom: '16px',
   paddingBottom: '12px',
   borderBottom: `1px solid ${FAINT_SEP}`,
@@ -108,10 +98,10 @@ const XPBar = ({ levelInfo }) => {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-        <span style={{ fontFamily: fontBody, fontSize: '12px', color: MUTED }}>
+        <span style={{ ...mono, fontSize: '12px', color: MUTED }}>
           level {levelInfo?.currentLevel ?? 1}
         </span>
-        <span style={{ fontFamily: fontBody, fontSize: '12px', color: MUTED }}>
+        <span style={{ ...mono, fontSize: '12px', color: MUTED }}>
           {xpInto} / {xpNeeded} xp
         </span>
       </div>
@@ -181,7 +171,7 @@ const WeeklyProgressChart = ({ userData }) => {
               borderRadius: '4px 4px 2px 2px',
               transition: 'height 0.4s ease',
             }} />
-            <span style={{ fontSize: '10px', color: MUTED, letterSpacing: '0.04em' }}>
+            <span style={{ ...mono, fontSize: '10px', color: MUTED, letterSpacing: '0.04em' }}>
               {day.date.toLowerCase()}
             </span>
           </div>
@@ -222,26 +212,30 @@ const TradingMilestones = ({ userData, portfolio }) => {
         return (
           <div key={m.id} style={{
             padding: '14px',
-            borderRadius: '12px',
+            borderRadius: tk.r,
             background: done ? `rgba(230,200,122,0.10)` : 'rgba(244,241,233,0.05)',
-            border: `1px solid ${done ? 'rgba(230,200,122,0.3)' : active ? 'rgba(230,200,122,0.2)' : 'rgba(244,241,233,0.10)'}`,
+            border: `1px solid ${done ? 'rgba(230,200,122,0.3)' : active ? 'rgba(230,200,122,0.2)' : tk.hair}`,
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
               <span style={{ fontFamily: fontBody, fontSize: '13px', fontWeight: '600', color: done ? DARK : MUTED }}>{m.title}</span>
               <span style={{
-                fontSize: '10px',
-                fontWeight: '600',
-                padding: '2px 7px',
-                borderRadius: '20px',
-                letterSpacing: '0.06em',
+                ...tag,
+                letterSpacing: '0.08em',
                 background: done ? GOLD : active ? DARK : 'rgba(244,241,233,0.10)',
-                color: done ? '#2C2C2C' : active ? '#2C2C2C' : MUTED,
+                border: 'none',
+                color: done ? tk.bg : active ? tk.bg : MUTED,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
               }}>
+                {done && <Icon name="check" size={9} />}
+                {active && <Icon name="bolt" size={9} />}
+                {!done && !active && <Icon name="lock" size={9} />}
                 {done ? 'done' : active ? 'active' : 'locked'}
               </span>
             </div>
             <div style={{ fontSize: '11px', color: MUTED }}>{m.desc}</div>
-            <div style={{ fontSize: '11px', color: GOLD, marginTop: '4px', fontWeight: '600' }}>+{m.xp} XP</div>
+            <div style={{ ...mono, fontSize: '11px', color: GOLD, marginTop: '4px', fontWeight: '600' }}>+{m.xp} XP</div>
           </div>
         );
       })}
@@ -297,13 +291,14 @@ const RecentActivity = ({ userData, portfolio }) => {
         <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div style={{ fontSize: '13px', fontWeight: '500', color: DARK, marginBottom: '2px' }}>{a.title}</div>
-            <div style={{ fontSize: '11px', color: MUTED }}>{ago(a.timestamp)}{a.xp ? ` · +${a.xp} XP` : ''}{a.amount ? ` · $${a.amount.toFixed(2)}` : ''}</div>
+            <div style={{ ...mono, fontSize: '11px', color: MUTED }}>{ago(a.timestamp)}{a.xp ? ` · +${a.xp} XP` : ''}{a.amount ? ` · $${a.amount.toFixed(2)}` : ''}</div>
           </div>
-          <div style={{
-            width: '6px', height: '6px', borderRadius: '50%',
-            background: a.type === 'trade' ? GOLD : 'rgba(244,241,233,0.20)',
-            flexShrink: 0,
-          }} />
+          <Icon
+            name="dot"
+            size={7}
+            color={a.type === 'trade' ? GOLD : 'rgba(244,241,233,0.20)'}
+            style={{ flexShrink: 0 }}
+          />
         </div>
       ))}
     </div>
@@ -377,14 +372,14 @@ const Leaderboard = ({ reduced }) => {
     );
   }
 
-  const rankColor = (r) => r === 1 ? GOLD : r === 2 ? '#C0C0C0' : r === 3 ? '#CD7F32' : 'rgba(244,241,233,0.18)';
+  const rankColor = (r) => r === 1 ? GOLD : r === 2 ? tk.gold : r === 3 ? tk.goldDim : 'rgba(244,241,233,0.18)';
 
   return (
     <div>
       {isDemo ? (
         <DemoPill style={{ marginBottom: '14px' }} />
       ) : totalUsers > 0 ? (
-        <p style={{ fontSize: '11px', color: MUTED, marginBottom: '14px' }}>{totalUsers} users ranked</p>
+        <p style={{ ...mono, fontSize: '11px', color: MUTED, marginBottom: '14px' }}>{totalUsers} users ranked</p>
       ) : null}
       <ol
         aria-label={isDemo ? 'Sample leaderboard rankings (demo data)' : 'Leaderboard rankings'}
@@ -403,11 +398,12 @@ const Leaderboard = ({ reduced }) => {
             >
               {/* Rank badge */}
               <div aria-hidden="true" style={{
-                width: '28px', height: '28px', borderRadius: '50%',
+                ...mono,
+                width: '28px', height: '28px', borderRadius: tk.rSm,
                 background: rankColor(rank),
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '11px', fontWeight: '700',
-                color: rank <= 3 ? DARK : MUTED,
+                color: rank <= 3 ? tk.bg : MUTED,
                 flexShrink: 0,
               }}>
                 {rank}
@@ -416,9 +412,9 @@ const Leaderboard = ({ reduced }) => {
                 <div style={{ fontSize: '13px', fontWeight: '600', color: DARK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {name}
                 </div>
-                <div style={{ fontSize: '11px', color: MUTED }}>{lessons} lessons</div>
+                <div style={{ ...mono, fontSize: '11px', color: MUTED }}>{lessons} lessons</div>
               </div>
-              <div style={{ fontSize: '12px', fontWeight: '700', color: GOLD, flexShrink: 0 }}>
+              <div style={{ ...mono, fontSize: '12px', fontWeight: '700', color: GOLD, flexShrink: 0 }}>
                 {xp} XP
               </div>
             </li>
@@ -490,9 +486,6 @@ const PortfolioHero = ({ portfolio, loading, error, reduced, fmt, fmtPct, change
 
   return (
     <div style={{ ...card, padding: '26px 28px', marginBottom: '24px', position: 'relative', overflow: 'hidden' }}>
-      {/* faint gold glow */}
-      <div aria-hidden="true" style={{ position: 'absolute', top: '-45%', right: '-8%', width: '320px', height: '320px', background: 'radial-gradient(circle, rgba(230,200,122,0.13) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '14px', position: 'relative' }}>
         <div>
           <div style={{ ...sectionLabel, border: 'none', padding: 0, margin: 0, marginBottom: '10px', display: 'flex', alignItems: 'center' }}>
@@ -503,26 +496,31 @@ const PortfolioHero = ({ portfolio, loading, error, reduced, fmt, fmtPct, change
             <Skeleton reduced={reduced} width="240px" height="44px" />
           ) : (
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px', flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: fontHeading, fontSize: '44px', fontWeight: '400', color: DARK, letterSpacing: '-0.02em', lineHeight: 1 }}>
+              <span style={{ ...mono, fontSize: '42px', fontWeight: '500', color: DARK, letterSpacing: '-0.02em', lineHeight: 1 }}>
                 {error ? '—' : fmt(portfolio?.totalValue)}
               </span>
               {showData && (
                 <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '5px',
+                  ...mono,
+                  display: 'inline-flex', alignItems: 'center', gap: '4px',
                   fontSize: '14px', fontWeight: '600', color: changeColor(ret),
-                  background: up ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
-                  border: `1px solid ${up ? 'rgba(34,197,94,0.30)' : 'rgba(239,68,68,0.30)'}`,
-                  borderRadius: '20px', padding: '4px 11px',
+                  background: up ? tk.upBg : tk.downBg,
+                  border: `1px solid ${up ? 'rgba(79,180,119,0.30)' : 'rgba(224,96,90,0.30)'}`,
+                  borderRadius: tk.rXs, padding: '4px 10px',
                 }}>
-                  <span aria-hidden="true">{up ? '▲' : '▼'}</span>{fmtPct(ret)}
+                  <Icon name={up ? 'tri-up' : 'tri-down'} size={9} />{fmtPct(ret)}
                 </span>
               )}
             </div>
           )}
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={onRefresh} style={{ background: 'rgba(244,241,233,0.08)', border: 'none', padding: '7px 14px', borderRadius: '10px', fontSize: '12px', cursor: 'pointer', color: DARK }}>Refresh</button>
-          <button onClick={onTrade} style={{ background: GOLD, border: 'none', padding: '7px 16px', borderRadius: '10px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', color: '#2C2C2C' }}>Trade →</button>
+          <button onClick={onRefresh} style={{ ...btnGhost, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <Icon name="refresh" size={14} /> Refresh
+          </button>
+          <button onClick={onTrade} style={{ ...btnPrimary, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            Trade <Icon name="arrow-right" size={14} />
+          </button>
         </div>
       </div>
 
@@ -536,9 +534,9 @@ const PortfolioHero = ({ portfolio, loading, error, reduced, fmt, fmtPct, change
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', marginTop: '14px' }}>
               {withPct.length ? withPct.map(s => (
                 <span key={s.key} style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', fontSize: '12px', color: MUTED }}>
-                  <span aria-hidden="true" style={{ width: '9px', height: '9px', borderRadius: '3px', background: s.color, display: 'inline-block' }} />
-                  <span style={{ color: DARK, fontWeight: '600' }}>{s.label}</span>
-                  {s.pct.toFixed(s.pct < 10 ? 1 : 0)}%
+                  <span aria-hidden="true" style={{ width: '9px', height: '9px', borderRadius: tk.rXs, background: s.color, display: 'inline-block' }} />
+                  <span style={{ ...mono, color: DARK, fontWeight: '600' }}>{s.label}</span>
+                  <span style={mono}>{s.pct.toFixed(s.pct < 10 ? 1 : 0)}%</span>
                 </span>
               )) : (
                 <span style={{ fontSize: '12px', color: MUTED }}>No holdings yet — make your first trade to see your allocation.</span>
@@ -556,9 +554,9 @@ const PortfolioHero = ({ portfolio, loading, error, reduced, fmt, fmtPct, change
           { l: 'holdings', v: showData ? fmt(holdingsValue) : null },
         ].map((s, i) => (
           <div key={i}>
-            <div style={{ fontSize: '10px', color: MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>{s.l}</div>
+            <div style={{ ...label, marginBottom: '6px' }}>{s.l}</div>
             {s.v === null ? <Skeleton reduced={reduced} width="70%" height="18px" /> : (
-              <div style={{ fontSize: '18px', fontWeight: '700', color: s.vc || DARK }}>{s.v}</div>
+              <div style={{ ...mono, fontSize: '18px', fontWeight: '600', color: s.vc || DARK }}>{s.v}</div>
             )}
           </div>
         ))}
@@ -639,7 +637,7 @@ export default function Dashboard() {
   const changeColor = (v) => {
     const n = num(v, NaN);
     if (!Number.isFinite(n) || n === 0) return MUTED;
-    return n >= 0 ? '#22c55e' : '#ef4444';
+    return n >= 0 ? tk.up : tk.down;
   };
 
   const currentUser   = getCurrentUser();
@@ -686,7 +684,7 @@ export default function Dashboard() {
         <div style={{ marginBottom: '32px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px' }}>
             <div>
-              <h1 style={{ fontFamily: fontHeading, fontSize: '28px', fontWeight: '400', color: DARK, marginBottom: '4px', letterSpacing: '-0.01em' }}>
+              <h1 style={{ ...heading, fontSize: '28px', color: DARK, marginBottom: '4px' }}>
                 welcome back, {displayName.toLowerCase()}.
               </h1>
               {displayUser && (
@@ -698,46 +696,46 @@ export default function Dashboard() {
               <div
                 aria-label={`${num(learningProg.xp, 0)} experience points`}
                 style={{
+                  ...mono,
                   background: SURFACE,
                   border: `1px solid ${BORDER}`,
-                  borderRadius: '20px',
-                  padding: '6px 16px',
+                  borderRadius: tk.rSm,
+                  padding: '6px 14px',
                   fontSize: '13px',
                   fontWeight: '600',
                   color: DARK,
                   display: 'flex',
                   gap: '6px',
                   alignItems: 'center',
-                  boxShadow: SHADOW,
                 }}
               >
-                <span aria-hidden="true" style={{ color: GOLD }}>◆</span>
+                <Icon name="diamond" size={13} color={GOLD} />
                 {num(learningProg.xp, 0)} XP
               </div>
               <div
                 aria-label={`${num(learningProg.coins, 0)} coins`}
                 style={{
+                  ...mono,
                   background: SURFACE,
                   border: `1px solid ${BORDER}`,
-                  borderRadius: '20px',
-                  padding: '6px 16px',
+                  borderRadius: tk.rSm,
+                  padding: '6px 14px',
                   fontSize: '13px',
                   fontWeight: '600',
                   color: DARK,
                   display: 'flex',
                   gap: '6px',
                   alignItems: 'center',
-                  boxShadow: SHADOW,
                 }}
               >
-                <span aria-hidden="true" style={{ color: GOLD, fontSize: '11px' }}>●</span>
+                <Icon name="coin" size={13} color={GOLD} />
                 {num(learningProg.coins, 0)} coins
               </div>
               <button
                 onClick={() => navigate('/shop')}
-                style={{ background: DARK, color: '#2C2C2C', border: 'none', padding: '7px 18px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', letterSpacing: '0.01em' }}
+                style={{ ...btnGhost, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
-                Shop
+                <Icon name="bag" size={14} /> Shop
               </button>
             </div>
           </div>
@@ -777,8 +775,8 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <>
-                  <div style={{ fontFamily: fontHeading, fontSize: '26px', fontWeight: '400', color: DARK, letterSpacing: '-0.01em' }}>{s.value}</div>
-                  {s.sub && <div style={{ fontSize: '12px', color: s.subColor || MUTED, marginTop: '4px' }}>{s.sub}</div>}
+                  <div style={{ ...mono, fontSize: '26px', fontWeight: '500', color: DARK, letterSpacing: '-0.01em' }}>{s.value}</div>
+                  {s.sub && <div style={{ ...mono, fontSize: '12px', color: s.subColor || MUTED, marginTop: '4px' }}>{s.sub}</div>}
                 </>
               )}
             </div>
@@ -798,26 +796,28 @@ export default function Dashboard() {
               {loading ? (
                 <SkeletonCard reduced={reduced} lines={4} />
               ) : error ? (
-                <p style={{ color: '#ef4444', fontSize: '13px' }}>Error: {error}</p>
+                <p style={{ color: tk.down, fontSize: '13px' }}>Error: {error}</p>
               ) : portfolio?.positions?.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
                   {portfolio.positions.map((h, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: INSET, borderRadius: '10px', border: '1px solid rgba(244,241,233,0.08)' }}>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 0', borderBottom: `1px solid ${tk.hair}` }}>
                       <div>
-                        <div style={{ fontWeight: '700', fontSize: '14px', color: DARK }}>{h.symbol}</div>
-                        <div style={{ fontSize: '11px', color: MUTED }}>{h.shares} shares · avg {fmt(h.avgPrice)}</div>
+                        <div style={{ ...mono, fontWeight: '600', fontSize: '14px', color: DARK }}>{h.symbol}</div>
+                        <div style={{ ...mono, fontSize: '11px', color: MUTED }}>{h.shares} shares · avg {fmt(h.avgPrice)}</div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontWeight: '600', fontSize: '14px', color: DARK }}>{fmt(h.currentValue)}</div>
-                        <div style={{ fontSize: '11px', color: changeColor(h.changePercent) }}>{fmtPct(h.changePercent)}</div>
+                        <div style={{ ...mono, fontWeight: '600', fontSize: '14px', color: DARK }}>{fmt(h.currentValue)}</div>
+                        <div style={{ ...mono, fontSize: '11px', color: changeColor(h.changePercent), display: 'flex', gap: '3px', alignItems: 'center', justifyContent: 'flex-end' }}>
+                          <Icon name={h.changePercent >= 0 ? 'tri-up' : 'tri-down'} size={8} /> {fmtPct(h.changePercent)}
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                <div style={{ textAlign: 'center', padding: '24px 0' }}>
                   <p style={{ color: MUTED, fontSize: '14px', marginBottom: '16px' }}>No holdings yet. Make your first trade.</p>
-                  <button onClick={() => navigate('/trade')} style={{ background: GOLD, border: 'none', padding: '10px 22px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', color: '#2C2C2C' }}>Start Trading</button>
+                  <button onClick={() => navigate('/trade')} style={btnPrimary}>Start trading</button>
                 </div>
               )}
             </div>
@@ -834,7 +834,7 @@ export default function Dashboard() {
             <div style={card}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                 <div style={sectionLabel}>trading journey</div>
-                <button onClick={() => navigate('/learn')} style={{ background: 'none', border: 'none', fontSize: '12px', color: GOLD, fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>View all →</button>
+                <button onClick={() => navigate('/learn')} style={{ background: 'none', border: 'none', fontSize: '12px', color: GOLD, fontWeight: '600', cursor: 'pointer', marginBottom: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>View all <Icon name="arrow-right" size={13} /></button>
               </div>
               {userDataLoading
                 ? <SkeletonCard reduced={reduced} lines={4} />
@@ -844,11 +844,11 @@ export default function Dashboard() {
             {/* Continue Learning */}
             <div style={{ ...card, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontFamily: fontHeading, fontSize: '18px', fontWeight: '400', color: DARK, marginBottom: '6px' }}>continue learning</div>
+                <div style={{ ...heading, fontSize: '18px', color: DARK, marginBottom: '6px' }}>continue learning</div>
                 <div style={{ fontSize: '13px', color: MUTED }}>Pick up where you left off.</div>
               </div>
-              <button onClick={() => navigate('/learn')} style={{ background: DARK, color: '#2C2C2C', border: 'none', padding: '11px 22px', borderRadius: '12px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                Go to Learn →
+              <button onClick={() => navigate('/learn')} style={{ ...btnPrimary, fontSize: '14px', padding: '11px 20px', display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+                Go to Learn <Icon name="arrow-right" size={15} />
               </button>
             </div>
           </div>

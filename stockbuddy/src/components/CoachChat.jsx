@@ -1,20 +1,22 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useCoachChat } from '../hooks/useCoachChat';
-import { fontHeading, fontBody } from '../fontPalette';
+import { fontBody } from '../fontPalette';
+import tk, { panel, inset, heading, btnGhost } from '../theme/terminal';
+import Icon from './Icon';
 
-// ── Marble dark theme tokens (chat renders on the dark AI Coach page) ──────────
-const PANEL    = '#2f2f2f';                       // chat panel surface
-const FIELD    = '#262626';                        // message scroll area (inset)
-const AI_BUBBLE = '#3a3a3a';                        // assistant message bubble
-const INPUT_BG = '#343434';                        // composer input surface
-const TEXT     = '#F4F1E9';                         // primary cream text
-const MUTED    = '#b8b4a8';                         // muted / secondary text
-const GOLD      = '#B69C60';
-const GOLD_LT   = '#E6C87A';
-const BORDER    = 'rgba(182, 156, 96, 0.22)';
-const DIVIDER   = 'rgba(244, 241, 233, 0.12)';
-const DARK_ON_GOLD = '#2C2C2C';                     // text on gold bubbles/button
+// ── Terminal Editorial tokens (chat renders on the dark AI Coach page) ─────────
+const PANEL        = tk.surface;     // chat panel surface
+const FIELD        = tk.inset;       // message scroll area (inset well)
+const AI_BUBBLE    = tk.raised;      // assistant message bubble
+const INPUT_BG     = tk.inset;       // composer input surface
+const TEXT         = tk.text;        // primary cream text
+const MUTED        = tk.muted;       // muted / secondary text
+const GOLD         = tk.gold;
+const GOLD_LT      = tk.goldBright;
+const BORDER       = tk.goldHair;    // accent hairline (gold)
+const DIVIDER      = tk.hair;        // structural hairline
+const DARK_ON_GOLD = tk.bg;          // ink on gold bubbles/button
 
 /**
  * CoachChat Component
@@ -119,14 +121,11 @@ export function CoachChat({
 
   return (
     <div style={{
-      backgroundColor: PANEL,
-      borderRadius: '20px',
+      ...panel,
       padding: '16px',
       height: '500px',
       display: 'flex',
-      flexDirection: 'column',
-      border: `1px solid ${BORDER}`,
-      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.28)'
+      flexDirection: 'column'
     }}>
       {/* Scoped styles: typing dots + markdown rhythm inside AI bubbles */}
       <style>{`
@@ -159,20 +158,20 @@ export function CoachChat({
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: '8px',
-        marginBottom: '16px'
+        marginBottom: '14px',
+        paddingBottom: '14px',
+        borderBottom: `1px solid ${DIVIDER}`
       }}>
         <h3 style={{
-          fontSize: '18px',
-          fontWeight: '400',
+          ...heading,
+          fontSize: '16px',
           color: TEXT,
           margin: 0,
-          fontFamily: fontHeading,
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
-          letterSpacing: '-0.01em'
+          gap: '8px'
         }}>
-          <span aria-hidden="true" style={{ color: GOLD }}>◆</span>
+          <Icon name="sparkle" size={16} color={GOLD} />
           AI Trading Coach
         </h3>
         <button
@@ -182,19 +181,19 @@ export function CoachChat({
           aria-label="Clear chat history"
           title="Clear chat history"
           style={{
+            ...btnGhost,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
             padding: '6px 12px',
-            borderRadius: '8px',
-            border: `1px solid ${DIVIDER}`,
-            backgroundColor: 'transparent',
-            color: MUTED,
             fontSize: '12px',
-            fontWeight: '600',
-            fontFamily: fontBody,
+            color: canClearHistory ? TEXT : MUTED,
             cursor: canClearHistory ? 'pointer' : 'not-allowed',
             opacity: canClearHistory ? 1 : 0.5,
             transition: 'border-color 0.2s ease, color 0.2s ease'
           }}
         >
+          <Icon name="trash" size={13} />
           Clear chat
         </button>
       </div>
@@ -209,16 +208,17 @@ export function CoachChat({
             alignSelf: 'flex-start',
             marginBottom: '12px',
             padding: '4px 10px',
-            borderRadius: '999px',
-            backgroundColor: 'rgba(182, 156, 96, 0.12)',
-            border: '1px solid rgba(182, 156, 96, 0.35)',
+            borderRadius: `${tk.rSm}px`,
+            backgroundColor: 'transparent',
+            border: `1px solid ${BORDER}`,
             color: GOLD_LT,
             fontSize: '11px',
             fontWeight: '600',
             fontFamily: fontBody
           }}
         >
-          ● Demo mode — coach running without a live AI key
+          <Icon name="dot" size={7} color={GOLD} />
+          Demo mode — coach running without a live AI key
         </div>
       )}
 
@@ -226,13 +226,11 @@ export function CoachChat({
       <div
         ref={chatContainerRef}
         style={{
+          ...inset,
           flex: 1,
           overflowY: 'auto',
           marginBottom: '14px',
-          padding: '12px',
-          backgroundColor: FIELD,
-          borderRadius: '14px',
-          border: `1px solid ${DIVIDER}`
+          padding: '12px'
         }}>
         {displayMessages.length === 0 && !loading && (
           <div style={{
@@ -246,12 +244,14 @@ export function CoachChat({
             padding: '24px'
           }}>
             <div aria-hidden="true" style={{
-              width: '44px', height: '44px', borderRadius: '50%',
+              width: '44px', height: '44px', borderRadius: `${tk.rSm}px`,
               display: 'grid', placeItems: 'center', marginBottom: '12px',
-              background: 'rgba(182,156,96,0.14)', border: `1px solid ${BORDER}`,
-              color: GOLD_LT, fontSize: '20px'
-            }}>◆</div>
-            <div style={{ color: TEXT, fontSize: '15px', fontWeight: 600, marginBottom: '4px', fontFamily: fontHeading }}>
+              background: 'transparent', border: `1px solid ${BORDER}`,
+              color: GOLD
+            }}>
+              <Icon name="sparkle" size={18} />
+            </div>
+            <div style={{ ...heading, color: TEXT, fontSize: '16px', marginBottom: '4px' }}>
               Ask your trading coach
             </div>
             <div style={{ fontSize: '12px', lineHeight: 1.5, maxWidth: '240px' }}>
@@ -272,16 +272,13 @@ export function CoachChat({
                   style={{
                     display: 'inline-block',
                     padding: '9px 13px',
-                    borderRadius: isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                    background: isUser
-                      ? `linear-gradient(180deg, ${GOLD_LT} 0%, ${GOLD} 100%)`
-                      : AI_BUBBLE,
+                    borderRadius: isUser ? '8px 8px 3px 8px' : '8px 8px 8px 3px',
+                    background: isUser ? GOLD : AI_BUBBLE,
                     color: isUser ? DARK_ON_GOLD : TEXT,
-                    border: isUser ? 'none' : '1px solid rgba(255,255,255,0.06)',
+                    border: isUser ? 'none' : `1px solid ${DIVIDER}`,
                     fontSize: '14px',
                     lineHeight: '1.45',
-                    fontFamily: fontBody,
-                    boxShadow: isUser ? '0 4px 14px rgba(182,156,96,0.20)' : 'none'
+                    fontFamily: fontBody
                   }}
                 >
                   <div className="coach-message-content">
@@ -310,9 +307,9 @@ export function CoachChat({
               alignItems: 'center',
               gap: '5px',
               padding: '11px 14px',
-              borderRadius: '14px 14px 14px 4px',
+              borderRadius: '8px 8px 8px 3px',
               backgroundColor: AI_BUBBLE,
-              border: '1px solid rgba(255,255,255,0.06)'
+              border: `1px solid ${DIVIDER}`
             }}>
               {[0, 1, 2].map((i) => (
                 <span
@@ -353,15 +350,14 @@ export function CoachChat({
             aria-label="Ask the AI trading coach a question"
             disabled={loading}
             style={{
+              ...inset,
               flex: 1,
-              padding: '11px 16px',
-              borderRadius: '999px',
-              border: `1px solid ${BORDER}`,
-              background: INPUT_BG,
+              padding: '11px 14px',
               color: TEXT,
               fontSize: '14px',
               fontFamily: fontBody,
               outline: 'none',
+              boxSizing: 'border-box',
               opacity: loading ? 0.6 : 1,
               cursor: loading ? 'not-allowed' : 'text'
             }}
@@ -377,19 +373,16 @@ export function CoachChat({
               height: '40px',
               display: 'grid',
               placeItems: 'center',
-              borderRadius: '50%',
+              borderRadius: `${tk.rSm}px`,
               border: 'none',
-              background: `linear-gradient(180deg, ${GOLD_LT} 0%, ${GOLD} 100%)`,
+              background: GOLD,
               color: DARK_ON_GOLD,
               cursor: loading || !userInput.trim() ? 'not-allowed' : 'pointer',
               opacity: loading || !userInput.trim() ? 0.5 : 1,
               transition: 'filter 0.2s ease, opacity 0.2s ease'
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
+            <Icon name="send" size={18} />
           </button>
         </div>
       )}
@@ -398,14 +391,18 @@ export function CoachChat({
         <div style={{
           marginTop: '8px',
           padding: '9px 12px',
-          backgroundColor: 'rgba(239, 68, 68, 0.10)',
-          border: '1px solid rgba(239, 68, 68, 0.30)',
-          borderRadius: '8px',
-          color: '#f0a9a4',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          backgroundColor: tk.downBg,
+          border: '1px solid rgba(224, 96, 90, 0.30)',
+          borderRadius: `${tk.rSm}px`,
+          color: tk.down,
           fontSize: '12px',
           fontFamily: fontBody
         }}>
-          ⚠️ {displayError}
+          <Icon name="alert" size={14} />
+          {displayError}
         </div>
       )}
     </div>

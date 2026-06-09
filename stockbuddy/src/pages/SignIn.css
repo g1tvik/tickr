@@ -2,7 +2,7 @@
 .signin-container {
   min-height: 100vh;
   display: flex;
-  background: #2C2C2C;
+  background: #1F1F1F;
   color: #F4F1E9;
 }
 
@@ -15,25 +15,11 @@
   justify-content: space-between;
   padding: 40px 48px;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 82% 10%, rgba(201, 168, 90, 0.55) 0%, rgba(201, 168, 90, 0.18) 22%, transparent 46%),
-    linear-gradient(165deg, rgba(42, 69, 128, 0.95) 0%, rgba(61, 83, 140, 0.82) 32%, rgba(58, 60, 74, 0.85) 60%, #232323 100%);
+  background: #262626;
   border-right: 1px solid rgba(182, 156, 96, 0.18);
 }
 
-/* faint starfield-ish grain via layered radial dots */
-.signin-showcase::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.5;
-  background-image:
-    radial-gradient(rgba(238, 230, 208, 0.35) 1px, transparent 1.4px),
-    radial-gradient(rgba(238, 230, 208, 0.18) 1px, transparent 1.4px);
-  background-size: 64px 64px, 96px 96px;
-  background-position: 0 0, 32px 40px;
-}
+/* flat charcoal — decorative glow/grain removed per Terminal Editorial */
 
 .signin-showcase > * {
   position: relative;
@@ -57,21 +43,22 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  border: 1px solid rgba(244, 241, 233, 0.16);
   color: rgba(244, 241, 233, 0.85);
-  font-size: 13px;
-  font-weight: 500;
-  padding: 7px 14px;
-  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 7px 13px;
+  border-radius: 6px;
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 .signin-back:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(182, 156, 96, 0.10);
   border-color: rgba(182, 156, 96, 0.4);
-  color: #fff;
+  color: #F4F1E9;
 }
 
 .signin-showcase-body {
@@ -93,7 +80,7 @@
   font-weight: 400;
   line-height: 1.12;
   letter-spacing: -0.015em;
-  color: #FFFFFF;
+  color: #F4F1E9;
   margin: 0 0 18px;
 }
 
@@ -126,13 +113,12 @@
   flex-shrink: 0;
   width: 24px;
   height: 24px;
-  border-radius: 50%;
+  border-radius: 5px;
   display: grid;
   place-items: center;
-  background: rgba(230, 200, 122, 0.16);
-  border: 1px solid rgba(230, 200, 122, 0.4);
+  background: rgba(230, 200, 122, 0.10);
+  border: 1px solid rgba(182, 156, 96, 0.38);
   color: #E6C87A;
-  font-size: 12px;
   margin-top: 1px;
 }
 
@@ -180,7 +166,7 @@
 }
 
 .signin-subtitle {
-  color: #b8b4a8;
+  color: #9A958B;
   font-size: 14px;
   margin: 0;
 }
@@ -190,14 +176,14 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  background: rgba(239, 68, 68, 0.10);
-  border: 1px solid rgba(239, 68, 68, 0.32);
-  border-left: 4px solid #ef4444;
-  color: #f0a9a4;
+  background: rgba(224, 96, 90, 0.12);
+  border: 1px solid rgba(224, 96, 90, 0.32);
+  border-left: 3px solid #E0605A;
+  color: #E0605A;
   font-size: 13.5px;
   line-height: 1.45;
   padding: 12px 14px;
-  border-radius: 10px;
+  border-radius: 6px;
   margin-bottom: 20px;
 }
 
@@ -211,21 +197,23 @@
 
 .form-label {
   display: block;
-  font-weight: 500;
-  color: #b8b4a8;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #9A958B;
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: 10.5px;
 }
 
 .form-input {
   width: 100%;
-  padding: 13px 16px;
-  background: #2f2f2f;
-  border: 1px solid rgba(182, 156, 96, 0.22);
-  border-radius: 10px;
+  padding: 13px 14px;
+  background: #191919;
+  border: 1px solid rgba(244, 241, 233, 0.10);
+  border-radius: 6px;
   font-size: 15px;
   color: #F4F1E9;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease;
   box-sizing: border-box;
 }
 
@@ -236,8 +224,7 @@
 .form-input:focus {
   outline: none;
   border-color: #B69C60;
-  background: #333230;
-  box-shadow: 0 0 0 3px rgba(182, 156, 96, 0.16);
+  background: #1F1F1F;
 }
 
 /* Password field with show/hide toggle */
@@ -258,8 +245,8 @@
   height: 32px;
   background: transparent;
   border: none;
-  border-radius: 8px;
-  color: #b8b4a8;
+  border-radius: 5px;
+  color: #9A958B;
   cursor: pointer;
   transition: color 0.2s ease, background 0.2s ease;
 }
@@ -270,7 +257,7 @@
 
 .form-hint {
   display: block;
-  color: #b8b4a8;
+  color: #9A958B;
   font-size: 12px;
   margin-top: 6px;
 }
@@ -285,43 +272,45 @@
 }
 
 .password-rule {
-  color: #b8b4a8;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #9A958B;
   font-size: 12px;
   line-height: 1.4;
   transition: color 0.2s ease;
 }
 
 .password-rule span {
-  display: inline-block;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 14px;
-  text-align: center;
-  color: #b8b4a8;
+  color: #9A958B;
 }
 
 .password-rule--met,
 .password-rule--met span {
-  color: #6ee7a8;
+  color: #4FB477;
 }
 
 .signin-button {
   width: 100%;
   padding: 13px 24px;
-  background: linear-gradient(180deg, #E6C87A 0%, #B69C60 100%);
-  color: #2C2C2C;
+  background: #B69C60;
+  color: #1F1F1F;
   border: none;
-  border-radius: 10px;
-  font-size: 15px;
+  border-radius: 6px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-  box-shadow: 0 8px 24px rgba(182, 156, 96, 0.22);
+  transition: background 0.2s ease;
 }
 
 .signin-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  filter: brightness(1.05);
-  box-shadow: 0 12px 30px rgba(182, 156, 96, 0.32);
+  background: #E6C87A;
 }
 
 .signin-button:disabled {
@@ -331,7 +320,7 @@
 
 .signin-footer {
   text-align: center;
-  color: #b8b4a8;
+  color: #9A958B;
   font-size: 14px;
 }
 
@@ -360,7 +349,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #b8b4a8;
+  color: #9A958B;
   font-size: 13px;
   margin: 16px 0;
 }
@@ -369,17 +358,17 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(244, 241, 233, 0.12);
+  background: rgba(244, 241, 233, 0.10);
 }
 
 .demo-button {
   width: 100%;
   padding: 13px;
-  border-radius: 10px;
-  border: 1px solid rgba(182, 156, 96, 0.5);
+  border-radius: 6px;
+  border: 1px solid rgba(182, 156, 96, 0.38);
   background-color: transparent;
   color: #F4F1E9;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease, border-color 0.2s ease;

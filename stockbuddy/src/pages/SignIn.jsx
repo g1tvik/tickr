@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { api } from "../services/api";
 import { useSEO, SEO_CONFIG } from "../lib/seo";
 import GoogleOAuth from "../components/GoogleOAuth";
+import { mono } from "../theme/terminal";
+import Icon from "../components/Icon";
 import './SignIn.css';
 
 // Demo account: email is pre-fillable, but no real password ships in client code.
@@ -84,7 +86,7 @@ function SignIn({ setIsLoggedIn }) {
         <div className="signin-brand">
           <img src="/marbleWhitelogo.png" alt="tickr" />
           <button type="button" className="signin-back" onClick={() => navigate('/')}>
-            ← Home
+            <Icon name="arrow-left" size={14} /> Home
           </button>
         </div>
 
@@ -97,15 +99,15 @@ function SignIn({ setIsLoggedIn }) {
           </p>
           <ul className="signin-feature-list">
             <li className="signin-feature">
-              <span className="signin-feature-icon" aria-hidden="true">✓</span>
-              $100k in virtual cash to practice trading risk-free
+              <span className="signin-feature-icon" aria-hidden="true"><Icon name="check" size={14} /></span>
+              <span><span style={mono}>$100k</span> in virtual cash to practice trading risk-free</span>
             </li>
             <li className="signin-feature">
-              <span className="signin-feature-icon" aria-hidden="true">✓</span>
+              <span className="signin-feature-icon" aria-hidden="true"><Icon name="check" size={14} /></span>
               An AI coach that explains every market move
             </li>
             <li className="signin-feature">
-              <span className="signin-feature-icon" aria-hidden="true">✓</span>
+              <span className="signin-feature-icon" aria-hidden="true"><Icon name="check" size={14} /></span>
               Lessons, XP, and a live community leaderboard
             </li>
           </ul>
@@ -134,7 +136,7 @@ function SignIn({ setIsLoggedIn }) {
 
           {error && (
             <div className="error-message" role="alert">
-              {error}
+              <Icon name="alert" size={16} />{error}
             </div>
           )}
 
@@ -179,17 +181,9 @@ function SignIn({ setIsLoggedIn }) {
                   tabIndex={-1}
                 >
                   {showPassword ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-                      <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
-                      <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
-                      <line x1="2" y1="2" x2="22" y2="22" />
-                    </svg>
+                    <Icon name="eye-off" size={18} strokeWidth={2} />
                   ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
+                    <Icon name="eye" size={18} strokeWidth={2} />
                   )}
                 </button>
               </div>

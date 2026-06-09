@@ -1,23 +1,21 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { white, marbleBlack, marbleGold, primary } from '../marblePalette';
-import { fontHeading } from '../fontPalette';
+import tk from '../theme/terminal';
+import Icon from '../components/Icon';
 import { useSEO } from '../lib/seo';
 import AppImage from '../components/AppImage';
 
-// ── Marble dark theme tokens ───────────────────────────────────────────────────
-const BG      = '#2C2C2C';
-const SURFACE = '#343434';
-const TEXT    = '#F4F1E9';
-const MUTED   = '#b8b4a8';
-const BORDER  = 'rgba(182, 156, 96, 0.22)';
+// ── Terminal Editorial tokens (mapped onto the shared design system) ────────────
+const BG      = tk.bg;
+const SURFACE = tk.surface;
+const TEXT    = tk.text;
+const MUTED   = tk.muted;
+const BORDER  = tk.hair;
 
 const Wrapper = styled.div`
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 86% -4%, rgba(201, 168, 90, 0.16) 0%, transparent 42%),
-    ${BG};
+  background: ${BG};
   color: ${TEXT};
 `;
 
@@ -40,13 +38,23 @@ const Section = styled.section`
 `;
 
 const Eyebrow = styled.p`
-  font-family: ${fontHeading};
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: ${tk.fontBody};
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: ${marbleGold};
-  margin: 0 0 14px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: ${tk.gold};
+  margin: 0 0 18px;
+
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: ${tk.hair};
+  }
 `;
 
 const Hero = styled.header`
@@ -54,9 +62,10 @@ const Hero = styled.header`
 `;
 
 const Title = styled.h1`
-  font-family: ${fontHeading};
-  font-size: clamp(2.25rem, 6vw, 3.5rem);
-  font-weight: 700;
+  font-family: ${tk.fontHeading};
+  font-size: clamp(2.25rem, 6vw, 3.4rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
   line-height: 1.08;
   margin: 0 0 20px;
   color: ${TEXT};
@@ -70,9 +79,10 @@ const Lead = styled.p`
 `;
 
 const SectionTitle = styled.h2`
-  font-family: ${fontHeading};
-  font-size: clamp(1.6rem, 4vw, 2.25rem);
-  font-weight: 700;
+  font-family: ${tk.fontHeading};
+  font-size: clamp(1.5rem, 4vw, 2.1rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
   line-height: 1.15;
   margin: 0 0 16px;
   color: ${TEXT};
@@ -104,30 +114,32 @@ const Grid = styled.div`
 const Card = styled.div`
   background: ${SURFACE};
   border: 1px solid ${BORDER};
-  border-radius: 18px;
-  padding: 28px 26px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  border-radius: ${tk.r}px;
+  padding: 26px 24px;
 `;
 
 const StepNumber = styled.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(182, 156, 96, 0.16);
-  color: ${marbleGold};
-  font-family: ${fontHeading};
-  font-weight: 700;
-  font-size: 1.1rem;
-  margin-bottom: 16px;
+  width: 34px;
+  height: 34px;
+  border-radius: ${tk.rSm}px;
+  border: 1px solid ${tk.goldHair};
+  background: transparent;
+  color: ${tk.gold};
+  font-family: ${tk.fontMono};
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 18px;
 `;
 
 const CardTitle = styled.h3`
-  font-family: ${fontHeading};
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-family: ${tk.fontHeading};
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   margin: 0 0 10px;
   color: ${TEXT};
 `;
@@ -158,22 +170,15 @@ const ValuesList = styled.ul`
   padding: 0;
   margin: 28px 0 0;
   display: grid;
-  gap: 18px;
+  gap: 0;
 `;
 
 const ValueItem = styled.li`
   display: flex;
   gap: 14px;
   align-items: flex-start;
-`;
-
-const ValueMark = styled.span`
-  flex-shrink: 0;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-top: 8px;
-  background: ${marbleGold};
+  padding: 18px 0;
+  border-top: 1px solid ${tk.hair};
 `;
 
 const ValueText = styled.div`
@@ -183,8 +188,8 @@ const ValueText = styled.div`
 
   strong {
     display: block;
-    font-family: ${fontHeading};
-    font-weight: 700;
+    font-family: ${tk.fontHeading};
+    font-weight: 600;
     margin-bottom: 4px;
   }
 
@@ -211,46 +216,48 @@ const TeamMember = styled.figure`
 `;
 
 const TeamName = styled.figcaption`
-  font-family: ${fontHeading};
-  font-weight: 700;
+  font-family: ${tk.fontHeading};
+  font-weight: 600;
   font-size: 1.05rem;
   color: ${TEXT};
   margin-top: 14px;
 `;
 
 const TeamRole = styled.p`
-  font-size: 0.92rem;
-  color: ${marbleGold};
+  font-size: 0.9rem;
+  color: ${tk.gold};
   margin: 4px 0 0;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 `;
 
 const CTASection = styled.section`
   margin-top: 96px;
   text-align: center;
-  background: linear-gradient(160deg, ${primary} 0%, #232323 100%);
-  color: ${white};
-  border-radius: 24px;
-  padding: 64px 32px;
+  background: ${SURFACE};
+  border: 1px solid ${tk.goldHair};
+  color: ${TEXT};
+  border-radius: ${tk.r}px;
+  padding: 56px 32px;
 
   @media (max-width: 768px) {
     margin-top: 72px;
-    padding: 48px 24px;
+    padding: 44px 24px;
   }
 `;
 
 const CTATitle = styled.h2`
-  font-family: ${fontHeading};
-  font-size: clamp(1.6rem, 4vw, 2.25rem);
-  font-weight: 700;
+  font-family: ${tk.fontHeading};
+  font-size: clamp(1.5rem, 4vw, 2.1rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
   margin: 0 0 14px;
-  color: ${white};
+  color: ${TEXT};
 `;
 
 const CTABody = styled.p`
   font-size: 1.1rem;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.82);
+  color: ${MUTED};
   margin: 0 auto 32px;
   max-width: 52ch;
 `;
@@ -263,43 +270,47 @@ const CTAButtonRow = styled.div`
 `;
 
 const PrimaryButton = styled(Link)`
-  display: inline-block;
-  padding: 14px 32px;
-  background: ${marbleGold};
-  color: ${marbleBlack};
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 26px;
+  background: ${tk.gold};
+  color: ${tk.bg};
   text-decoration: none;
   font-weight: 700;
-  border-radius: 12px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  letter-spacing: 0.02em;
+  border-radius: ${tk.rSm}px;
+  transition: background 0.15s;
 
   &:hover {
-    color: ${marbleBlack};
-    transform: translateY(-2px);
-    box-shadow: 0 12px 24px -10px rgba(182, 156, 96, 0.7);
+    color: ${tk.bg};
+    background: ${tk.goldBright};
   }
 `;
 
 const SecondaryButton = styled(Link)`
-  display: inline-block;
-  padding: 14px 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 26px;
   background: transparent;
-  color: ${white};
+  color: ${TEXT};
   text-decoration: none;
   font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 12px;
-  transition: background 0.2s, border-color 0.2s;
+  border: 1px solid ${tk.hairStrong};
+  border-radius: ${tk.rSm}px;
+  transition: background 0.15s, border-color 0.15s;
 
   &:hover {
-    color: ${white};
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.85);
+    color: ${TEXT};
+    background: ${tk.raised};
+    border-color: ${tk.goldHair};
   }
 `;
 
 const FinePrint = styled.p`
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: ${tk.faint};
   margin: 24px 0 0;
 `;
 
@@ -339,7 +350,7 @@ export default function About() {
             src="/images/product-shot.jpg"
             alt="A look inside the tickr app, showing a paper-trading dashboard and live chart"
             ratio="4/3"
-            rounded={20}
+            rounded={8}
           />
         </SplitSection>
 
@@ -411,7 +422,7 @@ export default function About() {
           <SectionTitle>The principles behind tickr.</SectionTitle>
           <ValuesList>
             <ValueItem>
-              <ValueMark aria-hidden="true" />
+              <Icon name="diamond" size={11} color={tk.gold} style={{ marginTop: 5, flexShrink: 0 }} />
               <ValueText>
                 <strong>Practice before stakes</strong>
                 <span>
@@ -421,7 +432,7 @@ export default function About() {
               </ValueText>
             </ValueItem>
             <ValueItem>
-              <ValueMark aria-hidden="true" />
+              <Icon name="diamond" size={11} color={tk.gold} style={{ marginTop: 5, flexShrink: 0 }} />
               <ValueText>
                 <strong>Honest by default</strong>
                 <span>
@@ -431,7 +442,7 @@ export default function About() {
               </ValueText>
             </ValueItem>
             <ValueItem>
-              <ValueMark aria-hidden="true" />
+              <Icon name="diamond" size={11} color={tk.gold} style={{ marginTop: 5, flexShrink: 0 }} />
               <ValueText>
                 <strong>Understanding over guessing</strong>
                 <span>
@@ -456,7 +467,7 @@ export default function About() {
                 src="/images/team.jpg"
                 alt="Portrait of a tickr team member"
                 ratio="1"
-                rounded={18}
+                rounded={8}
               />
               <TeamName>Product &amp; Design</TeamName>
               <TeamRole>Building the experience</TeamRole>
@@ -466,7 +477,7 @@ export default function About() {
                 src="/images/team.jpg"
                 alt="Portrait of a tickr team member"
                 ratio="1"
-                rounded={18}
+                rounded={8}
               />
               <TeamName>Engineering</TeamName>
               <TeamRole>Making it fast and reliable</TeamRole>
@@ -476,7 +487,7 @@ export default function About() {
                 src="/images/team.jpg"
                 alt="Portrait of a tickr team member"
                 ratio="1"
-                rounded={18}
+                rounded={8}
               />
               <TeamName>Learning &amp; Content</TeamName>
               <TeamRole>Keeping lessons clear and honest</TeamRole>
@@ -491,8 +502,14 @@ export default function About() {
             just a place to build real investing skills.
           </CTABody>
           <CTAButtonRow>
-            <PrimaryButton to="/signup">Create your free account</PrimaryButton>
-            <SecondaryButton to="/learn">Browse the lessons</SecondaryButton>
+            <PrimaryButton to="/signup">
+              Create your free account
+              <Icon name="arrow-right" size={16} />
+            </PrimaryButton>
+            <SecondaryButton to="/learn">
+              <Icon name="book" size={16} />
+              Browse the lessons
+            </SecondaryButton>
           </CTAButtonRow>
           <FinePrint>
             tickr is an educational paper-trading product. Nothing here is financial advice.

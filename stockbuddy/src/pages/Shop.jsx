@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { gray, marbleDarkGray, marbleGold } from '../marblePalette';
-import { fontHeading, fontBody } from '../fontPalette';
+import { fontBody } from '../fontPalette';
 import { useSEO, SEO_CONFIG } from '../lib/seo';
+import tk, { label, mono, panel, heading, btnPrimary, btnGhost, tag } from '../theme/terminal';
+import Icon from '../components/Icon';
 
 export default function Shop() {
   useSEO(SEO_CONFIG.shop);
   const navigate = useNavigate();
-  // Local dark "marble" theme constants (imported palette bindings can't be reassigned)
-  const pageBg = '#2C2C2C';
-  const cardBg = '#343434';
-  const cardBg2 = '#2f2f2f';
-  const cardText = '#F4F1E9';
-  const cardMuted = '#b8b4a8';
-  const cardBorder = 'rgba(182,156,96,0.22)';
-  const cardDivider = 'rgba(244, 241, 233, 0.12)';
+  // Terminal Editorial theme bindings (kept as local names; values from terminal.js tokens)
+  const pageBg = tk.bg;
+  const cardBg = tk.surface;
+  const cardBg2 = tk.raised;
+  const cardText = tk.text;
+  const cardMuted = tk.muted;
+  const cardDivider = tk.hair;
   const [shopItems, setShopItems] = useState([]);
   const [userCoins, setUserCoins] = useState(0);
   const [purchasedItems, setPurchasedItems] = useState([]);
@@ -158,11 +158,27 @@ export default function Shop() {
 
   const getRarityColor = (rarity) => {
     switch (rarity) {
-      case 'common': return gray;
-      case 'rare': return '#4A90E2';
-      case 'epic': return '#9B59B6';
-      case 'legendary': return marbleGold;
-      default: return gray;
+      case 'common': return tk.muted;
+      case 'rare': return tk.text;
+      case 'epic': return tk.gold;
+      case 'legendary': return tk.goldBright;
+      default: return tk.muted;
+    }
+  };
+
+  // Presentational glyph picker — maps item type/effect to a monoline Icon name.
+  const getItemIcon = (item) => {
+    const effectType = item.effect?.type;
+    if (effectType === 'xp_multiplier' || effectType === 'instant_xp') return 'bolt';
+    if (effectType === 'coin_multiplier' || effectType === 'instant_coins') return 'coin';
+    if (effectType === 'skip_token') return 'skip-forward';
+    if (effectType === 'streak_freeze') return 'shield';
+    switch (item.type) {
+      case 'booster': return 'bolt';
+      case 'cosmetic': return 'star';
+      case 'feature': return 'sparkle';
+      case 'utility': return 'box';
+      default: return 'gift';
     }
   };
 
@@ -194,19 +210,21 @@ export default function Shop() {
         gap: "16px",
         fontFamily: fontBody
       }}>
-        <div style={{ color: cardText, fontSize: "18px" }}>❌ {error}</div>
+        <div style={{
+          width: 44,
+          height: 44,
+          border: `1px solid ${tk.goldHair}`,
+          borderRadius: tk.rSm,
+          display: "grid",
+          placeItems: "center",
+          color: tk.down
+        }}>
+          <Icon name="alert" size={18} />
+        </div>
+        <div style={{ color: cardText, fontSize: "16px" }}>{error}</div>
         <button
           onClick={fetchShopData}
-          style={{
-            backgroundColor: marbleGold,
-            color: marbleDarkGray,
-            border: "none",
-            padding: "12px 24px",
-            borderRadius: "12px",
-            fontSize: "16px",
-            fontWeight: "600",
-            cursor: "pointer"
-          }}
+          style={{ ...btnPrimary, padding: "10px 20px", fontSize: "13px" }}
         >
           Retry
         </button>
@@ -224,8 +242,8 @@ export default function Shop() {
       <style>{`
         .shop-items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
         .shop-balance-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-        .shop-item-card { transition: transform 0.18s ease, box-shadow 0.18s ease; }
-        .shop-item-card:not(.is-owned):hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(0,0,0,0.42); }
+        .shop-item-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .shop-item-card:not(.is-owned):hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(182,156,96,0.30); }
         @media (prefers-reduced-motion: reduce) {
           .shop-item-card:hover { transform: none; }
         }
@@ -250,31 +268,30 @@ export default function Shop() {
             style={{
               backgroundColor: "transparent",
               border: "none",
-              color: cardText,
-              fontSize: "16px",
+              color: cardMuted,
+              fontFamily: tk.fontBody,
+              fontSize: "13px",
               cursor: "pointer",
               marginBottom: "16px",
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
-              gap: "8px"
+              gap: "6px"
             }}
           >
-            ← Back to Dashboard
+            <Icon name="arrow-left" size={14} /> Back to Dashboard
           </button>
-          
+
           <h1 style={{
-            fontSize: "32px",
-            fontWeight: "400",
-            letterSpacing: "-0.01em",
+            ...heading,
+            fontSize: "28px",
             color: cardText,
-            fontFamily: fontHeading,
             marginBottom: "8px"
           }}>
             Shop
           </h1>
-          
+
           <p style={{
-            fontSize: "18px",
+            fontSize: "14px",
             color: cardMuted,
             marginBottom: "24px"
           }}>
@@ -283,10 +300,9 @@ export default function Shop() {
 
           {/* User Balance */}
           <div className="shop-balance-bar" style={{
+            ...panel,
             backgroundColor: cardBg,
-            borderRadius: "12px",
-            padding: "16px",
-            border: `1px solid ${cardBorder}`
+            padding: "16px"
           }}>
             <div style={{
               display: "flex",
@@ -294,23 +310,27 @@ export default function Shop() {
               gap: "12px"
             }}>
               <div style={{
-                fontSize: "24px"
+                width: 40,
+                height: 40,
+                border: `1px solid ${tk.goldHair}`,
+                borderRadius: tk.rSm,
+                display: "grid",
+                placeItems: "center",
+                color: tk.gold
               }}>
-                🪙
+                <Icon name="coin" size={18} />
               </div>
               <div>
-                <div style={{
-                  fontSize: "20px",
-                  fontWeight: "bold",
-                  color: cardText
-                }}>
-                  {userCoins} Coins
+                <div style={{ ...label, marginBottom: "4px" }}>
+                  Available Balance
                 </div>
                 <div style={{
-                  fontSize: "14px",
-                  color: cardMuted
+                  ...mono,
+                  fontSize: "20px",
+                  fontWeight: 500,
+                  color: cardText
                 }}>
-                  Available Balance
+                  {userCoins} <span style={{ fontSize: "13px", color: cardMuted }}>coins</span>
                 </div>
               </div>
             </div>
@@ -332,17 +352,14 @@ export default function Shop() {
                   }
                 }}
                 style={{
-                  backgroundColor: marbleGold,
-                  color: marbleDarkGray,
-                  border: "none",
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  cursor: "pointer"
+                  ...btnPrimary,
+                  padding: "8px 14px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px"
                 }}
               >
-                + Add Test Coins
+                <Icon name="plus" size={14} /> Add Test Coins
               </button>
             )}
           </div>
@@ -360,17 +377,21 @@ export default function Shop() {
             role="status"
             style={{
               marginBottom: "24px",
-              padding: "12px 16px",
-              borderRadius: "12px",
-              backgroundColor: message ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-              color: message ? '#22c55e' : '#ef4444',
+              padding: "11px 14px",
+              borderRadius: tk.rSm,
+              backgroundColor: message ? tk.upBg : tk.downBg,
+              color: message ? tk.up : tk.down,
+              border: `1px solid ${message ? 'rgba(79,180,119,0.4)' : 'rgba(224,96,90,0.4)'}`,
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
               gap: "12px"
             }}
           >
-            <span>{message || actionError}</span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+              <Icon name={message ? 'check' : 'alert'} size={15} />
+              {message || actionError}
+            </span>
             <button
               onClick={() => { setMessage(null); setActionError(null); }}
               aria-label="Dismiss message"
@@ -378,21 +399,26 @@ export default function Shop() {
                 backgroundColor: "transparent",
                 border: "none",
                 color: "inherit",
-                fontSize: "18px",
                 lineHeight: 1,
                 cursor: "pointer",
-                padding: "0 4px"
+                padding: "0 4px",
+                display: "inline-flex",
+                alignItems: "center"
               }}
             >
-              ×
+              <Icon name="x" size={16} />
             </button>
           </div>
         )}
 
         {/* Categories */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+          <span style={label}>category</span>
+          <span style={{ flex: 1, height: 1, background: tk.hair }} />
+        </div>
         <div style={{
           display: "flex",
-          gap: "12px",
+          gap: "10px",
           marginBottom: "32px",
           flexWrap: "wrap"
         }}>
@@ -401,15 +427,17 @@ export default function Shop() {
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
               style={{
-                backgroundColor: selectedCategory === category.id ? marbleGold : cardBg2,
-                color: selectedCategory === category.id ? marbleDarkGray : cardText,
-                border: "none",
-                padding: "12px 20px",
-                borderRadius: "12px",
-                fontSize: "14px",
+                fontFamily: tk.fontBody,
+                backgroundColor: selectedCategory === category.id ? tk.gold : "transparent",
+                color: selectedCategory === category.id ? "#1F1F1F" : cardText,
+                border: `1px solid ${selectedCategory === category.id ? tk.gold : tk.hairStrong}`,
+                padding: "8px 14px",
+                borderRadius: tk.rSm,
+                fontSize: "12px",
                 fontWeight: "600",
+                letterSpacing: "0.04em",
                 cursor: "pointer",
-                transition: "all 0.2s ease"
+                transition: "all 0.15s ease"
               }}
             >
               {category.name}
@@ -418,34 +446,37 @@ export default function Shop() {
         </div>
 
         {/* Items Grid */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+          <span style={label}>items</span>
+          <span style={{ flex: 1, height: 1, background: tk.hair }} />
+          <span style={{ ...mono, fontSize: 11, color: tk.muted }}>{filteredItems.length} items</span>
+        </div>
         <div className="shop-items-grid">
           {filteredItems.map(item => (
             <div
               key={item.id}
               className={`shop-item-card${isItemPurchased(item.id) ? ' is-owned' : ''}`}
               style={{
+                ...panel,
                 backgroundColor: cardBg2,
-                borderRadius: "20px",
-                padding: "24px",
-                border: `2px solid ${getRarityColor(item.rarity)}`,
+                borderRadius: tk.r,
+                padding: "20px",
                 position: "relative",
-                opacity: isItemPurchased(item.id) ? 0.7 : 1
+                opacity: isItemPurchased(item.id) ? 0.65 : 1
               }}
             >
               {isItemPurchased(item.id) && (
-                <div style={{
+                <span style={{
+                  ...tag,
                   position: "absolute",
                   top: "12px",
                   right: "12px",
-                  backgroundColor: marbleGold,
-                  color: marbleDarkGray,
-                  padding: "4px 8px",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                  fontWeight: "600"
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px"
                 }}>
-                  OWNED
-                </div>
+                  <Icon name="check" size={10} /> owned
+                </span>
               )}
 
               <div style={{
@@ -454,33 +485,39 @@ export default function Shop() {
                 marginBottom: "16px"
               }}>
                 <div style={{
-                  fontSize: "32px",
-                  marginRight: "16px"
+                  width: 44,
+                  height: 44,
+                  marginRight: "14px",
+                  border: `1px solid ${tk.goldHair}`,
+                  borderRadius: tk.rSm,
+                  display: "grid",
+                  placeItems: "center",
+                  color: tk.gold,
+                  flexShrink: 0
                 }}>
-                  {item.icon}
+                  <Icon name={getItemIcon(item)} size={20} />
                 </div>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
-                    fontSize: "18px",
-                    fontWeight: "bold",
+                    fontSize: "15px",
+                    fontWeight: 600,
                     color: cardText,
-                    marginBottom: "4px"
+                    marginBottom: "6px"
                   }}>
                     {item.name}
                   </div>
-                  <div style={{
-                    fontSize: "12px",
+                  <span style={{
+                    ...tag,
                     color: getRarityColor(item.rarity),
-                    fontWeight: "600",
-                    textTransform: "uppercase"
+                    borderColor: tk.hairStrong
                   }}>
                     {item.rarity}
-                  </div>
+                  </span>
                 </div>
               </div>
 
               <p style={{
-                fontSize: "14px",
+                fontSize: "13px",
                 color: cardMuted,
                 marginBottom: "20px",
                 lineHeight: "1.5"
@@ -491,21 +528,20 @@ export default function Shop() {
               <div style={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between"
+                justifyContent: "space-between",
+                paddingTop: "16px",
+                borderTop: `1px solid ${tk.hair}`
               }}>
                 <div style={{
                   display: "flex",
                   alignItems: "center",
                   gap: "8px"
                 }}>
+                  <Icon name="coin" size={16} color={tk.gold} />
                   <span style={{
-                    fontSize: "16px"
-                  }}>
-                    🪙
-                  </span>
-                  <span style={{
-                    fontSize: "18px",
-                    fontWeight: "bold",
+                    ...mono,
+                    fontSize: "16px",
+                    fontWeight: 600,
                     color: cardText
                   }}>
                     {item.price}
@@ -516,13 +552,9 @@ export default function Shop() {
                   <button
                     disabled
                     style={{
-                      backgroundColor: gray,
-                      color: cardText,
-                      border: "none",
-                      padding: "8px 16px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      fontWeight: "600",
+                      ...btnGhost,
+                      color: tk.faint,
+                      borderColor: tk.hair,
                       cursor: "not-allowed"
                     }}
                   >
@@ -532,16 +564,11 @@ export default function Shop() {
                   <button
                     onClick={() => handlePurchase(item)}
                     disabled={userCoins < item.price}
-                    style={{
-                      backgroundColor: userCoins >= item.price ? marbleGold : gray,
-                      color: userCoins >= item.price ? marbleDarkGray : cardText,
-                      border: "none",
-                      padding: "8px 16px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      cursor: userCoins >= item.price ? "pointer" : "not-allowed"
-                    }}
+                    style={
+                      userCoins >= item.price
+                        ? { ...btnPrimary }
+                        : { ...btnGhost, color: tk.faint, borderColor: tk.hair, cursor: "not-allowed" }
+                    }
                   >
                     {userCoins >= item.price ? "Purchase" : "Not Enough Coins"}
                   </button>
@@ -555,24 +582,30 @@ export default function Shop() {
         {filteredItems.length === 0 && (
           <div style={{
             textAlign: "center",
-            padding: "48px",
+            padding: "40px 24px",
             color: cardMuted
           }}>
             <div style={{
-              fontSize: "48px",
-              marginBottom: "16px"
+              width: 44,
+              height: 44,
+              margin: "0 auto 14px",
+              border: `1px solid ${tk.goldHair}`,
+              borderRadius: tk.rSm,
+              display: "grid",
+              placeItems: "center",
+              color: tk.gold
             }}>
-              🛍️
+              <Icon name="bag" size={18} />
             </div>
             <h3 style={{
-              fontSize: "20px",
-              fontWeight: "bold",
+              ...heading,
+              fontSize: "16px",
               color: cardText,
-              marginBottom: "8px"
+              marginBottom: "6px"
             }}>
               No items in this category
             </h3>
-            <p>Try selecting a different category or check back later for new items.</p>
+            <p style={{ fontSize: "13px", color: cardMuted, lineHeight: 1.5, maxWidth: 360, margin: "0 auto" }}>Try selecting a different category or check back later for new items.</p>
           </div>
         )}
       </div>
@@ -593,38 +626,45 @@ export default function Shop() {
         }}>
           <div style={{
             backgroundColor: cardBg,
-            borderRadius: "20px",
-            padding: "32px",
+            borderRadius: tk.r,
+            padding: "28px",
             maxWidth: "400px",
             width: "90%",
             textAlign: "center",
-            border: `1px solid ${cardBorder}`,
-            boxShadow: "0 8px 24px rgba(0,0,0,0.28)"
+            border: `1px solid ${tk.hairStrong}`,
+            boxShadow: "0 12px 32px rgba(0,0,0,0.45)"
           }}>
             <div style={{
-              fontSize: "48px",
-              marginBottom: "16px"
+              width: 48,
+              height: 48,
+              margin: "0 auto 16px",
+              border: `1px solid ${tk.goldHair}`,
+              borderRadius: tk.rSm,
+              display: "grid",
+              placeItems: "center",
+              color: tk.gold
             }}>
-              {selectedItem.icon}
+              <Icon name={getItemIcon(selectedItem)} size={22} />
             </div>
-            
+
             <h3 style={{
-              fontSize: "24px",
-              fontWeight: "bold",
+              ...heading,
+              fontSize: "20px",
               color: cardText,
-              marginBottom: "16px"
+              marginBottom: "12px"
             }}>
               Confirm Purchase
             </h3>
-            
+
             <p style={{
-              fontSize: "16px",
+              fontSize: "14px",
               color: cardMuted,
-              marginBottom: "24px"
+              marginBottom: "24px",
+              lineHeight: 1.5
             }}>
-              Purchase <strong>{selectedItem.name}</strong> for <strong>{selectedItem.price} coins</strong>?
+              Purchase <strong style={{ color: cardText }}>{selectedItem.name}</strong> for <strong style={{ ...mono, color: cardText }}>{selectedItem.price}</strong> coins?
             </p>
-            
+
             <div style={{
               display: "flex",
               gap: "12px",
@@ -632,32 +672,14 @@ export default function Shop() {
             }}>
               <button
                 onClick={() => setShowPurchaseModal(false)}
-                style={{
-                  backgroundColor: gray,
-                  color: cardText,
-                  border: "none",
-                  padding: "12px 24px",
-                  borderRadius: "12px",
-                  fontSize: "16px",
-                  fontWeight: "600",
-                  cursor: "pointer"
-                }}
+                style={{ ...btnGhost, padding: "10px 20px", fontSize: "13px" }}
               >
                 Cancel
               </button>
-              
+
               <button
                 onClick={confirmPurchase}
-                style={{
-                  backgroundColor: marbleGold,
-                  color: marbleDarkGray,
-                  border: "none",
-                  padding: "12px 24px",
-                  borderRadius: "12px",
-                  fontSize: "16px",
-                  fontWeight: "600",
-                  cursor: "pointer"
-                }}
+                style={{ ...btnPrimary, padding: "10px 20px", fontSize: "13px" }}
               >
                 Purchase
               </button>

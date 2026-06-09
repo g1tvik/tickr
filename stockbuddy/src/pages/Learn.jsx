@@ -2,22 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { lessonStructure } from '../data/lessonStructure';
 import progressManager from '../utils/progressManager';
-import { marbleGold } from '../marblePalette';
-import { fontHeading, fontBody } from '../fontPalette';
 import { useSEO, SEO_CONFIG } from '../lib/seo';
-
-// ─── Marble dark theme tokens ───────────────────────────────────────────────
-const BG        = '#2C2C2C'; // page background
-const SURFACE   = '#343434'; // cards / modals / elevated banners
-const INSET     = '#2f2f2f'; // nested / inset surface
-const BORDER    = 'rgba(182, 156, 96, 0.22)';
-const DIVIDER   = 'rgba(244, 241, 233, 0.12)';
-const SHADOW    = '0 8px 24px rgba(0,0,0,0.28)';
-// Remapped (formerly light) palette tokens → dark theme
-const white          = '#F4F1E9'; // cream — light text on dark/gold
-const lightGray      = '#2f2f2f'; // inset / nested surface (was light)
-const gray           = '#b8b4a8'; // muted text / lines
-const marbleDarkGray = '#F4F1E9'; // primary text (cream)
+import tk, { label, mono, panel, inset, heading, btnPrimary, btnGhost, tag } from '../theme/terminal';
+import Icon from '../components/Icon';
 
 export default function Learn() {
   useSEO(SEO_CONFIG.learn);
@@ -237,16 +224,15 @@ export default function Learn() {
     return (
       <div style={{
         minHeight: "100vh",
-        backgroundColor: BG,
+        backgroundColor: tk.bg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily: fontBody,
-        color: gray,
-        fontSize: "14px",
-        letterSpacing: "0.04em",
+        fontFamily: tk.fontBody,
+        ...label,
+        color: tk.muted,
       }}>
-        loading…
+        loading
       </div>
     );
   }
@@ -256,15 +242,14 @@ export default function Learn() {
   return (
     <div style={{
       minHeight: "100vh",
-      backgroundColor: BG,
-      fontFamily: fontBody
+      backgroundColor: tk.bg,
+      fontFamily: tk.fontBody
     }}>
       {/* Header */}
       <div style={{
-        backgroundColor: SURFACE,
-        borderBottom: `1px solid ${BORDER}`,
+        backgroundColor: tk.surface,
+        borderBottom: `1px solid ${tk.hair}`,
         padding: "28px 24px",
-        boxShadow: SHADOW,
       }}>
         <div style={{ maxWidth: "560px", margin: "0 auto" }}>
           <button
@@ -272,62 +257,57 @@ export default function Learn() {
             style={{
               backgroundColor: "transparent",
               border: "none",
-              color: gray,
-              fontSize: "12px",
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
+              ...label,
+              color: tk.muted,
               cursor: "pointer",
               marginBottom: "18px",
               display: "flex",
               alignItems: "center",
               gap: "6px",
               padding: "0",
-              fontWeight: "600",
             }}
           >
-            ← Dashboard
+            <Icon name="arrow-left" size={14} /> Dashboard
           </button>
 
           <h1 style={{
+            ...heading,
             fontSize: "26px",
-            fontWeight: "400",
-            color: marbleDarkGray,
-            fontFamily: fontHeading,
             marginBottom: "6px",
-            letterSpacing: "-0.01em",
           }}>
-            learning path
+            Learning path
           </h1>
 
           <p style={{
             fontSize: "14px",
-            color: gray,
+            color: tk.muted,
             marginBottom: progress ? "20px" : "0",
             lineHeight: "1.5",
           }}>
-            interactive lessons, quizzes, and real paper trades
+            Interactive lessons, quizzes, and real paper trades
           </p>
 
           {/* Progress pills */}
           {progress && (
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
               {[
-                { label: `${progress.completedLessons} / ${progress.totalLessons} lessons` },
-                { label: `${progress.completedUnitTests} / ${progress.totalUnits} units` },
-                { label: `${progress.xp} XP`, gold: true },
-                { label: `${progress.coins} coins` },
+                { value: `${progress.completedLessons} / ${progress.totalLessons}`, suffix: "lessons" },
+                { value: `${progress.completedUnitTests} / ${progress.totalUnits}`, suffix: "units" },
+                { value: `${progress.xp}`, suffix: "XP", gold: true },
+                { value: `${progress.coins}`, suffix: "coins", icon: "coin" },
               ].map((p, i) => (
                 <span key={i} style={{
-                  display: "inline-block",
-                  padding: "4px 12px",
-                  borderRadius: "20px",
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  background: p.gold ? "rgba(230,200,122,0.15)" : "rgba(244,241,233,0.06)",
-                  color: p.gold ? "#E6C87A" : gray,
-                  border: p.gold ? "1px solid rgba(230,200,122,0.3)" : "1px solid rgba(244,241,233,0.12)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  padding: "5px 11px",
+                  borderRadius: `${tk.rSm}px`,
+                  background: tk.inset,
+                  border: `1px solid ${p.gold ? tk.goldHair : tk.hair}`,
                 }}>
-                  {p.label}
+                  {p.icon && <Icon name={p.icon} size={12} color={tk.gold} />}
+                  <span style={{ ...mono, fontSize: "12px", fontWeight: 600, color: p.gold ? tk.goldBright : tk.text }}>{p.value}</span>
+                  <span style={{ ...label, fontSize: "9.5px", color: tk.muted }}>{p.suffix}</span>
                 </span>
               ))}
             </div>
@@ -350,285 +330,182 @@ export default function Learn() {
             const isUnlocked = isUnitUnlocked(unit.id);
 
             return (
-            <div key={unit.id} style={{ marginBottom: "32px" }}>
-              {/* Unit Header Banner */}
+            <div key={unit.id} style={{ marginBottom: "40px" }}>
+              {/* Unit section header */}
+              <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "12px" }}>
+                <span style={{ ...label, color: unitCompleted ? tk.gold : tk.muted }}>unit {unit.id}</span>
+                <span style={{ flex: 1, height: 1, background: tk.hair }} />
+                {currentActiveUnit?.id === unit.id && <span style={tag}>current</span>}
+                {unitCompleted && <Icon name="check" size={14} color={tk.gold} />}
+                {!isUnlocked && <Icon name="lock" size={13} color={tk.faint} />}
+              </div>
+
+              {/* Unit banner */}
               <div
                 onClick={() => isUnlocked && handleUnitClick(unit)}
                 style={{
-                  backgroundColor: unitCompleted ? marbleGold : isUnlocked ? SURFACE : INSET,
-                  borderRadius: "16px",
-                  padding: "16px 20px",
-                  marginBottom: "24px",
+                  ...panel,
+                  borderColor: unitCompleted ? tk.goldHair : tk.hair,
+                  padding: "15px 18px",
+                  marginBottom: "18px",
                   cursor: isUnlocked ? "pointer" : "not-allowed",
                   opacity: isUnlocked ? 1 : 0.5,
-                  transition: "all 0.2s ease",
+                  transition: "border-color 0.2s ease",
                   display: "flex",
                   alignItems: "center",
-                  gap: "12px"
+                  gap: "14px"
                 }}
               >
                 <div style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "50%",
-                  backgroundColor: unitCompleted ? "#2C2C2C" : "rgba(255,255,255,0.2)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: white
+                  width: "38px",
+                  height: "38px",
+                  flexShrink: 0,
+                  borderRadius: `${tk.rSm}px`,
+                  background: unitCompleted ? tk.gold : tk.raised,
+                  border: `1px solid ${unitCompleted ? tk.gold : tk.hair}`,
+                  display: "grid",
+                  placeItems: "center",
+                  color: unitCompleted ? tk.bg : tk.text,
                 }}>
-                  {unitCompleted ? "✓" : unit.id}
+                  {unitCompleted ? <Icon name="check" size={18} /> : <span style={{ ...mono, fontSize: "15px", fontWeight: 600 }}>{unit.id}</span>}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{
-                    fontSize: "16px",
-                    fontWeight: "700",
-                    color: unitCompleted ? marbleDarkGray : white,
-                    fontFamily: fontHeading
-                  }}>
-                    Unit {unit.id}: {unit.title}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ ...heading, fontSize: "16px" }}>
+                    {unit.title}
                   </div>
                   <div style={{
-                    fontSize: "12px",
-                    color: unitCompleted ? marbleDarkGray : "rgba(255,255,255,0.7)",
-                    marginTop: "2px"
+                    ...mono,
+                    fontSize: "11px",
+                    color: tk.muted,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    marginTop: "3px"
                   }}>
-                    {unit.lessons.length} lessons • {unit.unitTest.xp} XP
+                    {unit.lessons.length} lessons <span style={{ color: tk.faint }}>·</span> {unit.unitTest.xp} XP
                   </div>
                 </div>
                 {isUnlocked && !unitCompleted && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleStartUnit(unit); }}
-                    style={{
-                      backgroundColor: marbleGold,
-                      color: marbleDarkGray,
-                      border: "none",
-                      borderRadius: "10px",
-                      padding: "8px 16px",
-                      fontSize: "13px",
-                      fontWeight: 700,
-                      fontFamily: fontHeading,
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                      boxShadow: currentActiveUnit?.id === unit.id ? "0 0 0 2px rgba(182,156,96,0.4)" : "none"
-                    }}
+                    style={{ ...btnPrimary, whiteSpace: "nowrap" }}
                   >
                     {getNextIncompleteLesson(unit.id) && unit.lessons.some(l => (progress?.completedLessons || []).includes(l.id)) ? "Continue" : "Start"}
                   </button>
                 )}
-                {isUnlocked && unitCompleted && (
-                  <div style={{
-                    fontSize: "20px",
-                    color: marbleDarkGray,
-                    opacity: 0.6
-                  }}>
-                    ✓
-                  </div>
-                )}
               </div>
 
-              {/* Lessons Roadmap */}
-                <div style={{
-                  display: "flex",
-                flexDirection: "column",
-                  alignItems: "center",
-                position: "relative"
-              }}>
+              {/* Lessons */}
+                <div>
                 {unit.lessons.map((lesson, lessonIndex) => {
                   const lessonCompleted = completedLessons.includes(lesson.id);
                   const prevLessonIndex = lessonIndex - 1;
                   const isLocked = !isUnlocked || (lessonIndex > 0 && !completedLessons.includes(unit.lessons[prevLessonIndex].id));
                   const isNext = isUnlocked && !lessonCompleted && !isLocked;
-                  
-                  // Zigzag offset: alternate left and right
-                  const offset = lessonIndex % 2 === 0 ? -40 : 40;
-                  
+
                   return (
-                    <div key={lesson.id} style={{ position: "relative", width: "100%" }}>
-                      {/* Connector line to next node */}
-                      {lessonIndex < unit.lessons.length - 1 && (
-                        <svg
-                          style={{
-                            position: "absolute",
-                            top: "64px",
-                            left: "50%",
-                            transform: "translateX(-50%)",
-                            width: "120px",
-                    height: "60px",
-                            zIndex: 0,
-                            overflow: "visible"
-                          }}
-                        >
-                          <path
-                            d={`M ${60 + offset} 0 Q ${60} 30 ${60 + (lessonIndex % 2 === 0 ? 80 : -80)} 60`}
-                            stroke={completedLessons.includes(unit.lessons[lessonIndex + 1]?.id) || (lessonCompleted && !completedLessons.includes(unit.lessons[lessonIndex + 1]?.id) && isUnlocked) ? marbleGold : gray}
-                            strokeWidth="4"
-                            fill="none"
-                            strokeLinecap="round"
-                            strokeDasharray={isLocked || !lessonCompleted ? "8 8" : "none"}
-                            opacity={isUnlocked ? 0.6 : 0.3}
-                          />
-                        </svg>
-                      )}
-                      
-                      {/* Lesson Node */}
-                      <div
-                        onClick={() => !isLocked && handleLessonClick(lesson)}
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          position: "relative",
-                          zIndex: 1,
-                          transform: `translateX(${offset}px)`,
-                          marginBottom: "40px",
-                          cursor: isLocked ? "not-allowed" : "pointer"
-                        }}
-                      >
-                        {/* Node circle */}
-                        <div style={{
-                          width: "64px",
-                          height: "64px",
-                    borderRadius: "50%",
-                          backgroundColor: lessonCompleted ? marbleGold :
-                                          isNext ? SURFACE :
-                                          isLocked ? lightGray : SURFACE,
-                          border: isNext ? `4px solid ${marbleGold}` : lessonCompleted ? "4px solid rgba(0,0,0,0.1)" : `4px solid ${gray}`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "24px",
-                          color: lessonCompleted ? marbleDarkGray : 
-                                isLocked ? gray : white,
-                          fontWeight: "bold",
-                          boxShadow: isNext ? `0 0 20px ${marbleGold}60` : "0 4px 12px rgba(0,0,0,0.15)",
-                          transition: "all 0.3s ease",
-                          opacity: isLocked && !isUnlocked ? 0.4 : 1,
-                          animation: isNext ? "pulse 2s infinite" : "none"
-                        }}>
-                          {lessonCompleted ? "✓" : isLocked ? "🔒" : lessonIndex + 1}
-                  </div>
-                        
-                        {/* Lesson title */}
-                    <div style={{
-                          marginTop: "8px",
-                          textAlign: "center",
-                          maxWidth: "140px"
-                        }}>
-                    <div style={{
-                            fontSize: "13px",
-                            fontWeight: "600",
-                            color: isLocked ? gray : marbleDarkGray,
-                            lineHeight: "1.3"
-                          }}>
-                            {lesson.title}
-                  </div>
-                  <div style={{
-                            fontSize: "11px",
-                            color: gray,
-                            marginTop: "2px"
-                          }}>
-                            {lesson.xp} XP • {lesson.coins} 🪙
-                  </div>
-                </div>
+                    <div
+                      key={lesson.id}
+                      onClick={() => !isLocked && handleLessonClick(lesson)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "14px",
+                        padding: "12px 0",
+                        borderBottom: `1px solid ${tk.hair}`,
+                        cursor: isLocked ? "not-allowed" : "pointer",
+                        opacity: isLocked && !isUnlocked ? 0.45 : 1,
+                      }}
+                    >
+                      {/* Status marker */}
+                      <div style={{
+                        width: "30px",
+                        height: "30px",
+                        flexShrink: 0,
+                        borderRadius: `${tk.rSm}px`,
+                        background: lessonCompleted ? tk.gold : tk.raised,
+                        border: `1px solid ${isNext ? tk.gold : tk.hair}`,
+                        display: "grid",
+                        placeItems: "center",
+                        color: lessonCompleted ? tk.bg : isLocked ? tk.faint : tk.text,
+                      }}>
+                        {lessonCompleted ? <Icon name="check" size={15} />
+                          : isLocked ? <Icon name="lock" size={13} />
+                          : <span style={{ ...mono, fontSize: "13px", fontWeight: 600 }}>{lessonIndex + 1}</span>}
                       </div>
+
+                      {/* Lesson title + meta */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: "13px", fontWeight: 600, color: isLocked ? tk.muted : tk.text, lineHeight: 1.3 }}>
+                          {lesson.title}
+                        </div>
+                        <div style={{ ...mono, fontSize: "11px", color: tk.muted, display: "flex", alignItems: "center", gap: "5px", marginTop: "3px" }}>
+                          {lesson.xp} XP <span style={{ color: tk.faint }}>·</span>
+                          <Icon name="coin" size={11} color={tk.gold} /> {lesson.coins}
+                        </div>
+                      </div>
+
+                      {lessonCompleted ? (
+                        <span style={{ ...tag, color: tk.up, borderColor: "rgba(79,180,119,0.4)" }}>done</span>
+                      ) : isNext ? (
+                        <span style={tag}>next</span>
+                      ) : (
+                        <Icon name="lock" size={13} color={tk.faint} />
+                      )}
                     </div>
                   );
                 })}
 
-                {/* Unit Test Node */}
+                {/* Unit Test */}
                 {(() => {
                   const allLessonsCompleted = areAllLessonsCompleted(unit.id);
                   const canTakeUnitTest = progressManager.canTakeUnitTest(unit.id);
-                  const lastLessonOffset = (unit.lessons.length - 1) % 2 === 0 ? -40 : 40;
-                  const testOffset = unit.lessons.length % 2 === 0 ? -40 : 40;
 
                   return (
-                    <div style={{ position: "relative", width: "100%" }}>
-                      {/* Connector to unit test */}
-                      <svg
-                        style={{
-                          position: "absolute",
-                          top: "-36px",
-                          left: "50%",
-                          transform: "translateX(-50%)",
-                          width: "120px",
-                          height: "60px",
-                          zIndex: 0,
-                          overflow: "visible"
-                        }}
-                      >
-                        <path
-                          d={`M ${60 + lastLessonOffset} 0 Q ${60} 30 ${60 + testOffset} 60`}
-                          stroke={unitCompleted ? marbleGold : gray}
-                          strokeWidth="4"
-                          fill="none"
-                          strokeLinecap="round"
-                          strokeDasharray={!allLessonsCompleted ? "8 8" : "none"}
-                          opacity={isUnlocked ? 0.6 : 0.3}
-                        />
-                      </svg>
-
-                      <div
-                        onClick={() => allLessonsCompleted && canTakeUnitTest.canTake && handleUnitTest(unit.id)}
-                    style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          position: "relative",
-                          zIndex: 1,
-                          transform: `translateX(${testOffset}px)`,
-                          marginBottom: "24px",
-                          cursor: allLessonsCompleted && canTakeUnitTest.canTake ? "pointer" : "not-allowed"
-                        }}
-                      >
-                        <div style={{
-                          width: "72px",
-                          height: "72px",
-                          borderRadius: "50%",
-                          background: unitCompleted ? `linear-gradient(135deg, ${marbleGold} 0%, #f4d03f 100%)` :
-                                      allLessonsCompleted ? `linear-gradient(135deg, #343434 0%, #444 100%)` :
-                                      lightGray,
-                          border: unitCompleted ? "4px solid rgba(0,0,0,0.1)" :
-                                  allLessonsCompleted && canTakeUnitTest.canTake ? `4px solid ${marbleGold}` :
-                                  `4px solid ${gray}`,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "28px",
-                          color: unitCompleted ? marbleDarkGray : 
-                                 allLessonsCompleted ? white : gray,
-                          boxShadow: allLessonsCompleted && canTakeUnitTest.canTake && !unitCompleted ? 
-                                     `0 0 24px ${marbleGold}50` : "0 4px 16px rgba(0,0,0,0.2)",
-                          transition: "all 0.3s ease",
-                          opacity: !allLessonsCompleted ? 0.5 : 1
-                        }}>
-                          {unitCompleted ? "🏆" : allLessonsCompleted ? "📝" : "🔒"}
+                    <div
+                      onClick={() => allLessonsCompleted && canTakeUnitTest.canTake && handleUnitTest(unit.id)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "14px",
+                        padding: "12px 0",
+                        cursor: allLessonsCompleted && canTakeUnitTest.canTake ? "pointer" : "not-allowed",
+                        opacity: allLessonsCompleted ? 1 : 0.5,
+                      }}
+                    >
+                      <div style={{
+                        width: "30px",
+                        height: "30px",
+                        flexShrink: 0,
+                        borderRadius: `${tk.rSm}px`,
+                        background: unitCompleted ? tk.gold : tk.raised,
+                        border: `1px solid ${unitCompleted || (allLessonsCompleted && canTakeUnitTest.canTake) ? tk.gold : tk.hair}`,
+                        display: "grid",
+                        placeItems: "center",
+                        color: unitCompleted ? tk.bg : allLessonsCompleted ? tk.gold : tk.faint,
+                      }}>
+                        {unitCompleted ? <Icon name="trophy" size={16} />
+                          : allLessonsCompleted ? <Icon name="edit" size={15} />
+                          : <Icon name="lock" size={13} />}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: "13px", fontWeight: 600, color: allLessonsCompleted ? tk.text : tk.muted, lineHeight: 1.3 }}>
+                          Unit test
                         </div>
-                        <div style={{
-                          marginTop: "8px",
-                          textAlign: "center"
-                        }}>
-                          <div style={{
-                            fontSize: "14px",
-                            fontWeight: "700",
-                            color: allLessonsCompleted ? marbleDarkGray : gray
-                          }}>
-                            Unit Test
-                          </div>
-                          <div style={{
-                            fontSize: "11px",
-                            color: gray,
-                            marginTop: "2px"
-                          }}>
-                            {unit.unitTest.xp} XP • {unit.unitTest.coins} 🪙
-                          </div>
+                        <div style={{ ...mono, fontSize: "11px", color: tk.muted, display: "flex", alignItems: "center", gap: "5px", marginTop: "3px" }}>
+                          {unit.unitTest.xp} XP <span style={{ color: tk.faint }}>·</span>
+                          <Icon name="coin" size={11} color={tk.gold} /> {unit.unitTest.coins}
                         </div>
                       </div>
-              </div>
-            );
+                      {unitCompleted ? (
+                        <span style={{ ...tag, color: tk.up, borderColor: "rgba(79,180,119,0.4)" }}>passed</span>
+                      ) : allLessonsCompleted ? (
+                        <span style={tag}>take</span>
+                      ) : (
+                        <Icon name="lock" size={13} color={tk.faint} />
+                      )}
+                    </div>
+                  );
                 })()}
         </div>
             </div>
@@ -638,44 +515,39 @@ export default function Learn() {
         {/* Final Test Section */}
         {progress?.unitProgress === 100 && (
           <div style={{
-            backgroundColor: `linear-gradient(135deg, #2C2C2C 0%, #333 100%)`,
-            background: `linear-gradient(135deg, #2C2C2C 0%, #333 100%)`,
-            borderRadius: "20px",
-            padding: "32px",
+            ...panel,
+            borderColor: tk.goldHair,
+            padding: "28px 24px",
             textAlign: "center",
-            marginTop: "24px",
-            border: `3px solid ${marbleGold}`
+            marginTop: "32px",
           }}>
             <div style={{
-              width: "80px",
-              height: "80px",
-              borderRadius: "50%",
-              background: `linear-gradient(135deg, ${marbleGold} 0%, #f4d03f 100%)`,
+              width: "48px",
+              height: "48px",
+              borderRadius: `${tk.rSm}px`,
+              border: `1px solid ${tk.goldHair}`,
               margin: "0 auto 16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "36px",
-              boxShadow: `0 0 30px ${marbleGold}50`
+              display: "grid",
+              placeItems: "center",
+              color: tk.gold,
             }}>
-              👑
+              <Icon name="trophy" size={22} />
             </div>
             <h2 style={{
-              fontSize: "22px",
-              fontWeight: "bold",
-              color: white,
+              ...heading,
+              fontSize: "20px",
               marginBottom: "8px",
-              fontFamily: fontHeading
             }}>
-              Final Test
+              Final test
             </h2>
             <p style={{
-              fontSize: "14px",
-              color: "rgba(255,255,255,0.7)",
-              marginBottom: "20px"
+              fontSize: "13px",
+              color: tk.muted,
+              marginBottom: "20px",
+              lineHeight: 1.5,
             }}>
-              {progress.finalTestUnlocked 
-                ? "Prove your mastery! Take it once per day."
+              {progress.finalTestUnlocked
+                ? "Prove your mastery. Take it once per day."
                 : "Complete all units to unlock."
               }
             </p>
@@ -683,35 +555,26 @@ export default function Learn() {
               onClick={handleFinalTest}
               disabled={!progressManager.canTakeFinalTest().canTake && !progressManager.canTakeFinalTest().needsUnlock}
               style={{
-                backgroundColor: (progressManager.canTakeFinalTest().canTake || progressManager.canTakeFinalTest().needsUnlock) ? marbleGold : "rgba(244,241,233,0.10)",
-                color: (progressManager.canTakeFinalTest().canTake || progressManager.canTakeFinalTest().needsUnlock) ? marbleDarkGray : white,
-                border: "none",
-                padding: "14px 28px",
-                borderRadius: "12px",
-                fontSize: "15px",
-                fontWeight: "700",
-                cursor: (progressManager.canTakeFinalTest().canTake || progressManager.canTakeFinalTest().needsUnlock) ? "pointer" : "not-allowed"
+                ...((progressManager.canTakeFinalTest().canTake || progressManager.canTakeFinalTest().needsUnlock) ? btnPrimary : btnGhost),
+                padding: "11px 22px",
+                fontSize: "14px",
+                cursor: (progressManager.canTakeFinalTest().canTake || progressManager.canTakeFinalTest().needsUnlock) ? "pointer" : "not-allowed",
+                opacity: (progressManager.canTakeFinalTest().canTake || progressManager.canTakeFinalTest().needsUnlock) ? 1 : 0.5,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "7px",
               }}
             >
               {progressManager.canTakeFinalTest().canTake
-                ? "Take Final Test"
+                ? "Take final test"
                 : progressManager.canTakeFinalTest().needsUnlock
-                ? `Unlock (${progressManager.canTakeFinalTest().unlockCost} 🪙)`
+                ? <>Unlock <Icon name="coin" size={14} /> <span style={mono}>{progressManager.canTakeFinalTest().unlockCost}</span></>
                 : progressManager.canTakeFinalTest().message
               }
             </button>
           </div>
         )}
       </div>
-
-      {/* CSS Keyframes for pulse animation */}
-      <style>{`
-        @keyframes pulse {
-          0% { box-shadow: 0 0 20px ${marbleGold}60; }
-          50% { box-shadow: 0 0 30px ${marbleGold}90, 0 0 40px ${marbleGold}40; }
-          100% { box-shadow: 0 0 20px ${marbleGold}60; }
-        }
-      `}</style>
 
       {/* Lessons Modal */}
       {showLessonsModal && selectedUnit && (
@@ -721,16 +584,16 @@ export default function Learn() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: "rgba(0,0,0,0.5)",
+          backgroundColor: "rgba(0,0,0,0.6)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: SURFACE,
-            borderRadius: "20px",
-            padding: "32px",
+            ...panel,
+            boxShadow: "0 16px 40px rgba(0,0,0,0.45)",
+            padding: "28px",
             maxWidth: "600px",
             width: "90%",
             maxHeight: "80vh",
@@ -739,36 +602,34 @@ export default function Learn() {
             <div style={{
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "24px"
+              alignItems: "flex-start",
+              marginBottom: "8px"
             }}>
-              <h3 style={{
-                fontSize: "24px",
-                fontWeight: "bold",
-                color: marbleDarkGray
-              }}>
-                {selectedUnit.title} - Lessons
-              </h3>
+              <div>
+                <div style={{ ...label, marginBottom: "6px" }}>lessons</div>
+                <h3 style={{ ...heading, fontSize: "20px" }}>
+                  {selectedUnit.title}
+                </h3>
+              </div>
               <button
                 onClick={() => setShowLessonsModal(false)}
                 style={{
-                  backgroundColor: "rgba(244,241,233,0.10)",
-                  color: white,
-                  border: "none",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  cursor: "pointer"
+                  ...btnGhost,
+                  padding: "8px",
+                  lineHeight: 0,
+                  display: "grid",
+                  placeItems: "center",
                 }}
               >
-                ✕
+                <Icon name="x" size={16} />
               </button>
             </div>
+            <div style={{ height: 1, background: tk.hair, margin: "16px 0 20px" }} />
 
             <div style={{
               display: "flex",
               flexDirection: "column",
-              gap: "12px"
+              gap: "10px"
             }}>
               {selectedUnit.lessons.map((lesson) => {
                 const completedLessons = Array.isArray(progress?.completedLessons) ? progress.completedLessons : [];
@@ -786,12 +647,11 @@ export default function Learn() {
                   <div
                     key={lesson.id}
                     style={{
-                      backgroundColor: lightGray,
-                      borderRadius: "12px",
-                      padding: "16px",
+                      ...inset,
+                      borderColor: lessonProgress ? tk.goldHair : tk.hair,
+                      padding: "14px 16px",
                       cursor: isLocked ? "not-allowed" : "pointer",
                       opacity: isLocked ? 0.6 : 1,
-                      border: lessonProgress ? `2px solid ${marbleGold}` : "none",
                       transition: "all 0.2s ease"
                     }}
                     onClick={() => !isLocked && handleLessonClick(lesson)}
@@ -811,41 +671,49 @@ export default function Learn() {
                     <div style={{
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "space-between"
+                      justifyContent: "space-between",
+                      gap: "12px"
                     }}>
-                      <div>
+                      <div style={{ minWidth: 0 }}>
                         <div style={{
-                          fontSize: "16px",
-                          fontWeight: "600",
-                          color: marbleDarkGray,
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          color: tk.text,
                           marginBottom: "4px"
                         }}>
                           {lesson.title}
                         </div>
                         <div style={{
-                          fontSize: "14px",
-                          color: gray
+                          ...mono,
+                          fontSize: "11px",
+                          color: tk.muted,
+                          display: "flex",
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                          gap: "5px"
                         }}>
-                          {lesson.duration} • {lesson.xp} XP • {lesson.coins} 🪙
+                          {lesson.duration} <span style={{ color: tk.faint }}>·</span> {lesson.xp} XP <span style={{ color: tk.faint }}>·</span>
+                          <Icon name="coin" size={11} color={tk.gold} /> {lesson.coins}
                           {showPercent && (
-                            <span style={{ color: marbleGold, fontWeight: "500" }}>
-                              {" "}• {percent.toFixed(0)}% correct
-                            </span>
+                            <>
+                              <span style={{ color: tk.faint }}>·</span>
+                              <span style={{ color: tk.gold }}>{percent.toFixed(0)}% correct</span>
+                            </>
                           )}
                         </div>
                       </div>
-                      <div style={{
-                        backgroundColor: lessonProgress ? marbleGold :
-                                       isLocked ? "rgba(244,241,233,0.10)" : "#F4F1E9",
-                        color: lessonProgress ? "#2C2C2C" : isLocked ? white : "#2C2C2C",
-                        padding: "4px 8px",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                        fontWeight: "500"
+                      <span style={{
+                        ...tag,
+                        ...(lessonProgress
+                          ? { color: tk.up, borderColor: "rgba(79,180,119,0.4)" }
+                          : isLocked
+                          ? { color: tk.faint, borderColor: tk.hair }
+                          : {}),
+                        whiteSpace: "nowrap",
                       }}>
                         {lessonProgress ? "Completed" :
                          isLocked ? "Locked" : "Start"}
-                      </div>
+                      </span>
                     </div>
                   </div>
                 );
@@ -859,12 +727,11 @@ export default function Learn() {
                 return (
                   <div
                     style={{
-                      backgroundColor: allLessonsCompleted ? lightGray : INSET,
-                      borderRadius: "12px",
-                      padding: "16px",
+                      ...inset,
+                      borderColor: allLessonsCompleted ? tk.goldHair : tk.hair,
+                      padding: "14px 16px",
                       cursor: allLessonsCompleted && canTakeUnitTest.canTake ? "pointer" : "not-allowed",
                       opacity: allLessonsCompleted ? 1 : 0.6,
-                      border: allLessonsCompleted ? "2px solid #ffd700" : "none",
                       transition: "all 0.2s ease"
                     }}
                     onClick={() => allLessonsCompleted && canTakeUnitTest.canTake && handleUnitTest(selectedUnit.id)}
@@ -884,38 +751,46 @@ export default function Learn() {
                     <div style={{
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "space-between"
+                      justifyContent: "space-between",
+                      gap: "12px"
                     }}>
-                      <div>
-                        <div style={{
-                          fontSize: "16px",
-                          fontWeight: "600",
-                          color: marbleDarkGray,
-                          marginBottom: "4px"
-                        }}>
-                          Unit Test
-                        </div>
+                      <div style={{ minWidth: 0 }}>
                         <div style={{
                           fontSize: "14px",
-                          color: gray
+                          fontWeight: 600,
+                          color: allLessonsCompleted ? tk.text : tk.muted,
+                          marginBottom: "4px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "7px"
                         }}>
-                          {selectedUnit.unitTest.questions.length} questions • {selectedUnit.unitTest.xp} XP • {selectedUnit.unitTest.coins} coins
+                          <Icon name={allLessonsCompleted ? "edit" : "lock"} size={14} color={allLessonsCompleted ? tk.gold : tk.faint} />
+                          Unit test
+                        </div>
+                        <div style={{
+                          ...mono,
+                          fontSize: "11px",
+                          color: tk.muted,
+                          display: "flex",
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                          gap: "5px"
+                        }}>
+                          {selectedUnit.unitTest.questions.length} questions <span style={{ color: tk.faint }}>·</span> {selectedUnit.unitTest.xp} XP <span style={{ color: tk.faint }}>·</span>
+                          <Icon name="coin" size={11} color={tk.gold} /> {selectedUnit.unitTest.coins}
                         </div>
                       </div>
-                      <div style={{
-                        backgroundColor: allLessonsCompleted && canTakeUnitTest.canTake ? "#ffd700" : "rgba(244,241,233,0.10)",
-                        color: allLessonsCompleted && canTakeUnitTest.canTake ? "#2C2C2C" : white,
-                        padding: "4px 8px",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                        fontWeight: "500"
-                      }}>
-                        {allLessonsCompleted ?
-                         (canTakeUnitTest.canTake ?
-                           `${canTakeUnitTest.dailyAttemptsLeft} daily, ${canTakeUnitTest.totalAttemptsLeft} total` :
-                           canTakeUnitTest.message) :
-                         "Locked"}
-                      </div>
+                      {allLessonsCompleted ? (
+                        canTakeUnitTest.canTake ? (
+                          <span style={{ ...mono, fontSize: "11px", color: tk.muted, whiteSpace: "nowrap" }}>
+                            {canTakeUnitTest.dailyAttemptsLeft} daily · {canTakeUnitTest.totalAttemptsLeft} total
+                          </span>
+                        ) : (
+                          <span style={{ ...tag, whiteSpace: "nowrap" }}>{canTakeUnitTest.message}</span>
+                        )
+                      ) : (
+                        <span style={{ ...tag, color: tk.faint, borderColor: tk.hair }}>Locked</span>
+                      )}
                     </div>
                   </div>
                 );
@@ -933,16 +808,16 @@ export default function Learn() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: "rgba(0,0,0,0.5)",
+          backgroundColor: "rgba(0,0,0,0.6)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: SURFACE,
-            borderRadius: "20px",
-            padding: "32px",
+            ...panel,
+            boxShadow: "0 16px 40px rgba(0,0,0,0.45)",
+            padding: "28px",
             maxWidth: "600px",
             width: "90%",
             maxHeight: "80vh",
@@ -951,54 +826,53 @@ export default function Learn() {
             <div style={{
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "24px"
+              alignItems: "flex-start",
+              marginBottom: "8px"
             }}>
-              <h3 style={{
-                fontSize: "24px",
-                fontWeight: "bold",
-                color: marbleDarkGray
-              }}>
-                {selectedUnit.title} - Unit Test
-              </h3>
+              <div>
+                <div style={{ ...label, marginBottom: "6px" }}>unit test</div>
+                <h3 style={{ ...heading, fontSize: "20px" }}>
+                  {selectedUnit.title}
+                </h3>
+              </div>
               <button
                 onClick={() => setShowUnitTest(false)}
                 style={{
-                  backgroundColor: "rgba(244,241,233,0.10)",
-                  color: white,
-                  border: "none",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  cursor: "pointer"
+                  ...btnGhost,
+                  padding: "8px",
+                  lineHeight: 0,
+                  display: "grid",
+                  placeItems: "center",
                 }}
               >
-                ✕
+                <Icon name="x" size={16} />
               </button>
             </div>
+            <div style={{ height: 1, background: tk.hair, margin: "16px 0 20px" }} />
 
             {selectedUnit.unitTest.questions.map((question, index) => (
               <div key={index} style={{ marginBottom: "24px" }}>
                 <p style={{
-                  fontSize: "18px",
-                  color: marbleDarkGray,
-                  marginBottom: "16px",
-                  fontWeight: "500"
+                  fontSize: "15px",
+                  color: tk.text,
+                  marginBottom: "14px",
+                  fontWeight: 600,
+                  lineHeight: 1.45
                 }}>
-                  {index + 1}. {question.question}
+                  <span style={{ ...mono, color: tk.gold, marginRight: "8px" }}>{index + 1}.</span>{question.question}
                 </p>
-                
+
                 {question.options.map((option, optionIndex) => (
                   <label
                     key={optionIndex}
                     style={{
-                      display: "block",
-                      padding: "16px",
-                      marginBottom: "12px",
-                      backgroundColor: lightGray,
-                      borderRadius: "12px",
+                      ...inset,
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "13px 14px",
+                      marginBottom: "10px",
                       cursor: "pointer",
-                      border: testAnswers[`q${index}`] === optionIndex ? `2px solid ${marbleGold}` : "2px solid transparent",
+                      borderColor: testAnswers[`q${index}`] === optionIndex ? tk.gold : tk.hair,
                       transition: "border-color 0.2s ease"
                     }}
                   >
@@ -1008,11 +882,11 @@ export default function Learn() {
                       value={optionIndex}
                       checked={testAnswers[`q${index}`] === optionIndex}
                       onChange={(e) => setTestAnswers({...testAnswers, [`q${index}`]: parseInt(e.target.value)})}
-                      style={{ marginRight: "12px" }}
+                      style={{ marginRight: "12px", accentColor: tk.gold }}
                     />
                     <span style={{
-                      fontSize: "16px",
-                      color: marbleDarkGray
+                      fontSize: "14px",
+                      color: tk.text
                     }}>
                       {option}
                     </span>
@@ -1023,38 +897,21 @@ export default function Learn() {
 
             <div style={{
               display: "flex",
-              gap: "16px",
-              justifyContent: "center"
+              gap: "12px",
+              justifyContent: "flex-end",
+              marginTop: "8px"
             }}>
               <button
                 onClick={() => setShowUnitTest(false)}
-                style={{
-                  backgroundColor: "rgba(244,241,233,0.10)",
-                  color: white,
-                  border: "none",
-                  padding: "12px 24px",
-                  borderRadius: "12px",
-                  fontSize: "16px",
-                  fontWeight: "600",
-                  cursor: "pointer"
-                }}
+                style={{ ...btnGhost, padding: "11px 20px", fontSize: "14px" }}
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleTestSubmit('unit', selectedUnit.id)}
-                style={{
-                  backgroundColor: marbleGold,
-                  color: marbleDarkGray,
-                  border: "none",
-                  padding: "12px 24px",
-                  borderRadius: "12px",
-                  fontSize: "16px",
-                  fontWeight: "600",
-                  cursor: "pointer"
-                }}
+                style={{ ...btnPrimary, padding: "11px 20px", fontSize: "14px" }}
               >
-                Submit Test
+                Submit test
               </button>
             </div>
           </div>
@@ -1069,16 +926,16 @@ export default function Learn() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: "rgba(0,0,0,0.5)",
+          backgroundColor: "rgba(0,0,0,0.6)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: SURFACE,
-            borderRadius: "20px",
-            padding: "32px",
+            ...panel,
+            boxShadow: "0 16px 40px rgba(0,0,0,0.45)",
+            padding: "28px",
             maxWidth: "600px",
             width: "90%",
             maxHeight: "80vh",
@@ -1087,54 +944,53 @@ export default function Learn() {
             <div style={{
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "24px"
+              alignItems: "flex-start",
+              marginBottom: "8px"
             }}>
-              <h3 style={{
-                fontSize: "24px",
-                fontWeight: "bold",
-                color: marbleDarkGray
-              }}>
-                Final Test
-              </h3>
+              <div>
+                <div style={{ ...label, marginBottom: "6px" }}>assessment</div>
+                <h3 style={{ ...heading, fontSize: "20px" }}>
+                  Final test
+                </h3>
+              </div>
               <button
                 onClick={() => setShowFinalTest(false)}
                 style={{
-                  backgroundColor: "rgba(244,241,233,0.10)",
-                  color: white,
-                  border: "none",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  cursor: "pointer"
+                  ...btnGhost,
+                  padding: "8px",
+                  lineHeight: 0,
+                  display: "grid",
+                  placeItems: "center",
                 }}
               >
-                ✕
+                <Icon name="x" size={16} />
               </button>
             </div>
+            <div style={{ height: 1, background: tk.hair, margin: "16px 0 20px" }} />
 
             {lessonStructure.finalTest.questions.map((question, index) => (
               <div key={index} style={{ marginBottom: "24px" }}>
                 <p style={{
-                  fontSize: "18px",
-                  color: marbleDarkGray,
-                  marginBottom: "16px",
-                  fontWeight: "500"
+                  fontSize: "15px",
+                  color: tk.text,
+                  marginBottom: "14px",
+                  fontWeight: 600,
+                  lineHeight: 1.45
                 }}>
-                  {index + 1}. {question.question}
+                  <span style={{ ...mono, color: tk.gold, marginRight: "8px" }}>{index + 1}.</span>{question.question}
                 </p>
-                
+
                 {question.options.map((option, optionIndex) => (
                   <label
                     key={optionIndex}
                     style={{
-                      display: "block",
-                      padding: "16px",
-                      marginBottom: "12px",
-                      backgroundColor: lightGray,
-                      borderRadius: "12px",
+                      ...inset,
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "13px 14px",
+                      marginBottom: "10px",
                       cursor: "pointer",
-                      border: testAnswers[`q${index}`] === optionIndex ? `2px solid ${marbleGold}` : "2px solid transparent",
+                      borderColor: testAnswers[`q${index}`] === optionIndex ? tk.gold : tk.hair,
                       transition: "border-color 0.2s ease"
                     }}
                   >
@@ -1144,11 +1000,11 @@ export default function Learn() {
                       value={optionIndex}
                       checked={testAnswers[`q${index}`] === optionIndex}
                       onChange={(e) => setTestAnswers({...testAnswers, [`q${index}`]: parseInt(e.target.value)})}
-                      style={{ marginRight: "12px" }}
+                      style={{ marginRight: "12px", accentColor: tk.gold }}
                     />
                     <span style={{
-                      fontSize: "16px",
-                      color: marbleDarkGray
+                      fontSize: "14px",
+                      color: tk.text
                     }}>
                       {option}
                     </span>
@@ -1159,38 +1015,21 @@ export default function Learn() {
 
             <div style={{
               display: "flex",
-              gap: "16px",
-              justifyContent: "center"
+              gap: "12px",
+              justifyContent: "flex-end",
+              marginTop: "8px"
             }}>
               <button
                 onClick={() => setShowFinalTest(false)}
-                style={{
-                  backgroundColor: "rgba(244,241,233,0.10)",
-                  color: white,
-                  border: "none",
-                  padding: "12px 24px",
-                  borderRadius: "12px",
-                  fontSize: "16px",
-                  fontWeight: "600",
-                  cursor: "pointer"
-                }}
+                style={{ ...btnGhost, padding: "11px 20px", fontSize: "14px" }}
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleTestSubmit('final')}
-                style={{
-                  backgroundColor: marbleGold,
-                  color: marbleDarkGray,
-                  border: "none",
-                  padding: "12px 24px",
-                  borderRadius: "12px",
-                  fontSize: "16px",
-                  fontWeight: "600",
-                  cursor: "pointer"
-                }}
+                style={{ ...btnPrimary, padding: "11px 20px", fontSize: "14px" }}
               >
-                Submit Final Test
+                Submit final test
               </button>
             </div>
           </div>
@@ -1205,80 +1044,86 @@ export default function Learn() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: "rgba(0,0,0,0.5)",
+          backgroundColor: "rgba(0,0,0,0.6)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: SURFACE,
-            borderRadius: "20px",
-            padding: "32px",
-            maxWidth: "500px",
+            ...panel,
+            boxShadow: "0 16px 40px rgba(0,0,0,0.45)",
+            padding: "28px",
+            maxWidth: "440px",
             width: "90%",
             textAlign: "center"
           }}>
-            <h3 style={{
-              fontSize: "24px",
-              fontWeight: "bold",
-              color: marbleDarkGray,
-              marginBottom: "16px"
-            }}>
-              Unlock Final Test
-            </h3>
-            
-            <p style={{
-              fontSize: "16px",
-              color: gray,
-              marginBottom: "24px"
-            }}>
-              Spend {lessonStructure.finalTest.unlockCost} coins to unlock the final test. 
-              This is a one-time purchase.
-            </p>
-            
             <div style={{
-              backgroundColor: lightGray,
-              borderRadius: "12px",
-              padding: "16px",
-              marginBottom: "24px"
+              width: "48px",
+              height: "48px",
+              borderRadius: `${tk.rSm}px`,
+              border: `1px solid ${tk.goldHair}`,
+              margin: "0 auto 16px",
+              display: "grid",
+              placeItems: "center",
+              color: tk.gold,
+            }}>
+              <Icon name="lock" size={20} />
+            </div>
+            <h3 style={{
+              ...heading,
+              fontSize: "20px",
+              marginBottom: "10px"
+            }}>
+              Unlock final test
+            </h3>
+
+            <p style={{
+              fontSize: "13px",
+              color: tk.muted,
+              marginBottom: "22px",
+              lineHeight: 1.55
+            }}>
+              Spend <span style={{ ...mono, color: tk.text }}>{lessonStructure.finalTest.unlockCost}</span> coins to unlock the final test. This is a one-time purchase.
+            </p>
+
+            <div style={{
+              ...inset,
+              padding: "14px 16px",
+              marginBottom: "22px",
+              textAlign: "left"
             }}>
               <div style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: "8px"
+                marginBottom: "10px"
               }}>
-                <span style={{ color: gray }}>Your Coins:</span>
-                <span style={{ color: marbleDarkGray, fontWeight: "600" }}>{progress?.coins || 0}</span>
+                <span style={label}>your coins</span>
+                <span style={{ ...mono, fontSize: "13px", fontWeight: 600, color: tk.text, display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                  <Icon name="coin" size={12} color={tk.gold} />{progress?.coins || 0}
+                </span>
               </div>
               <div style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center"
               }}>
-                <span style={{ color: gray }}>Unlock Cost:</span>
-                <span style={{ color: marbleGold, fontWeight: "600" }}>{lessonStructure.finalTest.unlockCost} coins</span>
+                <span style={label}>unlock cost</span>
+                <span style={{ ...mono, fontSize: "13px", fontWeight: 600, color: tk.gold, display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                  <Icon name="coin" size={12} color={tk.gold} />{lessonStructure.finalTest.unlockCost}
+                </span>
               </div>
             </div>
-            
+
             <div style={{
               display: "flex",
-              gap: "16px",
-              justifyContent: "center"
+              gap: "12px",
+              justifyContent: "flex-end"
             }}>
               <button
                 onClick={() => setShowUnlockModal(false)}
-                style={{
-                  backgroundColor: "rgba(244,241,233,0.10)",
-                  color: white,
-                  border: "none",
-                  padding: "12px 24px",
-                  borderRadius: "12px",
-                  fontSize: "16px",
-                  fontWeight: "600",
-                  cursor: "pointer"
-                }}
+                style={{ ...btnGhost, padding: "11px 20px", fontSize: "14px" }}
               >
                 Cancel
               </button>
@@ -1286,17 +1131,14 @@ export default function Learn() {
                 onClick={handleUnlockFinalTest}
                 disabled={(progress?.coins || 0) < lessonStructure.finalTest.unlockCost}
                 style={{
-                  backgroundColor: (progress?.coins || 0) >= lessonStructure.finalTest.unlockCost ? marbleGold : "rgba(244,241,233,0.10)",
-                  color: (progress?.coins || 0) >= lessonStructure.finalTest.unlockCost ? marbleDarkGray : white,
-                  border: "none",
-                  padding: "12px 24px",
-                  borderRadius: "12px",
-                  fontSize: "16px",
-                  fontWeight: "600",
+                  ...((progress?.coins || 0) >= lessonStructure.finalTest.unlockCost ? btnPrimary : btnGhost),
+                  padding: "11px 20px",
+                  fontSize: "14px",
+                  opacity: (progress?.coins || 0) >= lessonStructure.finalTest.unlockCost ? 1 : 0.5,
                   cursor: (progress?.coins || 0) >= lessonStructure.finalTest.unlockCost ? "pointer" : "not-allowed"
                 }}
               >
-                Unlock Final Test
+                Unlock final test
               </button>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../services/api';
+import Icon from './Icon';
 import './StockSearch.css';
 
 const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company name..." }) => {
@@ -22,11 +23,11 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
       try {
         // First warm up the backend cache
         await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api'}/trading/health`);
-        console.log('✅ Backend cache warmed up');
+        console.log('Backend cache warmed up');
         
         // Then preload a common search
         await api.searchStocksAutocomplete('AAPL');
-        console.log('✅ Preloaded search cache');
+        console.log('Preloaded search cache');
       } catch (error) {
         console.warn('Preload failed:', error);
       }
@@ -239,10 +240,7 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
     <div className="stock-search-container">
       <div className="search-input-wrapper">
         <span className="search-icon" aria-hidden="true">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="7" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
+          <Icon name="search" size={16} />
         </span>
         <input
           ref={inputRef}
@@ -272,7 +270,7 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
               inputRef.current?.focus();
             }}
           >
-            ×
+            <Icon name="x" size={16} />
           </button>
         )}
       </div>
@@ -324,7 +322,7 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
 
       {showSuggestions && suggestions.length === 0 && searchTerm.length >= 2 && !isLoading && (
         <div className="no-results">
-          <div className="no-results-icon">🔍</div>
+          <div className="no-results-icon"><Icon name="search" size={18} /></div>
           <div className="no-results-text">No stocks found</div>
           <div className="no-results-subtext">Try a different search term</div>
         </div>

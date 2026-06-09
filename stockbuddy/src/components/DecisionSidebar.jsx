@@ -1,18 +1,6 @@
 import React from 'react';
-import { fontBody } from '../fontPalette';
-
-// ── Marble dark theme tokens (renders on the dark AI Coach page) ───────────────
-const PANEL   = '#2f2f2f';                       // sidebar surface
-const CARD    = '#343434';                        // nested order-form surface
-const INSET   = '#2a2a2a';                        // deepest inset (info box / inputs)
-const TEXT    = '#F4F1E9';                         // primary cream text
-const MUTED   = '#b8b4a8';                         // muted / secondary text
-const GOLD     = '#B69C60';
-const GOLD_LT  = '#E6C87A';
-const BORDER   = 'rgba(182, 156, 96, 0.22)';
-const DIVIDER  = 'rgba(244, 241, 233, 0.12)';
-const DARK_ON_GOLD = '#2C2C2C';
-const DISABLED_BG = 'rgba(244, 241, 233, 0.06)';
+import tk, { label, mono, panel, inset, heading, btnPrimary, btnGhost } from '../theme/terminal';
+import Icon from './Icon';
 
 /**
  * DecisionSidebar Component
@@ -78,17 +66,34 @@ export function DecisionSidebar({
   const getOrderFormTitle = () => {
     switch (orderType) {
       case 'buy':
-        return '📈 Buy Order';
+        return 'Buy Order';
       case 'limit-buy':
-        return '📋 Limit Buy Order';
+        return 'Limit Buy Order';
       case 'sell':
-        return '📉 Sell Order';
+        return 'Sell Order';
       case 'limit-sell':
-        return '📋 Limit Sell Order';
+        return 'Limit Sell Order';
       case 'hold':
-        return '⏸️ Hold Decision';
+        return 'Hold Decision';
       default:
-        return '📊 Trading Decision';
+        return 'Trading Decision';
+    }
+  };
+
+  const getOrderFormIcon = () => {
+    switch (orderType) {
+      case 'buy':
+        return 'trending-up';
+      case 'limit-buy':
+        return 'target';
+      case 'sell':
+        return 'trending-down';
+      case 'limit-sell':
+        return 'target';
+      case 'hold':
+        return 'pause';
+      default:
+        return 'chart';
     }
   };
 
@@ -102,89 +107,106 @@ export function DecisionSidebar({
     return null;
   }
 
-  // Shared style for the primary action buttons (semantic colors kept).
-  const actionBtn = (bg, color = '#FFFFFF') => ({
+  // Solid semantic CTA (market buy / sell) — dark ink on the up/down accent.
+  const solidBtn = (accent) => ({
     width: '100%',
-    padding: '12px',
-    borderRadius: '10px',
+    padding: '11px 14px',
+    borderRadius: `${tk.rSm}px`,
     border: 'none',
-    backgroundColor: bg,
-    color,
-    fontWeight: 'bold',
+    background: accent,
+    color: '#1F1F1F',
+    fontFamily: tk.fontBody,
+    fontSize: '13px',
+    fontWeight: 700,
+    letterSpacing: '0.02em',
     cursor: 'pointer',
-    fontSize: '14px',
-    fontFamily: fontBody
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8
+  });
+
+  // Ghost action — hairline border, accent-colored label (limit orders, hold).
+  const ghostBtn = (accent) => ({
+    width: '100%',
+    padding: '11px 14px',
+    borderRadius: `${tk.rSm}px`,
+    border: `1px solid ${tk.hairStrong}`,
+    background: 'transparent',
+    color: accent,
+    fontFamily: tk.fontBody,
+    fontSize: '13px',
+    fontWeight: 600,
+    letterSpacing: '0.02em',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8
   });
 
   const disabledBtn = {
     width: '100%',
-    padding: '12px',
-    borderRadius: '10px',
-    border: `1px solid ${DIVIDER}`,
-    backgroundColor: DISABLED_BG,
-    color: MUTED,
-    fontWeight: 'bold',
+    padding: '11px 14px',
+    borderRadius: `${tk.rSm}px`,
+    border: `1px solid ${tk.hair}`,
+    background: 'transparent',
+    color: tk.faint,
+    fontFamily: tk.fontBody,
+    fontSize: '13px',
+    fontWeight: 600,
+    letterSpacing: '0.02em',
     cursor: 'not-allowed',
-    fontSize: '14px',
-    opacity: 0.7,
-    fontFamily: fontBody
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8
   };
 
   const fieldStyle = {
+    ...inset,
     width: '100%',
-    padding: '9px 12px',
-    borderRadius: '8px',
-    border: `1px solid ${BORDER}`,
-    background: INSET,
-    color: TEXT,
+    padding: '10px 12px',
+    color: tk.text,
     fontSize: '14px',
-    fontFamily: fontBody,
+    fontFamily: tk.fontBody,
     outline: 'none',
     boxSizing: 'border-box'
   };
 
   return (
-    <div style={{
-      backgroundColor: PANEL,
-      borderRadius: '20px',
-      padding: '16px',
-      border: `1px solid ${BORDER}`,
-      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.28)'
-    }}>
+    <div style={{ ...panel, padding: '18px' }}>
       <style>{`
-        .coach-decision-field::placeholder { color: ${MUTED}; opacity: 0.7; }
+        .coach-decision-field::placeholder { color: ${tk.muted}; opacity: 0.7; }
       `}</style>
-      <h3 style={{
-        fontSize: '18px',
-        fontWeight: '700',
-        color: TEXT,
-        marginBottom: '16px',
-        fontFamily: fontBody
-      }}>
-        📊 Your Trading Decision
-      </h3>
+
+      {/* Section header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+        <span style={label}>your trading decision</span>
+        <span style={{ flex: 1, height: 1, background: tk.hair }} />
+      </div>
 
       {!showOrderForm ? (
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '12px'
+          gap: '10px'
         }}>
           {/* Buy buttons - only show for 'buy' challenges */}
           {puzzleType === 'buy' && (
             <>
               <button
                 onClick={() => handleButtonClick('buy', scenario?.initialPrice?.toString() || '')}
-                style={actionBtn('#22c55e')}
+                style={solidBtn(tk.up)}
               >
-                📈 Buy Now
+                <Icon name="trending-up" size={15} /> Buy Now
               </button>
 
               <button
                 onClick={() => handleButtonClick('limit-buy', '')}
-                style={actionBtn('#3b82f6')}
+                style={ghostBtn(tk.up)}
               >
-                📋 Buy When Price Hits...
+                <Icon name="target" size={15} /> Buy When Price Hits...
               </button>
             </>
           )}
@@ -194,16 +216,16 @@ export function DecisionSidebar({
             <>
               <button
                 onClick={() => handleButtonClick('sell', scenario?.initialPrice?.toString() || '')}
-                style={actionBtn('#ef4444')}
+                style={solidBtn(tk.down)}
               >
-                📉 Sell Now
+                <Icon name="trending-down" size={15} /> Sell Now
               </button>
 
               <button
                 onClick={() => handleButtonClick('limit-sell', '')}
-                style={actionBtn('#f59e0b')}
+                style={ghostBtn(tk.down)}
               >
-                📋 Sell When Price Hits...
+                <Icon name="target" size={15} /> Sell When Price Hits...
               </button>
             </>
           )}
@@ -211,20 +233,20 @@ export function DecisionSidebar({
           {/* Hold button - always available */}
           <button
             onClick={() => handleButtonClick('hold', '0')}
-            style={actionBtn(GOLD, DARK_ON_GOLD)}
+            style={ghostBtn(tk.gold)}
           >
-            ⏸️ Hold (Wait and Watch)
+            <Icon name="pause" size={15} /> Hold (Wait and Watch)
           </button>
 
           {/* Disabled buy buttons for sell challenges */}
           {puzzleType === 'sell' && (
             <>
               <button disabled style={disabledBtn}>
-                📈 Buy Now (Not Available)
+                <Icon name="trending-up" size={15} /> Buy Now (Not Available)
               </button>
 
               <button disabled style={disabledBtn}>
-                📋 Buy When Price Hits... (Not Available)
+                <Icon name="target" size={15} /> Buy When Price Hits... (Not Available)
               </button>
             </>
           )}
@@ -233,31 +255,22 @@ export function DecisionSidebar({
           {puzzleType === 'buy' && (
             <>
               <button disabled style={disabledBtn}>
-                📉 Sell Now (Not Available)
+                <Icon name="trending-down" size={15} /> Sell Now (Not Available)
               </button>
 
               <button disabled style={disabledBtn}>
-                📋 Sell When Price Hits... (Not Available)
+                <Icon name="target" size={15} /> Sell When Price Hits... (Not Available)
               </button>
             </>
           )}
         </div>
       ) : (
-        <div style={{
-          backgroundColor: CARD,
-          borderRadius: '12px',
-          padding: '16px',
-          border: `1px solid ${BORDER}`
-        }}>
-          <h4 style={{
-            fontSize: '16px',
-            fontWeight: 'bold',
-            color: TEXT,
-            marginBottom: '12px',
-            fontFamily: fontBody
-          }}>
-            {getOrderFormTitle()}
-          </h4>
+        <div>
+          {/* Order form header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+            <Icon name={getOrderFormIcon()} size={15} color={tk.gold} />
+            <span style={{ ...heading, fontSize: 15 }}>{getOrderFormTitle()}</span>
+          </div>
 
           <div style={{
             display: 'flex',
@@ -266,44 +279,32 @@ export function DecisionSidebar({
           }}>
             {/* Portfolio info for buy orders */}
             {(orderType === 'buy' || orderType === 'limit-buy') && (
-              <div style={{
-                backgroundColor: INSET,
-                borderRadius: '8px',
-                padding: '12px',
-                border: `1px solid ${DIVIDER}`,
-                marginBottom: '8px'
-              }}>
-                <div style={{
-                  color: MUTED,
-                  fontSize: '12px',
-                  fontWeight: '500',
-                  marginBottom: '8px',
-                  fontFamily: fontBody
-                }}>
-                  Portfolio Info:
+              <div style={{ ...inset, padding: '12px', marginBottom: '4px' }}>
+                <div style={{ ...label, marginBottom: 10 }}>
+                  portfolio info
                 </div>
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '4px'
+                  alignItems: 'baseline',
+                  marginBottom: '6px'
                 }}>
-                  <span style={{ color: MUTED, fontSize: '12px', fontFamily: fontBody }}>
-                    Available Cash:
+                  <span style={{ color: tk.muted, fontSize: '12px', fontFamily: tk.fontBody }}>
+                    Available cash
                   </span>
-                  <span style={{ color: TEXT, fontSize: '14px', fontWeight: '600', fontFamily: fontBody }}>
+                  <span style={{ ...mono, color: tk.text, fontSize: '13px', fontWeight: 600 }}>
                     ${beginnerBudget.toLocaleString()}
                   </span>
                 </div>
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center'
+                  alignItems: 'baseline'
                 }}>
-                  <span style={{ color: MUTED, fontSize: '12px', fontFamily: fontBody }}>
-                    Max Shares at ${orderPrice || scenario?.initialPrice}:
+                  <span style={{ color: tk.muted, fontSize: '12px', fontFamily: tk.fontBody }}>
+                    Max shares @ <span style={{ ...mono }}>${orderPrice || scenario?.initialPrice}</span>
                   </span>
-                  <span style={{ color: GOLD_LT, fontSize: '14px', fontWeight: '600', fontFamily: fontBody }}>
+                  <span style={{ ...mono, color: tk.goldBright, fontSize: '13px', fontWeight: 600 }}>
                     {calculateMaxShares()} shares
                   </span>
                 </div>
@@ -311,15 +312,11 @@ export function DecisionSidebar({
             )}
 
             <div>
-              <label style={{
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: TEXT,
-                marginBottom: '4px',
-                display: 'block',
-                fontFamily: fontBody
-              }}>
-                Price: ${orderPrice}
+              <label style={{ display: 'block', marginBottom: '6px' }}>
+                <span style={label}>price</span>
+                <span style={{ ...mono, fontSize: '12px', color: tk.muted, marginLeft: 8, textTransform: 'none' }}>
+                  ${orderPrice}
+                </span>
               </label>
               <input
                 type="number"
@@ -327,20 +324,13 @@ export function DecisionSidebar({
                 value={orderPrice}
                 onChange={(e) => onOrderPriceChange?.(e.target.value)}
                 placeholder="Enter price..."
-                style={fieldStyle}
+                style={{ ...fieldStyle, ...mono }}
               />
             </div>
 
             <div>
-              <label style={{
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: TEXT,
-                marginBottom: '4px',
-                display: 'block',
-                fontFamily: fontBody
-              }}>
-                Reasoning:
+              <label style={{ ...label, display: 'block', marginBottom: '6px' }}>
+                reasoning
               </label>
               <textarea
                 className="coach-decision-field"
@@ -359,37 +349,35 @@ export function DecisionSidebar({
                 onClick={handleSubmit}
                 disabled={!orderPrice || !orderReasoning.trim()}
                 style={{
+                  ...btnPrimary,
                   flex: 1,
                   padding: '10px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  backgroundColor: GOLD,
-                  color: DARK_ON_GOLD,
-                  fontWeight: '700',
-                  cursor: !orderPrice || !orderReasoning.trim() ? 'not-allowed' : 'pointer',
                   fontSize: '12px',
-                  opacity: !orderPrice || !orderReasoning.trim() ? 0.5 : 1,
-                  fontFamily: fontBody
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  cursor: !orderPrice || !orderReasoning.trim() ? 'not-allowed' : 'pointer',
+                  opacity: !orderPrice || !orderReasoning.trim() ? 0.5 : 1
                 }}
               >
-                ✅ Submit Decision
+                <Icon name="check" size={14} /> Submit Decision
               </button>
               <button
                 onClick={handleCancel}
                 style={{
+                  ...btnGhost,
                   flex: 1,
                   padding: '10px',
-                  borderRadius: '8px',
-                  border: `1px solid ${DIVIDER}`,
-                  backgroundColor: 'transparent',
-                  color: MUTED,
-                  fontWeight: '600',
-                  cursor: 'pointer',
                   fontSize: '12px',
-                  fontFamily: fontBody
+                  color: tk.muted,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6
                 }}
               >
-                ❌ Cancel
+                <Icon name="x" size={14} /> Cancel
               </button>
             </div>
           </div>

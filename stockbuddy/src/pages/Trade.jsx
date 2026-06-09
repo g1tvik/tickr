@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import StockTicker from '../components/StockTicker';
 import StockSearch from '../components/StockSearch';
 import { SuperChart } from '../components/SuperChart';
 import { useTrading } from '../hooks/useTrading';
 import { getPositionValue, calculateOrderTotal } from '../utils/tradeUtils';
 import { gray, marbleDarkGray, marbleGold } from '../marblePalette';
-import { fontHeading, fontBody } from '../fontPalette';
+import { fontBody } from '../fontPalette';
 import { api } from '../services/api';
 import { useNavbarBackground } from '../hooks/useNavbarBackground';
 import { useSEO, SEO_CONFIG } from '../lib/seo';
+import tk, { label, mono, heading, tag } from '../theme/terminal';
+import Icon from '../components/Icon';
 import './Trade.css';
 
 const isDev = import.meta.env.DEV;
@@ -21,8 +22,11 @@ const isDemoData = (obj) =>
 // Small muted-gold pill shown next to demo-sourced data.
 function DemoPill({ title = 'Live market keys are missing — showing simulated data' }) {
   return (
-    <span className="trade-demo-pill" title={title}>
-      Demo data
+    <span
+      style={{ ...tag, display: 'inline-flex', alignItems: 'center', gap: 5 }}
+      title={title}
+    >
+      <Icon name="dot" size={7} /> Demo data
     </span>
   );
 }
@@ -48,7 +52,14 @@ function ChangePill({ percent, className = '' }) {
   const state = !known ? 'is-flat' : up ? 'is-up' : 'is-down';
   return (
     <span className={`trade-change ${state} ${className}`}>
-      {known ? `${up ? '▲' : '▼'} ${up ? '+' : ''}${num.toFixed(2)}%` : '—'}
+      {known ? (
+        <>
+          <Icon name={up ? 'tri-up' : 'tri-down'} size={9} />
+          {`${up ? '+' : ''}${num.toFixed(2)}%`}
+        </>
+      ) : (
+        '—'
+      )}
     </span>
   );
 }
@@ -61,9 +72,11 @@ function ChangeBadge({ change, percent }) {
   const hasAbs = change !== undefined && change !== null && !Number.isNaN(chg);
   return (
     <span className={`trade-change-badge ${state}`}>
-      {known ? `${up ? '▲' : '▼'}` : ''}
-      {hasAbs ? ` ${up ? '+' : ''}${chg.toFixed(2)}` : ''}
-      {known ? ` (${up ? '+' : ''}${num.toFixed(2)}%)` : ' —'}
+      {known && <Icon name={up ? 'tri-up' : 'tri-down'} size={10} />}
+      <span>
+        {hasAbs ? `${up ? '+' : ''}${chg.toFixed(2)}` : ''}
+        {known ? ` (${up ? '+' : ''}${num.toFixed(2)}%)` : ' —'}
+      </span>
     </span>
   );
 }
@@ -394,11 +407,10 @@ function Trade() {
       }}>
         <div style={{ textAlign: 'center', maxWidth: '400px' }}>
           <div style={{
+            ...heading,
             fontSize: '24px',
-            fontWeight: 'bold',
             color: 'var(--trade-text, #F4F1E9)',
-            marginBottom: '12px',
-            fontFamily: fontHeading
+            marginBottom: '12px'
           }}>
             {error || 'Sign in required'}
           </div>
@@ -422,19 +434,32 @@ function Trade() {
           <div className="trade-card trade-header">
             <div className="trade-header__top">
               <div className="trade-title-row">
-                <h1 className="trade-title">📈 Paper Trading</h1>
-                <span className="trade-market-pill">
-                  <span
-                    className={`trade-market-pill__dot ${marketStatus === 'open' ? 'is-open' : 'is-closed'}`}
-                    aria-hidden="true"
-                  />
-                  {marketStatus === 'open' ? 'Market Open' : 'Market Closed'}
+                <h1 className="trade-title">
+                  <Icon name="trending-up" size={20} color={tk.gold} />
+                  Paper trading
+                </h1>
+                <span
+                  style={{
+                    ...tag,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    color: marketStatus === 'open' ? tk.up : tk.down,
+                    borderColor:
+                      marketStatus === 'open'
+                        ? 'rgba(79,180,119,0.4)'
+                        : 'rgba(224,96,90,0.4)',
+                  }}
+                >
+                  <Icon name="dot" size={7} />
+                  {marketStatus === 'open' ? 'Market open' : 'Market closed'}
                 </span>
               </div>
               <div className="trade-header__meta">
                 {lastUpdate && (
                   <span style={{ fontSize: '12px', color: 'var(--trade-text-muted)' }}>
-                    Updated {new Date(lastUpdate).toLocaleTimeString()}
+                    Updated{' '}
+                    <span style={mono}>{new Date(lastUpdate).toLocaleTimeString()}</span>
                   </span>
                 )}
                 <button
@@ -443,12 +468,16 @@ function Trade() {
                   onClick={loadMarketData}
                   aria-label="Refresh market data"
                 >
-                  ↻ Refresh
+                  <Icon name="refresh" size={14} /> Refresh
                 </button>
               </div>
             </div>
 
             {/* Account snapshot — value, unrealized P&L, buying power */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <span style={label}>account</span>
+              <span style={{ flex: 1, height: 1, background: tk.hair }} />
+            </div>
             <div className="trade-stat-strip">
               <div className="trade-stat">
                 <div className="trade-stat__label">Portfolio Value</div>
@@ -489,12 +518,20 @@ function Trade() {
             {/* Persistent success indicator after a fill */}
             {lastFill && (
               <div className="trade-success-chip" aria-live="polite">
-                <span aria-hidden="true">✓</span>
+                <Icon name="check" size={13} />
                 Last order filled:&nbsp;
-                {lastFill.type === 'buy' ? 'Bought' : 'Sold'} {lastFill.shares}{' '}
+                {lastFill.type === 'buy' ? 'Bought' : 'Sold'}{' '}
+                <span style={mono}>{lastFill.shares}</span>{' '}
                 {lastFill.shares === 1 ? 'share' : 'shares'}
-                {lastFill.symbol ? ` of ${lastFill.symbol}` : ''} at{' '}
-                {lastFill.at.toLocaleTimeString()}
+                {lastFill.symbol ? (
+                  <>
+                    {' '}
+                    of <span style={mono}>{lastFill.symbol}</span>
+                  </>
+                ) : (
+                  ''
+                )}{' '}
+                at <span style={mono}>{lastFill.at.toLocaleTimeString()}</span>
               </div>
             )}
           </div>
@@ -503,7 +540,7 @@ function Trade() {
           {error && (
             <div className="trade-error-banner" role="alert" aria-live="assertive">
               <span className="trade-error-banner__text">
-                <span aria-hidden="true">⚠️</span>
+                <Icon name="alert" size={15} />
                 <span>{error}</span>
               </span>
               <button
@@ -512,16 +549,19 @@ function Trade() {
                 onClick={clearError}
                 aria-label="Dismiss error"
               >
-                ×
+                <Icon name="x" size={16} />
               </button>
             </div>
           )}
 
           {/* Stock Search */}
           <div className="trade-card">
-            <h2 className="trade-heading" style={{ fontSize: '20px', marginBottom: '16px' }}>
-              Search Stocks
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+              <h2 className="trade-heading" style={{ ...label, margin: 0 }}>
+                Search stocks
+              </h2>
+              <span style={{ flex: 1, height: 1, background: tk.hair }} />
+            </div>
             <StockSearch
               onStockSelect={handleStockSelect}
               placeholder="Search by symbol or company name (e.g., AAPL, Apple, TSLA)..."
@@ -532,7 +572,9 @@ function Trade() {
           {!selectedStock && (
             <div className="trade-card">
               <div className="trade-empty">
-                <div className="trade-empty__icon" aria-hidden="true">🔍</div>
+                <div className="trade-empty__icon" aria-hidden="true">
+                  <Icon name="search" size={18} />
+                </div>
                 <h2 className="trade-empty__title">Pick a stock to start trading</h2>
                 <p className="trade-empty__subtitle">
                   Search above, or jump into one of today&apos;s most active tickers.
@@ -584,7 +626,7 @@ function Trade() {
                   )}
                   {chartError && !chartLoading && (
                     <div className="trade-chart-status trade-chart-status--error" role="alert">
-                      <span aria-hidden="true">⚠️</span> {chartError}
+                      <Icon name="alert" size={14} /> {chartError}
                     </div>
                   )}
                   <SuperChart
@@ -615,7 +657,7 @@ function Trade() {
                       gap: '8px'
                     }}>
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--trade-text)' }}>
+                        <div style={{ ...mono, fontSize: '20px', fontWeight: 600, color: 'var(--trade-text)' }}>
                           {selectedStock.symbol}
                         </div>
                         <div className="trade-muted" style={{
@@ -628,7 +670,7 @@ function Trade() {
                         </div>
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--trade-text)' }}>
+                        <div style={{ ...mono, fontSize: '24px', fontWeight: 500, color: 'var(--trade-text)' }}>
                           {selectedStock.price != null ? fmtUsd(selectedStock.price) : 'N/A'}
                         </div>
                         <div style={{ marginTop: '2px' }}>
@@ -638,7 +680,7 @@ function Trade() {
                     </div>
                     {selectedStock.volume && (
                       <div className="trade-muted" style={{ fontSize: '12px' }}>
-                        Volume: {selectedStock.volume.toLocaleString()}
+                        Volume: <span style={mono}>{selectedStock.volume.toLocaleString()}</span>
                       </div>
                     )}
                   </div>
@@ -649,7 +691,7 @@ function Trade() {
                     <div style={{ marginBottom: '16px' }}>
                       <label
                         htmlFor="trade-order-type"
-                        style={{ display: 'block', marginBottom: '6px', color: 'var(--trade-text)', fontWeight: '500', fontSize: '14px' }}
+                        style={{ ...label, display: 'block', marginBottom: '8px' }}
                       >
                         Order Type
                       </label>
@@ -658,7 +700,7 @@ function Trade() {
                           type="button"
                           onClick={() => setOrderType('buy')}
                           aria-pressed={orderType === 'buy'}
-                          style={{ flex: 1, padding: '10px', borderRadius: '6px', border: 'none', color: 'white', fontWeight: '600', cursor: 'pointer', backgroundColor: orderType === 'buy' ? '#22c55e' : gray, transition: 'background-color 0.2s', fontSize: '14px' }}
+                          style={{ flex: 1, padding: '10px', borderRadius: '6px', border: 'none', color: 'white', fontWeight: '600', cursor: 'pointer', backgroundColor: orderType === 'buy' ? tk.up : gray, transition: 'background-color 0.2s', fontSize: '14px' }}
                         >
                           Buy
                         </button>
@@ -666,7 +708,7 @@ function Trade() {
                           type="button"
                           onClick={() => setOrderType('sell')}
                           aria-pressed={orderType === 'sell'}
-                          style={{ flex: 1, padding: '10px', borderRadius: '6px', border: 'none', color: 'white', fontWeight: '600', cursor: 'pointer', backgroundColor: orderType === 'sell' ? '#ef4444' : gray, transition: 'background-color 0.2s', fontSize: '14px' }}
+                          style={{ flex: 1, padding: '10px', borderRadius: '6px', border: 'none', color: 'white', fontWeight: '600', cursor: 'pointer', backgroundColor: orderType === 'sell' ? tk.down : gray, transition: 'background-color 0.2s', fontSize: '14px' }}
                         >
                           Sell
                         </button>
@@ -676,17 +718,17 @@ function Trade() {
                     {/* Shares — steppers + quick-amount chips */}
                     <div style={{ marginBottom: '16px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
-                        <label htmlFor="trade-shares" style={{ color: 'var(--trade-text)', fontWeight: '500', fontSize: '14px' }}>
+                        <label htmlFor="trade-shares" style={{ ...label }}>
                           Shares
                         </label>
                         {orderType === 'sell' && (
                           <span className="trade-muted" style={{ fontSize: '12px' }}>
-                            {heldShares} held
+                            <span style={mono}>{heldShares}</span> held
                           </span>
                         )}
                       </div>
                       <div className="trade-stepper">
-                        <button type="button" className="trade-stepper__btn" onClick={() => setSharesSafe(shares - 1)} aria-label="Decrease shares">−</button>
+                        <button type="button" className="trade-stepper__btn" onClick={() => setSharesSafe(shares - 1)} aria-label="Decrease shares"><Icon name="minus" size={16} /></button>
                         <input
                           id="trade-shares"
                           className="trade-stepper__input"
@@ -696,7 +738,7 @@ function Trade() {
                           min="1"
                           aria-label="Number of shares"
                         />
-                        <button type="button" className="trade-stepper__btn" onClick={() => setSharesSafe(shares + 1)} aria-label="Increase shares">+</button>
+                        <button type="button" className="trade-stepper__btn" onClick={() => setSharesSafe(shares + 1)} aria-label="Increase shares"><Icon name="plus" size={16} /></button>
                       </div>
                       <div className="trade-chips">
                         {[0.25, 0.5, 0.75].map((pct) => (
@@ -726,21 +768,21 @@ function Trade() {
                     <div style={{ padding: '12px', backgroundColor: 'var(--trade-surface)', borderRadius: '8px', marginBottom: '4px', fontSize: '12px' }}>
                       <div className="trade-buying-power">
                         <span className="trade-muted">Buying power</span>
-                        <span style={{ fontWeight: '600', color: 'var(--trade-text)' }}>{fmtUsd(buyingPower)}</span>
+                        <span style={{ ...mono, fontWeight: '600', color: 'var(--trade-text)' }}>{fmtUsd(buyingPower)}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                         <span className="trade-muted">Price per share</span>
-                        <span style={{ fontWeight: '500', color: 'var(--trade-text)' }}>
+                        <span style={{ ...mono, fontWeight: '500', color: 'var(--trade-text)' }}>
                           {selectedStock.price != null ? fmtUsd(selectedStock.price) : 'N/A'}
                         </span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--trade-divider)', paddingTop: '6px', marginTop: '2px', fontWeight: 'bold' }}>
                         <span style={{ color: 'var(--trade-text)' }}>Estimated total</span>
-                        <span style={{ color: 'var(--trade-text)' }}>{fmtUsd(orderTotal)}</span>
+                        <span style={{ ...mono, color: 'var(--trade-text)' }}>{fmtUsd(orderTotal)}</span>
                       </div>
                       <div className="trade-projected">
                         <span className="trade-muted">Balance after</span>
-                        <span style={{ fontWeight: '600', color: orderAffordable ? 'var(--trade-text)' : 'var(--trade-down)' }}>
+                        <span style={{ ...mono, fontWeight: '600', color: orderAffordable ? 'var(--trade-text)' : 'var(--trade-down)' }}>
                           {fmtUsd(projectedBalance)}
                         </span>
                       </div>
@@ -749,9 +791,15 @@ function Trade() {
                     {/* Affordability warning */}
                     {!orderAffordable && (
                       <div className="trade-order-warning" role="alert">
-                        {orderType === 'buy'
-                          ? 'Not enough buying power for this order.'
-                          : `You only hold ${heldShares} ${heldShares === 1 ? 'share' : 'shares'} of ${selectedStock.symbol}.`}
+                        {orderType === 'buy' ? (
+                          'Not enough buying power for this order.'
+                        ) : (
+                          <>
+                            You only hold <span style={mono}>{heldShares}</span>{' '}
+                            {heldShares === 1 ? 'share' : 'shares'} of{' '}
+                            <span style={mono}>{selectedStock.symbol}</span>.
+                          </>
+                        )}
                       </div>
                     )}
 
@@ -763,12 +811,13 @@ function Trade() {
                         width: '100%',
                         padding: '13px',
                         marginTop: '12px',
-                        borderRadius: '10px',
+                        borderRadius: '8px',
                         border: 'none',
                         backgroundColor: marbleGold,
                         color: marbleDarkGray,
                         fontSize: '14px',
                         fontWeight: 'bold',
+                        letterSpacing: '0.02em',
                         cursor: (isLoading || !orderAffordable) ? 'not-allowed' : 'pointer',
                         opacity: (isLoading || !orderAffordable) ? 0.55 : 1,
                         transition: 'transform 0.15s ease'
@@ -776,7 +825,13 @@ function Trade() {
                       onMouseEnter={(e) => { if (!isLoading && orderAffordable) e.currentTarget.style.transform = 'scale(1.02)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
                     >
-                      {isLoading ? 'Processing…' : `${orderType === 'buy' ? 'Buy' : 'Sell'} ${shares} ${shares === 1 ? 'Share' : 'Shares'}`}
+                      {isLoading ? 'Processing…' : (
+                        <>
+                          {orderType === 'buy' ? 'Buy' : 'Sell'}{' '}
+                          <span style={mono}>{shares}</span>{' '}
+                          {shares === 1 ? 'Share' : 'Shares'}
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -789,9 +844,12 @@ function Trade() {
         <div className="trade-col">
           {/* Portfolio — holdings summary + per-position P&L */}
           <div className="trade-card">
-            <h3 className="trade-heading" style={{ fontSize: '20px', marginBottom: '16px' }}>
-              Portfolio
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+              <h3 className="trade-heading" style={{ ...label, margin: 0 }}>
+                Portfolio
+              </h3>
+              <span style={{ flex: 1, height: 1, background: tk.hair }} />
+            </div>
             {initialLoading ? (
               <div>
                 <div className="trade-skeleton trade-skeleton--card" />
@@ -807,13 +865,13 @@ function Trade() {
                 <div className="trade-portfolio-summary">
                   <div>
                     <div className="trade-stat__label">Holdings Value</div>
-                    <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--trade-text)', fontFamily: 'var(--fontHeading)' }}>
+                    <div style={{ ...mono, fontSize: '20px', fontWeight: 500, color: 'var(--trade-text)' }}>
                       {fmtUsd(positionsValue)}
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div className="trade-stat__label">Unrealized</div>
-                    <div style={{ fontSize: '16px', fontWeight: 800, color: pnlUp ? 'var(--trade-up)' : 'var(--trade-down)' }}>
+                    <div style={{ ...mono, fontSize: '16px', fontWeight: 500, color: pnlUp ? 'var(--trade-up)' : 'var(--trade-down)' }}>
                       {pnlUp ? '+' : '−'}{fmtUsd(Math.abs(totalPnl))}
                     </div>
                   </div>
@@ -833,21 +891,21 @@ function Trade() {
                         aria-label={`Trade ${position.symbol}`}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                          <span style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--trade-text)' }}>
+                          <span style={{ ...mono, fontSize: '15px', fontWeight: 600, color: 'var(--trade-text)' }}>
                             {position.symbol}
                           </span>
                           <ChangePill percent={(position.pnlPercent ?? 0).toFixed(2)} />
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span className="trade-muted" style={{ fontSize: '12px' }}>
-                            {position.shares} sh · avg {fmtUsd(position.avgPrice ?? position.avgCost ?? 0)}
+                            <span style={mono}>{position.shares}</span> sh · avg <span style={mono}>{fmtUsd(position.avgPrice ?? position.avgCost ?? 0)}</span>
                           </span>
-                          <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--trade-text)' }}>
+                          <span style={{ ...mono, fontSize: '14px', fontWeight: 600, color: 'var(--trade-text)' }}>
                             {fmtUsd(position.currentValue)}
                           </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
-                          <span style={{ fontSize: '12px', fontWeight: 600, color: posUp ? 'var(--trade-up)' : 'var(--trade-down)' }}>
+                          <span style={{ ...mono, fontSize: '12px', fontWeight: 600, color: posUp ? 'var(--trade-up)' : 'var(--trade-down)' }}>
                             {posUp ? '+' : '−'}{fmtUsd(Math.abs(position.pnl || 0))}
                           </span>
                         </div>
@@ -867,18 +925,19 @@ function Trade() {
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '8px',
+              gap: 14,
               flexWrap: 'wrap',
               marginBottom: '8px'
             }}>
-              <h3 className="trade-heading" style={{ fontSize: '20px' }}>
-                Market Watch
+              <h3 className="trade-heading" style={{ ...label, margin: 0 }}>
+                Market watch
               </h3>
+              <span style={{ flex: 1, height: 1, background: tk.hair }} />
               {marketIsDemo && <DemoPill />}
             </div>
             <div className="trade-muted" style={{ fontSize: '12px', marginBottom: '12px' }}>
-              Tap a ticker to load it · Last: {lastUpdate ? new Date(lastUpdate).toLocaleTimeString() : new Date().toLocaleTimeString()}
+              Tap a ticker to load it · Last:{' '}
+              <span style={mono}>{lastUpdate ? new Date(lastUpdate).toLocaleTimeString() : new Date().toLocaleTimeString()}</span>
             </div>
             {initialLoading ? (
               <div>
@@ -919,10 +978,19 @@ function Trade() {
       {/* Success toast — persists ~6s so a fill is clearly visible */}
       {showSuccessToast && (
         <div className="trade-toast" role="status" aria-live="polite">
-          <span className="trade-toast__icon" aria-hidden="true">✓</span>
+          <span className="trade-toast__icon" aria-hidden="true">
+            <Icon name="check" size={13} />
+          </span>
           <span>
             Order executed successfully
-            {lastFill?.symbol ? ` — ${lastFill.type === 'buy' ? 'bought' : 'sold'} ${lastFill.shares} ${lastFill.symbol}` : '!'}
+            {lastFill?.symbol ? (
+              <>
+                {' '}— {lastFill.type === 'buy' ? 'bought' : 'sold'}{' '}
+                <span style={mono}>{lastFill.shares} {lastFill.symbol}</span>
+              </>
+            ) : (
+              '!'
+            )}
           </span>
         </div>
       )}

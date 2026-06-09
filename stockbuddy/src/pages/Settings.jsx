@@ -1,20 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, logout } from '../services/api';
-import { gray, marbleDarkGray, marbleGold } from '../marblePalette';
-import { fontHeading, fontBody } from '../fontPalette';
 import { useSEO } from '../lib/seo';
+import tk, { label, mono, panel, inset, heading, btnPrimary, btnGhost, tag } from '../theme/terminal';
+import Icon from '../components/Icon';
 
 const Settings = () => {
-  // Marble dark theme palette (local — imported palette constants are light).
-  const pageBg = '#2C2C2C';
-  const cardBg = '#343434';
-  const cardBg2 = '#2f2f2f';
-  const cardText = '#F4F1E9';
-  const cardMuted = '#b8b4a8';
-  const cardBorder = 'rgba(182,156,96,0.22)';
-  const divider = 'rgba(244,241,233,0.12)';
-
   useSEO({ title: 'Settings' });
   const navigate = useNavigate();
   const [userProfile, setUserProfile] = useState(null);
@@ -218,17 +209,59 @@ const Settings = () => {
     }
   };
 
+  // ── Shared inline style fragments (Terminal Editorial) ────────────────────
+  const dataRow = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '11px 0',
+    borderBottom: `1px solid ${tk.hair}`,
+    gap: 16
+  };
+  const valueText = { fontSize: 13, color: tk.text, fontWeight: 500, textAlign: 'right' };
+  const fieldInput = {
+    ...inset,
+    width: '100%',
+    padding: '11px 14px',
+    color: tk.text,
+    fontFamily: tk.fontBody,
+    fontSize: 14,
+    outline: 'none',
+    boxSizing: 'border-box'
+  };
+  const fieldLabel = { ...label, display: 'block', marginBottom: 8 };
+  const overlay = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+    padding: 16
+  };
+  const modalCard = {
+    ...panel,
+    padding: isMobile ? '24px 20px' : '28px',
+    maxWidth: 480,
+    width: '100%',
+    boxShadow: '0 24px 60px rgba(0,0,0,0.45)'
+  };
+
   if (loading) {
     return (
       <div className="page-dark" style={{
         minHeight: '100vh',
-        backgroundColor: pageBg,
+        backgroundColor: tk.bg,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: fontBody
+        fontFamily: tk.fontBody
       }}>
-        <div>Loading settings...</div>
+        <div style={{ ...mono, fontSize: 13, color: tk.muted }}>Loading settings...</div>
       </div>
     );
   }
@@ -237,47 +270,50 @@ const Settings = () => {
     return (
       <div className="page-dark" style={{
         minHeight: '100vh',
-        backgroundColor: pageBg,
+        backgroundColor: tk.bg,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: fontBody
+        fontFamily: tk.fontBody,
+        padding: 16
       }}>
         <div style={{
+          ...panel,
           textAlign: 'center',
-          padding: '48px',
-          backgroundColor: cardBg2,
-          borderRadius: '20px',
-          maxWidth: '500px'
+          padding: '40px 32px',
+          maxWidth: 460,
+          width: '100%'
         }}>
+          <div style={{
+            width: 44,
+            height: 44,
+            margin: '0 auto 16px',
+            border: `1px solid ${tk.goldHair}`,
+            borderRadius: tk.rSm,
+            display: 'grid',
+            placeItems: 'center',
+            color: tk.gold
+          }}>
+            <Icon name="lock" size={18} />
+          </div>
           <h2 style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: cardText,
-            marginBottom: '16px',
-            fontFamily: fontHeading
+            ...heading,
+            fontSize: 22,
+            marginBottom: 10
           }}>
             Authentication Required
           </h2>
           <p style={{
-            fontSize: '16px',
-            color: cardMuted,
-            marginBottom: '24px'
+            fontSize: 14,
+            color: tk.muted,
+            marginBottom: 22,
+            lineHeight: 1.5
           }}>
             You need to be logged in to access your settings.
           </p>
           <button
             onClick={() => navigate('/signin')}
-            style={{
-              backgroundColor: marbleGold,
-              color: marbleDarkGray,
-              border: 'none',
-              padding: '12px 24px',
-              borderRadius: '12px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: 'pointer'
-            }}
+            style={{ ...btnPrimary, padding: '11px 22px', fontSize: 14 }}
           >
             Sign In
           </button>
@@ -289,17 +325,18 @@ const Settings = () => {
   return (
     <div className="page-dark" style={{
       minHeight: '100vh',
-      backgroundColor: pageBg,
-      fontFamily: fontBody
+      backgroundColor: tk.bg,
+      fontFamily: tk.fontBody,
+      color: tk.text
     }}>
       {/* Header */}
       <div style={{
-        backgroundColor: cardBg2,
+        backgroundColor: tk.surface,
         padding: isMobile ? '20px 16px' : '24px',
-        borderBottom: `1px solid ${divider}`
+        borderBottom: `1px solid ${tk.hair}`
       }}>
         <div style={{
-          maxWidth: '1200px',
+          maxWidth: '1100px',
           margin: '0 auto'
         }}>
           <button
@@ -307,32 +344,32 @@ const Settings = () => {
             style={{
               backgroundColor: 'transparent',
               border: 'none',
-              color: cardText,
-              fontSize: '16px',
+              color: tk.muted,
+              fontFamily: tk.fontBody,
+              fontSize: 13,
               cursor: 'pointer',
-              marginBottom: '16px',
-              display: 'flex',
+              marginBottom: 18,
+              padding: 0,
+              display: 'inline-flex',
               alignItems: 'center',
-              gap: '8px'
+              gap: 6
             }}
           >
-            ← Back to Dashboard
+            <Icon name="arrow-left" size={14} /> Back to Dashboard
           </button>
-          
+
           <h1 style={{
-            fontSize: isMobile ? '26px' : '32px',
-            fontWeight: 'bold',
-            color: cardText,
-            fontFamily: fontHeading,
-            marginBottom: '8px'
+            ...heading,
+            fontSize: isMobile ? 26 : 30,
+            marginBottom: 6
           }}>
             Settings
           </h1>
 
           <p style={{
-            fontSize: isMobile ? '16px' : '18px',
-            color: cardMuted,
-            marginBottom: '16px'
+            fontSize: 14,
+            color: tk.muted,
+            margin: 0
           }}>
             Manage your account preferences and settings
           </p>
@@ -341,9 +378,9 @@ const Settings = () => {
 
       {/* Content */}
       <div style={{
-        maxWidth: '1200px',
+        maxWidth: '1100px',
         margin: '0 auto',
-        padding: isMobile ? '32px 16px' : '48px 24px'
+        padding: isMobile ? '28px 16px' : '40px 24px'
       }}>
         {/* Settings Grid */}
         <div style={{
@@ -351,314 +388,225 @@ const Settings = () => {
           gridTemplateColumns: isMobile
             ? '1fr'
             : 'repeat(auto-fit, minmax(360px, 1fr))',
-          gap: '24px'
+          gap: '20px'
         }}>
           {/* Account Settings */}
-          <div style={{
-            backgroundColor: cardBg2,
-            borderRadius: '20px',
-            padding: isMobile ? '24px 20px' : '32px',
-            border: `1px solid ${cardBorder}`,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.28)'
-          }}>
+          <div style={{ ...panel, padding: isMobile ? '20px' : '24px' }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '16px',
-              marginBottom: '24px'
+              gap: 12,
+              marginBottom: 16
             }}>
               <div style={{
-                width: '48px',
-                height: '48px',
-                backgroundColor: marbleGold,
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px'
+                width: 34,
+                height: 34,
+                border: `1px solid ${tk.goldHair}`,
+                borderRadius: tk.rSm,
+                display: 'grid',
+                placeItems: 'center',
+                color: tk.gold
               }}>
-                👤
+                <Icon name="user" size={16} />
               </div>
               <div>
                 <h3 style={{
-                  fontSize: '20px',
-                  fontWeight: 'bold',
-                  color: cardText,
-                  fontFamily: fontHeading,
-                  marginBottom: '4px'
+                  ...heading,
+                  fontSize: 17,
+                  marginBottom: 2
                 }}>
                   Account Settings
                 </h3>
                 <p style={{
-                  fontSize: '14px',
-                  color: cardMuted
+                  fontSize: 12.5,
+                  color: tk.muted,
+                  margin: 0
                 }}>
                   Manage your profile information
                 </p>
               </div>
             </div>
-            
-            <div style={{
-              backgroundColor: cardBg,
-              borderRadius: '12px',
-              padding: '24px',
-              marginBottom: '16px'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '12px'
-              }}>
-                <span style={{ color: cardMuted }}>Name</span>
-                <span style={{ color: cardText, fontWeight: '500' }}>
+
+            <div style={{ borderTop: `1px solid ${tk.hair}`, marginBottom: 18 }}>
+              <div style={dataRow}>
+                <span style={label}>Name</span>
+                <span style={valueText}>
                   {userProfile?.name || 'Not set'}
                 </span>
               </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '12px'
-              }}>
-                <span style={{ color: cardMuted }}>Username</span>
-                <span style={{ color: cardText, fontWeight: '500' }}>
+              <div style={dataRow}>
+                <span style={label}>Username</span>
+                <span style={{ ...valueText, ...mono }}>
                   @{userProfile?.username || 'Not set'}
                 </span>
               </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <span style={{ color: cardMuted }}>Email</span>
-                <span style={{ color: cardText, fontWeight: '500' }}>
+              <div style={dataRow}>
+                <span style={label}>Email</span>
+                <span style={valueText}>
                   {userProfile?.email || 'Not set'}
                 </span>
               </div>
             </div>
-            
-            <button 
+
+            <button
               onClick={() => setShowEditProfile(true)}
               style={{
-                backgroundColor: marbleDarkGray,
-                color: cardText,
-                border: 'none',
-                padding: '12px 24px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                width: '100%'
+                ...btnGhost,
+                width: '100%',
+                padding: '10px 16px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6
               }}
             >
-              Edit Profile
+              <Icon name="edit" size={14} /> Edit Profile
             </button>
           </div>
 
           {/* Learning Preferences */}
-          <div style={{
-            backgroundColor: cardBg2,
-            borderRadius: '20px',
-            padding: isMobile ? '24px 20px' : '32px',
-            border: `1px solid ${cardBorder}`,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.28)'
-          }}>
+          <div style={{ ...panel, padding: isMobile ? '20px' : '24px' }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '16px',
-              marginBottom: '24px'
+              gap: 12,
+              marginBottom: 16
             }}>
               <div style={{
-                width: '48px',
-                height: '48px',
-                backgroundColor: marbleGold,
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px'
+                width: 34,
+                height: 34,
+                border: `1px solid ${tk.goldHair}`,
+                borderRadius: tk.rSm,
+                display: 'grid',
+                placeItems: 'center',
+                color: tk.gold
               }}>
-                📚
+                <Icon name="book" size={16} />
               </div>
               <div>
                 <h3 style={{
-                  fontSize: '20px',
-                  fontWeight: 'bold',
-                  color: cardText,
-                  fontFamily: fontHeading,
-                  marginBottom: '4px'
+                  ...heading,
+                  fontSize: 17,
+                  marginBottom: 2
                 }}>
                   Learning Preferences
                 </h3>
                 <p style={{
-                  fontSize: '14px',
-                  color: cardMuted
+                  fontSize: 12.5,
+                  color: tk.muted,
+                  margin: 0
                 }}>
                   Customize your learning experience
                 </p>
               </div>
             </div>
-            
-            <div style={{
-              backgroundColor: cardBg,
-              borderRadius: '12px',
-              padding: '24px',
-              marginBottom: '16px'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '12px'
-              }}>
-                <span style={{ color: cardMuted }}>Daily Goal</span>
-                <span style={{ color: cardText, fontWeight: '500' }}>
-                  {learningPreferences.dailyGoal} lessons
+
+            <div style={{ borderTop: `1px solid ${tk.hair}`, marginBottom: 18 }}>
+              <div style={dataRow}>
+                <span style={label}>Daily Goal</span>
+                <span style={valueText}>
+                  <span style={mono}>{learningPreferences.dailyGoal}</span> lessons
                 </span>
               </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <span style={{ color: cardMuted }}>Notifications</span>
-                <span style={{ color: cardText, fontWeight: '500' }}>
-                  {learningPreferences.notifications ? 'Enabled' : 'Disabled'}
-                </span>
+              <div style={dataRow}>
+                <span style={label}>Notifications</span>
+                {learningPreferences.notifications ? (
+                  <span style={{ ...tag, color: tk.up, borderColor: 'rgba(79,180,119,0.4)' }}>Enabled</span>
+                ) : (
+                  <span style={{ ...tag, color: tk.muted, borderColor: tk.hairStrong }}>Disabled</span>
+                )}
               </div>
             </div>
-            
+
             <div style={{
               display: 'flex',
               flexWrap: 'wrap',
-              gap: '12px',
-              marginTop: '16px'
+              gap: 12
             }}>
               <button
                 onClick={() => setShowPreferences(true)}
                 style={{
-                  backgroundColor: marbleDarkGray,
-                  color: cardText,
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  flex: 1
+                  ...btnGhost,
+                  flex: 1,
+                  padding: '10px 16px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6
                 }}
               >
-                Customize Preferences
+                <Icon name="settings" size={14} /> Customize Preferences
               </button>
-              <button 
+              <button
                 onClick={handleSendReminder}
                 disabled={saving}
                 style={{
-                  backgroundColor: marbleGold,
-                  color: marbleDarkGray,
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  fontWeight: '500',
+                  ...btnPrimary,
+                  padding: '11px 16px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
                   cursor: saving ? 'not-allowed' : 'pointer',
                   opacity: saving ? 0.6 : 1
                 }}
               >
-                {saving ? 'Sending...' : 'Send Reminder'}
+                {saving ? 'Sending...' : (<><Icon name="mail" size={14} /> Send Reminder</>)}
               </button>
             </div>
           </div>
 
           {/* Privacy & Security */}
-          <div style={{
-            backgroundColor: cardBg2,
-            borderRadius: '20px',
-            padding: isMobile ? '24px 20px' : '32px',
-            border: `1px solid ${cardBorder}`,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.28)'
-          }}>
+          <div style={{ ...panel, padding: isMobile ? '20px' : '24px' }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '16px',
-              marginBottom: '24px'
+              gap: 12,
+              marginBottom: 16
             }}>
               <div style={{
-                width: '48px',
-                height: '48px',
-                backgroundColor: marbleGold,
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px'
+                width: 34,
+                height: 34,
+                border: `1px solid ${tk.goldHair}`,
+                borderRadius: tk.rSm,
+                display: 'grid',
+                placeItems: 'center',
+                color: tk.gold
               }}>
-                🔒
+                <Icon name="lock" size={16} />
               </div>
               <div>
                 <h3 style={{
-                  fontSize: '20px',
-                  fontWeight: 'bold',
-                  color: cardText,
-                  fontFamily: fontHeading,
-                  marginBottom: '4px'
+                  ...heading,
+                  fontSize: 17,
+                  marginBottom: 2
                 }}>
                   Privacy & Security
                 </h3>
                 <p style={{
-                  fontSize: '14px',
-                  color: cardMuted
+                  fontSize: 12.5,
+                  color: tk.muted,
+                  margin: 0
                 }}>
                   Manage your account security
                 </p>
               </div>
             </div>
-            
-            <div style={{
-              backgroundColor: cardBg,
-              borderRadius: '12px',
-              padding: '24px',
-              marginBottom: '16px'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '12px'
-              }}>
-                <span style={{ color: cardMuted }}>Two-Factor Auth</span>
-                <span style={{
-                  color: marbleGold,
-                  fontWeight: '500',
-                  fontSize: '13px',
-                  border: `1px solid ${marbleGold}`,
-                  borderRadius: '999px',
-                  padding: '2px 10px'
-                }}>
-                  Coming soon
-                </span>
+
+            <div style={{ borderTop: `1px solid ${tk.hair}` }}>
+              <div style={dataRow}>
+                <span style={label}>Two-Factor Auth</span>
+                <span style={tag}>Coming soon</span>
               </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '12px'
-              }}>
-                <span style={{ color: cardMuted }}>Last Login</span>
-                <span style={{ color: cardText, fontWeight: '500' }}>
+              <div style={dataRow}>
+                <span style={label}>Last Login</span>
+                <span style={{ ...valueText, ...mono }}>
                   {userProfile?.lastLogin ? new Date(userProfile.lastLogin).toLocaleDateString() : 'Unknown'}
                 </span>
               </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <span style={{ color: cardMuted }}>Account Created</span>
-                <span style={{ color: cardText, fontWeight: '500' }}>
+              <div style={{ ...dataRow, borderBottom: 'none' }}>
+                <span style={label}>Account Created</span>
+                <span style={{ ...valueText, ...mono }}>
                   {userProfile?.createdAt ? new Date(userProfile.createdAt).toLocaleDateString() : 'Unknown'}
                 </span>
               </div>
@@ -666,138 +614,109 @@ const Settings = () => {
           </div>
 
           {/* Data Management */}
-          <div style={{
-            backgroundColor: cardBg2,
-            borderRadius: '20px',
-            padding: isMobile ? '24px 20px' : '32px',
-            border: `1px solid ${cardBorder}`,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.28)'
-          }}>
+          <div style={{ ...panel, padding: isMobile ? '20px' : '24px' }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '16px',
-              marginBottom: '24px'
+              gap: 12,
+              marginBottom: 16
             }}>
               <div style={{
-                width: '48px',
-                height: '48px',
-                backgroundColor: marbleGold,
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px'
+                width: 34,
+                height: 34,
+                border: `1px solid ${tk.goldHair}`,
+                borderRadius: tk.rSm,
+                display: 'grid',
+                placeItems: 'center',
+                color: tk.gold
               }}>
-                💾
+                <Icon name="download" size={16} />
               </div>
               <div>
                 <h3 style={{
-                  fontSize: '20px',
-                  fontWeight: 'bold',
-                  color: cardText,
-                  fontFamily: fontHeading,
-                  marginBottom: '4px'
+                  ...heading,
+                  fontSize: 17,
+                  marginBottom: 2
                 }}>
                   Data Management
                 </h3>
                 <p style={{
-                  fontSize: '14px',
-                  color: cardMuted
+                  fontSize: 12.5,
+                  color: tk.muted,
+                  margin: 0
                 }}>
                   Manage your data and progress
                 </p>
               </div>
             </div>
-            
-            <div style={{
-              backgroundColor: cardBg,
-              borderRadius: '12px',
-              padding: '24px',
-              marginBottom: '16px'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '12px'
-              }}>
-                <span style={{ color: cardMuted }}>Export Data</span>
-                <span style={{ color: cardText, fontWeight: '500' }}>Available</span>
+
+            <div style={{ borderTop: `1px solid ${tk.hair}`, marginBottom: 18 }}>
+              <div style={dataRow}>
+                <span style={label}>Export Data</span>
+                <span style={{ ...tag, color: tk.up, borderColor: 'rgba(79,180,119,0.4)' }}>Available</span>
               </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '12px'
-              }}>
-                <span style={{ color: cardMuted }}>Delete Account</span>
-                <span style={{ color: '#ef4444', fontWeight: '500' }}>Danger Zone</span>
+              <div style={dataRow}>
+                <span style={label}>Delete Account</span>
+                <span style={{ ...tag, color: tk.down, borderColor: 'rgba(224,96,90,0.4)' }}>Danger Zone</span>
               </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <span style={{ color: cardMuted }}>Reset Progress</span>
-                <span style={{ color: '#f59e0b', fontWeight: '500' }}>Warning</span>
+              <div style={dataRow}>
+                <span style={label}>Reset Progress</span>
+                <span style={{ ...tag, color: tk.warn, borderColor: 'rgba(217,164,65,0.4)' }}>Warning</span>
               </div>
             </div>
-            
+
             <div style={{
               display: 'flex',
               flexWrap: 'wrap',
-              gap: '12px',
-              marginBottom: '12px'
+              gap: 12,
+              marginBottom: 12
             }}>
               <button
                 onClick={handleExportData}
                 style={{
-                  backgroundColor: marbleDarkGray,
-                  color: cardText,
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  flex: 1
+                  ...btnGhost,
+                  flex: 1,
+                  padding: '10px 16px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6
                 }}
               >
-                Export Data
+                <Icon name="download" size={14} /> Export Data
               </button>
-              <button 
+              <button
                 onClick={() => setShowDeleteConfirm(true)}
                 style={{
-                  backgroundColor: '#ef4444',
-                  color: cardText,
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  flex: 1
+                  ...btnGhost,
+                  flex: 1,
+                  padding: '10px 16px',
+                  color: tk.down,
+                  borderColor: 'rgba(224,96,90,0.4)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6
                 }}
               >
-                Delete Account
+                <Icon name="trash" size={14} /> Delete Account
               </button>
             </div>
-            <button 
+            <button
               onClick={() => setShowResetConfirm(true)}
               style={{
-                backgroundColor: '#f59e0b',
-                color: cardText,
-                border: 'none',
-                padding: '12px 24px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                width: '100%'
+                ...btnGhost,
+                width: '100%',
+                padding: '10px 16px',
+                color: tk.warn,
+                borderColor: 'rgba(217,164,65,0.4)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6
               }}
             >
-              Reset Progress
+              <Icon name="refresh" size={14} /> Reset Progress
             </button>
           </div>
         </div>
@@ -805,136 +724,61 @@ const Settings = () => {
 
       {/* Edit Profile Modal */}
       {showEditProfile && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: cardBg,
-            borderRadius: '20px',
-            padding: '32px',
-            maxWidth: '500px',
-            width: '90%'
-          }}>
+        <div style={overlay}>
+          <div style={modalCard}>
             <h3 style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: cardText,
-              marginBottom: '24px',
-              fontFamily: fontHeading
+              ...heading,
+              fontSize: 20,
+              marginBottom: 4
             }}>
               Edit Profile
             </h3>
-            
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: cardText,
-                fontWeight: '500'
-              }}>
+            <div style={{ height: 1, background: tk.hair, margin: '14px 0 20px' }} />
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={fieldLabel}>
                 Name
               </label>
               <input
                 type="text"
                 value={editForm.name}
                 onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: `1px solid ${cardBorder}`,
-                  background: cardBg2,
-                  color: cardText,
-                  fontSize: '16px',
-                  fontFamily: fontBody,
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
+                style={fieldInput}
               />
             </div>
-            
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: cardText,
-                fontWeight: '500'
-              }}>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={fieldLabel}>
                 Username
               </label>
               <input
                 type="text"
                 value={editForm.username}
                 onChange={(e) => setEditForm({...editForm, username: e.target.value})}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: `1px solid ${cardBorder}`,
-                  background: cardBg2,
-                  color: cardText,
-                  fontSize: '16px',
-                  fontFamily: fontBody,
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
+                style={fieldInput}
               />
             </div>
-            
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: cardText,
-                fontWeight: '500'
-              }}>
+
+            <div style={{ marginBottom: 24 }}>
+              <label style={fieldLabel}>
                 Email
               </label>
               <input
                 type="email"
                 value={editForm.email}
                 onChange={(e) => setEditForm({...editForm, email: e.target.value})}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: `1px solid ${cardBorder}`,
-                  background: cardBg2,
-                  color: cardText,
-                  fontSize: '16px',
-                  fontFamily: fontBody,
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
+                style={fieldInput}
               />
             </div>
-            
+
             <div style={{
               display: 'flex',
-              gap: '12px',
+              gap: 12,
               justifyContent: 'flex-end'
             }}>
               <button
                 onClick={() => setShowEditProfile(false)}
-                style={{
-                  backgroundColor: gray,
-                  color: cardText,
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
+                style={{ ...btnGhost, padding: '10px 18px' }}
               >
                 Cancel
               </button>
@@ -942,13 +786,8 @@ const Settings = () => {
                 onClick={handleEditProfile}
                 disabled={saving}
                 style={{
-                  backgroundColor: marbleGold,
-                  color: marbleDarkGray,
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  fontWeight: '500',
+                  ...btnPrimary,
+                  padding: '10px 18px',
                   cursor: saving ? 'not-allowed' : 'pointer',
                   opacity: saving ? 0.6 : 1
                 }}
@@ -962,60 +801,26 @@ const Settings = () => {
 
       {/* Learning Preferences Modal */}
       {showPreferences && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: cardBg,
-            borderRadius: '20px',
-            padding: '32px',
-            maxWidth: '500px',
-            width: '90%'
-          }}>
+        <div style={overlay}>
+          <div style={modalCard}>
             <h3 style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: cardText,
-              marginBottom: '24px',
-              fontFamily: fontHeading
+              ...heading,
+              fontSize: 20,
+              marginBottom: 4
             }}>
               Learning Preferences
             </h3>
-            
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: cardText,
-                fontWeight: '500'
-              }}>
+            <div style={{ height: 1, background: tk.hair, margin: '14px 0 20px' }} />
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={fieldLabel}>
                 Daily Goal (lessons)
               </label>
               <select
                 aria-label="Daily goal in lessons"
                 value={preferencesForm.dailyGoal}
                 onChange={(e) => setPreferencesForm({...preferencesForm, dailyGoal: parseInt(e.target.value)})}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: `1px solid ${cardBorder}`,
-                  background: cardBg2,
-                  color: cardText,
-                  fontSize: '16px',
-                  fontFamily: fontBody,
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
+                style={fieldInput}
               >
                 <option value={1}>1 lesson</option>
                 <option value={2}>2 lessons</option>
@@ -1024,32 +829,16 @@ const Settings = () => {
                 <option value={10}>10 lessons</option>
               </select>
             </div>
-            
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                color: cardText,
-                fontWeight: '500'
-              }}>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={fieldLabel}>
                 Notifications
               </label>
               <select
                 aria-label="Notifications enabled or disabled"
                 value={preferencesForm.notifications.toString()}
                 onChange={(e) => setPreferencesForm({...preferencesForm, notifications: e.target.value === 'true'})}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: `1px solid ${cardBorder}`,
-                  background: cardBg2,
-                  color: cardText,
-                  fontSize: '16px',
-                  fontFamily: fontBody,
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
+                style={fieldInput}
               >
                 <option value="true">Enabled</option>
                 <option value="false">Disabled</option>
@@ -1058,21 +847,12 @@ const Settings = () => {
 
             <div style={{
               display: 'flex',
-              gap: '12px',
+              gap: 12,
               justifyContent: 'flex-end'
             }}>
               <button
                 onClick={() => setShowPreferences(false)}
-                style={{
-                  backgroundColor: gray,
-                  color: cardText,
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
+                style={{ ...btnGhost, padding: '10px 18px' }}
               >
                 Cancel
               </button>
@@ -1080,13 +860,8 @@ const Settings = () => {
                 onClick={handleUpdatePreferences}
                 disabled={saving}
                 style={{
-                  backgroundColor: marbleGold,
-                  color: marbleDarkGray,
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  fontWeight: '500',
+                  ...btnPrimary,
+                  padding: '10px 18px',
                   cursor: saving ? 'not-allowed' : 'pointer',
                   opacity: saving ? 0.6 : 1
                 }}
@@ -1100,76 +875,46 @@ const Settings = () => {
 
       {/* Delete Account Confirmation Modal */}
       {showDeleteConfirm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: cardBg,
-            borderRadius: '20px',
-            padding: '32px',
-            maxWidth: '500px',
-            width: '90%',
-            textAlign: 'center'
-          }}>
+        <div style={overlay}>
+          <div style={{ ...modalCard, textAlign: 'center' }}>
             <div style={{
-              width: '64px',
-              height: '64px',
-              backgroundColor: '#ef4444',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 24px',
-              fontSize: '32px'
+              width: 48,
+              height: 48,
+              border: '1px solid rgba(224,96,90,0.4)',
+              borderRadius: tk.rSm,
+              display: 'grid',
+              placeItems: 'center',
+              margin: '0 auto 18px',
+              color: tk.down
             }}>
-              ⚠️
+              <Icon name="alert" size={20} />
             </div>
-            
+
             <h3 style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: cardText,
-              marginBottom: '16px',
-              fontFamily: fontHeading
+              ...heading,
+              fontSize: 20,
+              marginBottom: 12
             }}>
               Delete Account
             </h3>
-            
+
             <p style={{
-              color: cardMuted,
-              fontSize: '16px',
-              lineHeight: '1.5',
-              marginBottom: '24px'
+              color: tk.muted,
+              fontSize: 14,
+              lineHeight: 1.5,
+              marginBottom: 24
             }}>
               This action cannot be undone. All your data, including learning progress, portfolio, and account information will be permanently deleted.
             </p>
-            
+
             <div style={{
               display: 'flex',
-              gap: '12px',
+              gap: 12,
               justifyContent: 'center'
             }}>
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                style={{
-                  backgroundColor: gray,
-                  color: cardText,
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
+                style={{ ...btnGhost, padding: '10px 18px' }}
               >
                 Cancel
               </button>
@@ -1177,13 +922,10 @@ const Settings = () => {
                 onClick={handleDeleteAccount}
                 disabled={saving}
                 style={{
-                  backgroundColor: '#ef4444',
-                  color: cardText,
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  fontWeight: '500',
+                  ...btnPrimary,
+                  background: tk.down,
+                  color: tk.text,
+                  padding: '10px 18px',
                   cursor: saving ? 'not-allowed' : 'pointer',
                   opacity: saving ? 0.6 : 1
                 }}
@@ -1197,76 +939,46 @@ const Settings = () => {
 
       {/* Reset Progress Confirmation Modal */}
       {showResetConfirm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: cardBg,
-            borderRadius: '20px',
-            padding: '32px',
-            maxWidth: '500px',
-            width: '90%',
-            textAlign: 'center'
-          }}>
+        <div style={overlay}>
+          <div style={{ ...modalCard, textAlign: 'center' }}>
             <div style={{
-              width: '64px',
-              height: '64px',
-              backgroundColor: '#f59e0b',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 24px',
-              fontSize: '32px'
+              width: 48,
+              height: 48,
+              border: '1px solid rgba(217,164,65,0.4)',
+              borderRadius: tk.rSm,
+              display: 'grid',
+              placeItems: 'center',
+              margin: '0 auto 18px',
+              color: tk.warn
             }}>
-              ⚠️
+              <Icon name="alert" size={20} />
             </div>
-            
+
             <h3 style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: cardText,
-              marginBottom: '16px',
-              fontFamily: fontHeading
+              ...heading,
+              fontSize: 20,
+              marginBottom: 12
             }}>
               Reset Learning Progress
             </h3>
-            
+
             <p style={{
-              color: cardMuted,
-              fontSize: '16px',
-              lineHeight: '1.5',
-              marginBottom: '24px'
+              color: tk.muted,
+              fontSize: 14,
+              lineHeight: 1.5,
+              marginBottom: 24
             }}>
               This will reset all your learning progress including XP, coins, completed lessons, and quiz scores. This action cannot be undone.
             </p>
-            
+
             <div style={{
               display: 'flex',
-              gap: '12px',
+              gap: 12,
               justifyContent: 'center'
             }}>
               <button
                 onClick={() => setShowResetConfirm(false)}
-                style={{
-                  backgroundColor: gray,
-                  color: cardText,
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
+                style={{ ...btnGhost, padding: '10px 18px' }}
               >
                 Cancel
               </button>
@@ -1274,13 +986,10 @@ const Settings = () => {
                 onClick={handleResetProgress}
                 disabled={saving}
                 style={{
-                  backgroundColor: '#f59e0b',
-                  color: cardText,
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  fontWeight: '500',
+                  ...btnPrimary,
+                  background: tk.warn,
+                  color: '#1F1F1F',
+                  padding: '10px 18px',
                   cursor: saving ? 'not-allowed' : 'pointer',
                   opacity: saving ? 0.6 : 1
                 }}
@@ -1295,4 +1004,4 @@ const Settings = () => {
   );
 };
 
-export default Settings; 
+export default Settings;

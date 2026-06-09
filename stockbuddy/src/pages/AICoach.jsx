@@ -5,8 +5,10 @@ import { DecisionSidebar } from '../components/DecisionSidebar';
 import { useCoachChat } from '../hooks/useCoachChat';
 import { useSEO, SEO_CONFIG } from '../lib/seo';
 import { api } from '../services/api';
-import { gray, marbleDarkGray, marbleGold } from '../marblePalette';
-import { fontHeading, fontBody, fontMono } from '../fontPalette';
+import { marbleDarkGray, marbleGold } from '../marblePalette';
+import { fontHeading, fontBody } from '../fontPalette';
+import tk, { label, mono, inset, heading, btnPrimary, btnGhost, tag } from '../theme/terminal';
+import Icon from '../components/Icon';
 
 // Enhanced historical trading scenarios with detailed analysis
 const HISTORICAL_SCENARIOS = [
@@ -136,8 +138,8 @@ const HISTORICAL_SCENARIOS = [
 
 const BEGINNER_BUDGET = 1000; // USD, used to size the example position and keep P/L approachable
 
-// Scenario emoji icons for nav
-const SCENARIO_ICONS = ['🚗', '🎮', '🍎', '₿'];
+// Scenario nav ticker symbols
+const SCENARIO_ICONS = ['TSLA', 'GME', 'AAPL', 'BTC'];
 
 function AICoach() {
   useSEO(SEO_CONFIG.aiCoach);
@@ -145,13 +147,13 @@ function AICoach() {
   // Marble dark surface palette — this page renders on a dark background (page-dark),
   // so cards/panels must be dark too. These locals override the light palette imports
   // (white/lightGray/marbleDarkGray) for inline card styling only.
-  const cardBg = '#343434';                          // card / panel surface (was inline `white`)
-  const cardBg2 = '#2f2f2f';                          // nested / secondary surface (was inline `lightGray`)
-  const cardText = '#F4F1E9';                         // primary cream text on dark cards
-  const cardMuted = '#b8b4a8';                        // muted / secondary text
-  const cardBorder = 'rgba(182, 156, 96, 0.22)';      // gold-tinted border
-  const cardDivider = 'rgba(244, 241, 233, 0.12)';    // divider / separator
-  const cardShadow = '0 8px 24px rgba(0, 0, 0, 0.28)';
+  const cardBg = tk.raised;                            // nested card surface
+  const cardBg2 = tk.surface;                          // primary panel surface
+  const cardText = tk.text;                            // primary cream text
+  const cardMuted = tk.muted;                          // muted / secondary text
+  const cardBorder = tk.hair;                          // structural hairline border
+  const cardDivider = tk.hair;                         // divider / separator
+  const cardShadow = 'none';                           // flat — elevation via hierarchy, not glow
 
   const [currentScenario, setCurrentScenario] = useState(0);
   const [scenarioCompleted, setScenarioCompleted] = useState(false);
@@ -239,7 +241,7 @@ function AICoach() {
         setChatMessages([
           {
             type: 'ai',
-            content: `Welcome to the ${title} trading challenge! 🎯\n\nI'm your AI trading coach. I can help you understand market concepts, explain trading strategies, and provide educational insights.\n\nWhat would you like to know about this scenario?`,
+            content: `Welcome to the ${title} trading challenge!\n\nI'm your AI trading coach. I can help you understand market concepts, explain trading strategies, and provide educational insights.\n\nWhat would you like to know about this scenario?`,
             timestamp: Date.now()
           }
         ]);
@@ -343,7 +345,7 @@ function AICoach() {
       // Show loading message
       addMessage({
         type: 'ai',
-        content: '🤔 Analyzing your decision...',
+        content: 'Analyzing your decision...',
         timestamp: Date.now()
       });
 
@@ -358,7 +360,7 @@ function AICoach() {
         const breakdown = analysis.breakdown || {};
         const coaching = analysis.coaching || {};
         
-        let analysisContent = `🎯 **Analysis Complete!**\n\n**Your Score: ${analysis.totalScore ?? 0}/100**\n\n`;
+        let analysisContent = `**Analysis Complete!**\n\n**Your Score: ${analysis.totalScore ?? 0}/100**\n\n`;
         
         // Add breakdown if available
         if (breakdown.decisionQuality !== undefined) {
@@ -501,7 +503,7 @@ function AICoach() {
           {/* Enhanced Scenario Header */}
           <div style={{
             backgroundColor: cardBg2,
-            borderRadius: '24px',
+            borderRadius: tk.r,
             padding: '24px',
             border: `1px solid ${cardBorder}`,
             boxShadow: cardShadow
@@ -521,26 +523,24 @@ function AICoach() {
                   marginBottom: '8px' 
                 }}>
                   <h2 style={{
-                    fontSize: '28px',
-                    fontWeight: '700',
+                    ...heading,
+                    fontSize: '26px',
                     color: cardText,
-                    margin: 0,
-                    fontFamily: fontHeading,
-                    letterSpacing: '-0.5px'
+                    margin: 0
                   }}>
                     {scenario.title}
                   </h2>
                   {scenarioCompleted && (
-                    <div style={{
-                      backgroundColor: '#22c55e',
-                      color: 'white',
-                      padding: '4px 12px',
-                      borderRadius: '20px',
-                      fontSize: '12px',
-                      fontWeight: '600'
+                    <span style={{
+                      ...tag,
+                      color: tk.up,
+                      borderColor: 'rgba(79,180,119,0.4)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
                     }}>
-                      ✅ Complete
-                    </div>
+                      <Icon name="check" size={11} /> Complete
+                    </span>
                   )}
                 </div>
                 <div style={{ 
@@ -550,23 +550,21 @@ function AICoach() {
                   marginBottom: '8px',
                   fontFamily: fontBody
                 }}>
-                  Scenario {currentScenario + 1} of {HISTORICAL_SCENARIOS.length}
+                  Scenario <span style={mono}>{currentScenario + 1}</span> of <span style={mono}>{HISTORICAL_SCENARIOS.length}</span>
                 </div>
                 <div style={{
-                  backgroundColor: cardBg,
-                  borderRadius: '12px',
-                  padding: '12px',
-                  border: `1px solid ${cardBorder}`,
+                  ...inset,
+                  padding: '14px',
                   marginTop: '8px'
                 }}>
                   <div style={{
-                    color: cardText,
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    marginBottom: '4px',
-                    fontFamily: fontBody
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '7px',
+                    marginBottom: '8px'
                   }}>
-                    🎯 Challenge Goal:
+                    <Icon name="target" size={14} color={tk.gold} />
+                    <span style={label}>Challenge Goal</span>
                   </div>
                   <div style={{
                     color: cardMuted,
@@ -584,19 +582,11 @@ function AICoach() {
                 </div>
               </div>
               
-              <button 
-                onClick={() => setShowDetails(v => !v)} 
+              <button
+                onClick={() => setShowDetails(v => !v)}
                 style={{
-                  padding: '10px 16px', 
-                  borderRadius: '12px', 
-                  border: `2px solid ${cardBorder}`,
-                  background: showDetails ? marbleGold : cardBg,
-                  color: showDetails ? marbleDarkGray : cardText,
-                  fontSize: '13px', 
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  boxShadow: cardShadow
+                  ...(showDetails ? btnPrimary : btnGhost),
+                  transition: 'all 0.2s ease'
                 }}
               >
                 {showDetails ? 'Hide Details' : 'Show Details'}
@@ -612,7 +602,7 @@ function AICoach() {
             }}>
               <div style={{
                 backgroundColor: cardBg,
-                borderRadius: '16px',
+                borderRadius: tk.rSm,
                 padding: '16px',
                 border: `1px solid ${cardBorder}`,
                 boxShadow: cardShadow
@@ -623,7 +613,7 @@ function AICoach() {
                   gap: '8px', 
                   marginBottom: '8px' 
                 }}>
-                  <span style={{ fontSize: '16px' }}>🎯</span>
+                  <Icon name="target" size={14} color={tk.gold} />
                   <span style={{ 
                     fontSize: '12px', 
                     fontWeight: '600', 
@@ -648,7 +638,7 @@ function AICoach() {
 
               <div style={{
                 backgroundColor: cardBg,
-                borderRadius: '16px',
+                borderRadius: tk.rSm,
                 padding: '16px',
                 border: `1px solid ${cardBorder}`,
                 boxShadow: cardShadow
@@ -659,7 +649,7 @@ function AICoach() {
                   gap: '8px', 
                   marginBottom: '8px' 
                 }}>
-                  <span style={{ fontSize: '16px' }}>📅</span>
+                  <Icon name="calendar" size={14} color={tk.gold} />
                   <span style={{ 
                     fontSize: '12px', 
                     fontWeight: '600', 
@@ -677,13 +667,13 @@ function AICoach() {
                   color: cardText,
                   fontFamily: fontBody
                 }}>
-                  {asOfDate}
+                  <span style={mono}>{asOfDate}</span>
                 </div>
               </div>
 
               <div style={{
                 backgroundColor: cardBg,
-                borderRadius: '16px',
+                borderRadius: tk.rSm,
                 padding: '16px',
                 border: `1px solid ${cardBorder}`,
                 boxShadow: cardShadow
@@ -694,7 +684,7 @@ function AICoach() {
                   gap: '8px', 
                   marginBottom: '8px' 
                 }}>
-                  <span style={{ fontSize: '16px' }}>🪙</span>
+                  <Icon name="coin" size={14} color={tk.gold} />
                   <span style={{ 
                     fontSize: '12px', 
                     fontWeight: '600', 
@@ -712,7 +702,7 @@ function AICoach() {
                   color: cardText,
                   fontFamily: fontBody
                 }}>
-                  {scenario.symbol}
+                  <span style={mono}>{scenario.symbol}</span>
                 </div>
               </div>
             </div>
@@ -722,7 +712,7 @@ function AICoach() {
               <div className="coach-details-grid">
                 <div style={{ 
                   backgroundColor: cardBg, 
-                  borderRadius: '16px', 
+                  borderRadius: tk.rSm, 
                   padding: '20px',
                   border: `1px solid ${cardBorder}`,
                   boxShadow: cardShadow
@@ -733,7 +723,7 @@ function AICoach() {
                     gap: '8px', 
                     marginBottom: '12px' 
                   }}>
-                    <span style={{ fontSize: '18px' }}>📊</span>
+                    <Icon name="chart" size={15} color={tk.gold} />
                     <h3 style={{ 
                       fontSize: '18px', 
                       fontWeight: '700', 
@@ -757,7 +747,7 @@ function AICoach() {
                 
                 <div style={{ 
                   backgroundColor: cardBg, 
-                  borderRadius: '16px', 
+                  borderRadius: tk.rSm, 
                   padding: '20px',
                   border: `1px solid ${cardBorder}`,
                   boxShadow: cardShadow
@@ -768,7 +758,7 @@ function AICoach() {
                     gap: '8px', 
                     marginBottom: '12px' 
                   }}>
-                    <span style={{ fontSize: '18px' }}>📅</span>
+                    <Icon name="calendar" size={15} color={tk.gold} />
                     <h3 style={{ 
                       fontSize: '18px', 
                       fontWeight: '700', 
@@ -799,19 +789,21 @@ function AICoach() {
           {/* Chart */}
           <div style={{
             backgroundColor: cardBg2,
-            borderRadius: '20px',
+            borderRadius: tk.r,
             padding: '16px',
             border: `1px solid ${cardBorder}`,
-            boxShadow: cardShadow,
             minWidth: 0,
             overflow: 'hidden'
           }}>
-            <div style={{ marginBottom: '12px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: cardText, margin: 0 }}>
-                📈 {scenario.symbol} Chart
-              </h3>
-              <div style={{ color: cardMuted, fontSize: '12px', marginTop: '4px' }}>
-                Loading historical data for {scenario.startDate} to {scenario.endDate}...
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Icon name="chart" size={15} color={tk.gold} />
+                <span style={label}>Price Chart</span>
+                <span style={tag}>{scenario.symbol}</span>
+                <span style={{ flex: 1, height: 1, background: tk.hair }} />
+              </div>
+              <div style={{ color: cardMuted, fontSize: '12px', marginTop: '8px', fontFamily: fontBody }}>
+                Loading historical data for <span style={mono}>{scenario.startDate}</span> to <span style={mono}>{scenario.endDate}</span>...
               </div>
             </div>
             <SuperChart
@@ -837,7 +829,7 @@ function AICoach() {
           {scenario.puzzleType === 'buy' && (
             <div style={{
               backgroundColor: cardBg2,
-              borderRadius: '24px',
+              borderRadius: tk.r,
               padding: '24px',
               border: `1px solid ${cardBorder}`,
               boxShadow: cardShadow
@@ -845,24 +837,17 @@ function AICoach() {
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
-                marginBottom: '20px'
+                gap: '10px',
+                marginBottom: '18px'
               }}>
-                <span style={{ fontSize: '24px' }}>💰</span>
-                <h3 style={{
-                  fontSize: '20px',
-                  fontWeight: '700',
-                  color: cardText,
-                  margin: 0,
-                  fontFamily: fontHeading
-                }}>
-                  Your Portfolio
-                </h3>
+                <Icon name="wallet" size={15} color={tk.gold} />
+                <span style={label}>Your Portfolio</span>
+                <span style={{ flex: 1, height: 1, background: tk.hair }} />
               </div>
 
               <div style={{
                 backgroundColor: cardBg,
-                borderRadius: '16px',
+                borderRadius: tk.rSm,
                 padding: '20px',
                 border: `1px solid ${cardBorder}`,
                 boxShadow: cardShadow
@@ -882,10 +867,10 @@ function AICoach() {
                     fontWeight: '700',
                     fontFamily: fontBody
                   }}>
-                    ${BEGINNER_BUDGET.toLocaleString()}
+                    <span style={mono}>${BEGINNER_BUDGET.toLocaleString()}</span>
                   </span>
                 </div>
-                
+
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -893,7 +878,7 @@ function AICoach() {
                   marginBottom: '12px'
                 }}>
                   <span style={{ color: cardMuted, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
-                    Current Price ({asOfDate})
+                    Current Price (<span style={mono}>{asOfDate}</span>)
                   </span>
                   <span style={{ 
                     color: cardText, 
@@ -901,32 +886,26 @@ function AICoach() {
                     fontWeight: '700',
                     fontFamily: fontBody
                   }}>
-                    ${scenario.initialPrice.toFixed(2)}
+                    <span style={mono}>${scenario.initialPrice.toFixed(2)}</span>
                   </span>
                 </div>
 
                 <div style={{
-                  backgroundColor: cardBg2,
-                  borderRadius: '8px',
-                  padding: '12px',
-                  border: `1px solid ${cardBorder}`
+                  background: tk.bg,
+                  borderRadius: tk.rSm,
+                  padding: '14px',
+                  border: `1px solid ${tk.hair}`
                 }}>
-                  <div style={{
-                    color: cardMuted,
-                    fontSize: '12px',
-                    fontWeight: '500',
-                    marginBottom: '4px',
-                    fontFamily: fontBody
-                  }}>
-                    Maximum Shares You Can Buy:
+                  <div style={{ ...label, marginBottom: '8px' }}>
+                    Maximum Shares You Can Buy
                   </div>
                   <div style={{
+                    ...mono,
                     color: cardText,
-                    fontSize: '16px',
-                    fontWeight: '700',
-                    fontFamily: fontMono
+                    fontSize: '18px',
+                    fontWeight: '600'
                   }}>
-                    {Math.floor(BEGINNER_BUDGET / scenario.initialPrice)} shares
+                    {Math.floor(BEGINNER_BUDGET / scenario.initialPrice)} <span style={{ fontSize: '12px', color: cardMuted }}>shares</span>
                   </div>
                   <div style={{
                     color: cardMuted,
@@ -946,7 +925,7 @@ function AICoach() {
           {scenario.puzzleType !== 'buy' && position.hasPosition && (
             <div style={{
               backgroundColor: cardBg2,
-              borderRadius: '24px',
+              borderRadius: tk.r,
               padding: '24px',
               border: `1px solid ${cardBorder}`,
               boxShadow: cardShadow
@@ -954,40 +933,33 @@ function AICoach() {
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
-                marginBottom: '20px'
+                gap: '10px',
+                marginBottom: '18px'
               }}>
-                <span style={{ fontSize: '24px' }}>💼</span>
-                <h3 style={{
-                  fontSize: '20px',
-                  fontWeight: '700',
-                  color: cardText,
-                  margin: 0,
-                  fontFamily: fontHeading
-                }}>
-                  Example Beginner Position
-                </h3>
+                <Icon name="wallet" size={15} color={tk.gold} />
+                <span style={label}>Example Beginner Position</span>
+                <span style={{ flex: 1, height: 1, background: tk.hair }} />
               </div>
 
               <div className="coach-position-grid">
                 {/* Position Details */}
                 <div style={{
                   backgroundColor: cardBg,
-                  borderRadius: '16px',
+                  borderRadius: tk.rSm,
                   padding: '20px',
                   border: `1px solid ${cardBorder}`,
                   boxShadow: cardShadow
                 }}>
                   <h4 style={{
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    color: cardText,
+                    ...label,
+                    marginTop: 0,
                     marginBottom: '16px',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px'
                   }}>
-                    📊 Position Details
+                    <Icon name="chart" size={14} color={tk.gold} /> Position Details
+                    <span style={{ flex: 1, height: 1, background: tk.hair }} />
                   </h4>
                   
                   <div style={{ marginBottom: '16px' }}>
@@ -995,12 +967,13 @@ function AICoach() {
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      marginBottom: '8px'
+                      padding: '9px 0',
+                      borderBottom: `1px solid ${tk.hair}`
                     }}>
-                      <span style={{ color: cardMuted, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
+                      <span style={{ color: cardMuted, fontSize: '13px', fontWeight: '500', fontFamily: fontBody }}>
                         Budget
                       </span>
-                      <span style={{ color: cardText, fontSize: '16px', fontWeight: '700', fontFamily: fontBody }}>
+                      <span style={{ ...mono, color: cardText, fontSize: '15px', fontWeight: '600' }}>
                         ${BEGINNER_BUDGET.toLocaleString()}
                       </span>
                     </div>
@@ -1009,12 +982,13 @@ function AICoach() {
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      marginBottom: '8px'
+                      padding: '9px 0',
+                      borderBottom: `1px solid ${tk.hair}`
                     }}>
-                      <span style={{ color: cardMuted, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
+                      <span style={{ color: cardMuted, fontSize: '13px', fontWeight: '500', fontFamily: fontBody }}>
                         Entry Date
                       </span>
-                      <span style={{ color: cardText, fontSize: '16px', fontWeight: '700', fontFamily: fontBody }}>
+                      <span style={{ ...mono, color: cardText, fontSize: '15px', fontWeight: '600' }}>
                         {position.entryDate}
                       </span>
                     </div>
@@ -1023,12 +997,13 @@ function AICoach() {
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      marginBottom: '8px'
+                      padding: '9px 0',
+                      borderBottom: `1px solid ${tk.hair}`
                     }}>
-                      <span style={{ color: cardMuted, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
+                      <span style={{ color: cardMuted, fontSize: '13px', fontWeight: '500', fontFamily: fontBody }}>
                         Entry Price
                       </span>
-                      <span style={{ color: cardText, fontSize: '16px', fontWeight: '700', fontFamily: fontBody }}>
+                      <span style={{ ...mono, color: cardText, fontSize: '15px', fontWeight: '600' }}>
                         ${position.entryPrice.toFixed(2)}
                       </span>
                     </div>
@@ -1037,12 +1012,12 @@ function AICoach() {
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      marginBottom: '12px'
+                      padding: '9px 0'
                     }}>
-                      <span style={{ color: cardMuted, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
+                      <span style={{ color: cardMuted, fontSize: '13px', fontWeight: '500', fontFamily: fontBody }}>
                         Shares Owned
                       </span>
-                      <span style={{ color: cardText, fontSize: '16px', fontWeight: '700', fontFamily: fontBody }}>
+                      <span style={{ ...mono, color: cardText, fontSize: '15px', fontWeight: '600' }}>
                         {position.shares}
                       </span>
                     </div>
@@ -1068,20 +1043,16 @@ function AICoach() {
                         textAlign: 'left'
                       }}
                     >
-                      <span style={{
-                        color: cardMuted,
-                        fontSize: '12px',
-                        fontWeight: '500'
-                      }}>
-                        Calculation:
+                      <span style={label}>
+                        Calculation
                       </span>
                       <span style={{
                         color: cardMuted,
-                        fontSize: '14px',
+                        display: 'flex',
                         transform: showSharesCalculation ? 'rotate(180deg)' : 'rotate(0deg)',
                         transition: 'transform 0.2s ease'
                       }}>
-                        ▼
+                        <Icon name="chevron-down" size={14} />
                       </span>
                     </button>
                     
@@ -1091,10 +1062,10 @@ function AICoach() {
                         borderTop: `1px solid ${cardDivider}`
                       }}>
                         <div style={{
+                          ...mono,
                           color: cardText,
                           fontSize: '13px',
-                          fontFamily: fontMono,
-                          lineHeight: '1.4'
+                          lineHeight: '1.5'
                         }}>
                           Shares = floor(Budget ÷ Entry)<br/>
                           = floor(${BEGINNER_BUDGET} ÷ ${position.entryPrice.toFixed(2)})<br/>
@@ -1108,21 +1079,21 @@ function AICoach() {
                 {/* P&L Performance */}
                 <div style={{
                   backgroundColor: cardBg,
-                  borderRadius: '16px',
+                  borderRadius: tk.rSm,
                   padding: '20px',
                   border: `1px solid ${cardBorder}`,
                   boxShadow: cardShadow
                 }}>
                   <h4 style={{
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    color: cardText,
+                    ...label,
+                    marginTop: 0,
                     marginBottom: '16px',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px'
                   }}>
-                    📈 Performance as of {asOfDate}
+                    <Icon name="trending-up" size={14} color={tk.gold} /> Performance as of <span style={{ ...mono, textTransform: 'none', letterSpacing: 'normal' }}>{asOfDate}</span>
+                    <span style={{ flex: 1, height: 1, background: tk.hair }} />
                   </h4>
                   
                   {(() => {
@@ -1140,7 +1111,7 @@ function AICoach() {
                       );
                     }
                     
-                    const plColor = pl.value >= 0 ? '#22c55e' : '#ef4444';
+                    const plColor = pl.value >= 0 ? tk.up : tk.down;
                     const delta = (pl.currentPrice - position.entryPrice);
                     
                     return (
@@ -1159,7 +1130,7 @@ function AICoach() {
                             fontSize: '18px', 
                             fontWeight: '700' 
                           }}>
-                            ${pl.currentPrice.toFixed(2)}
+                            <span style={mono}>${pl.currentPrice.toFixed(2)}</span>
                           </span>
                         </div>
                         
@@ -1177,7 +1148,10 @@ function AICoach() {
                             fontSize: '16px', 
                             fontWeight: '700' 
                           }}>
-                            ${delta.toFixed(2)} ({pl.pct.toFixed(2)}%)
+                            <span style={{ ...mono, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <Icon name={pl.value >= 0 ? 'tri-up' : 'tri-down'} size={9} />
+                              ${delta.toFixed(2)} ({pl.pct.toFixed(2)}%)
+                            </span>
                           </span>
                         </div>
                         
@@ -1187,9 +1161,9 @@ function AICoach() {
                           alignItems: 'center',
                           marginBottom: '16px',
                           padding: '12px',
-                          backgroundColor: plColor === '#22c55e' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                          borderRadius: '8px',
-                          border: `1px solid ${plColor}20`
+                          backgroundColor: pl.value >= 0 ? tk.upBg : tk.downBg,
+                          borderRadius: tk.rSm,
+                          border: `1px solid ${plColor}33`
                         }}>
                           <span style={{ color: cardText, fontSize: '14px', fontWeight: '600' }}>
                             Total P&L
@@ -1199,7 +1173,7 @@ function AICoach() {
                             fontSize: '18px', 
                             fontWeight: '700' 
                           }}>
-                            ${pl.value.toFixed(2)}
+                            <span style={mono}>${pl.value.toFixed(2)}</span>
                           </span>
                         </div>
 
@@ -1223,20 +1197,16 @@ function AICoach() {
                               textAlign: 'left'
                             }}
                           >
-                            <span style={{
-                              color: cardMuted,
-                              fontSize: '12px',
-                              fontWeight: '500'
-                            }}>
-                              P&L Calculation:
+                            <span style={label}>
+                              P&L Calculation
                             </span>
                             <span style={{
                               color: cardMuted,
-                              fontSize: '14px',
+                              display: 'flex',
                               transform: showPLCalculation ? 'rotate(180deg)' : 'rotate(0deg)',
                               transition: 'transform 0.2s ease'
                             }}>
-                              ▼
+                              <Icon name="chevron-down" size={14} />
                             </span>
                           </button>
                           
@@ -1246,10 +1216,10 @@ function AICoach() {
                               borderTop: `1px solid ${cardDivider}`
                             }}>
                               <div style={{
+                                ...mono,
                                 color: cardText,
                                 fontSize: '13px',
-                                fontFamily: fontMono,
-                                lineHeight: '1.4'
+                                lineHeight: '1.5'
                               }}>
                                 {position.shares} × (${pl.currentPrice.toFixed(2)} − ${position.entryPrice.toFixed(2)})<br/>
                                 = {position.shares} × ${delta.toFixed(2)}<br/>
@@ -1265,7 +1235,7 @@ function AICoach() {
                           fontSize: '11px',
                           fontStyle: 'italic'
                         }}>
-                          * As-of price uses the official historical close on {asOfDate}
+                          * As-of price uses the official historical close on <span style={{ ...mono, fontStyle: 'normal' }}>{asOfDate}</span>
                         </div>
                       </div>
                     );
@@ -1315,24 +1285,25 @@ function AICoach() {
           {/* Navigation */}
           <div style={{
             backgroundColor: cardBg2,
-            borderRadius: '20px',
+            borderRadius: tk.r,
             padding: '16px',
-            border: `1px solid ${cardBorder}`,
-            boxShadow: cardShadow
+            border: `1px solid ${cardBorder}`
           }}>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: 'bold',
-              color: cardText,
-              marginBottom: '12px'
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              marginBottom: '14px'
             }}>
-              📚 All Scenarios
-            </h3>
+              <Icon name="book" size={15} color={tk.gold} />
+              <span style={label}>All Scenarios</span>
+              <span style={{ flex: 1, height: 1, background: tk.hair }} />
+            </div>
             
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '8px'
+              gap: '6px'
             }}>
               {HISTORICAL_SCENARIOS.map((scenario, index) => (
                 <button
@@ -1342,19 +1313,30 @@ function AICoach() {
                     resetScenario();
                   }}
                   style={{
-                    padding: '12px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    backgroundColor: currentScenario === index ? marbleGold : cardBg,
+                    padding: '11px 12px',
+                    borderRadius: tk.rSm,
+                    border: `1px solid ${currentScenario === index ? tk.goldHair : tk.hair}`,
+                    backgroundColor: currentScenario === index ? marbleGold : 'transparent',
                     color: currentScenario === index ? marbleDarkGray : cardText,
-                    fontWeight: currentScenario === index ? 'bold' : 'normal',
+                    fontWeight: currentScenario === index ? 700 : 500,
                     cursor: 'pointer',
-                    fontSize: '14px',
+                    fontSize: '13px',
                     textAlign: 'left',
-                    fontFamily: fontBody
+                    fontFamily: fontBody,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '10px'
                   }}
                 >
-                  {scenario.title}
+                  <span>{scenario.title}</span>
+                  <span style={{
+                    ...mono,
+                    fontSize: '11px',
+                    color: currentScenario === index ? marbleDarkGray : cardMuted
+                  }}>
+                    {scenario.symbol}
+                  </span>
                 </button>
               ))}
             </div>
@@ -1368,38 +1350,32 @@ function AICoach() {
                 <button
                   onClick={resetScenario}
                   style={{
+                    ...btnGhost,
                     flex: 1,
-                    padding: '8px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    backgroundColor: gray,
-                    color: 'white',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    fontFamily: fontBody
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    fontSize: '12px'
                   }}
                 >
-                  🔄 Retry
+                  <Icon name="refresh" size={13} /> Retry
                 </button>
                 
                 {currentScenario < HISTORICAL_SCENARIOS.length - 1 && (
                   <button
                     onClick={nextScenario}
                     style={{
+                      ...btnPrimary,
                       flex: 1,
-                      padding: '8px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      backgroundColor: marbleGold,
-                      color: marbleDarkGray,
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      fontFamily: fontBody
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      fontSize: '12px'
                     }}
                   >
-                    ➡️ Next
+                    Next <Icon name="arrow-right" size={13} />
                   </button>
                 )}
               </div>

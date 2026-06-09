@@ -215,6 +215,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn, navbarTheme = 'light' }) {
       >
         {isLoggedIn ? (
           <>
+            <div className="navbar-mobile-section-label" aria-hidden="true">Menu</div>
             <ul className="navbar-mobile-list">
               {PRIMARY_LINKS.map(({ to, label }) => (
                 <li key={to}>
@@ -232,6 +233,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn, navbarTheme = 'light' }) {
 
             <div className="navbar-mobile-divider" />
 
+            <div className="navbar-mobile-section-label" aria-hidden="true">Account</div>
             <ul className="navbar-mobile-list">
               {SECONDARY_LINKS.map(({ to, label }) => (
                 <li key={to}>

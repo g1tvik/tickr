@@ -1,6 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import './StockTicker.css';
 import { fetchStockData, getCachedData, CACHE_DURATION } from '../utils/stockCache';
+import tk, { mono } from '../theme/terminal';
+import Icon from './Icon';
 
 // Helper function to get formatted timestamp
 const getTimestamp = () => {
@@ -167,16 +169,20 @@ const StockTicker = ({ stocks = [] }) => {
               return (
                 <li key={stock.symbol + '-' + idx} ref={el => itemRefs.current[idx] = el}>
                   {isPositive ? (
-                    <span className="change plus">
-                      <span className="arrow plus">▲</span>
-                      {stock.symbol} <span className="price">${formattedPrice}</span> 
-                      (<span className="percent-change percent-positive">{formattedChange}%</span>)
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ ...mono, fontSize: 13, fontWeight: 600, color: tk.text, letterSpacing: '0.04em' }}>{stock.symbol}</span>
+                      <span style={{ ...mono, fontSize: 13, color: tk.muted }}>${formattedPrice}</span>
+                      <span style={{ ...mono, display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 12.5, fontWeight: 600, color: tk.up }}>
+                        <Icon name="tri-up" size={9} />{formattedChange}%
+                      </span>
                     </span>
                   ) : (
-                    <span className="change minus">
-                      <span className="arrow minus">▼</span>
-                      {stock.symbol} <span className="price">${formattedPrice}</span> 
-                      (<span className="percent-change percent-negative">{formattedChange}%</span>)
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ ...mono, fontSize: 13, fontWeight: 600, color: tk.text, letterSpacing: '0.04em' }}>{stock.symbol}</span>
+                      <span style={{ ...mono, fontSize: 13, color: tk.muted }}>${formattedPrice}</span>
+                      <span style={{ ...mono, display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 12.5, fontWeight: 600, color: tk.down }}>
+                        <Icon name="tri-down" size={9} />{formattedChange}%
+                      </span>
                     </span>
                   )}
                 </li>
@@ -192,16 +198,20 @@ const StockTicker = ({ stocks = [] }) => {
               return (
                 <li key={stock.symbol + '-dup-' + idx}>
                   {isPositive ? (
-                    <span className="change plus">
-                      <span className="arrow plus">▲</span>
-                      {stock.symbol} <span className="price">${formattedPrice}</span> 
-                      (<span className="percent-change percent-positive">{formattedChange}%</span>)
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ ...mono, fontSize: 13, fontWeight: 600, color: tk.text, letterSpacing: '0.04em' }}>{stock.symbol}</span>
+                      <span style={{ ...mono, fontSize: 13, color: tk.muted }}>${formattedPrice}</span>
+                      <span style={{ ...mono, display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 12.5, fontWeight: 600, color: tk.up }}>
+                        <Icon name="tri-up" size={9} />{formattedChange}%
+                      </span>
                     </span>
                   ) : (
-                    <span className="change minus">
-                      <span className="arrow minus">▼</span>
-                      {stock.symbol} <span className="price">${formattedPrice}</span> 
-                      (<span className="percent-change percent-negative">{formattedChange}%</span>)
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ ...mono, fontSize: 13, fontWeight: 600, color: tk.text, letterSpacing: '0.04em' }}>{stock.symbol}</span>
+                      <span style={{ ...mono, fontSize: 13, color: tk.muted }}>${formattedPrice}</span>
+                      <span style={{ ...mono, display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 12.5, fontWeight: 600, color: tk.down }}>
+                        <Icon name="tri-down" size={9} />{formattedChange}%
+                      </span>
                     </span>
                   )}
                 </li>
@@ -213,7 +223,8 @@ const StockTicker = ({ stocks = [] }) => {
         // Show loading or error state
         <ul>
           <li style={{ opacity: 0.6, transition: 'opacity 0.3s ease' }}>
-            <span className="change">
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: tk.fontBody, fontSize: 13, color: tk.muted }}>
+              <Icon name={isLoading ? 'refresh' : 'alert'} size={14} color={isLoading ? tk.muted : tk.down} />
               {isLoading ? 'Loading market data...' : (error || 'No market data available')}
             </span>
           </li>

@@ -3,29 +3,23 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { articles } from '../data/articles';
 import AppImage from './AppImage';
 import { useSEO } from '../lib/seo';
+import tk, { label, mono, panel, heading, btnPrimary, btnGhost, tag } from '../theme/terminal';
+import Icon from './Icon';
 import './ArticleReader.css';
 
 const quizButtonStyle = {
-  marginTop: '1.5rem',
-  padding: '0.85rem 1.5rem',
-  borderRadius: 8,
-  border: 'none',
-  background: 'var(--marbleGold)',
-  color: 'var(--marbleBlack)',
-  fontSize: '1rem',
-  fontWeight: 600,
+  ...btnPrimary,
+  marginTop: 24,
+  padding: '11px 20px',
+  fontSize: '13px',
   transition: 'opacity 0.2s ease',
 };
 
 const quizSecondaryButtonStyle = {
-  padding: '0.65rem 1.25rem',
-  borderRadius: 8,
-  border: '2px solid var(--marbleGold)',
-  background: 'transparent',
-  color: 'var(--marbleBlack)',
-  fontSize: '0.95rem',
-  fontWeight: 600,
-  cursor: 'pointer',
+  ...btnGhost,
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
 };
 
 const ArticleReader = () => {
@@ -93,26 +87,34 @@ const ArticleReader = () => {
     // Inline state styles keep new quiz states on-brand without touching
     // shared CSS (this component owns only ArticleReader.jsx/articles.js).
     const correctStyle = {
-      borderColor: '#2E7D32',
-      background: 'rgba(46, 125, 50, 0.12)',
-      color: 'var(--marbleBlack)',
+      borderColor: 'rgba(79,180,119,0.5)',
+      background: tk.upBg,
+      color: tk.text,
       fontWeight: 600,
     };
     const incorrectStyle = {
-      borderColor: '#C0392B',
-      background: 'rgba(192, 57, 43, 0.1)',
-      color: 'var(--marbleBlack)',
+      borderColor: 'rgba(224,96,90,0.5)',
+      background: tk.downBg,
+      color: tk.text,
     };
 
     return (
-      <div key={index} className="quiz-section">
-        <h3 className="quiz-title">{section.title}</h3>
+      <div key={index} className="quiz-section" style={{ ...panel, padding: 24, margin: '32px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+          <span style={label}>knowledge check</span>
+          <span style={{ flex: 1, height: 1, background: tk.hair }} />
+          <span style={{ ...mono, fontSize: 11, color: tk.muted }}>{questions.length} Q</span>
+        </div>
+        <h3 className="quiz-title" style={{ ...heading, fontSize: 20, color: tk.text, marginBottom: 16 }}>{section.title}</h3>
 
         {questions.map((question, qIndex) => {
           const selected = quizAnswers[`${index}-${qIndex}`];
           return (
             <div key={qIndex} className="question-container">
-              <p className="question-text">{question.question}</p>
+              <p className="question-text" style={{ display: 'flex', gap: 10, color: tk.text }}>
+                <span style={{ ...mono, color: tk.gold }}>{String(qIndex + 1).padStart(2, '0')}</span>
+                <span>{question.question}</span>
+              </p>
               <div
                 className="options-container"
                 role="radiogroup"
@@ -151,10 +153,10 @@ const ArticleReader = () => {
                     >
                       <span>{option}</span>
                       {isSubmitted && isCorrectOption && (
-                        <span aria-hidden="true" style={{ color: '#2E7D32' }}>✓</span>
+                        <Icon name="check" size={14} color={tk.up} />
                       )}
                       {isSubmitted && isSelected && !isCorrectOption && (
-                        <span aria-hidden="true" style={{ color: '#C0392B' }}>✕</span>
+                        <Icon name="x" size={14} color={tk.down} />
                       )}
                     </button>
                   );
@@ -167,18 +169,12 @@ const ArticleReader = () => {
         {isSubmitted ? (
           <div
             role="status"
-            style={{
-              marginTop: '1.5rem',
-              padding: '1rem 1.25rem',
-              borderRadius: 10,
-              background: 'var(--marbleWhite)',
-              border: '1px solid var(--marbleGold)',
-            }}
+            style={{ ...panel, marginTop: 24, padding: '18px 20px' }}
           >
-            <p style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--marbleBlack)' }}>
-              You scored {result.score} / {result.total}
+            <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: tk.text }}>
+              You scored <span style={{ ...mono, color: tk.gold }}>{result.score} / {result.total}</span>
             </p>
-            <p style={{ margin: '0.5rem 0 1rem', color: 'var(--marbleDarkGray)' }}>
+            <p style={{ margin: '8px 0 16px', fontSize: 13, color: tk.muted }}>
               {result.score === result.total
                 ? 'Perfect score — you’ve got this.'
                 : 'Review the highlighted answers above, then try again.'}
@@ -188,7 +184,7 @@ const ArticleReader = () => {
               style={quizSecondaryButtonStyle}
               onClick={() => resetQuiz(index, questions)}
             >
-              Try again
+              <Icon name="refresh" size={14} /> Try again
             </button>
           </div>
         ) : (
@@ -214,8 +210,8 @@ const ArticleReader = () => {
       case 'text':
         return (
           <div key={index} className="article-section">
-            <h2 className="section-title">{section.title}</h2>
-            <p className="section-content">{section.content}</p>
+            <h2 className="section-title" style={{ ...heading, fontSize: 22, color: tk.text }}>{section.title}</h2>
+            <p className="section-content" style={{ fontSize: 16, lineHeight: 1.75, color: tk.text }}>{section.content}</p>
           </div>
         );
 
@@ -228,7 +224,7 @@ const ArticleReader = () => {
   };
 
   return (
-    <div className="article-reader">
+    <div className="article-reader" style={{ background: tk.bg, color: tk.text, fontFamily: tk.fontBody }}>
       {/* Header */}
       <div className="article-header">
         <button
@@ -236,14 +232,15 @@ const ArticleReader = () => {
           className="back-button"
           onClick={() => navigate(-1)}
         >
-          ← Back
+          <Icon name="arrow-left" size={14} /> Back
         </button>
         <div className="article-meta">
-          <h1 className="article-title">{article.title}</h1>
-          <p className="article-description">{article.description}</p>
+          <h1 className="article-title" style={{ ...heading, color: tk.text }}>{article.title}</h1>
+          <p className="article-description" style={{ color: tk.muted }}>{article.description}</p>
           <div className="article-info">
-            <span className="author">{article.author}</span>
-            <span className="read-time">{article.readTime}</span>
+            <span className="author" style={{ color: tk.gold }}>{article.author}</span>
+            <span aria-hidden="true" style={{ width: 1, height: 12, background: tk.hairStrong }} />
+            <span className="read-time" style={{ ...mono, fontSize: 12, color: tk.muted }}>{article.readTime}</span>
           </div>
         </div>
       </div>
@@ -261,8 +258,8 @@ const ArticleReader = () => {
       )}
 
       {/* Category Badge */}
-      <div className="category-badge" style={{ backgroundColor: article.categoryColor }}>
-        {article.category}
+      <div className="category-badge">
+        <span style={{ ...tag, display: 'inline-block' }}>{article.category}</span>
       </div>
 
       {/* Article Content */}
@@ -275,7 +272,11 @@ const ArticleReader = () => {
       {/* Mentioned Stocks */}
       {article.mentionedStocks.length > 0 && (
         <div className="mentioned-stocks">
-          <h3>Mentioned in Story</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}>
+            <span style={label}>mentioned in story</span>
+            <span style={{ flex: 1, height: 1, background: tk.hair }} />
+            <span style={{ ...mono, fontSize: 11, color: tk.muted }}>{article.mentionedStocks.length}</span>
+          </div>
           <div className="stocks-grid">
             {article.mentionedStocks.map((stock, index) => (
               <div key={index} className="stock-card">
@@ -289,7 +290,7 @@ const ArticleReader = () => {
                   style={{ width: 40, flexShrink: 0 }}
                 />
                 <div className="stock-info">
-                  <span className="stock-symbol">{stock.symbol}</span>
+                  <span className="stock-symbol" style={{ ...mono }}>{stock.symbol}</span>
                   <span className="stock-name">{stock.name}</span>
                 </div>
               </div>

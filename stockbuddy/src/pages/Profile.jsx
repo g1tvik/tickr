@@ -3,18 +3,17 @@ import './Profile.css';
 import { api, isAuthenticated, getCurrentUser } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { getLevelProgress } from '../data/lessonStructure';
-import { fontHeading, fontBody } from '../fontPalette';
+import { fontBody } from '../fontPalette';
 import AppImage from '../components/AppImage';
 import { useSEO } from '../lib/seo';
+import tk, { label, mono, panel, heading, btnGhost, tag } from '../theme/terminal';
+import Icon from '../components/Icon';
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
-const BG      = '#2C2C2C';
-const SURFACE = '#343434';
-const BORDER  = 'rgba(182,156,96,0.22)';
-const SHADOW  = '0 8px 24px rgba(0,0,0,0.28)';
-const GOLD    = '#E6C87A';
-const DARK    = '#F4F1E9';
-const MUTED   = '#b8b4a8';
+// ─── Design tokens (Terminal Editorial) ─────────────────────────────────────────
+const BG    = tk.bg;
+const GOLD  = tk.gold;
+const DARK  = tk.text;
+const MUTED = tk.muted;
 
 // A muted-gold palette of allocation slice colours, used in order of weight.
 const ALLOC_COLORS = ['#B69C60', '#C8AE76', '#D8C397', '#A0998A'];
@@ -24,15 +23,15 @@ const ALLOC_COLORS = ['#B69C60', '#C8AE76', '#D8C397', '#A0998A'];
 // lessons finished, real buy/sell trades made, XP earned, or a real login streak.
 // We never award badges for mere attempts.
 const BADGE_DEFS = [
-  { id: 'first_lesson',    label: 'First Lesson',  desc: 'Complete your first lesson',  icon: '◇', earned: (s) => s.lessonsCompleted >= 1 },
-  { id: 'five_lessons',    label: 'Five Lessons',  desc: 'Complete 5 lessons',          icon: '◆', earned: (s) => s.lessonsCompleted >= 5 },
-  { id: 'ten_lessons',     label: 'Ten Lessons',   desc: 'Complete 10 lessons',         icon: '◈', earned: (s) => s.lessonsCompleted >= 10 },
-  { id: 'first_trade',     label: 'First Trade',   desc: 'Make your first paper trade', icon: '▲', earned: (s) => s.tradesMade >= 1 },
-  { id: 'five_trades',     label: 'Active Trader', desc: 'Make 5 paper trades',         icon: '▲▲', earned: (s) => s.tradesMade >= 5 },
-  { id: 'week_streak',     label: 'On a Roll',     desc: 'Reach a 7-day streak',        icon: '✶', earned: (s) => s.streak >= 7 },
-  { id: 'hundred_xp',      label: '100 XP',        desc: 'Earn 100 XP',                 icon: '★', earned: (s) => s.xp >= 100 },
-  { id: 'five_hundred_xp', label: '500 XP',        desc: 'Earn 500 XP',                 icon: '★★', earned: (s) => s.xp >= 500 },
-  { id: 'thousand_xp',     label: '1 000 XP',      desc: 'Earn 1 000 XP',               icon: '✦', earned: (s) => s.xp >= 1000 },
+  { id: 'first_lesson',    label: 'First Lesson',  desc: 'Complete your first lesson',  icon: 'diamond', earned: (s) => s.lessonsCompleted >= 1 },
+  { id: 'five_lessons',    label: 'Five Lessons',  desc: 'Complete 5 lessons',          icon: 'diamond', earned: (s) => s.lessonsCompleted >= 5 },
+  { id: 'ten_lessons',     label: 'Ten Lessons',   desc: 'Complete 10 lessons',         icon: 'diamond', earned: (s) => s.lessonsCompleted >= 10 },
+  { id: 'first_trade',     label: 'First Trade',   desc: 'Make your first paper trade', icon: 'tri-up', earned: (s) => s.tradesMade >= 1 },
+  { id: 'five_trades',     label: 'Active Trader', desc: 'Make 5 paper trades',         icon: 'tri-up', earned: (s) => s.tradesMade >= 5 },
+  { id: 'week_streak',     label: 'On a Roll',     desc: 'Reach a 7-day streak',        icon: 'star', earned: (s) => s.streak >= 7 },
+  { id: 'hundred_xp',      label: '100 XP',        desc: 'Earn 100 XP',                 icon: 'star', earned: (s) => s.xp >= 100 },
+  { id: 'five_hundred_xp', label: '500 XP',        desc: 'Earn 500 XP',                 icon: 'star', earned: (s) => s.xp >= 500 },
+  { id: 'thousand_xp',     label: '1 000 XP',      desc: 'Earn 1 000 XP',               icon: 'star', earned: (s) => s.xp >= 1000 },
 ];
 
 // Build the real achievement snapshot the badges are evaluated against.
@@ -97,11 +96,8 @@ function SectionCard({ children, style }) {
     <div
       className="profile-card"
       style={{
-        background: SURFACE,
-        border: `1px solid ${BORDER}`,
-        borderRadius: '16px',
-        boxShadow: SHADOW,
-        padding: '24px',
+        ...panel,
+        padding: '20px',
         ...style,
       }}
     >
@@ -115,23 +111,10 @@ function DemoPill() {
   return (
     <span
       title="Showing sample market data because live market keys aren't configured."
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '5px',
-        padding: '3px 9px',
-        borderRadius: '999px',
-        fontSize: '10px',
-        fontWeight: 600,
-        letterSpacing: '0.06em',
-        textTransform: 'uppercase',
-        color: '#E6C87A',
-        background: 'rgba(182,156,96,0.12)',
-        border: '1px solid rgba(182,156,96,0.35)',
-      }}
+      style={{ ...tag, display: 'inline-flex', alignItems: 'center', gap: '5px' }}
     >
-      <span aria-hidden="true" style={{ width: 5, height: 5, borderRadius: '50%', background: '#B69C60' }} />
-      Demo data
+      <Icon name="dot" size={7} />
+      demo data
     </span>
   );
 }
@@ -140,15 +123,37 @@ function DemoPill() {
 function TierBar({ tier }) {
   const isGold = tier === 'gold';
   return (
-    <div className={`tier-bar tier-bar-${tier}`}>
-      <div className="tier-bar-shine" />
-      <div className="tier-bar-content">
-        <span className="tier-bar-label">{isGold ? 'gold' : 'silver'}</span>
-        <span className="tier-bar-sublabel">{isGold ? 'premium member' : 'standard member'}</span>
+    <div
+      style={{
+        ...panel,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '16px 20px',
+        borderColor: isGold ? tk.goldHair : tk.hairStrong,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '13px' }}>
+        <Icon name="shield" size={20} color={isGold ? tk.gold : tk.muted} />
+        <div>
+          <div style={{ ...heading, fontSize: '18px', color: isGold ? tk.gold : tk.text, lineHeight: 1 }}>
+            {isGold ? 'gold' : 'silver'}
+          </div>
+          <div style={{ ...label, marginTop: '5px' }}>{isGold ? 'premium member' : 'standard member'}</div>
+        </div>
       </div>
-      <div className="tier-bar-grooves">
-        {Array.from({ length: 6 }).map((_, i) => <div key={i} className="tier-groove" />)}
-      </div>
+      <span
+        style={{
+          ...tag,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '5px',
+          color: isGold ? tk.gold : tk.muted,
+          borderColor: isGold ? tk.goldHair : tk.hairStrong,
+        }}
+      >
+        <Icon name="trophy" size={11} /> member
+      </span>
     </div>
   );
 }
@@ -159,9 +164,9 @@ function ProfileXPBar({ xp }) {
   const pct = Math.min((levelInfo.xpIntoLevel / levelInfo.xpNeeded) * 100, 100);
   return (
     <div style={{ width: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-        <span style={{ fontFamily: fontBody, fontSize: '12px', color: MUTED }}>level {levelInfo.currentLevel}</span>
-        <span style={{ fontFamily: fontBody, fontSize: '12px', color: MUTED }}>{levelInfo.xpIntoLevel} / {levelInfo.xpNeeded} xp</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+        <span style={label}>level <span style={{ ...mono, color: tk.text, fontWeight: 600, letterSpacing: 0 }}>{levelInfo.currentLevel}</span></span>
+        <span style={{ ...mono, fontSize: '12px', color: MUTED }}>{levelInfo.xpIntoLevel} / {levelInfo.xpNeeded} XP</span>
       </div>
       <div
         role="progressbar"
@@ -169,9 +174,9 @@ function ProfileXPBar({ xp }) {
         aria-valuenow={Math.round(pct)}
         aria-valuemin={0}
         aria-valuemax={100}
-        style={{ height: '4px', background: 'rgba(244,241,233,0.08)', borderRadius: '2px', overflow: 'hidden' }}
+        style={{ height: '4px', background: tk.hair, borderRadius: `${tk.rXs}px`, overflow: 'hidden' }}
       >
-        <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${GOLD} 0%, #F0D586 100%)`, borderRadius: '2px', transition: 'width 0.6s ease' }} />
+        <div style={{ height: '100%', width: `${pct}%`, background: tk.gold, borderRadius: `${tk.rXs}px`, transition: 'width 0.6s ease' }} />
       </div>
     </div>
   );
@@ -189,12 +194,16 @@ function BadgeWall({ badges }) {
         </div>
       )}
       {earned.length > 0 && (
-        <div style={{ marginBottom: locked.length > 0 ? '16px' : 0 }}>
-          <div style={{ fontSize: '10px', color: MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>earned</div>
+        <div style={{ marginBottom: locked.length > 0 ? '20px' : 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <span style={label}>earned</span>
+            <span style={{ flex: 1, height: 1, background: tk.hair }} />
+            <span style={{ ...mono, fontSize: '11px', color: MUTED }}>{earned.length}</span>
+          </div>
           <div className="badge-grid">
             {earned.map(b => (
               <div key={b.id} className="badge-chip badge-chip-earned" title={b.desc}>
-                <span aria-hidden="true" style={{ fontSize: '18px', color: GOLD, marginBottom: '4px', fontFamily: 'serif' }}>{b.icon}</span>
+                <span aria-hidden="true" style={{ color: GOLD, marginBottom: '6px', display: 'flex' }}><Icon name={b.icon} size={18} /></span>
                 <span style={{ fontSize: '10px', fontWeight: '600', color: DARK, textAlign: 'center', lineHeight: '1.3' }}>{b.label}</span>
               </div>
             ))}
@@ -203,11 +212,15 @@ function BadgeWall({ badges }) {
       )}
       {locked.length > 0 && (
         <div>
-          <div style={{ fontSize: '10px', color: MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>locked</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <span style={label}>locked</span>
+            <span style={{ flex: 1, height: 1, background: tk.hair }} />
+            <span style={{ ...mono, fontSize: '11px', color: MUTED }}>{locked.length}</span>
+          </div>
           <div className="badge-grid">
             {locked.map(b => (
               <div key={b.id} className="badge-chip badge-chip-locked" title={`Locked — ${b.desc}`}>
-                <span aria-hidden="true" style={{ fontSize: '18px', color: MUTED, marginBottom: '4px', fontFamily: 'serif' }}>{b.icon}</span>
+                <span aria-hidden="true" style={{ color: MUTED, marginBottom: '6px', display: 'flex' }}><Icon name={b.icon} size={18} /></span>
                 <span style={{ fontSize: '10px', fontWeight: '600', color: MUTED, textAlign: 'center', lineHeight: '1.3' }}>{b.label}</span>
                 <span style={{ fontSize: '9px', color: MUTED, textAlign: 'center', lineHeight: '1.3', marginTop: '2px' }}>{b.desc}</span>
               </div>
@@ -239,7 +252,7 @@ function AllocationSection({ allocation }) {
           'Portfolio allocation: ' +
           allocation.slices.map((s) => `${s.label} ${s.pct} percent`).join(', ')
         }
-        style={{ display: 'flex', height: '10px', borderRadius: '999px', overflow: 'hidden', marginBottom: '16px', background: 'rgba(244,241,233,0.08)' }}
+        style={{ display: 'flex', height: '8px', borderRadius: `${tk.rXs}px`, overflow: 'hidden', marginBottom: '16px', background: tk.inset }}
       >
         {allocation.slices.map((s, i) => (
           <div key={i} style={{ width: `${s.pct}%`, background: s.color }} />
@@ -254,15 +267,15 @@ function AllocationSection({ allocation }) {
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              padding: '12px 14px',
-              borderRadius: '12px',
-              background: '#2f2f2f',
-              border: '1px solid rgba(182,156,96,0.22)',
+              padding: '11px 14px',
+              borderRadius: `${tk.rSm}px`,
+              background: tk.raised,
+              border: `1px solid ${tk.hair}`,
             }}
           >
-            <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: '3px', background: s.color, flexShrink: 0 }} />
+            <span aria-hidden="true" style={{ width: 9, height: 9, borderRadius: `${tk.rXs}px`, background: s.color, flexShrink: 0 }} />
             <span style={{ fontSize: '13px', color: DARK, fontWeight: 600, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.label}</span>
-            <span style={{ fontFamily: fontHeading, fontSize: '15px', color: s.isCash ? MUTED : DARK }}>{s.pct}%</span>
+            <span style={{ ...mono, fontSize: '14px', color: s.isCash ? MUTED : DARK }}>{s.pct}%</span>
           </div>
         ))}
       </div>
@@ -349,15 +362,15 @@ function Profile() {
       <div className="profile-shell" style={{ maxWidth: '760px', margin: '0 auto' }}>
 
         {/* Back */}
-        <button onClick={() => navigate('/dashboard')} aria-label="Back to dashboard" style={{ background: 'none', border: 'none', color: MUTED, fontSize: '12px', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: '600', cursor: 'pointer', marginBottom: '24px', padding: '0' }}>
-          ← Dashboard
+        <button onClick={() => navigate('/dashboard')} aria-label="Back to dashboard" style={{ background: 'none', border: 'none', color: MUTED, fontSize: '12px', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: '600', cursor: 'pointer', marginBottom: '24px', padding: '0', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          <Icon name="arrow-left" size={14} /> Dashboard
         </button>
 
         {/* Tier bar */}
         <TierBar tier={tier} />
 
         {/* Identity card */}
-        <div className="profile-identity" style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: '16px', boxShadow: SHADOW, padding: '28px', marginTop: '20px' }}>
+        <div className="profile-identity" style={{ ...panel, padding: '24px', marginTop: '20px' }}>
           <div className="profile-avatar" aria-hidden={false}>
             <AppImage
               src={avatarSrc}
@@ -369,12 +382,12 @@ function Profile() {
             />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h1 style={{ fontFamily: fontHeading, fontSize: '22px', fontWeight: '400', color: DARK, marginBottom: '2px', letterSpacing: '-0.01em' }}>{name}</h1>
-            <div style={{ fontSize: '13px', color: MUTED }}>@{username} · joined {joinedYear}</div>
+            <h1 style={{ ...heading, fontSize: '22px', color: DARK, marginBottom: '3px' }}>{name}</h1>
+            <div style={{ fontSize: '13px', color: MUTED }}>@{username} · joined <span style={{ ...mono }}>{joinedYear}</span></div>
             {email && <div style={{ fontSize: '12px', color: MUTED, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{email}</div>}
           </div>
-          <button onClick={() => navigate('/settings')} className="profile-edit-btn" style={{ background: 'rgba(244,241,233,0.06)', border: '1px solid rgba(182,156,96,0.22)', borderRadius: '8px', padding: '7px 14px', fontSize: '12px', fontWeight: '600', color: DARK, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            Edit profile
+          <button onClick={() => navigate('/settings')} className="profile-edit-btn" style={{ ...btnGhost, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+            <Icon name="edit" size={14} /> Edit profile
           </button>
         </div>
 
@@ -385,24 +398,28 @@ function Profile() {
             { label: 'holdings',       value: fmt(holdings) },
             { label: 'cash',           value: fmt(cash) },
           ].map((s, i) => (
-            <div key={i} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: '14px', padding: '18px', boxShadow: SHADOW }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '10px', color: MUTED, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{s.label}</span>
+            <div key={i} style={{ ...panel, padding: '18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                <span style={label}>{s.label}</span>
                 {isDemo && i === 0 && <DemoPill />}
               </div>
-              <div style={{ fontFamily: fontHeading, fontSize: '18px', fontWeight: '400', color: DARK, letterSpacing: '-0.01em' }}>{s.value}</div>
+              <div style={{ ...mono, fontSize: '20px', fontWeight: 500, color: DARK }}>{s.value}</div>
             </div>
           ))}
         </div>
 
         {/* XP / level */}
         <SectionCard style={{ marginTop: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '12px', flexWrap: 'wrap' }}>
-            <div style={{ fontSize: '10px', color: MUTED, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: '600' }}>progress</div>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <span style={{ fontSize: '12px', color: GOLD, fontWeight: '700' }}>{xp} XP</span>
-              <span style={{ fontSize: '12px', color: MUTED }}>·</span>
-              <span style={{ fontSize: '12px', color: MUTED }}>{coins} coins</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', gap: '12px', flexWrap: 'wrap' }}>
+            <span style={label}>progress</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <span style={{ ...mono, fontSize: '13px', color: tk.gold, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                <Icon name="bolt" size={13} color={tk.gold} />{xp} XP
+              </span>
+              <span style={{ color: tk.faint }}>·</span>
+              <span style={{ ...mono, fontSize: '13px', color: MUTED, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                <Icon name="coin" size={13} />{coins} coins
+              </span>
             </div>
           </div>
           <ProfileXPBar xp={xp} />
@@ -410,14 +427,19 @@ function Profile() {
 
         {/* Badge wall */}
         <SectionCard style={{ marginTop: '16px' }}>
-          <div style={{ fontSize: '10px', color: MUTED, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: '600', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid rgba(244,241,233,0.12)' }}>badges</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
+            <span style={label}>badges</span>
+            <span style={{ flex: 1, height: 1, background: tk.hair }} />
+            <span style={{ ...mono, fontSize: '11px', color: MUTED }}>{badges.filter(b => b.earned).length} / {badges.length}</span>
+          </div>
           <BadgeWall badges={badges} />
         </SectionCard>
 
         {/* Portfolio allocation */}
         <SectionCard style={{ marginTop: '16px', marginBottom: '32px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid rgba(244,241,233,0.12)' }}>
-            <div style={{ fontSize: '10px', color: MUTED, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: '600' }}>allocation</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '18px' }}>
+            <span style={label}>allocation</span>
+            <span style={{ flex: 1, height: 1, background: tk.hair }} />
             {isDemo && allocation.hasPositions && <DemoPill />}
           </div>
           <AllocationSection allocation={allocation} />

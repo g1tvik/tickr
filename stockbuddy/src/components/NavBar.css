@@ -1,8 +1,6 @@
 /* ── Base navbar (Alpaca-style: adapts to section underneath) ─ */
 .navbar-color {
-  background-color: rgba(17, 24, 39, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(31, 31, 31, 0.96);
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -13,7 +11,7 @@
   display: flex;
   align-items: center;
   padding: 0 2rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(244, 241, 233, 0.10);
   animation: navbarSlideIn 0.35s ease-out forwards;
   border-radius: 0;
   box-shadow: none;
@@ -28,14 +26,14 @@
 /* Explicit dark theme */
 .navbar-color--dark,
 .navbar-color.page-dark {
-  background-color: rgba(17, 24, 39, 0.88);
-  border-bottom-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(31, 31, 31, 0.96);
+  border-bottom-color: rgba(244, 241, 233, 0.10);
 }
 
 /* Light/cream theme — matches the warm marble inner pages */
 .navbar-color--light,
 .navbar-color.page-light {
-  background-color: rgba(244, 241, 233, 0.92);
+  background-color: rgba(244, 241, 233, 0.96);
   border-bottom-color: rgba(34, 34, 34, 0.08);
 }
 
@@ -56,7 +54,6 @@
 }
 
 .navbar-color .navbar-brand img {
-  filter: drop-shadow(0 0 8px rgba(182, 156, 96, 0.10));
   transition: opacity 0.2s ease;
 }
 .navbar-color .navbar-brand:hover img {
@@ -82,25 +79,25 @@
 }
 
 .navbar-color .nav-link {
-  color: rgba(237, 237, 237, 0.75) !important;
+  color: rgba(244, 241, 233, 0.72) !important;
   font-size: 0.875rem;
   font-weight: 500;
   letter-spacing: 0.01em;
   padding: 6px 12px !important;
-  border-radius: 8px;
+  border-radius: 6px;
   transition: color 0.2s ease, background-color 0.2s ease !important;
   text-decoration: none;
   white-space: nowrap;
 }
 
 .navbar-color .nav-link:hover {
-  color: #FFFFFF !important;
-  background-color: rgba(255, 255, 255, 0.07);
+  color: #F4F1E9 !important;
+  background-color: rgba(244, 241, 233, 0.06);
 }
 
 .navbar-color .nav-link.active {
-  color: #FFFFFF !important;
-  background-color: rgba(255, 255, 255, 0.10);
+  color: #E6C87A !important;
+  background-color: rgba(182, 156, 96, 0.14);
   font-weight: 600;
 }
 
@@ -120,11 +117,11 @@
 
 /* Transparent theme — keep text light (sits over the dark hero gradient) */
 .navbar-color--transparent .nav-link {
-  color: rgba(255, 255, 255, 0.82) !important;
+  color: rgba(244, 241, 233, 0.82) !important;
 }
 .navbar-color--transparent .nav-link:hover {
-  color: #FFFFFF !important;
-  background-color: rgba(255, 255, 255, 0.08);
+  color: #F4F1E9 !important;
+  background-color: rgba(244, 241, 233, 0.08);
 }
 
 /* ── ⋯ More button ────────────────────────────────────────── */
@@ -137,9 +134,9 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
+  background: rgba(244, 241, 233, 0.05);
+  border: 1px solid rgba(244, 241, 233, 0.12);
+  border-radius: 6px;
   padding: 6px 12px;
   cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease;
@@ -148,8 +145,8 @@
 
 .navbar-more-btn:hover,
 .navbar-more-btn.open {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(182, 156, 96, 0.35);
+  background: rgba(244, 241, 233, 0.10);
+  border-color: rgba(182, 156, 96, 0.38);
 }
 
 .navbar-dot {
@@ -157,13 +154,13 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: rgba(237, 237, 237, 0.7);
+  background: rgba(244, 241, 233, 0.72);
   flex-shrink: 0;
   transition: background 0.2s ease;
 }
 .navbar-more-btn:hover .navbar-dot,
 .navbar-more-btn.open .navbar-dot {
-  background: #FFFFFF;
+  background: #F4F1E9;
 }
 
 /* Light-theme more button */
@@ -187,16 +184,14 @@
 /* ── Dropdown ─────────────────────────────────────────────── */
 .navbar-dropdown {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 8px);
   right: 0;
   min-width: 160px;
-  background: rgba(22, 28, 40, 0.97);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 12px;
+  background: #262626;
+  border: 1px solid rgba(244, 241, 233, 0.12);
+  border-radius: 8px;
   padding: 6px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(182, 156, 96, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
   z-index: 2000;
   animation: dropdownIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -211,10 +206,10 @@
   width: 100%;
   text-align: left;
   padding: 9px 14px;
-  border-radius: 8px;
+  border-radius: 5px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: rgba(237, 237, 237, 0.8);
+  color: rgba(244, 241, 233, 0.82);
   text-decoration: none;
   background: transparent;
   border: none;
@@ -225,22 +220,22 @@
 }
 
 .navbar-dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #FFFFFF;
+  background: rgba(244, 241, 233, 0.07);
+  color: #F4F1E9;
 }
 
 .navbar-dropdown-divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(244, 241, 233, 0.10);
   margin: 4px 0;
 }
 
 .navbar-dropdown-signout {
-  color: rgba(239, 68, 68, 0.8);
+  color: rgba(224, 96, 90, 0.85);
 }
 .navbar-dropdown-signout:hover {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.08);
+  color: #E0605A;
+  background: rgba(224, 96, 90, 0.10);
 }
 
 /* ── Hamburger button (mobile only) ───────────────────────── */
@@ -253,17 +248,17 @@
   height: 40px;
   margin-left: 8px;
   padding: 0;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
+  background: rgba(244, 241, 233, 0.05);
+  border: 1px solid rgba(244, 241, 233, 0.12);
+  border-radius: 6px;
   cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .navbar-hamburger:hover,
 .navbar-hamburger.open {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(182, 156, 96, 0.4);
+  background: rgba(244, 241, 233, 0.10);
+  border-color: rgba(182, 156, 96, 0.38);
 }
 
 .navbar-hamburger-bar {
@@ -272,7 +267,7 @@
   height: 2px;
   margin: 0 auto;
   border-radius: 2px;
-  background: rgba(237, 237, 237, 0.85);
+  background: rgba(244, 241, 233, 0.85);
   transition: transform 0.25s ease, opacity 0.2s ease, background 0.2s ease;
 }
 
@@ -303,7 +298,7 @@
 
 /* Transparent-theme hamburger (over dark hero) */
 .navbar-color--transparent .navbar-hamburger-bar {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(244, 241, 233, 0.92);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -322,12 +317,10 @@
   flex-direction: column;
   gap: 2px;
   padding: 8px;
-  background: rgba(22, 28, 40, 0.98);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.4);
+  background: #262626;
+  border-top: 1px solid rgba(244, 241, 233, 0.10);
+  border-bottom: 1px solid rgba(244, 241, 233, 0.10);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   z-index: 2000;
   max-height: calc(100vh - 64px);
   overflow-y: auto;
@@ -350,7 +343,7 @@
   background: rgba(244, 241, 233, 0.98);
   border-top-color: rgba(34, 34, 34, 0.08);
   border-bottom-color: rgba(34, 34, 34, 0.10);
-  box-shadow: 0 20px 48px rgba(34, 34, 34, 0.16);
+  box-shadow: 0 10px 30px rgba(34, 34, 34, 0.14);
 }
 
 .navbar-mobile-list {
@@ -362,17 +355,30 @@
   padding: 0;
 }
 
+/* Small-caps section label heading the mobile menu groups */
+.navbar-mobile-section-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(154, 149, 139, 0.9);
+  padding: 6px 14px 4px;
+}
+.navbar-color--light .navbar-mobile-section-label {
+  color: rgba(34, 34, 34, 0.5);
+}
+
 .navbar-mobile-link {
   display: block;
   width: 100%;
   text-align: left;
   padding: 12px 14px;
-  border-radius: 10px;
+  border-radius: 6px;
   font-family: inherit;
   font-size: 0.95rem;
   font-weight: 500;
   letter-spacing: 0.01em;
-  color: rgba(237, 237, 237, 0.8);
+  color: rgba(244, 241, 233, 0.82);
   text-decoration: none;
   background: transparent;
   border: none;
@@ -381,27 +387,27 @@
 }
 
 .navbar-mobile-link:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #FFFFFF;
+  background: rgba(244, 241, 233, 0.07);
+  color: #F4F1E9;
 }
 
 .navbar-mobile-link.active {
-  background: rgba(255, 255, 255, 0.10);
-  color: #FFFFFF;
+  background: rgba(182, 156, 96, 0.14);
+  color: #E6C87A;
   font-weight: 600;
 }
 
 .navbar-mobile-signout {
-  color: rgba(239, 68, 68, 0.85);
+  color: rgba(224, 96, 90, 0.85);
 }
 .navbar-mobile-signout:hover {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.08);
+  color: #E0605A;
+  background: rgba(224, 96, 90, 0.10);
 }
 
 .navbar-mobile-divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(244, 241, 233, 0.10);
   margin: 6px 4px;
 }
 

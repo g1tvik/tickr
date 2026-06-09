@@ -3,13 +3,14 @@ import { Link } from "react-router-dom";
 import styled, { keyframes, css } from "styled-components";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
-import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleBlack, marbleGold, primary } from "../marblePalette";
-import { fontHeading } from "../fontPalette";
+import { marbleWhite, marbleDarkGray, marbleGold } from "../marblePalette";
 import { useNavbar } from "../context/NavbarContext";
 import { api } from "../services/api";
 import AppImage from "../components/AppImage";
 import useReducedMotion from "../hooks/useReducedMotion";
 import { useSEO, SEO_CONFIG } from "../lib/seo";
+import tk, { label, mono } from "../theme/terminal";
+import Icon from "../components/Icon";
 
 // ============ ANIMATIONS ============
 const pulse = keyframes`
@@ -63,15 +64,6 @@ const PolkaDotOverlay = styled.div`
   filter: blur(0.65px);
   transition: opacity 0.25s ease-out;
   opacity: ${props => props.$opacity};
-`;
-
-const shimmerSweep = keyframes`
-  0% {
-    background-position: 100% 100%;
-  }
-  100% {
-    background-position: 0% 0%;
-  }
 `;
 
 // Mask reveal for hero text words
@@ -213,49 +205,21 @@ const MaskWord = styled.span`
 `;
 
 const StatValue = styled.h2`
-  font-size: 3.5rem;
-  font-weight: 800;
-  margin-bottom: 8px;
-  display: inline-block;
-  position: relative;
-  
-  ${props => props.$isGold ? css`
-    /* Top layer: thin bright tracer line; Bottom layer: base gold shimmer */
-    background:
-      linear-gradient(
-        -45deg,
-        transparent 49%,
-        rgba(255, 255, 255, 1) 50%,
-        transparent 51%
-      ),
-      linear-gradient(
-        -45deg,
-        transparent 48%,
-        rgba(255, 255, 255, 0.95) 50%,
-        transparent 52%
-      ),
-      linear-gradient(
-        -45deg,
-        #E6C87A 0%,
-        #F0D586 35%,
-        #FFFFFF 50%,
-        #F0D586 65%,
-        #E6C87A 100%
-      );
-    background-size: 400% 400%, 400% 400%, 400% 400%;
-    background-position: 100% 100%, 100% 100%, 100% 100%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-    will-change: background-position;
-  ` : css`
-    color: #F4F1E9;
-  `}
-  
-  ${props => props.$isGold && props.$animate && css`
-    animation: ${shimmerSweep} 2.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  `}
+  font-family: ${tk.fontMono};
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  font-size: clamp(2.4rem, 5vw, 3.2rem);
+  font-weight: 500;
+  line-height: 1;
+  margin: 0 0 10px;
+  color: ${props => (props.$isGold ? tk.goldBright : tk.text)};
+`;
+
+// Monospace tabular number — the data signature across the page.
+const Num = styled.span`
+  font-family: ${tk.fontMono};
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 `;
 
 // Floating accent elements
@@ -344,14 +308,10 @@ const ScreenCascadeWrapper = styled.div`
 // ============ STYLED COMPONENTS ============
 const PageWrapper = styled.div`
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 84% 8%, rgba(201, 168, 90, 0.62) 0%, rgba(201, 168, 90, 0.28) 18%, rgba(201, 168, 90, 0.08) 32%, transparent 44%),
-    linear-gradient(180deg, rgba(42, 69, 128, 0.96) 0%, rgba(61, 83, 140, 0.88) 30%, rgba(68, 72, 90, 0.8) 54%, ${marbleDarkGray} 72%, ${marbleBlack} 100%);
-  background-repeat: no-repeat;
-  background-size: 100% 115vh, 100% 115vh;
-  background-color: ${marbleBlack};
+  background: ${tk.bg};
+  border-top: 1px solid ${tk.goldHairFaint};
   overflow-x: hidden;
-  color: ${marbleDarkGray};
+  color: ${tk.text};
 `;
 
 const HeroSection = styled.section`
@@ -403,7 +363,7 @@ const BadgeBullet = styled.span`
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: ${marbleGold};
+  background: ${tk.gold};
   flex-shrink: 0;
   vertical-align: middle;
   margin: 0 4px;
@@ -411,43 +371,41 @@ const BadgeBullet = styled.span`
 `;
 
 const BadgeText = styled.span`
-  color: ${marbleWhite};
+  color: ${tk.text};
   font-weight: 600;
   ${props => props.$blink && css`animation: ${blink} 0.5s ease-in-out infinite;`}
 `;
 
 const Badge = styled.div`
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: ${tk.fontBody};
   text-transform: lowercase;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  padding: 8px 15px;
-  border-radius: 50px;
-  font-size: 0.8rem;
+  background: ${tk.surface};
+  border: 1px solid ${tk.hairStrong};
+  padding: 7px 14px;
+  border-radius: ${tk.rSm}px;
+  font-size: 0.78rem;
   margin-bottom: 23px;
   opacity: 0;
   animation: ${slideUp} 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0s forwards;
-  transform: scale(1.05);
 `;
 
 const HeroTitle = styled.h1`
-  font-family: 'Creato Display', Helvetica, Arial, sans-serif;
+  font-family: ${tk.fontHeading};
   font-size: clamp(2rem, 6vw, 3rem);
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.1;
   margin-bottom: 24px;
-  color: ${marbleWhite};
-  -webkit-text-stroke: 0.025em ${marbleDarkGray};
-  paint-order: stroke fill;
+  color: ${tk.text};
+  letter-spacing: -0.01em;
 `;
 
 const HeroSubtitle = styled.p`
-  font-family: 'Creato Display', Helvetica, Arial, sans-serif;
-  font-size: clamp(1rem, 2.5vw, 1.35rem);
-  color: ${marbleLightGray};
+  font-family: ${tk.fontBody};
+  font-size: clamp(1rem, 1.4vw, 1.2rem);
+  color: ${tk.muted};
   max-width: 520px;
   margin: 0 0 40px;
   line-height: 1.6;
@@ -473,46 +431,44 @@ const CTAGroup = styled.div`
 `;
 
 const PrimaryButton = styled(Link)`
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  background: ${marbleDarkGray};
-  color: ${marbleWhite};
-  padding: 16px 32px;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 1.1rem;
+  font-family: ${tk.fontBody};
+  background: ${tk.gold};
+  color: #1F1F1F;
+  padding: 14px 28px;
+  border-radius: ${tk.rSm}px;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
   text-decoration: none;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  
+  transition: background 0.2s ease;
+
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: none;
-    color: ${marbleWhite};
-    background: ${marbleBlack};
+    color: #1F1F1F;
+    background: ${tk.goldBright};
   }
-  
+
   span {
-    color: ${marbleGray};
+    color: ${tk.goldDim};
     font-size: 0.85rem;
   }
 `;
 
 const SecondaryButton = styled(Link)`
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: ${tk.fontBody};
   background: transparent;
-  color: ${marbleWhite};
-  padding: 16px 32px;
-  border-radius: 12px;
+  color: ${tk.text};
+  padding: 14px 28px;
+  border-radius: ${tk.rSm}px;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 1rem;
   text-decoration: none;
-  border: 2px solid ${marbleWhite};
-  transition: all 0.3s ease;
-  
+  border: 1px solid ${tk.hairStrong};
+  transition: background 0.2s ease, border-color 0.2s ease;
+
   &:hover {
-    background: ${marbleWhite};
-    transform: translateY(-3px);
-    color: ${marbleDarkGray};
+    background: ${tk.surface};
+    border-color: ${tk.gold};
+    color: ${tk.text};
   }
 `;
 
@@ -525,55 +481,32 @@ const GlowOrb = styled.div`
 `;
 
 // ─── HERO PREVIEW (Alpaca-style layered composition) ─────────────────────────
-const floatY = keyframes`
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-8px); }
-`;
-
 const HeroPreviewWrap = styled.div`
   position: relative;
   width: 100%;
-  max-width: 580px;
+  max-width: 460px;
   justify-self: center;
-  height: 480px;
-  perspective: 1600px;
   opacity: 0;
   animation: ${slideUp} 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
 
   @media (max-width: 980px) {
-    height: 440px;
     max-width: 520px;
   }
-
-  @media (max-width: 520px) {
-    height: 380px;
-    transform: scale(0.88);
-    transform-origin: center top;
-  }
 `;
 
-const PreviewCard = styled.div`
-  position: absolute;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  transform-style: preserve-3d;
-  will-change: transform;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+// One flat hairline-ruled panel — replaces the floating 3D glass-card stack.
+const PreviewPanel = styled.div`
+  background: ${tk.surface};
+  border: 1px solid ${tk.hair};
+  border-radius: ${tk.r}px;
+  overflow: hidden;
+  color: ${tk.text};
 `;
 
-const ChartCard = styled(PreviewCard)`
-  top: 6%;
-  left: 4%;
-  width: 78%;
-  background: rgba(245, 243, 233, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 18px;
-  box-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.35),
-    0 1px 0 rgba(255, 255, 255, 0.5) inset;
-  padding: 18px 20px 14px;
-  color: ${marbleDarkGray};
-  animation: ${floatY} 6s ease-in-out infinite;
+const ChartCard = styled.div`
+  padding: 18px 20px 16px;
+  border-bottom: 1px solid ${tk.hair};
+  color: ${tk.text};
 `;
 
 const ChartCardHeader = styled.div`
@@ -589,16 +522,17 @@ const SymbolBlock = styled.div`
   gap: 10px;
 
   .ticker {
-    font-family: 'Creato Display', Helvetica, Arial, sans-serif;
-    font-size: 1.2rem;
+    font-family: ${tk.fontMono};
+    font-variant-numeric: tabular-nums;
+    font-size: 0.95rem;
     font-weight: 600;
-    letter-spacing: -0.01em;
-    color: ${marbleDarkGray};
+    letter-spacing: 0.02em;
+    color: ${tk.text};
   }
   .name {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: ${tk.fontBody};
     font-size: 0.7rem;
-    color: rgba(34, 34, 34, 0.55);
+    color: ${tk.muted};
     letter-spacing: 0.02em;
   }
 `;
@@ -609,15 +543,17 @@ const PriceBlock = styled.div`
   gap: 8px;
 
   .price {
-    font-family: 'Creato Display', Helvetica, Arial, sans-serif;
-    font-size: 1.15rem;
+    font-family: ${tk.fontMono};
+    font-variant-numeric: tabular-nums;
+    font-size: 1rem;
     font-weight: 600;
-    color: ${marbleDarkGray};
+    color: ${tk.text};
   }
   .change {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: ${tk.fontMono};
+    font-variant-numeric: tabular-nums;
     font-size: 0.72rem;
-    color: #22A55C;
+    color: ${tk.up};
     font-weight: 600;
   }
 `;
@@ -625,144 +561,141 @@ const PriceBlock = styled.div`
 const TimeframeRow = styled.div`
   display: flex;
   gap: 6px;
-  margin-top: 10px;
+  margin-top: 12px;
 
   span {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: ${tk.fontMono};
+    font-variant-numeric: tabular-nums;
     font-size: 0.65rem;
     padding: 3px 8px;
-    border-radius: 6px;
-    color: rgba(34, 34, 34, 0.5);
+    border-radius: ${tk.rXs}px;
+    color: ${tk.muted};
     letter-spacing: 0.04em;
   }
   span.active {
-    background: rgba(34, 34, 34, 0.08);
-    color: ${marbleDarkGray};
+    background: ${tk.raised};
+    color: ${tk.text};
     font-weight: 600;
   }
 `;
 
-const OrderCard = styled(PreviewCard)`
-  bottom: 8%;
-  left: 0;
-  width: 56%;
-  background: linear-gradient(150deg, rgba(28, 32, 44, 0.96), rgba(20, 24, 36, 0.96));
-  border: 1px solid rgba(230, 200, 122, 0.22);
-  border-radius: 16px;
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.45),
-    0 1px 0 rgba(255, 255, 255, 0.05) inset;
-  padding: 16px 18px;
-  color: ${marbleWhite};
-  z-index: 2;
-  animation: ${floatY} 7s ease-in-out 0.6s infinite;
+const OrderCard = styled.div`
+  padding: 16px 20px;
+  border-bottom: 1px solid ${tk.hair};
+  color: ${tk.text};
 
   .label {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: ${tk.fontBody};
     font-size: 0.6rem;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.16em;
-    color: rgba(245, 243, 233, 0.5);
+    color: ${tk.muted};
     margin-bottom: 6px;
   }
   .heading {
-    font-family: 'Creato Display', Helvetica, Arial, sans-serif;
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: ${marbleWhite};
+    font-family: ${tk.fontMono};
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: ${tk.text};
     margin-bottom: 12px;
   }
   .row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    padding: 7px 0;
+    border-top: 1px solid ${tk.hair};
     font-size: 0.72rem;
   }
   .row span:first-child {
-    color: rgba(245, 243, 233, 0.55);
+    font-family: ${tk.fontBody};
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.62rem;
+    color: ${tk.muted};
   }
   .row span:last-child {
-    color: ${marbleWhite};
+    font-family: ${tk.fontMono};
+    font-variant-numeric: tabular-nums;
+    color: ${tk.text};
     font-weight: 600;
   }
   .total {
     margin-top: 4px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(230, 200, 122, 0.25);
+    padding-top: 10px;
+    border-top: 1px solid ${tk.goldHairFaint};
     display: flex;
     justify-content: space-between;
-    font-family: 'Creato Display', Helvetica, Arial, sans-serif;
-    font-size: 0.88rem;
+    align-items: center;
   }
   .total span:first-child {
-    color: rgba(245, 243, 233, 0.6);
+    font-family: ${tk.fontBody};
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.62rem;
+    color: ${tk.muted};
   }
   .total span:last-child {
-    color: ${marbleGold};
+    font-family: ${tk.fontMono};
+    font-variant-numeric: tabular-nums;
+    font-size: 0.95rem;
+    color: ${tk.goldBright};
     font-weight: 600;
   }
   .cta {
-    margin-top: 12px;
-    background: ${marbleGold};
-    color: ${marbleBlack};
+    margin-top: 14px;
+    background: ${tk.gold};
+    color: #1F1F1F;
     border: none;
     width: 100%;
-    padding: 8px 0;
-    border-radius: 10px;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-weight: 600;
-    font-size: 0.78rem;
-    letter-spacing: 0.02em;
+    padding: 9px 0;
+    border-radius: ${tk.rSm}px;
+    font-family: ${tk.fontBody};
+    font-weight: 700;
+    font-size: 0.74rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     cursor: default;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
   }
 `;
 
-const CoachCard = styled(PreviewCard)`
-  bottom: 0;
-  right: 0;
-  width: 50%;
-  background: rgba(245, 243, 233, 0.97);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 14px;
-  box-shadow:
-    0 18px 50px rgba(0, 0, 0, 0.32),
-    0 1px 0 rgba(255, 255, 255, 0.5) inset;
-  padding: 14px 16px;
-  color: ${marbleDarkGray};
-  z-index: 3;
-  animation: ${floatY} 8s ease-in-out 1.2s infinite;
+const CoachCard = styled.div`
+  padding: 14px 20px 18px;
+  color: ${tk.text};
 
   .label {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: ${tk.fontBody};
     font-size: 0.6rem;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.16em;
-    color: rgba(34, 34, 34, 0.5);
+    color: ${tk.muted};
     margin-bottom: 8px;
   }
   .label .dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: ${marbleGold};
-    box-shadow: 0 0 8px ${marbleGold};
+    background: ${tk.gold};
   }
   .quote {
-    font-family: 'Creato Display', Helvetica, Arial, sans-serif;
+    font-family: ${tk.fontBody};
     font-size: 0.82rem;
-    line-height: 1.45;
-    color: ${marbleDarkGray};
-    letter-spacing: -0.005em;
+    line-height: 1.5;
+    color: ${tk.text};
   }
   .quote .accent {
-    background: linear-gradient(90deg, transparent 0%, ${marbleGold}55 50%, transparent 100%);
-    padding: 0 2px;
+    color: ${tk.goldBright};
+    font-weight: 600;
   }
 `;
 
@@ -804,7 +737,7 @@ function MiniCandleChart({ candles = PLACEHOLDER_CANDLES }) {
           x2={W - padX}
           y1={padY + (H - padY * 2) * p}
           y2={padY + (H - padY * 2) * p}
-          stroke="rgba(34, 34, 34, 0.06)"
+          stroke={tk.hair}
           strokeWidth="1"
         />
       ))}
@@ -813,7 +746,7 @@ function MiniCandleChart({ candles = PLACEHOLDER_CANDLES }) {
         const isUp = cd.c >= cd.o;
         const bodyTop = yScale(Math.max(cd.o, cd.c));
         const bodyBottom = yScale(Math.min(cd.o, cd.c));
-        const color = isUp ? '#22A55C' : '#E04848';
+        const color = isUp ? tk.up : tk.down;
         return (
           <g key={i}>
             <line
@@ -852,22 +785,38 @@ const SectionInner = styled.div`
   margin: 0 auto;
 `;
 
+// Small-caps section eyebrow + hairline rule (replaces the centered light title).
 const SectionTitle = styled.h2`
-  font-family: ${fontHeading};
-  font-size: clamp(2rem, 5vw, 3rem);
-  font-weight: 300;
-  text-align: center;
-  margin-bottom: 20px;
-  color: ${marbleWhite};
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: ${tk.fontBody};
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: ${tk.gold};
+  text-align: left;
+  margin: 0 0 20px;
+
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: ${tk.goldHairFaint};
+  }
 `;
 
 const SectionSubtitle = styled.p`
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  text-align: center;
-  color: ${marbleLightGray};
-  font-size: 1.2rem;
-  max-width: 600px;
-  margin: 0 auto;
+  font-family: ${tk.fontHeading};
+  text-align: left;
+  color: ${tk.text};
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  max-width: 640px;
+  margin: 0;
 `;
 
 // 3D Phone Mockup Section
@@ -883,20 +832,16 @@ const PhoneSection = styled.section`
 `;
 
 const PhoneMockup = styled.div`
-  width: 300px;
-  height: 600px;
-  background: ${marbleDarkGray};
-  border-radius: 40px;
-  border: 3px solid ${marbleGray};
-  box-shadow: 
-    0 50px 100px rgba(0, 0, 0, 0.3),
-    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  width: 280px;
+  height: 560px;
+  background: ${tk.surface};
+  border-radius: 28px;
+  border: 1px solid ${tk.hairStrong};
   position: relative;
   z-index: 10;
   transform-style: preserve-3d;
-  transition: transform 0.08s ease-out, opacity 0.15s ease-out;
-  will-change: transform, opacity;
-  
+  transition: transform 0.2s ease-out, opacity 0.15s ease-out;
+
   &::before {
     content: '';
     position: absolute;
@@ -904,9 +849,9 @@ const PhoneMockup = styled.div`
     left: 50%;
     transform: translateX(-50%);
     width: 80px;
-    height: 24px;
-    background: ${marbleBlack};
-    border-radius: 12px;
+    height: 22px;
+    background: ${tk.inset};
+    border-radius: 11px;
   }
 `;
 
@@ -916,8 +861,8 @@ const PhoneScreen = styled.div`
   left: 12px;
   right: 12px;
   bottom: 50px;
-  background: linear-gradient(180deg, ${marbleDarkGray}, ${marbleBlack});
-  border-radius: 24px;
+  background: linear-gradient(180deg, ${tk.surface}, ${tk.inset});
+  border-radius: 20px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -942,8 +887,8 @@ const PhoneContent = styled.div`
   }
   
   p {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: ${marbleWhite} !important;
+    font-family: ${tk.fontBody};
+    color: ${tk.text} !important;
     font-size: 0.9rem;
     margin-bottom: 8px;
   }
@@ -952,34 +897,39 @@ const PhoneContent = styled.div`
 const FloatingStats = styled.div`
   position: absolute;
   z-index: 30;
-  background: rgba(17, 24, 39, 0.72);
-  border: 1px solid rgba(182, 156, 96, 0.55);
-  border-radius: 32px;
-  padding: 16px 24px;
+  background: ${tk.surface};
+  border: 1px solid ${tk.hairStrong};
+  border-radius: ${tk.r}px;
+  padding: 14px 20px;
   transform-style: preserve-3d;
-  transform: translateZ(140px);
+  transform: translateZ(60px);
   transition: opacity 0.15s ease-out;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  
+
   ${props => props.$position === 'left' && `
-    left: -120px;
+    left: -90px;
     top: 100px;
   `}
-  
+
   ${props => props.$position === 'right' && `
-    right: -120px;
+    right: -90px;
     bottom: 150px;
   `}
-  
+
   h5 {
-    color: ${marbleWhite};
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 0;
+    font-family: ${tk.fontMono};
+    font-variant-numeric: tabular-nums;
+    color: ${tk.goldBright};
+    font-size: 1.4rem;
+    font-weight: 500;
+    margin: 0 0 2px;
   }
 
   span {
-    color: ${marbleLightGray};
+    font-family: ${tk.fontBody};
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: ${tk.muted};
   }
 `;
 
@@ -988,15 +938,15 @@ const DemoPill = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: ${tk.fontBody};
   font-size: 0.55rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: ${marbleGold};
-  background: rgba(182, 156, 96, 0.12);
-  border: 1px solid rgba(182, 156, 96, 0.4);
-  padding: 2px 8px;
-  border-radius: 999px;
+  color: ${tk.gold};
+  background: transparent;
+  border: 1px solid ${tk.goldHair};
+  padding: 2px 7px;
+  border-radius: ${tk.rXs}px;
   white-space: nowrap;
 
   &::before {
@@ -1004,7 +954,7 @@ const DemoPill = styled.span`
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: ${marbleGold};
+    background: ${tk.gold};
   }
 `;
 
@@ -1023,40 +973,40 @@ const StepsGrid = styled.div`
 
 const StepCard = styled.div`
   position: relative;
-  background: rgba(245, 243, 233, 0.04);
-  border: 1px solid rgba(182, 156, 96, 0.22);
-  border-radius: 18px;
-  padding: 32px 28px;
+  background: ${tk.surface};
+  border: 1px solid ${tk.hair};
+  border-radius: ${tk.r}px;
+  padding: 28px 26px;
   text-align: left;
 
   .num {
-    font-family: ${fontHeading};
-    font-size: 1rem;
+    font-family: ${tk.fontMono};
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9rem;
     font-weight: 600;
-    color: ${marbleBlack};
-    background: ${marbleGold};
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
+    color: #1F1F1F;
+    background: ${tk.gold};
+    width: 34px;
+    height: 34px;
+    border-radius: ${tk.rSm}px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 22px;
-    box-shadow: 0 6px 18px rgba(182, 156, 96, 0.3);
+    margin-bottom: 20px;
   }
   h3 {
-    font-family: ${fontHeading};
-    font-size: 1.3rem;
+    font-family: ${tk.fontHeading};
+    font-size: 1.2rem;
     font-weight: 500;
-    color: ${marbleWhite};
+    color: ${tk.text};
     margin: 0 0 10px;
     letter-spacing: -0.01em;
   }
   p {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 0.98rem;
+    font-family: ${tk.fontBody};
+    font-size: 0.95rem;
     line-height: 1.6;
-    color: ${marbleLightGray};
+    color: ${tk.muted};
     margin: 0;
   }
 `;
@@ -1064,15 +1014,15 @@ const StepCard = styled.div`
 // ─── FAQ ─────────────────────────────────────────────────────────────────────
 const FaqList = styled.div`
   max-width: 760px;
-  margin: 56px auto 0;
+  margin: 40px auto 0;
 `;
 
 const FaqItem = styled.details`
-  border-top: 1px solid rgba(182, 156, 96, 0.2);
+  border-top: 1px solid ${tk.hair};
   padding: 4px 0;
 
   &:last-child {
-    border-bottom: 1px solid rgba(182, 156, 96, 0.2);
+    border-bottom: 1px solid ${tk.hair};
   }
 
   summary {
@@ -1082,11 +1032,11 @@ const FaqItem = styled.details`
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 22px 4px;
-    font-family: ${fontHeading};
-    font-size: 1.1rem;
+    padding: 20px 4px;
+    font-family: ${tk.fontHeading};
+    font-size: 1.05rem;
     font-weight: 500;
-    color: ${marbleWhite};
+    color: ${tk.text};
     letter-spacing: -0.005em;
   }
   summary::-webkit-details-marker {
@@ -1094,20 +1044,20 @@ const FaqItem = styled.details`
   }
   summary .chev {
     flex-shrink: 0;
-    width: 18px;
-    height: 18px;
-    color: ${marbleGold};
+    width: 16px;
+    height: 16px;
+    color: ${tk.gold};
     transition: transform 0.25s ease;
   }
   &[open] summary .chev {
     transform: rotate(45deg);
   }
   .answer {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 1rem;
+    font-family: ${tk.fontBody};
+    font-size: 0.95rem;
     line-height: 1.65;
-    color: ${marbleLightGray};
-    padding: 0 4px 24px;
+    color: ${tk.muted};
+    padding: 0 4px 22px;
     margin: 0;
     max-width: 680px;
   }
@@ -1117,57 +1067,53 @@ const FaqItem = styled.details`
 const CtaBand = styled.section`
   position: relative;
   z-index: 5;
-  padding: 110px 24px;
+  padding: 100px 24px;
   text-align: center;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(182, 156, 96, 0.18) 0%, transparent 60%),
-    ${marbleBlack};
-  border-top: 1px solid rgba(182, 156, 96, 0.18);
+  background: ${tk.bg};
+  border-top: 1px solid ${tk.goldHairFaint};
 
   h2 {
-    font-family: ${fontHeading};
-    font-size: clamp(1.9rem, 5vw, 3rem);
-    font-weight: 300;
-    color: ${marbleWhite};
+    font-family: ${tk.fontHeading};
+    font-size: clamp(1.9rem, 5vw, 2.8rem);
+    font-weight: 500;
+    color: ${tk.text};
     margin: 0 0 18px;
     letter-spacing: -0.01em;
   }
   p {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 1.1rem;
-    color: ${marbleLightGray};
+    font-family: ${tk.fontBody};
+    font-size: 1.05rem;
+    color: ${tk.muted};
     max-width: 520px;
-    margin: 0 auto 40px;
+    margin: 0 auto 36px;
     line-height: 1.6;
   }
 `;
 
 const CtaButton = styled(Link)`
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: ${tk.fontBody};
   display: inline-block;
-  background: ${marbleGold};
-  color: ${marbleBlack};
-  padding: 18px 44px;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 1.1rem;
+  background: ${tk.gold};
+  color: #1F1F1F;
+  padding: 15px 40px;
+  border-radius: ${tk.rSm}px;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
   text-decoration: none;
-  box-shadow: 0 12px 40px rgba(182, 156, 96, 0.3);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  transition: background 0.2s ease;
 
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 16px 48px rgba(182, 156, 96, 0.42);
-    color: ${marbleBlack};
-    background: #C9AC6E;
+    color: #1F1F1F;
+    background: ${tk.goldBright};
   }
 `;
 
 // ─── FOOTER ──────────────────────────────────────────────────────────────────
 const Footer = styled.footer`
-  background: ${marbleBlack};
-  border-top: 1px solid ${marbleGray};
-  padding: 72px 24px 40px;
+  background: ${tk.bg};
+  border-top: 1px solid ${tk.hair};
+  padding: 64px 24px 36px;
 `;
 
 const FooterInner = styled.div`
@@ -1180,7 +1126,7 @@ const FooterGrid = styled.div`
   grid-template-columns: 1.5fr repeat(3, 1fr);
   gap: 40px;
   padding-bottom: 48px;
-  border-bottom: 1px solid rgba(245, 243, 233, 0.1);
+  border-bottom: 1px solid ${tk.hair};
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -1196,10 +1142,10 @@ const FooterBrand = styled.div`
     margin-bottom: 16px;
   }
   p {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: ${tk.fontBody};
     font-size: 0.92rem;
     line-height: 1.6;
-    color: ${marbleLightGray};
+    color: ${tk.muted};
     max-width: 280px;
     margin: 0;
   }
@@ -1207,11 +1153,11 @@ const FooterBrand = styled.div`
 
 const FooterCol = styled.nav`
   h4 {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: ${tk.fontBody};
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.16em;
-    color: ${marbleGold};
+    color: ${tk.gold};
     margin: 0 0 18px;
   }
   ul {
@@ -1223,14 +1169,14 @@ const FooterCol = styled.nav`
     gap: 12px;
   }
   a {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: ${tk.fontBody};
     font-size: 0.95rem;
-    color: ${marbleLightGray};
+    color: ${tk.muted};
     text-decoration: none;
     transition: color 0.2s ease;
   }
   a:hover {
-    color: ${marbleWhite};
+    color: ${tk.text};
   }
 `;
 
@@ -1243,13 +1189,13 @@ const FooterBottom = styled.div`
   padding-top: 28px;
 
   p {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: ${tk.fontBody};
     font-size: 0.85rem;
-    color: ${marbleLightGray};
+    color: ${tk.muted};
     margin: 0;
   }
   .disclaimer {
-    color: rgba(245, 243, 233, 0.45);
+    color: ${tk.faint};
   }
 `;
 
@@ -1337,7 +1283,7 @@ function Home({ isLoggedIn }) {
     if (pct >= 3) {
       return (
         <>
-          NVDA is up <span className="accent">{abs}%</span> today. strong sessions raise one of the classic trading questions: <span className="accent">take profits</span>, or let the position run? both have a defensible case.
+          NVDA is up <span className="accent" style={mono}>{abs}%</span> today. strong sessions raise one of the classic trading questions: <span className="accent">take profits</span>, or let the position run? both have a defensible case.
         </>
       );
     }
@@ -1364,7 +1310,7 @@ function Home({ isLoggedIn }) {
     }
     return (
       <>
-        NVDA is down <span className="accent">{abs}%</span> today, a significant move. before reacting, it is worth <span className="accent">investigating the cause</span>. most large single-day moves prove to be noise, but the exceptions are the ones that matter.
+        NVDA is down <span className="accent" style={mono}>{abs}%</span> today, a significant move. before reacting, it is worth <span className="accent">investigating the cause</span>. most large single-day moves prove to be noise, but the exceptions are the ones that matter.
       </>
     );
   };
@@ -1650,17 +1596,21 @@ function Home({ isLoggedIn }) {
 
       {/* ============ HERO SECTION ============ */}
       <HeroSection ref={heroRef} data-theme="dark">
-        {/* Glow Orbs */}
-        <GlowOrb 
-          style={{ width: 600, height: 600, top: '-200px', left: '-200px' }}
-          $color={`radial-gradient(circle, ${marbleGold}33, transparent 70%)`}
-          $duration="6s"
-        />
-        <GlowOrb 
-          style={{ width: 500, height: 500, bottom: '-150px', right: '-150px' }}
-          $color={`radial-gradient(circle, ${primary}44, transparent 70%)`}
-          $duration="8s"
-        />
+        {/* Glow Orbs — decorative; only render when motion is allowed */}
+        {!reduceMotion && (
+          <>
+            <GlowOrb
+              style={{ width: 600, height: 600, top: '-200px', left: '-200px' }}
+              $color={`radial-gradient(circle, ${marbleGold}22, transparent 70%)`}
+              $duration="6s"
+            />
+            <GlowOrb
+              style={{ width: 500, height: 500, bottom: '-150px', right: '-150px' }}
+              $color={`radial-gradient(circle, ${marbleGold}1a, transparent 70%)`}
+              $duration="8s"
+            />
+          </>
+        )}
 
         {/* Hero Content */}
         <HeroContent style={{
@@ -1704,56 +1654,52 @@ function Home({ isLoggedIn }) {
           </CTAGroup>
         </HeroContent>
 
-        {/* ============ HERO PREVIEW (stacked floating cards) ============ */}
+        {/* ============ HERO PREVIEW (one flat hairline panel) ============ */}
         <HeroPreviewWrap style={{
           transform: `translateY(${scrollProgress * 60}px)`,
           opacity: Math.max(1 - scrollProgress * 1.4, 0),
         }}>
-          <ChartCard style={{
-            transform: `perspective(1600px) rotateY(-6deg) rotateX(4deg) translateZ(0)`,
-          }}>
-            <ChartCardHeader>
-              <SymbolBlock>
-                <span className="ticker">NVDA</span>
-                <span className="name">NVIDIA Corp.</span>
-                {isDemoData && <DemoPill title="Sample data shown while live market keys are unavailable">Demo data</DemoPill>}
-              </SymbolBlock>
-              <PriceBlock>
-                <span className="price">{fmtPrice(livePrice)}</span>
-                <span className="change" style={{ color: changeColor }}>{fmtChange(liveChange)}</span>
-              </PriceBlock>
-            </ChartCardHeader>
-            <MiniCandleChart candles={liveCandles} />
-            <TimeframeRow>
-              <span>1D</span>
-              <span className="active">1W</span>
-              <span>1M</span>
-              <span>3M</span>
-              <span>1Y</span>
-              <span>ALL</span>
-            </TimeframeRow>
-          </ChartCard>
+          <PreviewPanel>
+            <ChartCard>
+              <ChartCardHeader>
+                <SymbolBlock>
+                  <span className="ticker">NVDA</span>
+                  <span className="name">NVIDIA Corp.</span>
+                  {isDemoData && <DemoPill title="Sample data shown while live market keys are unavailable">Demo data</DemoPill>}
+                </SymbolBlock>
+                <PriceBlock>
+                  <span className="price">{fmtPrice(livePrice)}</span>
+                  <span className="change" style={{ color: changeColor }}>{fmtChange(liveChange)}</span>
+                </PriceBlock>
+              </ChartCardHeader>
+              <MiniCandleChart candles={liveCandles} />
+              <TimeframeRow>
+                <span>1D</span>
+                <span className="active">1W</span>
+                <span>1M</span>
+                <span>3M</span>
+                <span>1Y</span>
+                <span>ALL</span>
+              </TimeframeRow>
+            </ChartCard>
 
-          <OrderCard style={{
-            transform: `perspective(1600px) rotateY(8deg) rotateX(-2deg) translateZ(60px)`,
-          }}>
-            <div className="label">paper order</div>
-            <div className="heading">buy NVDA</div>
-            <div className="row"><span>shares</span><span>10</span></div>
-            <div className="row"><span>type</span><span>market</span></div>
-            <div className="row"><span>est. price</span><span>{fmtPrice(livePrice)}</span></div>
-            <div className="total"><span>total</span><span>{fmtPrice(livePrice * 10)}</span></div>
-            <button className="cta">review order →</button>
-          </OrderCard>
+            <OrderCard>
+              <div className="label">paper order</div>
+              <div className="heading">buy NVDA</div>
+              <div className="row"><span>shares</span><span>10</span></div>
+              <div className="row"><span>type</span><span>market</span></div>
+              <div className="row"><span>est. price</span><span>{fmtPrice(livePrice)}</span></div>
+              <div className="total"><span>total</span><span>{fmtPrice(livePrice * 10)}</span></div>
+              <button className="cta">review order <Icon name="arrow-right" size={13} /></button>
+            </OrderCard>
 
-          <CoachCard style={{
-            transform: `perspective(1600px) rotateY(-4deg) rotateX(-3deg) translateZ(80px)`,
-          }}>
-            <div className="label"><span className="dot" />ai coach</div>
-            <div className="quote">
-              {renderCoachMessage()}
-            </div>
-          </CoachCard>
+            <CoachCard>
+              <div className="label"><span className="dot" />ai coach</div>
+              <div className="quote">
+                {renderCoachMessage()}
+              </div>
+            </CoachCard>
+          </PreviewPanel>
         </HeroPreviewWrap>
 
       </HeroSection>
@@ -1761,14 +1707,9 @@ function Home({ isLoggedIn }) {
       {/* ============ 3D PHONE SECTION ============ */}
       <PhoneSection ref={phoneRef} data-theme="dark" style={{ position: 'relative', zIndex: 10 }}>
         <div style={{ position: 'relative', transformStyle: 'preserve-3d' }}>
-          <PhoneMockup 
-            style={{ 
-              transform: `
-                perspective(1200px)
-                rotateY(${Math.sin(totalScrollProgress * Math.PI * 4) * 15}deg) 
-                rotateX(${Math.cos(totalScrollProgress * Math.PI * 4) * 10}deg)
-                rotateZ(${Math.sin(totalScrollProgress * Math.PI * 2) * 5}deg)
-              `
+          <PhoneMockup
+            style={{
+              transform: 'perspective(1200px) rotateX(2deg)'
             }}
           >
             <PhoneScreen>
@@ -1819,17 +1760,18 @@ function Home({ isLoggedIn }) {
               )}
               <PhoneContent>
                 <img src="/marbleWhitelogo.png" alt="tickr logo" />
-                <p style={{ color: marbleWhite }}>your personal trading mentor</p>
+                <p style={{ color: tk.text }}>your personal trading mentor</p>
                 <div style={{
                   marginTop: '20px',
-                  background: `${marbleGray}33`,
-                  borderRadius: '12px',
+                  background: tk.inset,
+                  border: `1px solid ${tk.hair}`,
+                  borderRadius: `${tk.rSm}px`,
                   padding: '12px'
                 }}>
-                  <div style={{ color: marbleGold, fontSize: '1.5rem', fontWeight: '700' }}>
+                  <Num style={{ color: tk.goldBright, fontSize: '1.5rem', fontWeight: 500, display: 'block' }}>
                     $10K
-                  </div>
-                  <div style={{ color: marbleWhite, fontSize: '0.8rem' }}>
+                  </Num>
+                  <div style={{ ...label, marginTop: 4, color: tk.muted }}>
                     Starting balance
                   </div>
                 </div>
@@ -1917,19 +1859,16 @@ function Home({ isLoggedIn }) {
                   flexShrink: 0,
                   width: '24px',
                   height: '24px',
-                  borderRadius: '50%',
+                  borderRadius: `${tk.rSm}px`,
                   background: marbleGold,
                   color: marbleDarkGray,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: '0.85rem',
                   marginTop: '2px',
-                  boxShadow: '0 4px 14px rgba(230, 200, 122, 0.35)',
                   overflow: 'hidden',
                 }}>
-                  ✓
+                  <Icon name="check" size={14} />
                   <img
                     src={f.icon}
                     alt=""
@@ -1973,65 +1912,73 @@ function Home({ isLoggedIn }) {
 
       {/* ============ STATS SECTION ============ */}
       <Section ref={statsRef} data-theme="dark" style={{ background: 'transparent', position: 'relative', overflow: 'hidden', padding: '160px 20px' }}>
-        {/* Subtle light accents on dark background */}
-        <GoldDot 
-          $size="10px" 
-          $opacity={0.5}
-          style={{ 
-            top: '20%', 
-            left: '15%',
-            transform: `translateY(${Math.cos(totalScrollProgress * Math.PI * 2.5) * 25}px)`
-          }} 
-        />
-        <GoldDot 
-          $size="8px" 
-          $opacity={0.3}
-          style={{ 
-            bottom: '25%', 
-            right: '10%',
-            transform: `translateY(${Math.sin(totalScrollProgress * Math.PI * 2.5) * 20}px)`
-          }} 
-        />
-        <GoldLine 
-          $width="100px"
-          $opacity={0.3}
-          style={{ 
-            top: '50%', 
-            right: '5%',
-            transform: `translateY(${Math.sin(totalScrollProgress * Math.PI * 3) * 15}px) rotate(${-30 + totalScrollProgress * 15}deg)`
-          }} 
-        />
-        <SubtleCross 
-          $opacity={0.2}
-          style={{ 
-            top: '30%', 
-            left: '6%',
-            transform: `rotate(${totalScrollProgress * 45}deg)`
-          }} 
-        />
-        
+        {/* Subtle accents — decorative; only render when motion is allowed */}
+        {!reduceMotion && (
+          <>
+            <GoldDot
+              $size="10px"
+              $opacity={0.4}
+              style={{
+                top: '20%',
+                left: '15%',
+                transform: `translateY(${Math.cos(totalScrollProgress * Math.PI * 2.5) * 25}px)`
+              }}
+            />
+            <GoldDot
+              $size="8px"
+              $opacity={0.25}
+              style={{
+                bottom: '25%',
+                right: '10%',
+                transform: `translateY(${Math.sin(totalScrollProgress * Math.PI * 2.5) * 20}px)`
+              }}
+            />
+            <GoldLine
+              $width="100px"
+              $opacity={0.25}
+              style={{
+                top: '50%',
+                right: '5%',
+                transform: `translateY(${Math.sin(totalScrollProgress * Math.PI * 3) * 15}px) rotate(${-30 + totalScrollProgress * 15}deg)`
+              }}
+            />
+            <SubtleCross
+              $opacity={0.18}
+              style={{
+                top: '30%',
+                left: '6%',
+                transform: `rotate(${totalScrollProgress * 45}deg)`
+              }}
+            />
+          </>
+        )}
+
         <SectionInner>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
+            <span style={label}>by the numbers</span>
+            <span style={{ flex: 1, height: 1, background: tk.hair }} />
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '40px',
-            textAlign: 'center'
+            textAlign: 'left'
           }}>
             <div>
               <StatValue $isGold $animate={statsVisible}>$10K</StatValue>
-              <p style={{ color: marbleLightGray }}>Virtual Trading Balance</p>
+              <p style={{ ...label, margin: 0 }}>Virtual Trading Balance</p>
             </div>
             <div>
               <StatValue>25+</StatValue>
-              <p style={{ color: marbleLightGray }}>Interactive Lessons</p>
+              <p style={{ ...label, margin: 0 }}>Interactive Lessons</p>
             </div>
             <div>
               <StatValue $isGold $animate={statsVisible}>24/7</StatValue>
-              <p style={{ color: marbleLightGray }}>AI Coach Access</p>
+              <p style={{ ...label, margin: 0 }}>AI Coach Access</p>
             </div>
             <div>
               <StatValue>$0</StatValue>
-              <p style={{ color: marbleLightGray }}>Risk While Learning</p>
+              <p style={{ ...label, margin: 0 }}>Risk While Learning</p>
             </div>
           </div>
         </SectionInner>
@@ -2158,7 +2105,7 @@ function Home({ isLoggedIn }) {
           </FooterGrid>
 
           <FooterBottom>
-            <p>© {new Date().getFullYear()} tickr. Learn responsibly.</p>
+            <p>© <Num>{new Date().getFullYear()}</Num> tickr. Learn responsibly.</p>
             <p className="disclaimer">Paper trading only — not investment advice.</p>
           </FooterBottom>
         </FooterInner>

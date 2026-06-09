@@ -3,6 +3,7 @@
  * Provides visual placeholders while content is loading.
  */
 import styled, { keyframes } from 'styled-components';
+import tk from '../theme/terminal';
 
 const shimmer = keyframes`
   0% {
@@ -16,13 +17,13 @@ const shimmer = keyframes`
 const SkeletonBase = styled.div`
   background: linear-gradient(
     90deg,
-    #f0f0f0 25%,
-    #e0e0e0 50%,
-    #f0f0f0 75%
+    ${tk.inset} 25%,
+    ${tk.raised} 50%,
+    ${tk.inset} 75%
   );
   background-size: 200% 100%;
   animation: ${shimmer} 1.5s ease-in-out infinite;
-  border-radius: 4px;
+  border-radius: ${tk.rXs}px;
 `;
 
 /**
@@ -58,9 +59,9 @@ export const SkeletonRect = styled(SkeletonBase)`
 const ChartContainer = styled.div`
   width: 100%;
   padding: 20px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background: ${tk.surface};
+  border: 1px solid ${tk.hair};
+  border-radius: ${tk.r}px;
 `;
 
 const ChartHeader = styled.div`
@@ -107,9 +108,9 @@ export function ChartSkeleton() {
  */
 const PortfolioContainer = styled.div`
   padding: 20px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background: ${tk.surface};
+  border: 1px solid ${tk.hair};
+  border-radius: ${tk.r}px;
 `;
 
 const PortfolioHeader = styled.div`
@@ -123,8 +124,8 @@ const PortfolioItem = styled.div`
   align-items: center;
   gap: 12px;
   padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
-  
+  border-bottom: 1px solid ${tk.hair};
+
   &:last-child {
     border-bottom: none;
   }
@@ -162,8 +163,9 @@ export function PortfolioSkeleton() {
  */
 const ChatContainer = styled.div`
   padding: 20px;
-  background: #1a1a2e;
-  border-radius: 12px;
+  background: ${tk.surface};
+  border: 1px solid ${tk.hair};
+  border-radius: ${tk.r}px;
   min-height: 400px;
 `;
 
@@ -179,13 +181,13 @@ const ChatMessage = styled.div`
 
 const MessageBubble = styled(SkeletonBase)`
   padding: 16px;
-  border-radius: 16px;
+  border-radius: ${tk.r}px;
   max-width: 70%;
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.1) 25%,
-    rgba(255, 255, 255, 0.15) 50%,
-    rgba(255, 255, 255, 0.1) 75%
+    rgba(244, 241, 233, 0.06) 25%,
+    rgba(244, 241, 233, 0.12) 50%,
+    rgba(244, 241, 233, 0.06) 75%
   );
   background-size: 200% 100%;
 `;
@@ -194,7 +196,7 @@ export function CoachChatSkeleton() {
   return (
     <ChatContainer>
       <ChatMessage>
-        <SkeletonCircle $size="36px" style={{ background: 'rgba(255,255,255,0.1)' }} />
+        <SkeletonCircle $size="36px" style={{ background: 'rgba(244,241,233,0.08)' }} />
         <div>
           <MessageBubble style={{ width: '200px', height: '60px', marginBottom: '8px' }} />
           <MessageBubble style={{ width: '280px', height: '40px' }} />
@@ -206,7 +208,7 @@ export function CoachChatSkeleton() {
         </div>
       </ChatMessage>
       <ChatMessage>
-        <SkeletonCircle $size="36px" style={{ background: 'rgba(255,255,255,0.1)' }} />
+        <SkeletonCircle $size="36px" style={{ background: 'rgba(244,241,233,0.08)' }} />
         <div>
           <MessageBubble style={{ width: '240px', height: '80px' }} />
         </div>

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { marbleDarkGray, marbleGold } from '../marblePalette';
-import { fontHeading, fontBody } from '../fontPalette';
+import { fontBody } from '../fontPalette';
 import { useSEO } from '../lib/seo';
+import tk, { label, mono, panel, heading, btnPrimary, tag } from '../theme/terminal';
+import Icon from '../components/Icon';
 
 const defaultInventoryState = {
   purchasedItems: [],
@@ -19,14 +20,13 @@ const defaultInventoryState = {
 export default function Inventory() {
   useSEO({ title: 'Inventory' });
   const navigate = useNavigate();
-  // Local dark "marble" theme constants (imported palette bindings can't be reassigned)
-  const pageBg = '#2C2C2C';
-  const cardBg = '#343434';
-  const cardBg2 = '#2f2f2f';
-  const cardText = '#F4F1E9';
-  const cardMuted = '#b8b4a8';
-  const cardBorder = 'rgba(182,156,96,0.22)';
-  const cardDivider = 'rgba(244, 241, 233, 0.12)';
+  // Terminal Editorial theme bindings (charcoal + cream + restrained gold).
+  const pageBg = tk.bg;
+  const cardBg = tk.raised;
+  const cardBg2 = tk.surface;
+  const cardText = tk.text;
+  const cardMuted = tk.muted;
+  const cardDivider = tk.hair;
   const [inventoryData, setInventoryData] = useState(defaultInventoryState);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -101,17 +101,17 @@ export default function Inventory() {
   const getItemIcon = (itemType, effectType) => {
     switch (itemType) {
       case 'booster':
-        return '⚡';
+        return 'bolt';
       case 'utility':
         switch (effectType) {
-          case 'instant_xp': return '🎁';
-          case 'skip_token': return '⏭️';
-          case 'streak_freeze': return '🛡️';
-          case 'instant_coins': return '💰';
-          default: return '🔧';
+          case 'instant_xp': return 'gift';
+          case 'skip_token': return 'skip-forward';
+          case 'streak_freeze': return 'shield';
+          case 'instant_coins': return 'wallet';
+          default: return 'settings';
         }
       default:
-        return '📦';
+        return 'box';
     }
   };
 
@@ -241,12 +241,12 @@ export default function Inventory() {
     if (item.itemType === 'booster') {
       const activeEffect = findActiveEffectForItem(item);
       if (activeEffect) {
-        return '#22c55e'; // Green for active
+        return tk.up; // active
       }
     }
-    
-    if (item.active) return '#22c55e';
-    if (item.consumed) return '#6b7280';
+
+    if (item.active) return tk.up;
+    if (item.consumed) return tk.faint;
     return cardText;
   };
 
@@ -329,19 +329,12 @@ export default function Inventory() {
         gap: "16px",
         fontFamily: fontBody
       }}>
-        <div style={{ color: cardText, fontSize: "18px" }}>❌ {error}</div>
+        <div style={{ color: cardText, fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+          <Icon name="alert" size={18} color={tk.down} /> {error}
+        </div>
         <button
           onClick={fetchInventory}
-          style={{
-            backgroundColor: marbleGold,
-            color: marbleDarkGray,
-            border: "none",
-            padding: "12px 24px",
-            borderRadius: "12px",
-            fontSize: "16px",
-            fontWeight: "600",
-            cursor: "pointer"
-          }}
+          style={{ ...btnPrimary, padding: "10px 22px", fontSize: "13px" }}
         >
           Retry
         </button>
@@ -362,9 +355,9 @@ export default function Inventory() {
     }}>
       {/* Scoped styles: responsive grid collapse (<=768px). */}
       <style>{`
-        .inv-items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+        .inv-items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
         .inv-item-card { transition: transform 0.18s ease, box-shadow 0.18s ease; }
-        .inv-item-card:hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(0,0,0,0.42); }
+        .inv-item-card:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(182,156,96,0.30); }
         @media (prefers-reduced-motion: reduce) {
           .inv-item-card:hover { transform: none; }
         }
@@ -387,120 +380,118 @@ export default function Inventory() {
             style={{
               backgroundColor: "transparent",
               border: "none",
-              color: cardText,
-              fontSize: "16px",
+              color: cardMuted,
+              fontFamily: fontBody,
+              fontSize: "13px",
               cursor: "pointer",
-              marginBottom: "16px",
-              display: "flex",
+              marginBottom: "20px",
+              padding: 0,
+              display: "inline-flex",
               alignItems: "center",
-              gap: "8px"
+              gap: "6px"
             }}
           >
-            ← Back to Dashboard
+            <Icon name="arrow-left" size={14} /> Back to Dashboard
           </button>
-          
+
           <h1 style={{
-            fontSize: "32px",
-            fontWeight: "400",
-            letterSpacing: "-0.01em",
-            color: cardText,
-            fontFamily: fontHeading,
+            ...heading,
+            fontSize: "28px",
             marginBottom: "8px"
           }}>
             Inventory
           </h1>
-          
+
           <p style={{
-            fontSize: "18px",
+            fontSize: "15px",
             color: cardMuted,
-            marginBottom: "24px"
+            marginBottom: "28px"
           }}>
             Manage your purchased items and activate them when you're ready.
           </p>
 
           {/* Inventory Stats */}
+          <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "14px" }}>
+            <span style={label}>balances</span>
+            <span style={{ flex: 1, height: 1, background: cardDivider }} />
+          </div>
           <div style={{
             display: "flex",
-            gap: "16px",
+            gap: "14px",
             flexWrap: "wrap"
           }}>
             <div style={{
-              backgroundColor: cardBg,
-              borderRadius: "12px",
-              padding: "16px",
+              ...panel,
+              background: cardBg,
+              padding: "14px 18px",
               display: "flex",
               alignItems: "center",
-              gap: "12px",
-              border: `1px solid ${cardBorder}`
+              gap: "12px"
             }}>
-              <div style={{ fontSize: "24px" }}>⏭️</div>
+              <Icon name="skip-forward" size={18} color={tk.gold} />
               <div>
                 <div style={{
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: cardText
+                  ...mono,
+                  fontSize: "20px",
+                  fontWeight: 600,
+                  color: cardText,
+                  lineHeight: 1
                 }}>
                   {skipTokens}
                 </div>
-                <div style={{
-                  fontSize: "14px",
-                  color: cardMuted
-                }}>
-                  Skip Tokens
+                <div style={{ ...label, marginTop: "6px" }}>
+                  skip tokens
                 </div>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: cardBg,
-              borderRadius: "12px",
-              padding: "16px",
+              ...panel,
+              background: cardBg,
+              padding: "14px 18px",
               display: "flex",
               alignItems: "center",
-              gap: "12px",
-              border: `1px solid ${cardBorder}`
+              gap: "12px"
             }}>
-              <div style={{ fontSize: "24px" }}>🛡️</div>
+              <Icon name="shield" size={18} color={tk.gold} />
               <div>
                 <div style={{
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: cardText
+                  ...mono,
+                  fontSize: "20px",
+                  fontWeight: 600,
+                  color: cardText,
+                  lineHeight: 1
                 }}>
                   {streakFreezes}
                 </div>
-                <div style={{
-                  fontSize: "14px",
-                  color: cardMuted
-                }}>
-                  Streak Freeze Days
+                <div style={{ ...label, marginTop: "6px" }}>
+                  streak freeze days
                 </div>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: cardBg,
-              borderRadius: "12px",
-              padding: "16px",
+              ...panel,
+              background: cardBg,
+              padding: "14px 18px",
               display: "flex",
               alignItems: "center",
-              gap: "12px",
-              border: `1px solid ${cardBorder}`
+              gap: "12px"
             }}>
-              <div style={{ fontSize: "24px" }}>⭐</div>
+              <Icon name="star" size={18} color={tk.gold} />
               <div>
                 <div style={{
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: cardText
+                  ...mono,
+                  fontSize: "20px",
+                  fontWeight: 600,
+                  color: cardText,
+                  lineHeight: 1
                 }}>
-                  {learningProgress.xp || 0} XP
+                  {learningProgress.xp || 0}
+                  <span style={{ fontSize: "11px", color: cardMuted, marginLeft: "4px" }}>XP</span>
                 </div>
-                <div style={{
-                  fontSize: "14px",
-                  color: cardMuted
-                }}>
-                  Current XP
+                <div style={{ ...label, marginTop: "6px" }}>
+                  current xp
                 </div>
               </div>
             </div>
@@ -520,16 +511,19 @@ export default function Inventory() {
             style={{
               marginBottom: "24px",
               padding: "12px 16px",
-              borderRadius: "12px",
-              backgroundColor: message ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-              color: message ? '#22c55e' : '#ef4444',
+              borderRadius: `${tk.rSm}px`,
+              background: message ? tk.upBg : tk.downBg,
+              border: `1px solid ${message ? 'rgba(79,180,119,0.35)' : 'rgba(224,96,90,0.35)'}`,
+              color: message ? tk.up : tk.down,
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
               gap: "12px"
             }}
           >
-            <span>{message || error}</span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "13px" }}>
+              <Icon name={message ? 'check' : 'alert'} size={15} /> {message || error}
+            </span>
             <button
               onClick={() => { setMessage(null); setError(null); }}
               aria-label="Dismiss message"
@@ -537,53 +531,57 @@ export default function Inventory() {
                 backgroundColor: "transparent",
                 border: "none",
                 color: "inherit",
-                fontSize: "18px",
                 lineHeight: 1,
                 cursor: "pointer",
-                padding: "0 4px"
+                padding: "0 4px",
+                display: "inline-flex"
               }}
             >
-              ×
+              <Icon name="x" size={16} />
             </button>
           </div>
         )}
+
+        <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "20px" }}>
+          <span style={label}>your items</span>
+          <span style={{ flex: 1, height: 1, background: cardDivider }} />
+          <span style={{ ...mono, fontSize: "11px", color: cardMuted }}>
+            {purchasedItems.length} {purchasedItems.length === 1 ? 'item' : 'items'}
+          </span>
+        </div>
 
         <div className="inv-items-grid">
           {purchasedItems.length === 0 ? (
             <div style={{
               gridColumn: "1 / -1",
               textAlign: "center",
-              padding: "48px",
+              padding: "48px 24px",
               color: cardMuted
             }}>
               <div style={{
-                fontSize: "48px",
-                marginBottom: "16px"
+                width: "44px",
+                height: "44px",
+                margin: "0 auto 16px",
+                border: `1px solid ${tk.goldHair}`,
+                borderRadius: `${tk.rSm}px`,
+                display: "grid",
+                placeItems: "center",
+                color: tk.gold
               }}>
-                🎒
+                <Icon name="box" size={20} />
               </div>
               <h3 style={{
-                fontSize: "20px",
-                fontWeight: "bold",
+                ...heading,
+                fontSize: "18px",
                 color: cardText,
                 marginBottom: "8px"
               }}>
                 No items in inventory
               </h3>
-              <p>Visit the shop to purchase items and they’ll appear here.</p>
+              <p style={{ fontSize: "13px", color: cardMuted, lineHeight: 1.5 }}>Visit the shop to purchase items and they’ll appear here.</p>
               <button
                 onClick={() => navigate('/shop')}
-                style={{
-                  backgroundColor: marbleGold,
-                  color: marbleDarkGray,
-                  border: "none",
-                  padding: "12px 24px",
-                  borderRadius: "12px",
-                  fontSize: "16px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  marginTop: "16px"
-                }}
+                style={{ ...btnPrimary, padding: "10px 22px", fontSize: "13px", marginTop: "16px" }}
               >
                 Go to Shop
               </button>
@@ -596,10 +594,9 @@ export default function Inventory() {
                 key={resolvePurchaseId(item) || `${item.itemId}-${item.purchasedAt}`}
                 className="inv-item-card"
                 style={{
-                  backgroundColor: cardBg2,
-                  borderRadius: "20px",
-                  padding: "24px",
-                  border: `2px solid ${cardBorder}`,
+                  ...panel,
+                  background: cardBg2,
+                  padding: "20px",
                   position: "relative"
                 }}
               >
@@ -609,35 +606,37 @@ export default function Inventory() {
                   marginBottom: "16px"
                 }}>
                   <div style={{
-                    fontSize: "32px",
-                    marginRight: "16px"
+                    width: "38px",
+                    height: "38px",
+                    border: `1px solid ${tk.goldHair}`,
+                    borderRadius: `${tk.rSm}px`,
+                    display: "grid",
+                    placeItems: "center",
+                    color: tk.gold,
+                    marginRight: "14px",
+                    flexShrink: 0
                   }}>
-                    {getItemIcon(item.itemType, item.effect?.type)}
+                    <Icon name={getItemIcon(item.itemType, item.effect?.type)} size={18} />
                   </div>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
-                      fontSize: "18px",
-                      fontWeight: "bold",
+                      fontSize: "15px",
+                      fontWeight: 600,
                       color: cardText,
-                      marginBottom: "4px"
+                      marginBottom: "6px"
                     }}>
                       {item.itemName}
                     </div>
-                    <div style={{
-                      fontSize: "12px",
-                      color: cardMuted,
-                      fontWeight: "600",
-                      textTransform: "uppercase"
-                    }}>
+                    <span style={tag}>
                       {item.itemType}
-                    </div>
+                    </span>
                   </div>
                 </div>
 
                 <p style={{
-                  fontSize: "14px",
+                  fontSize: "13px",
                   color: cardMuted,
-                  marginBottom: "20px",
+                  marginBottom: "18px",
                   lineHeight: "1.5"
                 }}>
                   {getItemDescription(item)}
@@ -646,11 +645,14 @@ export default function Inventory() {
                 <div style={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "space-between"
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  paddingTop: "16px",
+                  borderTop: `1px solid ${cardDivider}`
                 }}>
                   <div style={{
-                    fontSize: "14px",
-                    fontWeight: "600",
+                    fontSize: "13px",
+                    fontWeight: 600,
                     color: getStatusColor(item)
                   }}>
                     {getItemStatus(item)}
@@ -667,13 +669,8 @@ export default function Inventory() {
                       onClick={() => handleUseItem(purchaseId)}
                       disabled={usingItemId === purchaseId}
                       style={{
-                        backgroundColor: marbleGold,
-                        color: marbleDarkGray,
-                        border: "none",
-                        padding: "8px 16px",
-                        borderRadius: "8px",
-                        fontSize: "14px",
-                        fontWeight: "600",
+                        ...btnPrimary,
+                        flexShrink: 0,
                         cursor: usingItemId === purchaseId ? "not-allowed" : "pointer",
                         opacity: usingItemId === purchaseId ? 0.7 : 1
                       }}
@@ -686,32 +683,32 @@ export default function Inventory() {
 
                 <div style={{
                   position: "absolute",
-                  top: "12px",
-                  right: "12px",
-                  fontSize: "11px",
+                  top: "16px",
+                  right: "16px",
+                  fontSize: "10.5px",
                   color: cardMuted,
                   textAlign: "right",
-                  lineHeight: "1.4"
+                  lineHeight: "1.6"
                 }}>
-                  <div style={{ marginBottom: "4px" }}>
-                    Purchased: {new Date(item.purchasedAt).toLocaleDateString()}
+                  <div style={{ marginBottom: "3px" }}>
+                    Purchased: <span style={mono}>{new Date(item.purchasedAt).toLocaleDateString()}</span>
                   </div>
                   {item.activatedAt && (
-                    <div style={{ marginBottom: "4px", color: '#22c55e' }}>
-                      Activated: {new Date(item.activatedAt).toLocaleString()}
+                    <div style={{ marginBottom: "3px", color: tk.up }}>
+                      Activated: <span style={mono}>{new Date(item.activatedAt).toLocaleString()}</span>
                     </div>
                   )}
                   {item.consumedAt && !item.activatedAt && (
-                    <div style={{ marginBottom: "4px", color: '#6b7280' }}>
-                      Used: {new Date(item.consumedAt).toLocaleString()}
+                    <div style={{ marginBottom: "3px", color: tk.faint }}>
+                      Used: <span style={mono}>{new Date(item.consumedAt).toLocaleString()}</span>
                     </div>
                   )}
                   {(() => {
                     const activeEffect = findActiveEffectForItem(item);
                     if (activeEffect && activeEffect.activatedAt) {
                       return (
-                        <div style={{ marginBottom: "4px", color: '#22c55e', fontWeight: "600" }}>
-                          Active since: {new Date(activeEffect.activatedAt).toLocaleString()}
+                        <div style={{ marginBottom: "3px", color: tk.up, fontWeight: 600 }}>
+                          Active since: <span style={mono}>{new Date(activeEffect.activatedAt).toLocaleString()}</span>
                         </div>
                       );
                     }

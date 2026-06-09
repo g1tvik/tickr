@@ -1,19 +1,19 @@
 .stock-ticker {
-  font-size: 15px;
-  padding-block: 8px;
+  font-size: 13px;
+  padding-block: 9px;
   user-select: none;
-  --gap: 20px;
+  --gap: 26px;
   max-width: 950px;
   width: 100%;
   margin: 0 auto;
   min-width: 280px;
-  background: rgba(244, 241, 233, 0.7);
-  color: var(--marbleDarkGray);
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(230, 200, 122, 0.08);
+  background: #262626; /* tk.surface */
+  color: #F4F1E9; /* tk.text */
+  border: 1px solid rgba(244, 241, 233, 0.10); /* tk.hair */
+  border-radius: 8px; /* tk.r */
   overflow: hidden;
-  mask-image: linear-gradient(to right, transparent 0%, rgba(244, 241, 233, 0.7) 8%, rgba(244, 241, 233, 0.7) 92%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(244, 241, 233, 0.7) 8%, rgba(244, 241, 233, 0.7) 92%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
 }
 
 .stock-ticker-wrapper {
@@ -44,46 +44,4 @@
   to {
     transform: translateX(calc(-50% - var(--gap) / 2));
   }
-}
-
-.stock-ticker .company,
-.stock-ticker .price {
-  font-weight: bold;
-}
-
-.stock-ticker .price {
-  margin-inline: 4px;
-}
-
-.stock-ticker .plus .change,
-.stock-ticker .plus::before {
-  color: var(--marbleGold);
-}
-
-.stock-ticker .minus .change,
-.stock-ticker .minus::before {
-  color: var(--marbleGray);
-}
-
-.arrow.plus {
-  color: var(--marbleGold);
-}
-.arrow.minus {
-  color: var(--marbleGray);
-}
-
-.percent-positive {
-  color: var(--marbleGold);
-  font-weight: 650;
-}
-.percent-negative {
-  color: var(--marbleGray);
-  font-weight: 650;
-}
-
-/* Loading text */
-.loading-text {
-  color: #666;
-  text-align: center;
-  font-weight: bold;
 }

@@ -2,19 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { lessonStructure } from '../data/lessonStructure';
 import progressManager from '../utils/progressManager';
-import { gray, marbleDarkGray, marbleGold } from '../marblePalette';
-import { fontHeading, fontBody } from '../fontPalette';
+import { fontBody } from '../fontPalette';
 import { useSEO } from '../lib/seo';
+import tk, { label, mono, panel, inset, heading, btnPrimary, btnGhost, tag } from '../theme/terminal';
+import Icon from '../components/Icon';
 
 export default function LessonDetail() {
-  // Marble dark theme palette (local — imported palette constants are light).
-  const pageBg = '#2C2C2C';
-  const cardBg = '#343434';
-  const cardBg2 = '#2f2f2f';
-  const cardText = '#F4F1E9';
-  const cardMuted = '#b8b4a8';
-  const divider = 'rgba(244,241,233,0.12)';
-  const track = 'rgba(244,241,233,0.10)';
+  // Terminal Editorial palette (charcoal ramp + brand gold).
+  const pageBg = tk.bg;
+  const cardBg = tk.raised;
+  const cardBg2 = tk.surface;
+  const cardText = tk.text;
+  const cardMuted = tk.muted;
+  const divider = tk.hair;
+  const track = tk.inset;
+  const ink = '#1F1F1F'; // dark ink on gold fills
 
   const { lessonId } = useParams();
   const navigate = useNavigate();
@@ -189,7 +191,7 @@ export default function LessonDetail() {
         justifyContent: "center",
         fontFamily: fontBody
       }}>
-        <div>Loading lesson...</div>
+        <div style={{ ...label, color: cardMuted }}>Loading lesson…</div>
       </div>
     );
   }
@@ -204,7 +206,7 @@ export default function LessonDetail() {
         justifyContent: "center",
         fontFamily: fontBody
       }}>
-        <div>Lesson not found</div>
+        <div style={{ ...heading, fontSize: 18, color: cardText }}>Lesson not found</div>
       </div>
     );
   }
@@ -243,78 +245,90 @@ export default function LessonDetail() {
             style={{
               backgroundColor: "transparent",
               border: "none",
-              color: cardText,
-              fontSize: "16px",
+              color: cardMuted,
+              fontFamily: fontBody,
+              fontSize: "13px",
+              fontWeight: 600,
+              letterSpacing: "0.04em",
               cursor: "pointer",
-              marginBottom: "16px",
-              display: "flex",
+              marginBottom: "18px",
+              padding: 0,
+              display: "inline-flex",
               alignItems: "center",
-              gap: "8px"
+              gap: "7px"
             }}
           >
-            ← Back to Learn
+            <Icon name="arrow-left" size={14} /> Back to Learn
           </button>
-          
+
           <h1 style={{
-            fontSize: "32px",
-            fontWeight: "bold",
+            ...heading,
+            fontSize: "30px",
             color: cardText,
-            fontFamily: fontHeading,
             marginBottom: "8px"
           }}>
             {lesson.title}
           </h1>
-          
+
           <p style={{
-            fontSize: "18px",
+            fontSize: "16px",
+            lineHeight: 1.55,
             color: cardMuted,
-            marginBottom: "16px"
+            marginBottom: "20px",
+            maxWidth: "720px"
           }}>
             {lesson.description}
           </p>
-          
+
           {/* Progress Bar */}
           <div style={{
             display: "flex",
             alignItems: "center",
             gap: "16px",
-            marginBottom: "16px"
+            marginBottom: "18px"
           }}>
             <div style={{
               flex: 1,
-              height: "8px",
+              height: "6px",
               backgroundColor: track,
-              borderRadius: "4px",
+              borderRadius: `${tk.rXs}px`,
+              border: `1px solid ${divider}`,
               overflow: "hidden"
             }}>
               <div style={{
                 width: `${((currentSection + 1) / lesson.content.length) * 100}%`,
                 height: "100%",
-                backgroundColor: marbleGold,
+                backgroundColor: tk.gold,
                 transition: "width 0.3s ease"
               }} />
             </div>
             <span style={{
-              fontSize: "14px",
-              color: cardMuted,
-              fontWeight: "500"
+              ...mono,
+              fontSize: "12px",
+              color: cardMuted
             }}>
-              {currentSection + 1} of {lesson.content.length}
+              {currentSection + 1} / {lesson.content.length}
             </span>
           </div>
-          
+
           {/* Lesson Info */}
           <div style={{
             display: "flex",
-            gap: "24px",
-            fontSize: "14px",
-            color: cardMuted
+            alignItems: "center",
+            gap: "22px",
+            flexWrap: "wrap"
           }}>
-            <span>Duration: {lesson.duration}</span>
-            <span>XP: {lesson.xp}</span>
+            <span style={{ display: "inline-flex", alignItems: "baseline", gap: "8px" }}>
+              <span style={label}>duration</span>
+              <span style={{ ...mono, fontSize: "13px", color: cardText }}>{lesson.duration}</span>
+            </span>
+            <span style={{ display: "inline-flex", alignItems: "baseline", gap: "8px" }}>
+              <span style={label}>xp</span>
+              <span style={{ ...mono, fontSize: "13px", color: tk.gold }}>{lesson.xp}</span>
+            </span>
             {progress?.completed && (
-              <span style={{ color: marbleGold, fontWeight: "500" }}>
-                ✓ Completed
+              <span style={{ ...tag, color: tk.up, borderColor: 'rgba(79,180,119,.4)', display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                <Icon name="check" size={11} /> completed
               </span>
             )}
           </div>
@@ -338,24 +352,30 @@ export default function LessonDetail() {
             <div>
               {/* Section Content */}
               <div style={{
-                backgroundColor: cardBg2,
-                borderRadius: "20px",
-                padding: "32px",
-                marginBottom: "32px"
+                ...panel,
+                padding: "28px",
+                marginBottom: "24px"
               }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
+                  <span style={label}>section</span>
+                  <span style={{ flex: 1, height: 1, background: divider }} />
+                  <span style={{ ...mono, fontSize: 11, color: cardMuted }}>
+                    {currentSection + 1} / {lesson.content.length}
+                  </span>
+                </div>
+
                 <h2 style={{
-                  fontSize: "24px",
-                  fontWeight: "bold",
+                  ...heading,
+                  fontSize: "22px",
                   color: cardText,
-                  marginBottom: "24px",
-                  fontFamily: fontHeading
+                  marginBottom: "16px"
                 }}>
                   {currentContent.title}
                 </h2>
-                
+
                 <div style={{
-                  fontSize: "18px",
-                  lineHeight: "1.6",
+                  fontSize: "16px",
+                  lineHeight: "1.7",
                   color: cardText
                 }}>
                   {currentContent.content}
@@ -372,41 +392,36 @@ export default function LessonDetail() {
                   onClick={handlePreviousSection}
                   disabled={currentSection === 0}
                   style={{
-                    backgroundColor: currentSection === 0 ? gray : marbleDarkGray,
-                    color: cardText,
-                    border: "none",
-                    padding: "12px 24px",
-                    borderRadius: "12px",
-                    fontSize: "16px",
-                    fontWeight: "600",
+                    ...btnGhost,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
                     cursor: currentSection === 0 ? "not-allowed" : "pointer",
-                    opacity: currentSection === 0 ? 0.6 : 1
+                    opacity: currentSection === 0 ? 0.45 : 1
                   }}
                 >
-                  Previous
+                  <Icon name="arrow-left" size={14} /> Previous
                 </button>
-                
+
                 <div style={{
-                  fontSize: "14px",
+                  ...mono,
+                  fontSize: "12px",
                   color: cardMuted
                 }}>
-                  Section {currentSection + 1} of {lesson.content.length}
+                  {currentSection + 1} / {lesson.content.length}
                 </div>
-                
+
                 <button
                   onClick={handleNextSection}
                   style={{
-                    backgroundColor: marbleGold,
-                    color: marbleDarkGray,
-                    border: "none",
-                    padding: "12px 24px",
-                    borderRadius: "12px",
-                    fontSize: "16px",
-                    fontWeight: "600",
-                    cursor: "pointer"
+                    ...btnPrimary,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px"
                   }}
                 >
                   {currentSection === lesson.content.length - 1 ? "Take Quiz" : "Next"}
+                  <Icon name="arrow-right" size={14} />
                 </button>
               </div>
             </div>
@@ -418,23 +433,17 @@ export default function LessonDetail() {
             }}>
               {/* Progress Card */}
               <div style={{
-                backgroundColor: cardBg2,
-                borderRadius: "20px",
-                padding: "24px",
-                marginBottom: "24px"
+                ...panel,
+                padding: "22px",
+                marginBottom: "20px"
               }}>
-                <h3 style={{
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: cardText,
-                  marginBottom: "16px",
-                  fontFamily: fontHeading
-                }}>
-                  Lesson Progress
-                </h3>
-                
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+                  <span style={label}>progress</span>
+                  <span style={{ flex: 1, height: 1, background: divider }} />
+                </div>
+
                 <div style={{
-                  marginBottom: "16px"
+                  marginBottom: "18px"
                 }}>
                   <div style={{
                     display: "flex",
@@ -443,93 +452,113 @@ export default function LessonDetail() {
                     marginBottom: "8px"
                   }}>
                     <span style={{
-                      fontSize: "14px",
+                      fontSize: "13px",
                       color: cardMuted
                     }}>
-                      Progress
+                      Sections
                     </span>
                     <span style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
+                      ...mono,
+                      fontSize: "13px",
                       color: cardText
                     }}>
-                      {currentSection + 1} of {lesson.content.length}
+                      {currentSection + 1} / {lesson.content.length}
                     </span>
                   </div>
-                  
+
                   <div style={{
-                    height: "8px",
+                    height: "6px",
                     backgroundColor: track,
-                    borderRadius: "4px",
+                    borderRadius: `${tk.rXs}px`,
+                    border: `1px solid ${divider}`,
                     overflow: "hidden"
                   }}>
                     <div style={{
                       width: `${((currentSection + 1) / lesson.content.length) * 100}%`,
                       height: "100%",
-                      backgroundColor: marbleGold,
+                      backgroundColor: tk.gold,
                       transition: "width 0.3s ease"
                     }} />
                   </div>
                 </div>
-                
-                <div style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "8px"
-                }}>
+
+                <div>
                   <div style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    fontSize: "14px"
+                    alignItems: "center",
+                    fontSize: "13px",
+                    padding: "9px 0",
+                    borderTop: `1px solid ${divider}`
                   }}>
-                    <span style={{ color: cardMuted }}>Duration:</span>
-                    <span style={{ color: cardText, fontWeight: "500" }}>{lesson.duration}</span>
+                    <span style={{ color: cardMuted }}>Duration</span>
+                    <span style={{ ...mono, color: cardText }}>{lesson.duration}</span>
                   </div>
                   <div style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    fontSize: "14px"
+                    alignItems: "center",
+                    fontSize: "13px",
+                    padding: "9px 0",
+                    borderTop: `1px solid ${divider}`
                   }}>
-                    <span style={{ color: cardMuted }}>XP Reward:</span>
-                    <span style={{ color: marbleGold, fontWeight: "500" }}>{lesson.xp} XP</span>
+                    <span style={{ color: cardMuted }}>XP reward</span>
+                    <span style={{ ...mono, color: tk.gold }}>{lesson.xp} XP</span>
                   </div>
                   <div style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    fontSize: "14px"
+                    alignItems: "center",
+                    fontSize: "13px",
+                    padding: "9px 0",
+                    borderTop: `1px solid ${divider}`
                   }}>
-                    <span style={{ color: cardMuted }}>Coin Reward:</span>
-                    <span style={{ color: marbleGold, fontWeight: "500" }}>{lesson.coins} 🪙</span>
+                    <span style={{ color: cardMuted }}>Coin reward</span>
+                    <span style={{ ...mono, color: tk.gold, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      {lesson.coins} <Icon name="coin" size={14} color={tk.gold} />
+                    </span>
                   </div>
                   {progress?.completed && (
                     <div style={{
                       display: "flex",
                       justifyContent: "space-between",
-                      fontSize: "14px"
+                      alignItems: "center",
+                      fontSize: "13px",
+                      padding: "9px 0",
+                      borderTop: `1px solid ${divider}`
                     }}>
-                      <span style={{ color: cardMuted }}>Status:</span>
-                      <span style={{ color: marbleGold, fontWeight: "500" }}>✓ Completed</span>
+                      <span style={{ color: cardMuted }}>Status</span>
+                      <span style={{ color: tk.up, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                        <Icon name="check" size={13} /> Completed
+                      </span>
                     </div>
                   )}
                   {hasQuizData && (
                     <div style={{
                       display: "flex",
                       justifyContent: "space-between",
-                      fontSize: "14px"
+                      alignItems: "center",
+                      fontSize: "13px",
+                      padding: "9px 0",
+                      borderTop: `1px solid ${divider}`
                     }}>
-                      <span style={{ color: cardMuted }}>Quiz Score:</span>
-                      <span style={{ color: marbleGold, fontWeight: "500" }}>{bestScorePercent}% correct</span>
+                      <span style={{ color: cardMuted }}>Quiz score</span>
+                      <span style={{ ...mono, color: tk.gold }}>{bestScorePercent}%</span>
                     </div>
                   )}
                   {hasQuizData && totalQuestions > 0 && (
                     <div style={{
                       display: "flex",
                       justifyContent: "space-between",
-                      fontSize: "14px"
+                      alignItems: "center",
+                      fontSize: "13px",
+                      padding: "9px 0",
+                      borderTop: `1px solid ${divider}`
                     }}>
-                      <span style={{ color: cardMuted }}>Best Result:</span>
-                      <span style={{ color: cardText, fontWeight: "500" }}>
-                        {bestCorrectCount}/{totalQuestions} correct ({bestIncorrectCount} wrong)
+                      <span style={{ color: cardMuted }}>Best result</span>
+                      <span style={{ ...mono, color: cardText }}>
+                        {bestCorrectCount}/{totalQuestions}
+                        <span style={{ color: cardMuted }}> ({bestIncorrectCount} wrong)</span>
                       </span>
                     </div>
                   )}
@@ -538,45 +567,50 @@ export default function LessonDetail() {
 
               {/* Section Navigation */}
               <div style={{
-                backgroundColor: cardBg2,
-                borderRadius: "20px",
-                padding: "24px"
+                ...panel,
+                padding: "22px"
               }}>
-                <h3 style={{
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: cardText,
-                  marginBottom: "16px",
-                  fontFamily: fontHeading
-                }}>
-                  Sections
-                </h3>
-                
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+                  <span style={label}>sections</span>
+                  <span style={{ flex: 1, height: 1, background: divider }} />
+                  <span style={{ ...mono, fontSize: 11, color: cardMuted }}>{lesson.content.length}</span>
+                </div>
+
                 <div style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: "8px"
+                  gap: "6px"
                 }}>
-                  {lesson.content.map((section, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentSection(index)}
-                      style={{
-                        backgroundColor: index === currentSection ? marbleGold : cardBg,
-                        color: index === currentSection ? marbleDarkGray : cardText,
-                        border: "none",
-                        padding: "12px 16px",
-                        borderRadius: "12px",
-                        fontSize: "14px",
-                        fontWeight: index === currentSection ? "600" : "500",
-                        cursor: "pointer",
-                        textAlign: "left",
-                        transition: "all 0.2s ease"
-                      }}
-                    >
-                      {section.title}
-                    </button>
-                  ))}
+                  {lesson.content.map((section, index) => {
+                    const active = index === currentSection;
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentSection(index)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          backgroundColor: active ? tk.gold : "transparent",
+                          color: active ? ink : cardText,
+                          border: `1px solid ${active ? "transparent" : divider}`,
+                          padding: "10px 12px",
+                          borderRadius: `${tk.rSm}px`,
+                          fontFamily: fontBody,
+                          fontSize: "13px",
+                          fontWeight: active ? "600" : "500",
+                          cursor: "pointer",
+                          textAlign: "left",
+                          transition: "all 0.2s ease"
+                        }}
+                      >
+                        <span style={{ ...mono, fontSize: "11px", color: active ? ink : cardMuted, minWidth: "18px" }}>
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <span>{section.title}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -592,108 +626,110 @@ export default function LessonDetail() {
             <div>
               {/* Quiz */}
               <div style={{
-                backgroundColor: cardBg2,
-                borderRadius: "20px",
-                padding: "32px",
-                marginBottom: "32px"
+                ...panel,
+                padding: "28px",
+                marginBottom: "24px"
               }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+                  <span style={label}>quiz</span>
+                  <span style={{ flex: 1, height: 1, background: divider }} />
+                </div>
+
                 <h2 style={{
-                  fontSize: "24px",
-                  fontWeight: "bold",
+                  ...heading,
+                  fontSize: "22px",
                   color: cardText,
-                  marginBottom: "24px",
-                  fontFamily: fontHeading
+                  marginBottom: "10px"
                 }}>
-                  Lesson Quiz
+                  Lesson quiz
                 </h2>
-                
+
                 <p style={{
-                  fontSize: "16px",
+                  fontSize: "14px",
                   color: cardMuted,
-                  marginBottom: "32px"
+                  marginBottom: "28px"
                 }}>
-                  Test your knowledge with this quiz. You have unlimited attempts!
+                  Test your knowledge with this quiz. You have unlimited attempts.
                 </p>
-                
+
                 {lesson.quiz.questions.map((question, index) => (
-                  <div key={index} style={{ marginBottom: "32px" }}>
+                  <div key={index} style={{ marginBottom: "28px" }}>
                     <p style={{
-                      fontSize: "18px",
+                      fontSize: "16px",
                       color: cardText,
-                      marginBottom: "16px",
-                      fontWeight: "500"
+                      marginBottom: "14px",
+                      fontWeight: "500",
+                      display: "flex",
+                      gap: "10px"
                     }}>
-                      {index + 1}. {question.question}
+                      <span style={{ ...mono, color: tk.gold }}>{String(index + 1).padStart(2, "0")}</span>
+                      <span>{question.question}</span>
                     </p>
-                    
-                    {question.options.map((option, optionIndex) => (
-                      <label
-                        key={optionIndex}
-                        style={{
-                          display: "block",
-                          padding: "16px",
-                          marginBottom: "12px",
-                          backgroundColor: cardBg,
-                          borderRadius: "12px",
-                          cursor: "pointer",
-                          border: quizAnswers[`q${index}`] === optionIndex ? `2px solid ${marbleGold}` : "2px solid transparent",
-                          transition: "border-color 0.2s ease"
-                        }}
-                      >
-                        <input
-                          type="radio"
-                          name={`q${index}`}
-                          value={optionIndex}
-                          checked={quizAnswers[`q${index}`] === optionIndex}
-                          onChange={(e) => setQuizAnswers({...quizAnswers, [`q${index}`]: parseInt(e.target.value)})}
-                          style={{ marginRight: "12px" }}
-                        />
-                        <span style={{
-                          fontSize: "16px",
-                          color: cardText
-                        }}>
-                          {option}
-                        </span>
-                      </label>
-                    ))}
+
+                    {question.options.map((option, optionIndex) => {
+                      const selected = quizAnswers[`q${index}`] === optionIndex;
+                      return (
+                        <label
+                          key={optionIndex}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            padding: "13px 14px",
+                            marginBottom: "8px",
+                            background: selected ? tk.upBg : tk.inset,
+                            borderRadius: `${tk.rSm}px`,
+                            cursor: "pointer",
+                            border: selected ? `1px solid ${tk.goldHair}` : `1px solid ${divider}`,
+                            transition: "border-color 0.2s ease, background 0.2s ease"
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name={`q${index}`}
+                            value={optionIndex}
+                            checked={quizAnswers[`q${index}`] === optionIndex}
+                            onChange={(e) => setQuizAnswers({...quizAnswers, [`q${index}`]: parseInt(e.target.value)})}
+                            style={{ marginRight: "12px", accentColor: tk.gold }}
+                          />
+                          <span style={{
+                            fontSize: "14px",
+                            color: cardText
+                          }}>
+                            {option}
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
                 ))}
-                
+
                 <div style={{
                   display: "flex",
-                  gap: "16px",
+                  gap: "12px",
                   justifyContent: "center"
                 }}>
                   <button
                     onClick={() => setShowQuiz(false)}
                     style={{
-                      backgroundColor: gray,
-                      color: cardText,
-                      border: "none",
-                      padding: "12px 24px",
-                      borderRadius: "12px",
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      cursor: "pointer"
+                      ...btnGhost,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px"
                     }}
                   >
-                    Back to Lesson
+                    <Icon name="arrow-left" size={14} /> Back to Lesson
                   </button>
-                  
+
                   <button
                     onClick={handleQuizSubmit}
                     style={{
-                      backgroundColor: marbleGold,
-                      color: marbleDarkGray,
-                      border: "none",
-                      padding: "12px 24px",
-                      borderRadius: "12px",
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      cursor: "pointer"
+                      ...btnPrimary,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px"
                     }}
                   >
-                    Submit Quiz
+                    <Icon name="check" size={14} /> Submit Quiz
                   </button>
                 </div>
               </div>
@@ -701,39 +737,37 @@ export default function LessonDetail() {
               {/* Completed Lesson Actions */}
               {progress?.completed && (
                 <div style={{
-                  backgroundColor: cardBg2,
-                  borderRadius: "20px",
-                  padding: "24px",
+                  ...panel,
+                  padding: "22px",
                   textAlign: "center"
                 }}>
                   <h3 style={{
-                    fontSize: "20px",
-                    fontWeight: "bold",
+                    ...heading,
+                    fontSize: "18px",
                     color: cardText,
-                    marginBottom: "16px"
+                    marginBottom: "16px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px"
                   }}>
-                    Lesson Completed! 🎉
+                    <Icon name="trophy" size={18} color={tk.gold} /> Lesson completed
                   </h3>
-                  
+
                   <div style={{
                     display: "flex",
-                    gap: "16px",
+                    gap: "12px",
                     justifyContent: "center"
                   }}>
                     <button
                       onClick={handleRetakeQuiz}
                       style={{
-                        backgroundColor: marbleDarkGray,
-                        color: cardText,
-                        border: "none",
-                        padding: "12px 24px",
-                        borderRadius: "12px",
-                        fontSize: "16px",
-                        fontWeight: "600",
-                        cursor: "pointer"
+                        ...btnGhost,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px"
                       }}
                     >
-                      Retake Quiz
+                      <Icon name="refresh" size={14} /> Retake Quiz
                     </button>
                   </div>
                 </div>
@@ -747,59 +781,61 @@ export default function LessonDetail() {
             }}>
               {/* Quiz Info Card */}
               <div style={{
-                backgroundColor: cardBg2,
-                borderRadius: "20px",
-                padding: "24px",
-                marginBottom: "24px"
+                ...panel,
+                padding: "22px",
+                marginBottom: "20px"
               }}>
-                <h3 style={{
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: cardText,
-                  marginBottom: "16px",
-                  fontFamily: fontHeading
-                }}>
-                  Quiz Information
-                </h3>
-                
-                <div style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "12px"
-                }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+                  <span style={label}>quiz info</span>
+                  <span style={{ flex: 1, height: 1, background: divider }} />
+                </div>
+
+                <div>
                   <div style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    fontSize: "14px"
+                    alignItems: "center",
+                    fontSize: "13px",
+                    padding: "9px 0",
+                    borderTop: `1px solid ${divider}`
                   }}>
-                    <span style={{ color: cardMuted }}>Questions:</span>
-                    <span style={{ color: cardText, fontWeight: "500" }}>{lesson.quiz.questions.length}</span>
+                    <span style={{ color: cardMuted }}>Questions</span>
+                    <span style={{ ...mono, color: cardText }}>{lesson.quiz.questions.length}</span>
                   </div>
                   <div style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    fontSize: "14px"
+                    alignItems: "center",
+                    fontSize: "13px",
+                    padding: "9px 0",
+                    borderTop: `1px solid ${divider}`
                   }}>
-                    <span style={{ color: cardMuted }}>Attempts:</span>
+                    <span style={{ color: cardMuted }}>Attempts</span>
                     <span style={{ color: cardText, fontWeight: "500" }}>Unlimited</span>
                   </div>
                   <div style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    fontSize: "14px"
+                    alignItems: "center",
+                    fontSize: "13px",
+                    padding: "9px 0",
+                    borderTop: `1px solid ${divider}`
                   }}>
-                    <span style={{ color: cardMuted }}>Best Score:</span>
-                    <span style={{ color: marbleGold, fontWeight: "500" }}>
+                    <span style={{ color: cardMuted }}>Best score</span>
+                    <span style={{ ...mono, color: progress?.bestScore ? tk.gold : cardMuted }}>
                       {progress?.bestScore ? `${Math.round(progress.bestScore)}%` : "Not taken"}
                     </span>
                   </div>
                   <div style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    fontSize: "14px"
+                    alignItems: "center",
+                    fontSize: "13px",
+                    padding: "9px 0",
+                    borderTop: `1px solid ${divider}`
                   }}>
-                    <span style={{ color: cardMuted }}>Rewards:</span>
-                    <span style={{ color: marbleGold, fontWeight: "500" }}>
+                    <span style={{ color: cardMuted }}>Rewards</span>
+                    <span style={{ color: tk.gold, fontWeight: "500" }}>
                       {completionData?.rewardAlreadyGiven ? "Already claimed" : "One-time"}
                     </span>
                   </div>
@@ -807,10 +843,15 @@ export default function LessonDetail() {
                     <div style={{
                       display: "flex",
                       justifyContent: "space-between",
-                      fontSize: "14px"
+                      alignItems: "center",
+                      fontSize: "13px",
+                      padding: "9px 0",
+                      borderTop: `1px solid ${divider}`
                     }}>
-                      <span style={{ color: cardMuted }}>Status:</span>
-                      <span style={{ color: marbleGold, fontWeight: "500" }}>✓ Completed</span>
+                      <span style={{ color: cardMuted }}>Status</span>
+                      <span style={{ color: tk.up, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                        <Icon name="check" size={13} /> Completed
+                      </span>
                     </div>
                   )}
                 </div>
@@ -818,60 +859,62 @@ export default function LessonDetail() {
 
               {/* Quiz Progress */}
               <div style={{
-                backgroundColor: cardBg2,
-                borderRadius: "20px",
-                padding: "24px"
+                ...panel,
+                padding: "22px"
               }}>
-                <h3 style={{
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: cardText,
-                  marginBottom: "16px",
-                  fontFamily: fontHeading
-                }}>
-                  Quiz Progress
-                </h3>
-                
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+                  <span style={label}>quiz progress</span>
+                  <span style={{ flex: 1, height: 1, background: divider }} />
+                  <span style={{ ...mono, fontSize: 11, color: cardMuted }}>
+                    {Object.keys(quizAnswers).length} / {lesson.quiz.questions.length}
+                  </span>
+                </div>
+
                 <div style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: "8px"
+                  gap: "6px"
                 }}>
-                  {lesson.quiz.questions.map((question, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        padding: "8px 12px",
-                        backgroundColor: cardBg,
-                        borderRadius: "8px",
-                        fontSize: "14px"
-                      }}
-                    >
-                      <div style={{
-                        width: "20px",
-                        height: "20px",
-                        borderRadius: "50%",
-                        backgroundColor: quizAnswers[`q${index}`] !== undefined ? marbleGold : gray,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "12px",
-                        color: cardText,
-                        fontWeight: "bold"
-                      }}>
-                        {index + 1}
+                  {lesson.quiz.questions.map((question, index) => {
+                    const answered = quizAnswers[`q${index}`] !== undefined;
+                    return (
+                      <div
+                        key={index}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          padding: "8px 12px",
+                          background: answered ? tk.upBg : tk.inset,
+                          borderRadius: `${tk.rSm}px`,
+                          border: `1px solid ${answered ? "rgba(79,180,119,.32)" : divider}`,
+                          fontSize: "13px"
+                        }}
+                      >
+                        <div style={{
+                          width: "22px",
+                          height: "22px",
+                          borderRadius: `${tk.rXs}px`,
+                          background: answered ? tk.up : "transparent",
+                          border: answered ? "none" : `1px solid ${divider}`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: answered ? ink : cardMuted
+                        }}>
+                          {answered
+                            ? <Icon name="check" size={13} />
+                            : <span style={{ ...mono, fontSize: "11px" }}>{index + 1}</span>}
+                        </div>
+                        <span style={{
+                          color: answered ? cardText : cardMuted,
+                          fontWeight: answered ? "500" : "400"
+                        }}>
+                          Question <span style={{ ...mono }}>{index + 1}</span>
+                        </span>
                       </div>
-                      <span style={{
-                        color: quizAnswers[`q${index}`] !== undefined ? cardText : cardMuted,
-                        fontWeight: quizAnswers[`q${index}`] !== undefined ? "500" : "400"
-                      }}>
-                        Question {index + 1}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -891,50 +934,49 @@ export default function LessonDetail() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          zIndex: 1000,
-          backdropFilter: "blur(4px)"
+          zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: cardBg,
-            borderRadius: "24px",
-            padding: "40px",
-            maxWidth: "500px",
+            ...panel,
+            background: cardBg,
+            padding: "32px",
+            maxWidth: "480px",
             width: "90%",
             textAlign: "center",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.28)",
+            boxShadow: "0 12px 32px rgba(0,0,0,0.45)",
             animation: "slideIn 0.3s ease-out"
           }}>
             {/* Success Icon */}
             <div style={{
-              width: "80px",
-              height: "80px",
-              borderRadius: "50%",
-              backgroundColor: marbleGold,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              margin: "0 auto 24px",
-              fontSize: "40px"
+              width: "56px",
+              height: "56px",
+              borderRadius: `${tk.rSm}px`,
+              border: `1px solid ${tk.goldHair}`,
+              color: tk.gold,
+              display: "grid",
+              placeItems: "center",
+              margin: "0 auto 18px"
             }}>
-              🎉
+              <Icon name="trophy" size={24} />
             </div>
 
             {/* Title */}
             <h2 style={{
-              fontSize: "28px",
-              fontWeight: "bold",
+              ...heading,
+              fontSize: "24px",
               color: cardText,
-              marginBottom: "16px",
-              fontFamily: fontHeading
+              marginBottom: "14px"
             }}>
-              {completionData.lessonCompleted ? "Lesson Completed!" : "Quiz Submitted!"}
+              {completionData.lessonCompleted ? "Lesson completed" : "Quiz submitted"}
             </h2>
 
             {/* Score */}
             <div style={{
-              fontSize: "48px",
-              fontWeight: "bold",
-              color: marbleGold,
+              ...mono,
+              fontSize: "44px",
+              fontWeight: 600,
+              color: tk.gold,
+              lineHeight: 1,
               marginBottom: "24px"
             }}>
               {completionData.score}%
@@ -942,23 +984,25 @@ export default function LessonDetail() {
 
             {/* Score Details */}
             <div style={{
-              backgroundColor: cardBg2,
-              borderRadius: "16px",
-              padding: "20px",
-              marginBottom: "24px"
+              ...inset,
+              padding: "6px 18px 12px",
+              marginBottom: "24px",
+              textAlign: "left"
             }}>
               <div style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: "12px"
+                fontSize: "13px",
+                padding: "9px 0",
+                borderTop: `1px solid ${divider}`
               }}>
-                <span style={{ color: cardMuted }}>Correct Answers:</span>
-                <span style={{ fontWeight: "600", color: cardText }}>
+                <span style={{ color: cardMuted }}>Correct answers</span>
+                <span style={{ ...mono, fontWeight: "600", color: cardText }}>
                   {completionData.correctAnswers}/{completionData.totalQuestions}
                 </span>
               </div>
-              
+
               {/* Show rewards earned this attempt */}
               {completionData.xpEarned > 0 || completionData.coinsEarned > 0 ? (
                 <>
@@ -966,23 +1010,27 @@ export default function LessonDetail() {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    marginBottom: "12px"
+                    fontSize: "13px",
+                    padding: "9px 0",
+                    borderTop: `1px solid ${divider}`
                   }}>
-                    <span style={{ color: cardMuted }}>XP Earned This Attempt:</span>
-                    <span style={{ fontWeight: "600", color: marbleGold }}>
+                    <span style={{ color: cardMuted }}>XP earned this attempt</span>
+                    <span style={{ ...mono, fontWeight: "600", color: tk.gold }}>
                       +{completionData.xpEarned} XP
                     </span>
                   </div>
-                  
+
                   <div style={{
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    marginBottom: "12px"
+                    fontSize: "13px",
+                    padding: "9px 0",
+                    borderTop: `1px solid ${divider}`
                   }}>
-                    <span style={{ color: cardMuted }}>Coins Earned This Attempt:</span>
-                    <span style={{ fontWeight: "600", color: marbleGold }}>
-                      +{completionData.coinsEarned} 🪙
+                    <span style={{ color: cardMuted }}>Coins earned this attempt</span>
+                    <span style={{ ...mono, fontWeight: "600", color: tk.gold, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      +{completionData.coinsEarned} <Icon name="coin" size={13} color={tk.gold} />
                     </span>
                   </div>
                 </>
@@ -991,11 +1039,13 @@ export default function LessonDetail() {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  marginBottom: "12px"
+                  fontSize: "13px",
+                  padding: "9px 0",
+                  borderTop: `1px solid ${divider}`
                 }}>
-                  <span style={{ color: cardMuted }}>Rewards Earned:</span>
-                  <span style={{ fontWeight: "600", color: cardMuted }}>
-                    No new rewards (already earned maximum)
+                  <span style={{ color: cardMuted }}>Rewards earned</span>
+                  <span style={{ color: cardMuted }}>
+                    None (max already earned)
                   </span>
                 </div>
               )}
@@ -1005,28 +1055,30 @@ export default function LessonDetail() {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: "12px",
-                paddingTop: "12px",
-                borderTop: `1px solid ${divider}`
+                fontSize: "13px",
+                padding: "9px 0",
+                borderTop: `1px solid ${tk.hairStrong}`
               }}>
-                <span style={{ color: cardMuted }}>Total XP Earned:</span>
-                <span style={{ fontWeight: "600", color: cardText }}>
+                <span style={{ color: cardMuted }}>Total XP earned</span>
+                <span style={{ ...mono, fontWeight: "600", color: cardText }}>
                   {completionData.totalXpEarned}/{completionData.totalXpPossible} XP
                 </span>
               </div>
-              
+
               <div style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: "12px"
+                fontSize: "13px",
+                padding: "9px 0",
+                borderTop: `1px solid ${divider}`
               }}>
-                <span style={{ color: cardMuted }}>Total Coins Earned:</span>
-                <span style={{ fontWeight: "600", color: cardText }}>
-                  {completionData.totalCoinsEarned}/{completionData.totalCoinsPossible} 🪙
+                <span style={{ color: cardMuted }}>Total coins earned</span>
+                <span style={{ ...mono, fontWeight: "600", color: cardText, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                  {completionData.totalCoinsEarned}/{completionData.totalCoinsPossible} <Icon name="coin" size={13} color={cardText} />
                 </span>
               </div>
-              
+
               {/* Show remaining rewards if any */}
               {(completionData.xpRemaining > 0 || completionData.coinsRemaining > 0) && (
                 <>
@@ -1034,54 +1086,64 @@ export default function LessonDetail() {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    marginBottom: "12px",
-                    paddingTop: "12px",
-                    borderTop: `1px solid ${divider}`
+                    fontSize: "13px",
+                    padding: "9px 0",
+                    borderTop: `1px solid ${tk.hairStrong}`
                   }}>
-                    <span style={{ color: cardMuted }}>XP Remaining:</span>
-                    <span style={{ fontWeight: "600", color: marbleGold }}>
+                    <span style={{ color: cardMuted }}>XP remaining</span>
+                    <span style={{ ...mono, fontWeight: "600", color: tk.gold }}>
                       {completionData.xpRemaining} XP
                     </span>
                   </div>
-                  
+
                   <div style={{
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    marginBottom: "12px"
+                    fontSize: "13px",
+                    padding: "9px 0",
+                    borderTop: `1px solid ${divider}`
                   }}>
-                    <span style={{ color: cardMuted }}>Coins Remaining:</span>
-                    <span style={{ fontWeight: "600", color: marbleGold }}>
-                      {completionData.coinsRemaining} 🪙
+                    <span style={{ color: cardMuted }}>Coins remaining</span>
+                    <span style={{ ...mono, fontWeight: "600", color: tk.gold, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      {completionData.coinsRemaining} <Icon name="coin" size={13} color={tk.gold} />
                     </span>
                   </div>
-                  
+
                   <div style={{
-                    backgroundColor: marbleGold,
-                    color: marbleDarkGray,
-                    padding: "8px 12px",
-                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    background: "transparent",
+                    border: `1px solid ${tk.goldHair}`,
+                    color: tk.gold,
+                    padding: "9px 12px",
+                    borderRadius: `${tk.rSm}px`,
                     fontSize: "12px",
-                    textAlign: "center",
-                    marginTop: "8px"
+                    textAlign: "left",
+                    marginTop: "12px"
                   }}>
-                    💡 Retake the quiz to earn remaining rewards!
+                    <Icon name="sparkle" size={14} /> Retake the quiz to earn remaining rewards.
                   </div>
                 </>
               )}
-              
+
               {/* Show completion message if 100% achieved */}
               {completionData.rewardAlreadyGiven && (
                 <div style={{
-                  backgroundColor: marbleGold,
-                  color: marbleDarkGray,
-                  padding: "8px 12px",
-                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  background: "transparent",
+                  border: `1px solid ${tk.goldHair}`,
+                  color: tk.gold,
+                  padding: "9px 12px",
+                  borderRadius: `${tk.rSm}px`,
                   fontSize: "12px",
-                  textAlign: "center",
-                  marginTop: "8px"
+                  textAlign: "left",
+                  marginTop: "12px"
                 }}>
-                  🎉 Perfect score! All rewards earned!
+                  <Icon name="trophy" size={14} /> Perfect score. All rewards earned.
                 </div>
               )}
             </div>
@@ -1096,74 +1158,67 @@ export default function LessonDetail() {
               <button
                 onClick={handleBackToLesson}
                 style={{
-                  backgroundColor: gray,
-                  color: cardText,
-                  border: "none",
-                  padding: "12px 20px",
-                  borderRadius: "12px",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  cursor: "pointer",
+                  ...btnGhost,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  padding: "11px 16px",
                   flex: 1,
                   minWidth: "140px"
                 }}
               >
-                Back to Lesson
+                <Icon name="arrow-left" size={14} /> Back to Lesson
               </button>
-              
+
               <button
                 onClick={handleRetakeQuiz}
                 style={{
-                  backgroundColor: (completionData.xpRemaining > 0 || completionData.coinsRemaining > 0) ? marbleGold : gray,
-                  color: (completionData.xpRemaining > 0 || completionData.coinsRemaining > 0) ? marbleDarkGray : cardText,
-                  border: "none",
-                  padding: "12px 20px",
-                  borderRadius: "12px",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  cursor: "pointer",
+                  ...((completionData.xpRemaining > 0 || completionData.coinsRemaining > 0) ? btnPrimary : btnGhost),
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  padding: "11px 16px",
                   flex: 1,
                   minWidth: "140px"
                 }}
               >
-                {(completionData.xpRemaining > 0 || completionData.coinsRemaining > 0) ? "Retake for More Rewards" : "Retake Quiz"}
+                <Icon name="refresh" size={14} /> {(completionData.xpRemaining > 0 || completionData.coinsRemaining > 0) ? "Retake for More Rewards" : "Retake Quiz"}
               </button>
-              
+
               {findNextLesson(lesson.id) ? (
                 <button
                   onClick={handleContinueToNext}
                   style={{
-                    backgroundColor: completionData.lessonCompleted ? marbleGold : marbleDarkGray,
-                    color: completionData.lessonCompleted ? marbleDarkGray : cardText,
-                    border: "none",
-                    padding: "12px 20px",
-                    borderRadius: "12px",
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    cursor: "pointer",
+                    ...(completionData.lessonCompleted ? btnPrimary : btnGhost),
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                    padding: "11px 16px",
                     flex: 1,
                     minWidth: "140px"
                   }}
                 >
                   {completionData.lessonCompleted ? "Continue to Next Lesson" : "Next Lesson"}
+                  <Icon name="arrow-right" size={14} />
                 </button>
               ) : (
                 <button
                   onClick={handleBackToLearn}
                   style={{
-                    backgroundColor: marbleGold,
-                    color: marbleDarkGray,
-                    border: "none",
-                    padding: "12px 20px",
-                    borderRadius: "12px",
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    cursor: "pointer",
+                    ...btnPrimary,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                    padding: "11px 16px",
                     flex: 1,
                     minWidth: "140px"
                   }}
                 >
-                  Back to Learn
+                  <Icon name="arrow-left" size={14} /> Back to Learn
                 </button>
               )}
             </div>

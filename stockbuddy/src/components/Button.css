@@ -1,4 +1,5 @@
-/* Button variants use globals.css tokens */
+/* Button variants use globals.css tokens — Terminal Editorial geometry:
+   tight radius, tracked type, flat (no glow/shadow). */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -7,7 +8,8 @@
   padding: 12px 24px;
   font-size: 1rem;
   font-weight: 600;
-  border-radius: 12px;
+  letter-spacing: 0.02em;
+  border-radius: 6px;
   text-decoration: none;
   cursor: pointer;
   border: none;
