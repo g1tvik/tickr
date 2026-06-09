@@ -429,6 +429,144 @@ const Leaderboard = ({ reduced }) => {
   );
 };
 
+// ─── Portfolio allocation palette ───────────────────────────────────────────────
+// Warm marble tones, ordered for adjacent-segment contrast. Cash gets a faint
+// cream so it reads as "uninvested" rather than another holding.
+const ALLOC_COLORS = ['#E6C87A', '#B69C60', '#CBB078', '#9C8550', '#D9C4A0', '#7E6F46'];
+const CASH_COLOR = 'rgba(244, 241, 233, 0.22)';
+
+// Segmented allocation bar — visualizes how the portfolio is split across
+// holdings + cash. Adapted from a 21st.dev balance-card pattern, recolored to
+// the marble palette and driven by live position values.
+const AllocationBar = ({ segments, reduced }) => {
+  if (!segments.length) {
+    return <div style={{ height: '10px', borderRadius: '6px', background: 'rgba(244,241,233,0.08)' }} />;
+  }
+  return (
+    <div style={{ display: 'flex', gap: '3px', height: '10px', width: '100%' }}>
+      {segments.map((s, i) => (
+        <div
+          key={s.key}
+          title={`${s.label} · ${s.pct.toFixed(1)}%`}
+          style={{
+            width: `${s.pct}%`,
+            minWidth: '4px',
+            background: s.color,
+            borderRadius:
+              segments.length === 1 ? '6px' :
+              i === 0 ? '6px 2px 2px 6px' :
+              i === segments.length - 1 ? '2px 6px 6px 2px' : '2px',
+            transition: reduced ? 'none' : 'width 0.6s cubic-bezier(0.16,1,0.3,1)',
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+// ─── Portfolio Hero ─────────────────────────────────────────────────────────────
+// The dashboard centerpiece: big portfolio value, a color-coded return chip, the
+// allocation bar + legend, and a cash / return / holdings metric strip.
+const PortfolioHero = ({ portfolio, loading, error, reduced, fmt, fmtPct, changeColor, onRefresh, onTrade }) => {
+  const positions = (portfolio?.positions || []).filter(p => num(p.currentValue, 0) > 0);
+  const holdingsValue = positions.reduce((s, p) => s + num(p.currentValue, 0), 0);
+  const cash = num(portfolio?.cash, 0);
+  const denom = holdingsValue + cash;
+
+  // Top 5 holdings by value; everything smaller folds into a single "Other".
+  const sorted = [...positions].sort((a, b) => num(b.currentValue, 0) - num(a.currentValue, 0));
+  const segments = [];
+  sorted.slice(0, 5).forEach((p, i) =>
+    segments.push({ key: p.symbol, label: p.symbol, value: num(p.currentValue, 0), color: ALLOC_COLORS[i % ALLOC_COLORS.length] })
+  );
+  const restValue = sorted.slice(5).reduce((s, p) => s + num(p.currentValue, 0), 0);
+  if (restValue > 0) segments.push({ key: '__other', label: 'Other', value: restValue, color: ALLOC_COLORS[5] });
+  if (cash > 0) segments.push({ key: '__cash', label: 'Cash', value: cash, color: CASH_COLOR });
+  const withPct = denom > 0 ? segments.map(s => ({ ...s, pct: (s.value / denom) * 100 })) : [];
+
+  const ret = num(portfolio?.totalReturn, 0);
+  const up = ret >= 0;
+  const showData = !loading && !error;
+
+  return (
+    <div style={{ ...card, padding: '26px 28px', marginBottom: '24px', position: 'relative', overflow: 'hidden' }}>
+      {/* faint gold glow */}
+      <div aria-hidden="true" style={{ position: 'absolute', top: '-45%', right: '-8%', width: '320px', height: '320px', background: 'radial-gradient(circle, rgba(230,200,122,0.13) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '14px', position: 'relative' }}>
+        <div>
+          <div style={{ ...sectionLabel, border: 'none', padding: 0, margin: 0, marginBottom: '10px', display: 'flex', alignItems: 'center' }}>
+            portfolio value
+            {portfolio?.isDemo && <DemoPill style={{ marginLeft: '10px' }} />}
+          </div>
+          {loading ? (
+            <Skeleton reduced={reduced} width="240px" height="44px" />
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px', flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: fontHeading, fontSize: '44px', fontWeight: '400', color: DARK, letterSpacing: '-0.02em', lineHeight: 1 }}>
+                {error ? '—' : fmt(portfolio?.totalValue)}
+              </span>
+              {showData && (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '5px',
+                  fontSize: '14px', fontWeight: '600', color: changeColor(ret),
+                  background: up ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
+                  border: `1px solid ${up ? 'rgba(34,197,94,0.30)' : 'rgba(239,68,68,0.30)'}`,
+                  borderRadius: '20px', padding: '4px 11px',
+                }}>
+                  <span aria-hidden="true">{up ? '▲' : '▼'}</span>{fmtPct(ret)}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={onRefresh} style={{ background: 'rgba(244,241,233,0.08)', border: 'none', padding: '7px 14px', borderRadius: '10px', fontSize: '12px', cursor: 'pointer', color: DARK }}>Refresh</button>
+          <button onClick={onTrade} style={{ background: GOLD, border: 'none', padding: '7px 16px', borderRadius: '10px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', color: '#2C2C2C' }}>Trade →</button>
+        </div>
+      </div>
+
+      {/* allocation bar + legend */}
+      <div style={{ marginTop: '22px', position: 'relative' }}>
+        {loading ? (
+          <Skeleton reduced={reduced} width="100%" height="10px" radius="6px" />
+        ) : (
+          <>
+            <AllocationBar segments={withPct} reduced={reduced} />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', marginTop: '14px' }}>
+              {withPct.length ? withPct.map(s => (
+                <span key={s.key} style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', fontSize: '12px', color: MUTED }}>
+                  <span aria-hidden="true" style={{ width: '9px', height: '9px', borderRadius: '3px', background: s.color, display: 'inline-block' }} />
+                  <span style={{ color: DARK, fontWeight: '600' }}>{s.label}</span>
+                  {s.pct.toFixed(s.pct < 10 ? 1 : 0)}%
+                </span>
+              )) : (
+                <span style={{ fontSize: '12px', color: MUTED }}>No holdings yet — make your first trade to see your allocation.</span>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* metrics strip */}
+      <div className="dash-portfolio-summary" style={{ marginTop: '24px', paddingTop: '20px', borderTop: `1px solid ${FAINT_SEP}` }}>
+        {[
+          { l: 'cash', v: showData ? fmt(portfolio?.cash) : null },
+          { l: 'total return', v: showData ? fmtPct(ret) : null, vc: changeColor(ret) },
+          { l: 'holdings', v: showData ? fmt(holdingsValue) : null },
+        ].map((s, i) => (
+          <div key={i}>
+            <div style={{ fontSize: '10px', color: MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>{s.l}</div>
+            {s.v === null ? <Skeleton reduced={reduced} width="70%" height="18px" /> : (
+              <div style={{ fontSize: '18px', fontWeight: '700', color: s.vc || DARK }}>{s.v}</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function Dashboard() {
   useSEO(SEO_CONFIG.dashboard);
@@ -610,12 +748,25 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* ── Portfolio hero ── */}
+        <PortfolioHero
+          portfolio={portfolio}
+          loading={loading}
+          error={error}
+          reduced={reduced}
+          fmt={fmt}
+          fmtPct={fmtPct}
+          changeColor={changeColor}
+          onRefresh={() => { setLoading(true); fetchPortfolio(); }}
+          onTrade={() => navigate('/trade')}
+        />
+
         {/* ── Top stat row ── */}
         <div className="dash-stat-row" style={{ marginBottom: '24px' }}>
           {[
-            { label: 'level', value: `${levelInfo?.currentLevel ?? 1}`, loading: false },
+            { label: 'level', value: `${levelInfo?.currentLevel ?? 1}`, sub: `${num(learningProg.xp, 0)} XP total`, loading: false },
             { label: 'daily goal', value: `${dg.completed} / ${dg.total}`, sub: `${dg.pct}% complete`, loading: false },
-            { label: 'portfolio', value: fmt(portfolio?.totalValue), sub: portfolio ? fmtPct(portfolio.totalReturn) : '—', subColor: portfolio ? changeColor(portfolio.totalReturn) : MUTED, loading: loading },
+            { label: 'xp to next level', value: `${Math.max(num(levelInfo?.xpNeeded, 0) - num(levelInfo?.xpIntoLevel, 0), 0)} XP`, sub: `to level ${(levelInfo?.currentLevel ?? 1) + 1}`, loading: false },
           ].map((s, i) => (
             <div key={i} style={card}>
               <div style={sectionLabel}>{s.label}</div>
@@ -640,66 +791,33 @@ export default function Dashboard() {
           {/* Left column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-            {/* Portfolio */}
+            {/* Holdings */}
             <div style={card}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', paddingBottom: '12px', borderBottom: `1px solid ${FAINT_SEP}` }}>
-                  <span style={{ ...sectionLabel, margin: 0, padding: 0, border: 'none' }}>portfolio</span>
-                  {portfolio?.isDemo && <DemoPill />}
-                </div>
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                  <button onClick={() => { setLoading(true); fetchPortfolio(); }} style={{ background: 'rgba(244,241,233,0.08)', border: 'none', padding: '5px 12px', borderRadius: '8px', fontSize: '12px', cursor: 'pointer', color: DARK }}>Refresh</button>
-                  <button onClick={() => navigate('/trade')} style={{ background: GOLD, border: 'none', padding: '5px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', color: DARK }}>Trade →</button>
-                </div>
-              </div>
+              <div style={sectionLabel}>holdings</div>
 
               {loading ? (
                 <SkeletonCard reduced={reduced} lines={4} />
               ) : error ? (
                 <p style={{ color: '#ef4444', fontSize: '13px' }}>Error: {error}</p>
-              ) : !portfolio ? (
-                <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                  <p style={{ color: MUTED, fontSize: '14px', marginBottom: '16px' }}>No portfolio yet.</p>
-                  <button onClick={() => navigate('/trade')} style={{ background: GOLD, border: 'none', padding: '10px 22px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', color: DARK }}>Start Trading</button>
-                </div>
-              ) : (
-                <div>
-                  {/* Summary row */}
-                  <div className="dash-portfolio-summary" style={{ marginBottom: '20px' }}>
-                    {[
-                      { l: 'total value', v: fmt(portfolio.totalValue) },
-                      { l: 'cash', v: fmt(portfolio.cash) },
-                      { l: 'total return', v: fmtPct(portfolio.totalReturn), vc: changeColor(portfolio.totalReturn) },
-                    ].map((s, i) => (
-                      <div key={i} style={{ padding: '14px', background: INSET, borderRadius: '10px', border: '1px solid rgba(244,241,233,0.08)' }}>
-                        <div style={{ fontSize: '10px', color: MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>{s.l}</div>
-                        <div style={{ fontSize: '16px', fontWeight: '700', color: s.vc || DARK }}>{s.v}</div>
+              ) : portfolio?.positions?.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {portfolio.positions.map((h, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: INSET, borderRadius: '10px', border: '1px solid rgba(244,241,233,0.08)' }}>
+                      <div>
+                        <div style={{ fontWeight: '700', fontSize: '14px', color: DARK }}>{h.symbol}</div>
+                        <div style={{ fontSize: '11px', color: MUTED }}>{h.shares} shares · avg {fmt(h.avgPrice)}</div>
                       </div>
-                    ))}
-                  </div>
-
-                  {/* Holdings */}
-                  {portfolio.positions?.length > 0 ? (
-                    <div>
-                      <div style={{ fontSize: '11px', color: MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>holdings</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {portfolio.positions.map((h, i) => (
-                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: INSET, borderRadius: '10px', border: '1px solid rgba(244,241,233,0.08)' }}>
-                            <div>
-                              <div style={{ fontWeight: '700', fontSize: '14px', color: DARK }}>{h.symbol}</div>
-                              <div style={{ fontSize: '11px', color: MUTED }}>{h.shares} shares</div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                              <div style={{ fontWeight: '600', fontSize: '14px', color: DARK }}>{fmt(h.currentValue)}</div>
-                              <div style={{ fontSize: '11px', color: changeColor(h.changePercent) }}>{fmtPct(h.changePercent)}</div>
-                            </div>
-                          </div>
-                        ))}
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontWeight: '600', fontSize: '14px', color: DARK }}>{fmt(h.currentValue)}</div>
+                        <div style={{ fontSize: '11px', color: changeColor(h.changePercent) }}>{fmtPct(h.changePercent)}</div>
                       </div>
                     </div>
-                  ) : (
-                    <p style={{ color: MUTED, fontSize: '13px', textAlign: 'center', padding: '12px 0' }}>No holdings yet. Make your first trade.</p>
-                  )}
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  <p style={{ color: MUTED, fontSize: '14px', marginBottom: '16px' }}>No holdings yet. Make your first trade.</p>
+                  <button onClick={() => navigate('/trade')} style={{ background: GOLD, border: 'none', padding: '10px 22px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', color: '#2C2C2C' }}>Start Trading</button>
                 </div>
               )}
             </div>
