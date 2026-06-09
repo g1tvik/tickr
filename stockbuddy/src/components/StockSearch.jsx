@@ -189,6 +189,14 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
     }, 200);
   };
 
+  // Tiered chip styling (from the 21st.dev Magic-generated design):
+  // exact symbol = solid gold, starts-with = strong, contains/fuzzy = subtle.
+  const getMatchTier = (matchType) => {
+    if (matchType === 'exact_symbol') return 'exact';
+    if (matchType === 'symbol_starts' || matchType === 'name_starts' || matchType === 'name_word') return 'strong';
+    return 'weak';
+  };
+
   // Get match type display
   const getMatchTypeDisplay = (matchType) => {
     switch (matchType) {
@@ -230,6 +238,12 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
   return (
     <div className="stock-search-container">
       <div className="search-input-wrapper">
+        <span className="search-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="7" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </span>
         <input
           ref={inputRef}
           type="text"
@@ -286,7 +300,7 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
                   {highlightText(suggestion.name, searchTerm)}
                 </div>
               </div>
-              <div className="suggestion-match-type">
+              <div className={`suggestion-match-type suggestion-match-type--${getMatchTier(suggestion.matchType)}`}>
                 {getMatchTypeDisplay(suggestion.matchType)}
               </div>
             </div>
