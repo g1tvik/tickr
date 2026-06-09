@@ -706,7 +706,33 @@ const getStockQuoteFromREST = async (symbol) => {
 };
 
 // AI-powered search stocks with multiple data sources and intelligent matching
-const searchStocks = async (query) => {
+// The Alpaca active US-equity universe (~11k assets, multi-MB payload) changes
+// rarely. Reuse the module-level `alpacaAssetsCache` (declared near the top) so we
+// don't re-fetch the whole list on every keystroke — the old searchStocks declared
+// that cache but never actually consulted it.
+const getAlpacaAssets = async () => {
+  const now = Date.now();
+  if (alpacaAssetsCache.data && alpacaAssetsCache.timestamp &&
+      (now - alpacaAssetsCache.timestamp) < alpacaAssetsCache.ttl) {
+    return alpacaAssetsCache.data;
+  }
+  const response = await axios.get('https://paper-api.alpaca.markets/v2/assets', {
+    headers: {
+      'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
+      'APCA-API-SECRET-KEY': process.env.ALPACA_SECRET_KEY
+    },
+    timeout: EXTERNAL_TIMEOUT_MS,
+    params: { status: 'active', asset_class: 'us_equity' }
+  });
+  alpacaAssetsCache = { ...alpacaAssetsCache, data: response.data, timestamp: now };
+  return response.data;
+};
+
+// Pass `withQuotes: false` to return lightweight { symbol, name, matchType } matches
+// without the expensive per-symbol quote lookups. Autocomplete uses this path — its
+// dropdown only renders symbol/name, and the full quote is fetched separately when
+// the user actually selects a suggestion.
+const searchStocks = async (query, { withQuotes = true } = {}) => {
   try {
     // Check if Alpaca API keys are configured; fall back to demo results otherwise
     if (!hasAlpacaKeys()) {
@@ -715,25 +741,11 @@ const searchStocks = async (query) => {
     }
 
     const queryLower = query.toLowerCase().trim();
-    const queryUpper = query.toUpperCase().trim();
-    
-    // Step 1: Get Alpaca assets for comprehensive search
-    const headers = {
-      'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
-      'APCA-API-SECRET-KEY': process.env.ALPACA_SECRET_KEY
-    };
 
+    // Step 1: Get the (cached) Alpaca asset universe for comprehensive search
     let alpacaAssets = [];
     try {
-      const response = await axios.get('https://paper-api.alpaca.markets/v2/assets', {
-        headers,
-        timeout: EXTERNAL_TIMEOUT_MS,
-        params: {
-          status: 'active',
-          asset_class: 'us_equity'
-        }
-      });
-      alpacaAssets = response.data;
+      alpacaAssets = await getAlpacaAssets();
     } catch (alpacaError) {
       if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] Failed to fetch Alpaca assets:`, alpacaError.message);
       // Graceful demo fallback so the UI still works
@@ -742,76 +754,76 @@ const searchStocks = async (query) => {
 
     // Step 2: Professional search algorithm (like Robinhood/Fidelity)
     const searchResults = [];
-    
+
     for (const asset of alpacaAssets) {
       const symbolLower = asset.symbol.toLowerCase();
       const nameLower = asset.name.toLowerCase();
-      
+
       let score = 0;
-      let shouldInclude = false;
+      let matchType = null;
 
       // Exact symbol match (highest priority)
       if (symbolLower === queryLower) {
         score = 10000;
-        shouldInclude = true;
+        matchType = 'exact_symbol';
       }
       // Symbol starts with query (very high priority)
       else if (symbolLower.startsWith(queryLower)) {
         score = 9000;
-        shouldInclude = true;
+        matchType = 'symbol_starts';
       }
       // Company name starts with query (high priority)
       else if (nameLower.startsWith(queryLower)) {
         score = 8000;
-        shouldInclude = true;
+        matchType = 'name_starts';
       }
       // Company name contains query as whole word
       else {
         const nameWords = nameLower.split(/\s+/);
         if (nameWords.some(word => word === queryLower)) {
           score = 7000;
-          shouldInclude = true;
+          matchType = 'name_word';
         }
         // Company name contains query word that starts with query
         else if (nameWords.some(word => word.startsWith(queryLower))) {
           score = 6000;
-          shouldInclude = true;
+          matchType = 'name_word_starts';
         }
         // Company name contains query (lower priority)
         else if (nameLower.includes(queryLower)) {
           score = 5000;
-          shouldInclude = true;
+          matchType = 'name_contains';
         }
         // Symbol contains query (lower priority)
         else if (symbolLower.includes(queryLower)) {
           score = 4000;
-          shouldInclude = true;
+          matchType = 'symbol_contains';
         }
       }
 
-      if (shouldInclude) {
+      if (matchType) {
         // Professional relevance scoring (like major platforms)
-        
+
         // Bonus for shorter symbols (more recognizable companies)
         score += Math.max(0, 15 - symbolLower.length) * 50;
-        
+
         // Bonus for common company keywords (established companies)
         const establishedKeywords = ['inc', 'corp', 'company', 'ltd', 'llc', 'plc', 'sa', 'ag', 'co', 'corporation'];
         if (establishedKeywords.some(keyword => nameLower.includes(keyword))) {
           score += 200;
         }
-        
+
         // Penalty for ETF/Index keywords (prioritize actual companies)
         const etfKeywords = ['etf', 'fund', 'trust', 'shares', 'strategy', 'index', 'portfolio'];
         if (etfKeywords.some(keyword => nameLower.includes(keyword))) {
           score -= 2000;
         }
-        
+
         // Penalty for very long company names (less recognizable)
         if (nameLower.length > 50) {
           score -= 300;
         }
-        
+
         // Bonus for companies with recognizable brand names
         const brandKeywords = ['apple', 'microsoft', 'google', 'amazon', 'tesla', 'netflix', 'facebook', 'meta', 'nvidia', 'intel', 'amd'];
         if (brandKeywords.some(brand => nameLower.includes(brand))) {
@@ -821,6 +833,7 @@ const searchStocks = async (query) => {
         searchResults.push({
           symbol: asset.symbol,
           name: asset.name,
+          matchType,
           relevanceScore: score
         });
       }
@@ -831,38 +844,32 @@ const searchStocks = async (query) => {
       if (a.relevanceScore !== b.relevanceScore) {
         return b.relevanceScore - a.relevanceScore;
       }
-      
+
       // For same score, prioritize shorter symbols
       if (a.symbol.length !== b.symbol.length) {
         return a.symbol.length - b.symbol.length;
       }
-      
+
       // Finally alphabetically
       return a.symbol.toLowerCase().localeCompare(b.symbol.toLowerCase());
     });
 
-    // Debug logging for search results
-    if (VERBOSE_LOGS) {
-      console.log(`[${getTimestamp()}] 🔍 Professional search results for "${query}":`, searchResults.slice(0, 5).map(asset => ({
-        symbol: asset.symbol,
-        name: asset.name,
-        score: asset.relevanceScore
-      })));
+    const topAssets = searchResults.slice(0, 10);
+
+    // Fast path: autocomplete only needs symbol/name/matchType, so skip the
+    // per-symbol quote lookups entirely (this is the bulk of the old latency).
+    if (!withQuotes) {
+      return topAssets.map(({ symbol, name, matchType }) => ({ symbol, name, matchType }));
     }
 
-    // Step 4: Get quotes for top results
-    const finalResults = [];
-    const topAssets = searchResults.slice(0, 10);
-    
-    for (const asset of topAssets) {
+    // Step 4: Get quotes for top results — fetched in parallel, not sequentially.
+    const finalResults = await Promise.all(topAssets.map(async (asset) => {
       try {
-        if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 🔍 Getting quote for ${asset.symbol}...`);
-        const quote = await getStockQuoteFromREST(asset.symbol);
-        finalResults.push(quote);
+        return await getStockQuoteFromREST(asset.symbol);
       } catch (quoteError) {
         if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] Failed to get quote for ${asset.symbol}:`, quoteError.message);
-        // Add asset without quote data
-        finalResults.push({
+        // Include the asset without quote data
+        return {
           symbol: asset.symbol,
           name: asset.name,
           price: null,
@@ -872,9 +879,9 @@ const searchStocks = async (query) => {
           timestamp: null,
           hasHistoricalData: false,
           hasVolumeData: false
-        });
+        };
       }
-    }
+    }));
 
     return finalResults;
   } catch (error) {
@@ -1711,7 +1718,7 @@ router.get('/autocomplete', searchLimiter, async (req, res) => {
       });
     }
 
-    const results = await searchStocks(query);
+    const results = await searchStocks(query, { withQuotes: false });
     const limitedResults = results.slice(0, 5); // Limit for autocomplete
 
     searchCache.set(cacheKey, { data: limitedResults, timestamp: now });
