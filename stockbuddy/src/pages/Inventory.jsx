@@ -651,6 +651,7 @@ export default function Inventory() {
                   borderTop: `1px solid ${cardDivider}`
                 }}>
                   <div style={{
+                    ...mono,
                     fontSize: "13px",
                     fontWeight: 600,
                     color: getStatusColor(item)
@@ -682,12 +683,12 @@ export default function Inventory() {
                 </div>
 
                 <div style={{
-                  position: "absolute",
-                  top: "16px",
-                  right: "16px",
+                  ...mono,
+                  marginTop: "16px",
+                  paddingTop: "14px",
+                  borderTop: `1px solid ${cardDivider}`,
                   fontSize: "10.5px",
                   color: cardMuted,
-                  textAlign: "right",
                   lineHeight: "1.6"
                 }}>
                   <div style={{ marginBottom: "3px" }}>

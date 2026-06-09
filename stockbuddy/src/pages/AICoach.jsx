@@ -152,7 +152,6 @@ function AICoach() {
   const cardText = tk.text;                            // primary cream text
   const cardMuted = tk.muted;                          // muted / secondary text
   const cardBorder = tk.hair;                          // structural hairline border
-  const cardDivider = tk.hair;                         // divider / separator
   const cardShadow = 'none';                           // flat — elevation via hierarchy, not glow
 
   const [currentScenario, setCurrentScenario] = useState(0);
@@ -838,77 +837,60 @@ function AICoach() {
                 <span style={{ flex: 1, height: 1, background: tk.hair }} />
               </div>
 
+              {/* Available Cash */}
               <div style={{
-                backgroundColor: cardBg,
-                borderRadius: tk.rSm,
-                padding: '20px',
-                border: `1px solid ${cardBorder}`,
-                boxShadow: cardShadow
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px 0',
+                borderBottom: `1px solid ${tk.hair}`
               }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '16px'
-                }}>
-                  <span style={{ color: cardMuted, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
-                    Available Cash
-                  </span>
-                  <span style={{ 
-                    color: cardText, 
-                    fontSize: '24px', 
-                    fontWeight: '700',
-                    fontFamily: fontBody
-                  }}>
-                    <span style={mono}>${BEGINNER_BUDGET.toLocaleString()}</span>
-                  </span>
-                </div>
+                <span style={{ color: cardMuted, fontSize: '13px', fontFamily: fontBody }}>
+                  Available Cash
+                </span>
+                <span style={{ ...mono, color: cardText, fontSize: '22px', fontWeight: 600 }}>
+                  ${BEGINNER_BUDGET.toLocaleString()}
+                </span>
+              </div>
 
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '12px'
-                }}>
-                  <span style={{ color: cardMuted, fontSize: '14px', fontWeight: '500', fontFamily: fontBody }}>
-                    Current Price (<span style={mono}>{asOfDate}</span>)
-                  </span>
-                  <span style={{ 
-                    color: cardText, 
-                    fontSize: '18px', 
-                    fontWeight: '700',
-                    fontFamily: fontBody
-                  }}>
-                    <span style={mono}>${scenario.initialPrice.toFixed(2)}</span>
-                  </span>
-                </div>
+              {/* Current Price */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px 0',
+                borderBottom: `1px solid ${tk.hair}`
+              }}>
+                <span style={{ color: cardMuted, fontSize: '13px', fontFamily: fontBody }}>
+                  Current Price (<span style={mono}>{asOfDate}</span>)
+                </span>
+                <span style={{ ...mono, color: cardText, fontSize: '16px', fontWeight: 600 }}>
+                  ${scenario.initialPrice.toFixed(2)}
+                </span>
+              </div>
 
-                <div style={{
-                  background: tk.bg,
-                  borderRadius: tk.rSm,
-                  padding: '14px',
-                  border: `1px solid ${tk.hair}`
-                }}>
-                  <div style={{ ...label, marginBottom: '8px' }}>
+              {/* Maximum Shares */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                padding: '12px 0'
+              }}>
+                <div>
+                  <div style={{ ...label, marginBottom: '4px' }}>
                     Maximum Shares You Can Buy
-                  </div>
-                  <div style={{
-                    ...mono,
-                    color: cardText,
-                    fontSize: '18px',
-                    fontWeight: '600'
-                  }}>
-                    {Math.floor(BEGINNER_BUDGET / scenario.initialPrice)} <span style={{ fontSize: '12px', color: cardMuted }}>shares</span>
                   </div>
                   <div style={{
                     color: cardMuted,
                     fontSize: '11px',
-                    marginTop: '4px',
                     fontStyle: 'italic',
                     fontFamily: fontBody
                   }}>
                     * This assumes you use all available cash
                   </div>
+                </div>
+                <div style={{ ...mono, color: cardText, fontSize: '16px', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  {Math.floor(BEGINNER_BUDGET / scenario.initialPrice)} <span style={{ fontSize: '12px', color: cardMuted }}>shares</span>
                 </div>
               </div>
             </div>
@@ -936,17 +918,11 @@ function AICoach() {
 
               <div className="coach-position-grid">
                 {/* Position Details */}
-                <div style={{
-                  backgroundColor: cardBg,
-                  borderRadius: tk.rSm,
-                  padding: '20px',
-                  border: `1px solid ${cardBorder}`,
-                  boxShadow: cardShadow
-                }}>
+                <div>
                   <h4 style={{
                     ...label,
                     marginTop: 0,
-                    marginBottom: '16px',
+                    marginBottom: '14px',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px'
@@ -1016,71 +992,54 @@ function AICoach() {
                     </div>
                   </div>
 
-                  <div style={{
-                    backgroundColor: cardBg2,
-                    borderRadius: '8px',
-                    border: `1px solid ${cardBorder}`,
-                    overflow: 'hidden'
-                  }}>
-                    <button
-                      onClick={() => setShowSharesCalculation(!showSharesCalculation)}
-                      style={{
-                        width: '100%',
-                        padding: '12px',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        textAlign: 'left'
-                      }}
-                    >
-                      <span style={label}>
-                        Calculation
-                      </span>
-                      <span style={{
-                        color: cardMuted,
-                        display: 'flex',
-                        transform: showSharesCalculation ? 'rotate(180deg)' : 'rotate(0deg)',
-                        transition: 'transform 0.2s ease'
-                      }}>
-                        <Icon name="chevron-down" size={14} />
-                      </span>
-                    </button>
-                    
-                    {showSharesCalculation && (
+                  <button
+                    onClick={() => setShowSharesCalculation(!showSharesCalculation)}
+                    style={{
+                      width: '100%',
+                      padding: '11px 0',
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <span style={label}>
+                      Calculation
+                    </span>
+                    <span style={{
+                      color: cardMuted,
+                      display: 'flex',
+                      transform: showSharesCalculation ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s ease'
+                    }}>
+                      <Icon name="chevron-down" size={14} />
+                    </span>
+                  </button>
+                  {showSharesCalculation && (
+                    <div style={{ borderTop: `1px solid ${tk.hair}`, paddingTop: '12px' }}>
                       <div style={{
-                        padding: '0 12px 12px 12px',
-                        borderTop: `1px solid ${cardDivider}`
+                        ...mono,
+                        color: cardText,
+                        fontSize: '13px',
+                        lineHeight: '1.5'
                       }}>
-                        <div style={{
-                          ...mono,
-                          color: cardText,
-                          fontSize: '13px',
-                          lineHeight: '1.5'
-                        }}>
-                          Shares = floor(Budget ÷ Entry)<br/>
-                          = floor(${BEGINNER_BUDGET} ÷ ${position.entryPrice.toFixed(2)})<br/>
-                          = {position.shares}
-                        </div>
+                        Shares = floor(Budget ÷ Entry)<br/>
+                        = floor(${BEGINNER_BUDGET} ÷ ${position.entryPrice.toFixed(2)})<br/>
+                        = {position.shares}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* P&L Performance */}
-                <div style={{
-                  backgroundColor: cardBg,
-                  borderRadius: tk.rSm,
-                  padding: '20px',
-                  border: `1px solid ${cardBorder}`,
-                  boxShadow: cardShadow
-                }}>
+                <div>
                   <h4 style={{
                     ...label,
                     marginTop: 0,
-                    marginBottom: '16px',
+                    marginBottom: '14px',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px'
@@ -1109,118 +1068,99 @@ function AICoach() {
                     
                     return (
                       <div>
+                        {/* Current Price */}
                         <div style={{
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          marginBottom: '12px'
+                          padding: '10px 0',
+                          borderBottom: `1px solid ${tk.hair}`
                         }}>
-                          <span style={{ color: cardMuted, fontSize: '14px', fontWeight: '500' }}>
+                          <span style={{ color: cardMuted, fontSize: '13px', fontFamily: fontBody }}>
                             Current Price
                           </span>
-                          <span style={{ 
-                            color: cardText, 
-                            fontSize: '18px', 
-                            fontWeight: '700' 
-                          }}>
-                            <span style={mono}>${pl.currentPrice.toFixed(2)}</span>
+                          <span style={{ ...mono, color: cardText, fontSize: '16px', fontWeight: 600 }}>
+                            ${pl.currentPrice.toFixed(2)}
                           </span>
                         </div>
-                        
+
+                        {/* Price Change */}
                         <div style={{
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          marginBottom: '12px'
+                          padding: '10px 0',
+                          borderBottom: `1px solid ${tk.hair}`
                         }}>
-                          <span style={{ color: cardMuted, fontSize: '14px', fontWeight: '500' }}>
+                          <span style={{ color: cardMuted, fontSize: '13px', fontFamily: fontBody }}>
                             Price Change
                           </span>
-                          <span style={{ 
-                            color: plColor, 
-                            fontSize: '16px', 
-                            fontWeight: '700' 
-                          }}>
-                            <span style={{ ...mono, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                              <Icon name={pl.value >= 0 ? 'tri-up' : 'tri-down'} size={9} />
-                              ${delta.toFixed(2)} ({pl.pct.toFixed(2)}%)
-                            </span>
+                          <span style={{ ...mono, color: plColor, fontSize: '15px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <Icon name={pl.value >= 0 ? 'tri-up' : 'tri-down'} size={9} />
+                            ${delta.toFixed(2)} ({pl.pct.toFixed(2)}%)
                           </span>
                         </div>
-                        
+
+                        {/* Total P&L — single inset row with subtle up/down tint */}
                         <div style={{
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          marginBottom: '16px',
-                          padding: '12px',
+                          padding: '11px 14px',
+                          margin: '12px 0',
                           backgroundColor: pl.value >= 0 ? tk.upBg : tk.downBg,
                           borderRadius: tk.rSm,
                           border: `1px solid ${plColor}33`
                         }}>
-                          <span style={{ color: cardText, fontSize: '14px', fontWeight: '600' }}>
+                          <span style={{ color: cardText, fontSize: '13px', fontWeight: 600 }}>
                             Total P&L
                           </span>
-                          <span style={{ 
-                            color: plColor, 
-                            fontSize: '18px', 
-                            fontWeight: '700' 
-                          }}>
-                            <span style={mono}>${pl.value.toFixed(2)}</span>
+                          <span style={{ ...mono, color: plColor, fontSize: '18px', fontWeight: 700 }}>
+                            ${pl.value.toFixed(2)}
                           </span>
                         </div>
 
-                        <div style={{
-                          backgroundColor: cardBg2,
-                          borderRadius: '8px',
-                          border: `1px solid ${cardBorder}`,
-                          overflow: 'hidden'
-                        }}>
-                          <button
-                            onClick={() => setShowPLCalculation(!showPLCalculation)}
-                            style={{
-                              width: '100%',
-                              padding: '12px',
-                              backgroundColor: 'transparent',
-                              border: 'none',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              textAlign: 'left'
-                            }}
-                          >
-                            <span style={label}>
-                              P&L Calculation
-                            </span>
-                            <span style={{
-                              color: cardMuted,
-                              display: 'flex',
-                              transform: showPLCalculation ? 'rotate(180deg)' : 'rotate(0deg)',
-                              transition: 'transform 0.2s ease'
-                            }}>
-                              <Icon name="chevron-down" size={14} />
-                            </span>
-                          </button>
-                          
-                          {showPLCalculation && (
+                        {/* P&L Calculation */}
+                        <button
+                          onClick={() => setShowPLCalculation(!showPLCalculation)}
+                          style={{
+                            width: '100%',
+                            padding: '11px 0',
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            textAlign: 'left'
+                          }}
+                        >
+                          <span style={label}>
+                            P&L Calculation
+                          </span>
+                          <span style={{
+                            color: cardMuted,
+                            display: 'flex',
+                            transform: showPLCalculation ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s ease'
+                          }}>
+                            <Icon name="chevron-down" size={14} />
+                          </span>
+                        </button>
+                        {showPLCalculation && (
+                          <div style={{ borderTop: `1px solid ${tk.hair}`, paddingTop: '12px' }}>
                             <div style={{
-                              padding: '0 12px 12px 12px',
-                              borderTop: `1px solid ${cardDivider}`
+                              ...mono,
+                              color: cardText,
+                              fontSize: '13px',
+                              lineHeight: '1.5'
                             }}>
-                              <div style={{
-                                ...mono,
-                                color: cardText,
-                                fontSize: '13px',
-                                lineHeight: '1.5'
-                              }}>
-                                {position.shares} × (${pl.currentPrice.toFixed(2)} − ${position.entryPrice.toFixed(2)})<br/>
-                                = {position.shares} × ${delta.toFixed(2)}<br/>
-                                = ${pl.value.toFixed(2)}
-                              </div>
+                              {position.shares} × (${pl.currentPrice.toFixed(2)} − ${position.entryPrice.toFixed(2)})<br/>
+                              = {position.shares} × ${delta.toFixed(2)}<br/>
+                              = ${pl.value.toFixed(2)}
                             </div>
-                          )}
-                        </div>
+                          </div>
+                        )}
                         
                         <div style={{
                           marginTop: '12px',

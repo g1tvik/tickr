@@ -1999,8 +1999,8 @@ function Home({ isLoggedIn }) {
             </StepCard>
             <StepCard>
               <div className="num" aria-hidden="true">2</div>
-              <h3>practice with $10K paper money</h3>
-              <p>put it into action on real market data with a $10,000 virtual balance. real prices, real lessons, none of the risk.</p>
+              <h3>practice with <span style={mono}>$10K</span> paper money</h3>
+              <p>put it into action on real market data with a <span style={mono}>$10,000</span> virtual balance. real prices, real lessons, none of the risk.</p>
             </StepCard>
             <StepCard>
               <div className="num" aria-hidden="true">3</div>

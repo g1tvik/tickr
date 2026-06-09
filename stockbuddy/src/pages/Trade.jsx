@@ -4,7 +4,7 @@ import StockSearch from '../components/StockSearch';
 import { SuperChart } from '../components/SuperChart';
 import { useTrading } from '../hooks/useTrading';
 import { getPositionValue, calculateOrderTotal } from '../utils/tradeUtils';
-import { gray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontBody } from '../fontPalette';
 import { api } from '../services/api';
 import { useNavbarBackground } from '../hooks/useNavbarBackground';
@@ -700,7 +700,7 @@ function Trade() {
                           type="button"
                           onClick={() => setOrderType('buy')}
                           aria-pressed={orderType === 'buy'}
-                          style={{ flex: 1, padding: '10px', borderRadius: '6px', border: 'none', color: 'white', fontWeight: '600', cursor: 'pointer', backgroundColor: orderType === 'buy' ? tk.up : gray, transition: 'background-color 0.2s', fontSize: '14px' }}
+                          style={{ flex: 1, padding: '10px', borderRadius: tk.rSm, border: orderType === 'buy' ? 'none' : `1px solid ${tk.hairStrong}`, color: orderType === 'buy' ? '#1F1F1F' : tk.muted, fontWeight: '700', cursor: 'pointer', backgroundColor: orderType === 'buy' ? tk.up : 'transparent', transition: 'background-color 0.2s ease, color 0.2s ease', fontSize: '14px' }}
                         >
                           Buy
                         </button>
@@ -708,7 +708,7 @@ function Trade() {
                           type="button"
                           onClick={() => setOrderType('sell')}
                           aria-pressed={orderType === 'sell'}
-                          style={{ flex: 1, padding: '10px', borderRadius: '6px', border: 'none', color: 'white', fontWeight: '600', cursor: 'pointer', backgroundColor: orderType === 'sell' ? tk.down : gray, transition: 'background-color 0.2s', fontSize: '14px' }}
+                          style={{ flex: 1, padding: '10px', borderRadius: tk.rSm, border: orderType === 'sell' ? 'none' : `1px solid ${tk.hairStrong}`, color: orderType === 'sell' ? '#1F1F1F' : tk.muted, fontWeight: '700', cursor: 'pointer', backgroundColor: orderType === 'sell' ? tk.down : 'transparent', transition: 'background-color 0.2s ease, color 0.2s ease', fontSize: '14px' }}
                         >
                           Sell
                         </button>
@@ -820,10 +820,8 @@ function Trade() {
                         letterSpacing: '0.02em',
                         cursor: (isLoading || !orderAffordable) ? 'not-allowed' : 'pointer',
                         opacity: (isLoading || !orderAffordable) ? 0.55 : 1,
-                        transition: 'transform 0.15s ease'
+                        transition: 'background-color 0.2s ease, opacity 0.2s ease'
                       }}
-                      onMouseEnter={(e) => { if (!isLoading && orderAffordable) e.currentTarget.style.transform = 'scale(1.02)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
                     >
                       {isLoading ? 'Processing…' : (
                         <>

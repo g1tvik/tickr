@@ -382,52 +382,16 @@ const Settings = () => {
         margin: '0 auto',
         padding: isMobile ? '28px 16px' : '40px 24px'
       }}>
-        {/* Settings Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile
-            ? '1fr'
-            : 'repeat(auto-fit, minmax(360px, 1fr))',
-          gap: '20px'
-        }}>
-          {/* Account Settings */}
-          <div style={{ ...panel, padding: isMobile ? '20px' : '24px' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              marginBottom: 16
-            }}>
-              <div style={{
-                width: 34,
-                height: 34,
-                border: `1px solid ${tk.goldHair}`,
-                borderRadius: tk.rSm,
-                display: 'grid',
-                placeItems: 'center',
-                color: tk.gold
-              }}>
-                <Icon name="user" size={16} />
-              </div>
-              <div>
-                <h3 style={{
-                  ...heading,
-                  fontSize: 17,
-                  marginBottom: 2
-                }}>
-                  Account Settings
-                </h3>
-                <p style={{
-                  fontSize: 12.5,
-                  color: tk.muted,
-                  margin: 0
-                }}>
-                  Manage your profile information
-                </p>
-              </div>
-            </div>
+        {/* Settings — editorial sections in one flat statement panel */}
+        <div style={{ ...panel, maxWidth: 720, padding: isMobile ? '24px 20px' : '30px 32px' }}>
+          {/* Account */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+            <Icon name="user" size={15} color={tk.gold} />
+            <span style={label}>account</span>
+            <span style={{ flex: 1, height: 1, background: tk.hair }} />
+          </div>
 
-            <div style={{ borderTop: `1px solid ${tk.hair}`, marginBottom: 18 }}>
+          <div style={{ marginBottom: 18 }}>
               <div style={dataRow}>
                 <span style={label}>Name</span>
                 <span style={valueText}>
@@ -462,46 +426,14 @@ const Settings = () => {
             >
               <Icon name="edit" size={14} /> Edit Profile
             </button>
+          {/* Learning Preferences */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: isMobile ? 28 : 34, marginBottom: 14 }}>
+            <Icon name="book" size={15} color={tk.gold} />
+            <span style={label}>learning preferences</span>
+            <span style={{ flex: 1, height: 1, background: tk.hair }} />
           </div>
 
-          {/* Learning Preferences */}
-          <div style={{ ...panel, padding: isMobile ? '20px' : '24px' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              marginBottom: 16
-            }}>
-              <div style={{
-                width: 34,
-                height: 34,
-                border: `1px solid ${tk.goldHair}`,
-                borderRadius: tk.rSm,
-                display: 'grid',
-                placeItems: 'center',
-                color: tk.gold
-              }}>
-                <Icon name="book" size={16} />
-              </div>
-              <div>
-                <h3 style={{
-                  ...heading,
-                  fontSize: 17,
-                  marginBottom: 2
-                }}>
-                  Learning Preferences
-                </h3>
-                <p style={{
-                  fontSize: 12.5,
-                  color: tk.muted,
-                  margin: 0
-                }}>
-                  Customize your learning experience
-                </p>
-              </div>
-            </div>
-
-            <div style={{ borderTop: `1px solid ${tk.hair}`, marginBottom: 18 }}>
+          <div style={{ marginBottom: 18 }}>
               <div style={dataRow}>
                 <span style={label}>Daily Goal</span>
                 <span style={valueText}>
@@ -554,49 +486,17 @@ const Settings = () => {
                 {saving ? 'Sending...' : (<><Icon name="mail" size={14} /> Send Reminder</>)}
               </button>
             </div>
+          {/* Privacy & Security */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: isMobile ? 28 : 34, marginBottom: 14 }}>
+            <Icon name="lock" size={15} color={tk.gold} />
+            <span style={label}>privacy & security</span>
+            <span style={{ flex: 1, height: 1, background: tk.hair }} />
           </div>
 
-          {/* Privacy & Security */}
-          <div style={{ ...panel, padding: isMobile ? '20px' : '24px' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              marginBottom: 16
-            }}>
-              <div style={{
-                width: 34,
-                height: 34,
-                border: `1px solid ${tk.goldHair}`,
-                borderRadius: tk.rSm,
-                display: 'grid',
-                placeItems: 'center',
-                color: tk.gold
-              }}>
-                <Icon name="lock" size={16} />
-              </div>
-              <div>
-                <h3 style={{
-                  ...heading,
-                  fontSize: 17,
-                  marginBottom: 2
-                }}>
-                  Privacy & Security
-                </h3>
-                <p style={{
-                  fontSize: 12.5,
-                  color: tk.muted,
-                  margin: 0
-                }}>
-                  Manage your account security
-                </p>
-              </div>
-            </div>
-
-            <div style={{ borderTop: `1px solid ${tk.hair}` }}>
+          <div>
               <div style={dataRow}>
                 <span style={label}>Two-Factor Auth</span>
-                <span style={tag}>Coming soon</span>
+                <span style={{ ...tag, color: tk.muted, borderColor: tk.hairStrong }}>Coming soon</span>
               </div>
               <div style={dataRow}>
                 <span style={label}>Last Login</span>
@@ -611,59 +511,12 @@ const Settings = () => {
                 </span>
               </div>
             </div>
-          </div>
-
           {/* Data Management */}
-          <div style={{ ...panel, padding: isMobile ? '20px' : '24px' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              marginBottom: 16
-            }}>
-              <div style={{
-                width: 34,
-                height: 34,
-                border: `1px solid ${tk.goldHair}`,
-                borderRadius: tk.rSm,
-                display: 'grid',
-                placeItems: 'center',
-                color: tk.gold
-              }}>
-                <Icon name="download" size={16} />
-              </div>
-              <div>
-                <h3 style={{
-                  ...heading,
-                  fontSize: 17,
-                  marginBottom: 2
-                }}>
-                  Data Management
-                </h3>
-                <p style={{
-                  fontSize: 12.5,
-                  color: tk.muted,
-                  margin: 0
-                }}>
-                  Manage your data and progress
-                </p>
-              </div>
-            </div>
-
-            <div style={{ borderTop: `1px solid ${tk.hair}`, marginBottom: 18 }}>
-              <div style={dataRow}>
-                <span style={label}>Export Data</span>
-                <span style={{ ...tag, color: tk.up, borderColor: 'rgba(79,180,119,0.4)' }}>Available</span>
-              </div>
-              <div style={dataRow}>
-                <span style={label}>Delete Account</span>
-                <span style={{ ...tag, color: tk.down, borderColor: 'rgba(224,96,90,0.4)' }}>Danger Zone</span>
-              </div>
-              <div style={dataRow}>
-                <span style={label}>Reset Progress</span>
-                <span style={{ ...tag, color: tk.warn, borderColor: 'rgba(217,164,65,0.4)' }}>Warning</span>
-              </div>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: isMobile ? 28 : 34, marginBottom: 14 }}>
+            <Icon name="download" size={15} color={tk.gold} />
+            <span style={label}>data management</span>
+            <span style={{ flex: 1, height: 1, background: tk.hair }} />
+          </div>
 
             <div style={{
               display: 'flex',
@@ -718,7 +571,6 @@ const Settings = () => {
             >
               <Icon name="refresh" size={14} /> Reset Progress
             </button>
-          </div>
         </div>
       </div>
 

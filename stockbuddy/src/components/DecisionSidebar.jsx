@@ -145,24 +145,6 @@ export function DecisionSidebar({
     gap: 8
   });
 
-  const disabledBtn = {
-    width: '100%',
-    padding: '11px 14px',
-    borderRadius: `${tk.rSm}px`,
-    border: `1px solid ${tk.hair}`,
-    background: 'transparent',
-    color: tk.faint,
-    fontFamily: tk.fontBody,
-    fontSize: '13px',
-    fontWeight: 600,
-    letterSpacing: '0.02em',
-    cursor: 'not-allowed',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8
-  };
-
   const fieldStyle = {
     ...inset,
     width: '100%',
@@ -238,31 +220,6 @@ export function DecisionSidebar({
             <Icon name="pause" size={15} /> Hold (Wait and Watch)
           </button>
 
-          {/* Disabled buy buttons for sell challenges */}
-          {puzzleType === 'sell' && (
-            <>
-              <button disabled style={disabledBtn}>
-                <Icon name="trending-up" size={15} /> Buy Now (Not Available)
-              </button>
-
-              <button disabled style={disabledBtn}>
-                <Icon name="target" size={15} /> Buy When Price Hits... (Not Available)
-              </button>
-            </>
-          )}
-
-          {/* Disabled sell buttons for buy challenges */}
-          {puzzleType === 'buy' && (
-            <>
-              <button disabled style={disabledBtn}>
-                <Icon name="trending-down" size={15} /> Sell Now (Not Available)
-              </button>
-
-              <button disabled style={disabledBtn}>
-                <Icon name="target" size={15} /> Sell When Price Hits... (Not Available)
-              </button>
-            </>
-          )}
         </div>
       ) : (
         <div>

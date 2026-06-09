@@ -243,7 +243,7 @@ export default function Shop() {
         .shop-items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
         .shop-balance-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
         .shop-item-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
-        .shop-item-card:not(.is-owned):hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(182,156,96,0.30); }
+        .shop-item-card:not(.is-owned):hover { transform: translateY(-2px); outline: 1px solid var(--tk-gold-hair); outline-offset: -1px; }
         @media (prefers-reduced-motion: reduce) {
           .shop-item-card:hover { transform: none; }
         }
