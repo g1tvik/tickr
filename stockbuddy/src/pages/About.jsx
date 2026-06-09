@@ -1,15 +1,24 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { white, gray, marbleDarkGray, marbleBlack, marbleGold, primary } from '../marblePalette';
+import { white, marbleBlack, marbleGold, primary } from '../marblePalette';
 import { fontHeading } from '../fontPalette';
 import { useSEO } from '../lib/seo';
 import AppImage from '../components/AppImage';
 
+// ── Marble dark theme tokens ───────────────────────────────────────────────────
+const BG      = '#2C2C2C';
+const SURFACE = '#343434';
+const TEXT    = '#F4F1E9';
+const MUTED   = '#b8b4a8';
+const BORDER  = 'rgba(182, 156, 96, 0.22)';
+
 const Wrapper = styled.div`
   min-height: 100vh;
-  background-color: var(--color-gray-100, #F4F1E9);
-  color: ${marbleDarkGray};
+  background:
+    radial-gradient(circle at 86% -4%, rgba(201, 168, 90, 0.16) 0%, transparent 42%),
+    ${BG};
+  color: ${TEXT};
 `;
 
 const Inner = styled.main`
@@ -50,12 +59,12 @@ const Title = styled.h1`
   font-weight: 700;
   line-height: 1.08;
   margin: 0 0 20px;
-  color: ${marbleDarkGray};
+  color: ${TEXT};
 `;
 
 const Lead = styled.p`
   font-size: clamp(1.1rem, 2.4vw, 1.35rem);
-  color: ${gray};
+  color: ${MUTED};
   line-height: 1.6;
   margin: 0 0 16px;
 `;
@@ -66,13 +75,13 @@ const SectionTitle = styled.h2`
   font-weight: 700;
   line-height: 1.15;
   margin: 0 0 16px;
-  color: ${marbleDarkGray};
+  color: ${TEXT};
 `;
 
 const Body = styled.p`
   font-size: 1.05rem;
   line-height: 1.75;
-  color: ${marbleDarkGray};
+  color: ${TEXT};
   margin: 0 0 18px;
   max-width: 68ch;
 `;
@@ -93,11 +102,11 @@ const Grid = styled.div`
 `;
 
 const Card = styled.div`
-  background: ${white};
-  border: 1px solid rgba(42, 69, 128, 0.08);
+  background: ${SURFACE};
+  border: 1px solid ${BORDER};
   border-radius: 18px;
   padding: 28px 26px;
-  box-shadow: 0 10px 30px -18px rgba(44, 44, 44, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
 `;
 
 const StepNumber = styled.span`
@@ -120,13 +129,13 @@ const CardTitle = styled.h3`
   font-size: 1.2rem;
   font-weight: 700;
   margin: 0 0 10px;
-  color: ${marbleDarkGray};
+  color: ${TEXT};
 `;
 
 const CardBody = styled.p`
   font-size: 0.98rem;
   line-height: 1.65;
-  color: ${gray};
+  color: ${MUTED};
   margin: 0;
 `;
 
@@ -170,7 +179,7 @@ const ValueMark = styled.span`
 const ValueText = styled.div`
   font-size: 1.02rem;
   line-height: 1.6;
-  color: ${marbleDarkGray};
+  color: ${TEXT};
 
   strong {
     display: block;
@@ -180,7 +189,7 @@ const ValueText = styled.div`
   }
 
   span {
-    color: ${gray};
+    color: ${MUTED};
   }
 `;
 
@@ -205,7 +214,7 @@ const TeamName = styled.figcaption`
   font-family: ${fontHeading};
   font-weight: 700;
   font-size: 1.05rem;
-  color: ${marbleDarkGray};
+  color: ${TEXT};
   margin-top: 14px;
 `;
 
@@ -219,7 +228,7 @@ const TeamRole = styled.p`
 const CTASection = styled.section`
   margin-top: 96px;
   text-align: center;
-  background: linear-gradient(160deg, ${primary} 0%, ${marbleDarkGray} 100%);
+  background: linear-gradient(160deg, ${primary} 0%, #232323 100%);
   color: ${white};
   border-radius: 24px;
   padding: 64px 32px;
