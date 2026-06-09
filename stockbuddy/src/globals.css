@@ -496,3 +496,46 @@ body {
   margin: 0 0 4px 0;
   line-height: 1.4;
 }
+
+/* ===========================================================================
+   Accessibility layer (app-wide)
+   - Visible keyboard focus on every interactive element (mouse clicks unaffected)
+   - Respect prefers-reduced-motion; allow a hard global override via
+     <html data-motion="reduce"> (see src/hooks/useReducedMotion.js)
+   =========================================================================== */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Don't show focus ring for mouse users that don't support :focus-visible well */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}

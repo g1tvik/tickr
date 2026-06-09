@@ -3,6 +3,7 @@ import { SuperChart } from '../components/SuperChart';
 import { CoachChat } from '../components/CoachChat';
 import { DecisionSidebar } from '../components/DecisionSidebar';
 import { useCoachChat } from '../hooks/useCoachChat';
+import { useSEO, SEO_CONFIG } from '../lib/seo';
 import { api } from '../services/api';
 import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody, fontMono } from '../fontPalette';
@@ -135,82 +136,21 @@ const HISTORICAL_SCENARIOS = [
 
 const BEGINNER_BUDGET = 1000; // USD, used to size the example position and keep P/L approachable
 
-const escapeHtml = (text = '') =>
-  text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-
-const renderMarkdown = (raw = '') => {
-  if (!raw) return '';
-
-  let html = escapeHtml(raw);
-
-  // Headings
-  html = html.replace(/^###\s?(.*)$/gim, '<h3>$1</h3>');
-  html = html.replace(/^##\s?(.*)$/gim, '<h2>$1</h2>');
-  html = html.replace(/^#\s?(.*)$/gim, '<h1>$1</h1>');
-
-  // Bold / Italic / Code
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
-  html = html.replace(/\*(.+?)\*/g, (match, inner) => {
-    const trimmed = inner.trim();
-    if (!trimmed || inner !== trimmed) return match;
-    return `<em>${trimmed}</em>`;
-  });
-  html = html.replace(/_(.+?)_/g, (match, inner) => {
-    const trimmed = inner.trim();
-    if (!trimmed || inner !== trimmed) return match;
-    return `<em>${trimmed}</em>`;
-  });
-  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-  // Lists
-  html = html.replace(
-    /(^|\n)(- .*(\n- .*)+)/g,
-    (match) => {
-      const items = match
-        .trim()
-        .split('\n')
-        .map((line) => line.replace(/^- /, '').trim());
-      return `\n<ul>${items.map((item) => `<li>${item}</li>`).join('')}</ul>`;
-    }
-  );
-
-  // Paragraphs & line breaks
-  const blocks = html
-    .split(/\n{2,}/)
-    .map((block) => {
-      const withBreaks = block.replace(/\n/g, '<br/>');
-      return `<p>${withBreaks}</p>`;
-    })
-    .join('');
-
-  return blocks
-    .replace(/<p>(<ul>.*?<\/ul>)<\/p>/g, '$1')
-    .replace(/<p>(<h\d>.*?<\/h\d>)<\/p>/g, '$1')
-    .replace(/<p>/g, '<p style="margin:0;">');
-};
-
 // Scenario emoji icons for nav
 const SCENARIO_ICONS = ['🚗', '🎮', '🍎', '₿'];
 
 function AICoach() {
+  useSEO(SEO_CONFIG.aiCoach);
+
   const [currentScenario, setCurrentScenario] = useState(0);
   const [scenarioCompleted, setScenarioCompleted] = useState(false);
-  const [userDecision, setUserDecision] = useState(null);
   const [showOrderForm, setShowOrderForm] = useState(false);
   const [orderType, setOrderType] = useState('');
   const [orderPrice, setOrderPrice] = useState('');
-  const [orderShares, setOrderShares] = useState('');
   const [orderReasoning, setOrderReasoning] = useState('');
   const [chartData, setChartData] = useState(null);
   const [chartScenarioIndex, setChartScenarioIndex] = useState(null);
   const [asOfDate, setAsOfDate] = useState(null);
-  const [showInfo, setShowInfo] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [showPLCalculation, setShowPLCalculation] = useState(false);
   const [showSharesCalculation, setShowSharesCalculation] = useState(false);
@@ -219,7 +159,6 @@ function AICoach() {
   const bounceAltIndexRef = useRef(1);
   const defaultScenarioIndexRef = useRef(0);
   const [bouncePhase, setBouncePhase] = useState('idle'); // idle | toAlt | back | done
-  const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'decide'
 
   // Derive scenario from a safe index so we never read undefined
   const safeIndex = HISTORICAL_SCENARIOS.length > 0
@@ -234,6 +173,7 @@ function AICoach() {
     setChatMessages,
     addMessage,
     resetChat,
+    clearHistory,
     isLoading: chatLoading,
     error: chatError,
     sendMessage
@@ -375,11 +315,9 @@ function AICoach() {
       timestamp: Date.now()
     };
 
-    setUserDecision(decision);
     setShowOrderForm(false);
     setOrderType('');
     setOrderPrice('');
-    setOrderShares('');
     setOrderReasoning('');
 
     // Add decision to chat
@@ -478,7 +416,9 @@ function AICoach() {
         setScenarioCompleted(false);
       }
     } catch (error) {
-      console.error('Analysis error:', error);
+      if (import.meta.env.DEV) {
+        console.error('Analysis error:', error);
+      }
       addMessage({
         type: 'ai',
         content: `I encountered an error while analyzing your decision: ${error.message || 'Unknown error'}. Please try submitting again.`,
@@ -499,7 +439,6 @@ function AICoach() {
   const resetScenario = () => {
     resetChat();
     setScenarioCompleted(false);
-    setUserDecision(null);
     setShowOrderForm(false);
   };
 
@@ -526,12 +465,20 @@ function AICoach() {
       padding: '16px',
       fontFamily: fontBody
     }}>
-      <div style={{
+      {/* Scoped styles: responsive grid collapse to a single column on small screens (<=768px). */}
+      <style>{`
+        .coach-main-grid { display: grid; grid-template-columns: 1.2fr 400px; gap: 16px; }
+        .coach-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 8px; }
+        .coach-position-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+        @media (max-width: 768px) {
+          .coach-main-grid,
+          .coach-details-grid,
+          .coach-position-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+      <div className="coach-main-grid" style={{
         maxWidth: '1400px',
-        margin: '0 auto',
-        display: 'grid',
-        gridTemplateColumns: '1.2fr 400px',
-        gap: '16px'
+        margin: '0 auto'
       }}>
         {/* Main Content */}
         <div style={{
@@ -760,12 +707,7 @@ function AICoach() {
 
             {/* Enhanced Collapsible Details */}
             {showDetails && (
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: '1fr 1fr', 
-                gap: '20px',
-                marginTop: '8px'
-              }}>
+              <div className="coach-details-grid">
                 <div style={{ 
                   backgroundColor: white, 
                   borderRadius: '16px', 
@@ -846,7 +788,9 @@ function AICoach() {
           <div style={{
             backgroundColor: lightGray,
             borderRadius: '20px',
-            padding: '16px'
+            padding: '16px',
+            border: '1px solid rgba(42, 69, 128, 0.06)',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)'
           }}>
             <div style={{ marginBottom: '12px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: marbleDarkGray, margin: 0 }}>
@@ -1011,12 +955,7 @@ function AICoach() {
                 </h3>
               </div>
 
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '24px',
-                alignItems: 'start'
-              }}>
+              <div className="coach-position-grid">
                 {/* Position Details */}
                 <div style={{
                   backgroundColor: white,
@@ -1336,6 +1275,7 @@ function AICoach() {
             disabled={scenarioCompleted}
             messages={chatMessages}
             onSendMessage={sendMessage}
+            onClearHistory={clearHistory}
             isLoading={chatLoading}
             error={chatError}
           />
@@ -1361,7 +1301,9 @@ function AICoach() {
           <div style={{
             backgroundColor: lightGray,
             borderRadius: '20px',
-            padding: '16px'
+            padding: '16px',
+            border: '1px solid rgba(42, 69, 128, 0.06)',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)'
           }}>
             <h3 style={{
               fontSize: '18px',

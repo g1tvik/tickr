@@ -12,6 +12,7 @@ export function NavbarProvider({ children }) {
   );
 }
 
+/* eslint-disable-next-line react-refresh/only-export-components */
 export function useNavbar() {
   const ctx = useContext(NavbarContext);
   if (!ctx) throw new Error('useNavbar must be used within NavbarProvider');

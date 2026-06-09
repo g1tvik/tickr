@@ -4,6 +4,7 @@ import { lessonStructure } from '../data/lessonStructure';
 import progressManager from '../utils/progressManager';
 import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
+import { useSEO } from '../lib/seo';
 
 export default function LessonDetail() {
   const { lessonId } = useParams();
@@ -16,6 +17,13 @@ export default function LessonDetail() {
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [completionData, setCompletionData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Set the page title/meta to the current lesson once it loads
+  useSEO({
+    title: lesson?.title ? `${lesson.title} — Learn` : 'Lesson — Learn',
+    description: lesson?.description ||
+      'Interactive lessons to master stock trading and investing fundamentals.',
+  });
 
   useEffect(() => {
     loadLessonAndProgress();
@@ -50,7 +58,7 @@ export default function LessonDetail() {
         navigate('/learn');
       }
     } catch (error) {
-      console.error('Error loading lesson:', error);
+      if (import.meta.env.DEV) console.error('Error loading lesson:', error);
       navigate('/learn');
     } finally {
       setLoading(false);
@@ -130,7 +138,7 @@ export default function LessonDetail() {
       
       setShowCompletionModal(true);
     } catch (error) {
-      console.error('Error submitting quiz:', error);
+      if (import.meta.env.DEV) console.error('Error submitting quiz:', error);
       alert('Failed to submit quiz. Please try again.');
     }
   };
@@ -311,7 +319,7 @@ export default function LessonDetail() {
         padding: "48px 24px"
       }}>
         {!showQuiz ? (
-          <div style={{
+          <div className="lesson-grid" style={{
             display: "grid",
             gridTemplateColumns: "1fr 300px",
             gap: "32px",
@@ -395,7 +403,7 @@ export default function LessonDetail() {
             </div>
 
             {/* Sidebar */}
-            <div style={{
+            <div className="lesson-sidebar" style={{
               position: "sticky",
               top: "24px"
             }}>
@@ -565,7 +573,7 @@ export default function LessonDetail() {
             </div>
           </div>
         ) : (
-          <div style={{
+          <div className="lesson-grid" style={{
             display: "grid",
             gridTemplateColumns: "1fr 300px",
             gap: "32px",
@@ -724,7 +732,7 @@ export default function LessonDetail() {
             </div>
 
             {/* Quiz Sidebar */}
-            <div style={{
+            <div className="lesson-sidebar" style={{
               position: "sticky",
               top: "24px"
             }}>
@@ -1154,7 +1162,7 @@ export default function LessonDetail() {
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         @keyframes slideIn {
           from {
             opacity: 0;
@@ -1163,6 +1171,17 @@ export default function LessonDetail() {
           to {
             opacity: 1;
             transform: translateY(0) scale(1);
+          }
+        }
+
+        /* Collapse the lesson/quiz two-column layout to a single column on small screens */
+        @media (max-width: 768px) {
+          .lesson-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .lesson-sidebar {
+            position: static !important;
+            top: auto !important;
           }
         }
       `}</style>

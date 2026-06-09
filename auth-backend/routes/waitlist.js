@@ -1,13 +1,14 @@
 /**
  * Waitlist routes for MVP lockdown mode
- * Stores waitlist entries in JSON file; idempotent by email.
+ * Stores waitlist entries via the async storage layer; idempotent by email.
  */
 const express = require('express');
 const router = express.Router();
-const fs = require('node:fs/promises');
-const path = require('node:path');
+const crypto = require('node:crypto');
+const rateLimit = require('express-rate-limit');
 const { z } = require('zod');
 const { sendWaitlistConfirmation } = require('../services/emailService');
+const { requireAdmin } = require('../middleware/requireAdmin');
 
 const waitlistSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -15,36 +16,45 @@ const waitlistSchema = z.object({
   captcha: z.string().min(10).optional() // TODO: verify with hCaptcha/Turnstile
 });
 
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
-const WAITLIST_FILE = path.join(DATA_DIR, 'waitlist.json');
-
-/**
- * Load waitlist from JSON file
- * @returns {Promise<Array>}
- */
-async function loadWaitlist() {
-  try {
-    const data = await fs.readFile(WAITLIST_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch {
-    return [];
+// Limit public waitlist joins to 5 requests per minute per IP to prevent abuse
+const waitlistLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res, next, options) => {
+    res.status(options.statusCode).json({
+      ok: false,
+      error: 'Too many requests. Please try again later.'
+    });
   }
-}
+});
 
-/**
- * Save waitlist to JSON file
- * @param {Array} list
- */
-async function saveWaitlist(list) {
-  await fs.mkdir(path.dirname(WAITLIST_FILE), { recursive: true });
-  await fs.writeFile(WAITLIST_FILE, JSON.stringify(list, null, 2));
-}
+// Limit public status lookups to 10 requests per minute per IP to deter
+// email enumeration and resource-exhaustion (DoS) abuse.
+const statusLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res, next, options) => {
+    res.status(options.statusCode).json({
+      ok: false,
+      error: 'Too many requests. Please try again later.'
+    });
+  }
+});
+
+// Validate the email query param for the public status endpoint.
+const statusQuerySchema = z.object({
+  email: z.string().max(254, 'Email too long').email('Invalid email address')
+});
 
 /**
  * POST /api/waitlist
  * Add email to waitlist (idempotent - returns success if already exists)
  */
-router.post('/', async (req, res) => {
+router.post('/', waitlistLimiter, async (req, res) => {
   try {
     const parsed = waitlistSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -56,14 +66,15 @@ router.post('/', async (req, res) => {
 
     const { email, name, captcha } = parsed.data;
 
-    // TODO: Verify captcha with hCaptcha/Turnstile using server-side secret
-    // if (captcha) {
-    //   const verified = await verifyCaptcha(captcha);
-    //   if (!verified) return res.status(400).json({ ok: false, error: 'Invalid captcha' });
-    // }
+    // TODO: Verify captcha with hCaptcha/Turnstile using server-side secret.
+    // Skip gracefully when no captcha secret is configured so this never crashes.
+    if (captcha && process.env.CAPTCHA_SECRET) {
+      // const verified = await verifyCaptcha(captcha);
+      // if (!verified) return res.status(400).json({ ok: false, error: 'Invalid captcha' });
+    }
 
-    const list = await loadWaitlist();
-    
+    const list = await req.app.locals.storage.getWaitlist();
+
     // Check for existing entry (case-insensitive)
     const existing = list.find(x => x.email.toLowerCase() === email.toLowerCase());
     if (existing) {
@@ -72,7 +83,7 @@ router.post('/', async (req, res) => {
     }
 
     const entry = {
-      id: `wl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `wl_${crypto.randomUUID()}`,
       email: email.toLowerCase(),
       name: name,
       addedAt: new Date().toISOString(),
@@ -82,7 +93,7 @@ router.post('/', async (req, res) => {
     };
 
     list.push(entry);
-    await saveWaitlist(list);
+    await req.app.locals.storage.saveWaitlist(list);
 
     // Send confirmation email (don't block response)
     sendWaitlistConfirmation(email, name || 'there').catch(err => {
@@ -99,27 +110,31 @@ router.post('/', async (req, res) => {
 
 /**
  * GET /api/waitlist/status
- * Check if an email is on the waitlist and their approval status
+ * Check if an email is on the waitlist.
+ * Rate limited and intentionally does NOT reveal approval status to an
+ * unauthenticated caller (prevents enumeration of approved accounts).
  */
-router.get('/status', async (req, res) => {
+router.get('/status', statusLimiter, async (req, res) => {
   try {
-    const email = req.query.email?.toLowerCase();
-    if (!email) {
-      return res.status(400).json({ ok: false, error: 'Email required' });
+    const parsed = statusQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({
+        ok: false,
+        error: parsed.error.issues[0]?.message || 'Invalid input'
+      });
     }
 
-    const list = await loadWaitlist();
+    const email = parsed.data.email.toLowerCase();
+
+    const list = await req.app.locals.storage.getWaitlist();
     const entry = list.find(x => x.email === email);
 
-    if (!entry) {
-      return res.json({ ok: true, onWaitlist: false, approved: false });
-    }
-
+    // Return only whether the email is on the waitlist; do not leak the
+    // 'approved' boolean. Approval state is always reported as 'pending'.
     res.json({
       ok: true,
-      onWaitlist: true,
-      approved: entry.approved,
-      addedAt: entry.addedAt
+      onWaitlist: !!entry,
+      status: 'pending'
     });
   } catch (err) {
     console.error('[Waitlist] Status error:', err);
@@ -129,12 +144,11 @@ router.get('/status', async (req, res) => {
 
 /**
  * GET /api/waitlist (admin)
- * List all waitlist entries (requires admin auth in production)
+ * List all waitlist entries (requires admin auth)
  */
-router.get('/', async (req, res) => {
+router.get('/', requireAdmin, async (req, res) => {
   try {
-    // TODO: Add admin authentication middleware
-    const list = await loadWaitlist();
+    const list = await req.app.locals.storage.getWaitlist();
     res.json({ ok: true, entries: list, count: list.length });
   } catch (err) {
     console.error('[Waitlist] List error:', err);
@@ -143,4 +157,3 @@ router.get('/', async (req, res) => {
 });
 
 module.exports = router;
-

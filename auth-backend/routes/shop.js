@@ -1,6 +1,8 @@
 const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
 const authRoutes = require('./auth');
+const { requireApproved } = require('../middleware/requireApproved');
 
 // Reuse shared middleware from auth routes
 const authenticateToken = authRoutes.authenticateToken;
@@ -16,16 +18,8 @@ const getTimestamp = () => {
   });
 };
 
-// File-based user management
-const getUsers = (req) => req.app.locals.fileStorage.getUsers();
-const saveUsers = (req, users) => req.app.locals.fileStorage.saveUsers(users);
-
-
-const generatePurchaseId = (userId) => {
-  const timestamp = Date.now().toString(36);
-  const randomPart = Math.random().toString(36).slice(2, 8);
-  return `${userId || 'purchase'}_${timestamp}_${randomPart}`;
-};
+// Generate a collision-free purchase identifier using crypto.
+const generatePurchaseId = () => crypto.randomUUID();
 
 // Shop items definition (synced with frontend)
 // Only includes items that are fully implemented
@@ -135,13 +129,12 @@ router.get('/items', authenticateToken, (req, res) => {
 });
 
 // Get user's purchased items
-router.get('/purchases', authenticateToken, (req, res) => {
+router.get('/purchases', authenticateToken, async (req, res) => {
   console.log(`[${getTimestamp()}] 🛍️ Shop: User ${req.user.userId} fetching purchases`);
-  
+
   try {
-    const users = getUsers(req);
-    const user = users[req.user.userId];
-    
+    const user = await req.app.locals.storage.getUserById(req.user.userId);
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -167,11 +160,12 @@ router.get('/purchases', authenticateToken, (req, res) => {
 });
 
 // Purchase an item
-router.post('/purchase', authenticateToken, (req, res) => {
+router.post('/purchase', authenticateToken, requireApproved, async (req, res) => {
   const { itemId } = req.body;
-  
-  console.log(`[${getTimestamp()}] 🛒 Shop: User ${req.user.userId} attempting to purchase item ${itemId}`);
-  
+  const userId = req.user.userId;
+
+  console.log(`[${getTimestamp()}] 🛒 Shop: User ${userId} attempting to purchase item ${itemId}`);
+
   try {
     // Validate item ID
     if (!itemId) {
@@ -191,79 +185,87 @@ router.post('/purchase', authenticateToken, (req, res) => {
       });
     }
 
-    // Get user data
-    const users = getUsers(req);
-    const user = users[req.user.userId];
-    
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
+    // Atomically deduct coins and grant the item so concurrent purchases
+    // cannot double-spend coins or duplicate inventory. Re-read the user
+    // inside the lock, validate, mutate, then persist via tx.saveUser.
+    const result = await req.app.locals.storage.withUserLock(userId, async (tx) => {
+      const user = await tx.getUserById(userId);
 
-    // Initialize user data if needed
-    if (!user.learningProgress) {
-      user.learningProgress = { xp: 0, coins: 0 };
-    }
-    if (!user.purchasedItems) {
-      user.purchasedItems = [];
-    }
+      if (!user) {
+        return { status: 404, body: { success: false, message: 'User not found' } };
+      }
 
-    // Check if user has enough coins
-    const userCoins = user.learningProgress.coins || 0;
-    if (userCoins < item.price) {
-      console.log(`[${getTimestamp()}] ⚠️ Shop: User ${req.user.userId} has insufficient coins (${userCoins}/${item.price})`);
-      return res.status(400).json({
-        success: false,
-        message: 'Insufficient coins',
-        userCoins,
-        itemPrice: item.price
-      });
-    }
+      // Initialize user data if needed
+      if (!user.learningProgress) {
+        user.learningProgress = { xp: 0, coins: 0 };
+      }
+      if (!user.purchasedItems) {
+        user.purchasedItems = [];
+      }
 
-    // Check if item is already purchased (for one-time purchase items)
-    const alreadyPurchased = user.purchasedItems.some(p => p.itemId === itemId);
-    if (alreadyPurchased && item.type !== 'booster' && item.type !== 'utility') {
-      console.log(`[${getTimestamp()}] ⚠️ Shop: User ${req.user.userId} already owns item ${itemId}`);
-      return res.status(400).json({
-        success: false,
-        message: 'You already own this item'
-      });
-    }
+      // Check if user has enough coins
+      const userCoins = user.learningProgress.coins || 0;
+      if (userCoins < item.price) {
+        console.log(`[${getTimestamp()}] ⚠️ Shop: User ${userId} has insufficient coins (${userCoins}/${item.price})`);
+        return {
+          status: 400,
+          body: {
+            success: false,
+            message: 'Insufficient coins',
+            userCoins,
+            itemPrice: item.price
+          }
+        };
+      }
 
-    // Deduct coins
-    user.learningProgress.coins -= item.price;
+      // Check if item is already purchased (for one-time purchase items)
+      const alreadyPurchased = user.purchasedItems.some(p => p.itemId === itemId);
+      if (alreadyPurchased && item.type !== 'booster' && item.type !== 'utility') {
+        console.log(`[${getTimestamp()}] ⚠️ Shop: User ${userId} already owns item ${itemId}`);
+        return {
+          status: 400,
+          body: { success: false, message: 'You already own this item' }
+        };
+      }
 
-    // Create purchase record
-    const purchase = {
-      id: generatePurchaseId(req.user.userId),
-      itemId: item.id,
-      itemName: item.name,
-      itemType: item.type,
-      price: item.price,
-      purchasedAt: new Date().toISOString(),
-      effect: item.effect,
-      active: false,
-      consumed: false,
-      activatedAt: null,
-      consumedAt: null
-    };
+      // Deduct coins
+      user.learningProgress.coins -= item.price;
 
-    // Add to purchased items
-    user.purchasedItems.push(purchase);
+      // Create purchase record
+      const purchase = {
+        id: generatePurchaseId(),
+        itemId: item.id,
+        itemName: item.name,
+        itemType: item.type,
+        price: item.price,
+        purchasedAt: new Date().toISOString(),
+        effect: item.effect,
+        active: false,
+        consumed: false,
+        activatedAt: null,
+        consumedAt: null
+      };
 
-    // Save updated user data
-    saveUsers(req, users);
+      // Add to purchased items
+      user.purchasedItems.push(purchase);
 
-    console.log(`[${getTimestamp()}] ✅ Shop: Purchase successful - User ${req.user.userId} bought "${item.name}" for ${item.price} coins (${user.learningProgress.coins} coins remaining)`);
+      // Persist updated user data atomically
+      await tx.saveUser(user);
 
-    res.json({
-      success: true,
-      message: 'Purchase successful',
-      purchase: purchase,
-      remainingCoins: user.learningProgress.coins
+      console.log(`[${getTimestamp()}] ✅ Shop: Purchase successful - User ${userId} bought "${item.name}" for ${item.price} coins (${user.learningProgress.coins} coins remaining)`);
+
+      return {
+        status: 200,
+        body: {
+          success: true,
+          message: 'Purchase successful',
+          purchase: purchase,
+          remainingCoins: user.learningProgress.coins
+        }
+      };
     });
+
+    res.status(result.status).json(result.body);
   } catch (error) {
     console.error(`[${getTimestamp()}] ❌ Shop: Error processing purchase:`, error.message);
     res.status(500).json({
@@ -274,10 +276,11 @@ router.post('/purchase', authenticateToken, (req, res) => {
 });
 
 // Use a purchased item
-router.post('/use', authenticateToken, (req, res) => {
+router.post('/use', authenticateToken, requireApproved, async (req, res) => {
   const { purchaseId } = req.body;
+  const userId = req.user.userId;
 
-  console.log(`[${getTimestamp()}] 🎒 Shop: User ${req.user.userId} attempting to use purchase ${purchaseId}`);
+  console.log(`[${getTimestamp()}] 🎒 Shop: User ${userId} attempting to use purchase ${purchaseId}`);
 
   try {
     if (!purchaseId) {
@@ -287,146 +290,152 @@ router.post('/use', authenticateToken, (req, res) => {
       });
     }
 
-    const users = getUsers(req);
-    const user = users[req.user.userId];
+    // Atomically consume the purchase so concurrent uses cannot apply the
+    // same effect twice. Re-read the user inside the lock, validate, mutate,
+    // then persist via tx.saveUser.
+    const result = await req.app.locals.storage.withUserLock(userId, async (tx) => {
+      const user = await tx.getUserById(userId);
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    if (!user.purchasedItems || user.purchasedItems.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'No purchased items found'
-      });
-    }
-
-    let purchase = user.purchasedItems.find(p => p.id === purchaseId);
-
-    if (!purchase) {
-      purchase = user.purchasedItems.find(p => {
-        if (p.id) return false;
-        if (p.consumed) return false;
-        const candidateId = typeof p.itemId === 'number' ? p.itemId.toString() : p.itemId;
-        return candidateId === purchaseId;
-      });
-    }
-
-    if (!purchase) {
-      return res.status(404).json({
-        success: false,
-        message: 'Purchase not found'
-      });
-    }
-
-    if (!purchase.id) {
-      purchase.id = generatePurchaseId(req.user.userId);
-    }
-
-    if (purchase.consumed) {
-      return res.status(400).json({
-        success: false,
-        message: 'This item has already been used'
-      });
-    }
-
-    const now = new Date().toISOString();
-
-    if (purchase.itemType === 'booster') {
-      if (!user.activeEffects) {
-        user.activeEffects = {};
+      if (!user) {
+        return { status: 404, body: { success: false, message: 'User not found' } };
       }
 
-      const effect = purchase.effect || {};
-      if (!effect.duration) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid booster configuration'
+      if (!user.purchasedItems || user.purchasedItems.length === 0) {
+        return {
+          status: 404,
+          body: { success: false, message: 'No purchased items found' }
+        };
+      }
+
+      let purchase = user.purchasedItems.find(p => p.id === purchaseId);
+
+      if (!purchase) {
+        purchase = user.purchasedItems.find(p => {
+          if (p.id) return false;
+          if (p.consumed) return false;
+          const candidateId = typeof p.itemId === 'number' ? p.itemId.toString() : p.itemId;
+          return candidateId === purchaseId;
         });
       }
 
-      const effectKey = `${effect.type}_${Date.now()}`;
-      user.activeEffects[effectKey] = {
-        ...effect,
-        expiresAt: new Date(Date.now() + effect.duration).toISOString(),
-        purchasedAt: purchase.purchasedAt,
-        activatedAt: now
-      };
-
-      purchase.active = true;
-      purchase.consumed = true;
-      purchase.activatedAt = now;
-      purchase.consumedAt = now;
-
-      console.log(`[${getTimestamp()}] ⚡ Shop: Activated booster ${effect.type} for user ${req.user.userId}`);
-    } else if (purchase.itemType === 'utility') {
-      const effect = purchase.effect || {};
-
-      switch (effect.type) {
-        case 'instant_xp': {
-          if (!user.learningProgress) {
-            user.learningProgress = { xp: 0, coins: 0 };
-          }
-          user.learningProgress.xp = (user.learningProgress.xp || 0) + (effect.amount || 0);
-          purchase.consumed = true;
-          purchase.consumedAt = now;
-          console.log(`[${getTimestamp()}] 🎁 Shop: Applied ${effect.amount} XP to user ${req.user.userId}`);
-          break;
-        }
-        case 'instant_coins': {
-          if (!user.learningProgress) {
-            user.learningProgress = { xp: 0, coins: 0 };
-          }
-          user.learningProgress.coins = (user.learningProgress.coins || 0) + (effect.amount || 0);
-          purchase.consumed = true;
-          purchase.consumedAt = now;
-          console.log(`[${getTimestamp()}] 💰 Shop: Applied ${effect.amount} coins to user ${req.user.userId}`);
-          break;
-        }
-        case 'skip_token': {
-          if (!user.skipTokens) user.skipTokens = 0;
-          user.skipTokens += effect.uses || 1;
-          purchase.consumed = true;
-          purchase.consumedAt = now;
-          console.log(`[${getTimestamp()}] ⏭️ Shop: Granted skip token to user ${req.user.userId}`);
-          break;
-        }
-        case 'streak_freeze': {
-          if (!user.streakFreezes) user.streakFreezes = 0;
-          user.streakFreezes += effect.days || 0;
-          purchase.consumed = true;
-          purchase.consumedAt = now;
-          console.log(`[${getTimestamp()}] 🛡️ Shop: Granted streak freeze days to user ${req.user.userId}`);
-          break;
-        }
-        default: {
-          return res.status(400).json({
-            success: false,
-            message: 'Unsupported utility item type'
-          });
-        }
+      if (!purchase) {
+        return {
+          status: 404,
+          body: { success: false, message: 'Purchase not found' }
+        };
       }
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: 'Unsupported item type'
-      });
-    }
 
-    saveUsers(req, users);
+      if (!purchase.id) {
+        purchase.id = generatePurchaseId();
+      }
 
-    res.json({
-      success: true,
-      message: 'Item used successfully',
-      purchase,
-      skipTokens: user.skipTokens || 0,
-      streakFreezes: user.streakFreezes || 0,
-      learningProgress: user.learningProgress || { xp: 0, coins: 0 },
-      activeEffects: user.activeEffects || {}
+      if (purchase.consumed) {
+        return {
+          status: 400,
+          body: { success: false, message: 'This item has already been used' }
+        };
+      }
+
+      const now = new Date().toISOString();
+
+      if (purchase.itemType === 'booster') {
+        if (!user.activeEffects) {
+          user.activeEffects = {};
+        }
+
+        const effect = purchase.effect || {};
+        if (!effect.duration) {
+          return {
+            status: 400,
+            body: { success: false, message: 'Invalid booster configuration' }
+          };
+        }
+
+        const effectKey = `${effect.type}_${Date.now()}`;
+        user.activeEffects[effectKey] = {
+          ...effect,
+          expiresAt: new Date(Date.now() + effect.duration).toISOString(),
+          purchasedAt: purchase.purchasedAt,
+          activatedAt: now
+        };
+
+        purchase.active = true;
+        purchase.consumed = true;
+        purchase.activatedAt = now;
+        purchase.consumedAt = now;
+
+        console.log(`[${getTimestamp()}] ⚡ Shop: Activated booster ${effect.type} for user ${userId}`);
+      } else if (purchase.itemType === 'utility') {
+        const effect = purchase.effect || {};
+
+        switch (effect.type) {
+          case 'instant_xp': {
+            if (!user.learningProgress) {
+              user.learningProgress = { xp: 0, coins: 0 };
+            }
+            user.learningProgress.xp = (user.learningProgress.xp || 0) + (effect.amount || 0);
+            purchase.consumed = true;
+            purchase.consumedAt = now;
+            console.log(`[${getTimestamp()}] 🎁 Shop: Applied ${effect.amount} XP to user ${userId}`);
+            break;
+          }
+          case 'instant_coins': {
+            if (!user.learningProgress) {
+              user.learningProgress = { xp: 0, coins: 0 };
+            }
+            user.learningProgress.coins = (user.learningProgress.coins || 0) + (effect.amount || 0);
+            purchase.consumed = true;
+            purchase.consumedAt = now;
+            console.log(`[${getTimestamp()}] 💰 Shop: Applied ${effect.amount} coins to user ${userId}`);
+            break;
+          }
+          case 'skip_token': {
+            if (!user.skipTokens) user.skipTokens = 0;
+            user.skipTokens += effect.uses || 1;
+            purchase.consumed = true;
+            purchase.consumedAt = now;
+            console.log(`[${getTimestamp()}] ⏭️ Shop: Granted skip token to user ${userId}`);
+            break;
+          }
+          case 'streak_freeze': {
+            if (!user.streakFreezes) user.streakFreezes = 0;
+            user.streakFreezes += effect.days || 0;
+            purchase.consumed = true;
+            purchase.consumedAt = now;
+            console.log(`[${getTimestamp()}] 🛡️ Shop: Granted streak freeze days to user ${userId}`);
+            break;
+          }
+          default: {
+            return {
+              status: 400,
+              body: { success: false, message: 'Unsupported utility item type' }
+            };
+          }
+        }
+      } else {
+        return {
+          status: 400,
+          body: { success: false, message: 'Unsupported item type' }
+        };
+      }
+
+      await tx.saveUser(user);
+
+      return {
+        status: 200,
+        body: {
+          success: true,
+          message: 'Item used successfully',
+          purchase,
+          skipTokens: user.skipTokens || 0,
+          streakFreezes: user.streakFreezes || 0,
+          learningProgress: user.learningProgress || { xp: 0, coins: 0 },
+          activeEffects: user.activeEffects || {}
+        }
+      };
     });
+
+    res.status(result.status).json(result.body);
   } catch (error) {
     console.error(`[${getTimestamp()}] ❌ Shop: Error using item:`, error.message);
     res.status(500).json({
@@ -437,49 +446,57 @@ router.post('/use', authenticateToken, (req, res) => {
 });
 
 // Get active effects (boosters)
-router.get('/active-effects', authenticateToken, (req, res) => {
-  console.log(`[${getTimestamp()}] 🛍️ Shop: User ${req.user.userId} fetching active effects`);
-  
+router.get('/active-effects', authenticateToken, async (req, res) => {
+  const userId = req.user.userId;
+
+  console.log(`[${getTimestamp()}] 🛍️ Shop: User ${userId} fetching active effects`);
+
   try {
-    const users = getUsers(req);
-    const user = users[req.user.userId];
-    
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
+    // Atomically read, prune expired effects, and persist so this cleanup
+    // cannot race with /use (which adds effects under the same lock) and
+    // silently drop a newly-added effect.
+    const result = await req.app.locals.storage.withUserLock(userId, async (tx) => {
+      const user = await tx.getUserById(userId);
 
-    const activeEffects = user.activeEffects || {};
-    const now = new Date();
-
-    // Filter out expired effects
-    const validEffects = {};
-    let hasExpired = false;
-
-    Object.keys(activeEffects).forEach(key => {
-      const effect = activeEffects[key];
-      if (new Date(effect.expiresAt) > now && effect.lessonsRemaining > 0) {
-        validEffects[key] = effect;
-      } else {
-        hasExpired = true;
+      if (!user) {
+        return { status: 404, body: { success: false, message: 'User not found' } };
       }
+
+      const activeEffects = user.activeEffects || {};
+      const now = new Date();
+
+      // Filter out expired effects
+      const validEffects = {};
+      let hasExpired = false;
+
+      Object.keys(activeEffects).forEach(key => {
+        const effect = activeEffects[key];
+        if (new Date(effect.expiresAt) > now && effect.lessonsRemaining > 0) {
+          validEffects[key] = effect;
+        } else {
+          hasExpired = true;
+        }
+      });
+
+      // Update user data if any effects expired
+      if (hasExpired) {
+        user.activeEffects = validEffects;
+        await tx.saveUser(user);
+        console.log(`[${getTimestamp()}] 🧹 Shop: Cleaned up expired effects for user ${userId}`);
+      }
+
+      console.log(`[${getTimestamp()}] ✅ Shop: Retrieved ${Object.keys(validEffects).length} active effects for user ${userId}`);
+
+      return {
+        status: 200,
+        body: {
+          success: true,
+          activeEffects: validEffects
+        }
+      };
     });
 
-    // Update user data if any effects expired
-    if (hasExpired) {
-      user.activeEffects = validEffects;
-      saveUsers(req, users);
-      console.log(`[${getTimestamp()}] 🧹 Shop: Cleaned up expired effects for user ${req.user.userId}`);
-    }
-
-    console.log(`[${getTimestamp()}] ✅ Shop: Retrieved ${Object.keys(validEffects).length} active effects for user ${req.user.userId}`);
-    
-    res.json({
-      success: true,
-      activeEffects: validEffects
-    });
+    res.status(result.status).json(result.body);
   } catch (error) {
     console.error(`[${getTimestamp()}] ❌ Shop: Error fetching active effects:`, error.message);
     res.status(500).json({

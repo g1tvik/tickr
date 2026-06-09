@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
+import { useSEO, SEO_CONFIG } from '../lib/seo';
 
 export default function Shop() {
+  useSEO(SEO_CONFIG.shop);
   const navigate = useNavigate();
   const [shopItems, setShopItems] = useState([]);
   const [userCoins, setUserCoins] = useState(0);
@@ -14,6 +16,8 @@ export default function Shop() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [message, setMessage] = useState(null);
+  const [actionError, setActionError] = useState(null);
 
   useEffect(() => {
     fetchShopData();
@@ -24,8 +28,8 @@ export default function Shop() {
     setError(null);
     
     try {
-      console.log('🛍️ Shop: Fetching shop data...');
-      
+      if (import.meta.env.DEV) console.log('Shop: Fetching shop data...');
+
       // Fetch shop items, purchases, and user data in parallel
       const [itemsResponse, purchasesResponse, userDataResponse] = await Promise.all([
         api.getShopItems(),
@@ -33,15 +37,17 @@ export default function Shop() {
         api.getUserData()
       ]);
 
-      console.log('📦 Shop: Items received:', itemsResponse.items?.length || 0);
-      console.log('🛒 Shop: Purchases received:', purchasesResponse.purchases?.length || 0);
-      console.log('💰 Shop: User coins:', userDataResponse.user?.learningProgress?.coins || 0);
+      if (import.meta.env.DEV) {
+        console.log('Shop: Items received:', itemsResponse.items?.length || 0);
+        console.log('Shop: Purchases received:', purchasesResponse.purchases?.length || 0);
+        console.log('Shop: User coins:', userDataResponse.user?.learningProgress?.coins || 0);
+      }
 
       setShopItems(itemsResponse.items || []);
       setPurchasedItems(purchasesResponse.purchases || []);
       setUserCoins(userDataResponse.user?.learningProgress?.coins || 0);
     } catch (err) {
-      console.error('❌ Shop: Error fetching data:', err);
+      if (import.meta.env.DEV) console.error('Shop: Error fetching data:', err);
       setError(err.message || 'Failed to load shop data');
     } finally {
       setLoading(false);
@@ -62,43 +68,52 @@ export default function Shop() {
 
   const handlePurchase = (item) => {
     if (userCoins >= item.price) {
+      setActionError(null);
       setSelectedItem(item);
       setShowPurchaseModal(true);
     } else {
-      alert('Not enough coins! Complete more lessons to earn coins.');
+      setMessage(null);
+      setActionError('Not enough coins! Complete more lessons to earn coins.');
     }
   };
 
   const confirmPurchase = async () => {
     if (!selectedItem) return;
 
+    setMessage(null);
+    setActionError(null);
+
     try {
-      console.log(`🛒 Shop: Purchasing ${selectedItem.name} (ID: ${selectedItem.id}) for ${selectedItem.price} coins...`);
-      console.log(`💰 Shop: Current balance: ${userCoins} coins`);
-      
+      if (import.meta.env.DEV) {
+        console.log(`Shop: Purchasing ${selectedItem.name} (ID: ${selectedItem.id}) for ${selectedItem.price} coins...`);
+        console.log(`Shop: Current balance: ${userCoins} coins`);
+      }
+
       // Call backend to purchase item
       const response = await api.purchaseItem(selectedItem.id);
-      
+
       if (response.success) {
-        console.log('✅ Shop: Purchase successful!', response);
-        console.log(`💰 Shop: New balance: ${response.remainingCoins} coins`);
-        
+        if (import.meta.env.DEV) {
+          console.log('Shop: Purchase successful!', response);
+          console.log(`Shop: New balance: ${response.remainingCoins} coins`);
+        }
+
         // Update local state
         setUserCoins(response.remainingCoins);
         setPurchasedItems([...purchasedItems, response.purchase]);
 
-        // Show success message
-        alert(getSuccessMessage(selectedItem));
-        
+        // Show success message inline
+        setMessage(getSuccessMessage(selectedItem));
+
         setShowPurchaseModal(false);
         setSelectedItem(null);
       } else {
-        console.error('❌ Shop: Purchase failed - backend returned success: false');
-        alert('Purchase failed. Please try again.');
+        if (import.meta.env.DEV) console.error('Shop: Purchase failed - backend returned success: false');
+        setActionError('Purchase failed. Please try again.');
       }
     } catch (err) {
-      console.error('❌ Shop: Purchase failed:', err);
-      alert(err.message || 'Purchase failed. Please try again.');
+      if (import.meta.env.DEV) console.error('Shop: Purchase failed:', err);
+      setActionError(err.message || 'Purchase failed. Please try again.');
     }
   };
 
@@ -196,6 +211,16 @@ export default function Shop() {
       backgroundColor: white,
       fontFamily: fontBody
     }}>
+      {/* Scoped styles: responsive grid collapse + header layout (<=768px). */}
+      <style>{`
+        .shop-items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+        .shop-balance-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        @media (max-width: 768px) {
+          .shop-items-grid { grid-template-columns: 1fr; }
+          .shop-balance-bar { flex-direction: column; align-items: stretch; }
+          .shop-balance-bar > button { width: 100%; }
+        }
+      `}</style>
       {/* Header */}
       <div style={{
         backgroundColor: lightGray,
@@ -242,14 +267,10 @@ export default function Shop() {
           </p>
 
           {/* User Balance */}
-          <div style={{
+          <div className="shop-balance-bar" style={{
             backgroundColor: white,
             borderRadius: "12px",
-            padding: "16px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "12px"
+            padding: "16px"
           }}>
             <div style={{
               display: "flex",
@@ -277,32 +298,37 @@ export default function Shop() {
                 </div>
               </div>
             </div>
-            <button
-              onClick={async () => {
-                try {
-                  console.log('🎁 Adding test coins...');
-                  const response = await api.addTestCoins(100);
-                  if (response.success) {
-                    setUserCoins(response.newBalance);
-                    console.log('✅ Test coins added! New balance:', response.newBalance);
+            {import.meta.env.DEV && (
+              <button
+                onClick={async () => {
+                  setMessage(null);
+                  setActionError(null);
+                  try {
+                    if (import.meta.env.DEV) console.log('Adding test coins...');
+                    const response = await api.addTestCoins(100);
+                    if (response.success) {
+                      setUserCoins(response.newBalance);
+                      if (import.meta.env.DEV) console.log('Test coins added! New balance:', response.newBalance);
+                    }
+                  } catch (err) {
+                    if (import.meta.env.DEV) console.error('Failed to add test coins:', err);
+                    setActionError(err.message || 'Failed to add test coins.');
                   }
-                } catch (err) {
-                  console.error('❌ Failed to add test coins:', err);
-                }
-              }}
-              style={{
-                backgroundColor: marbleGold,
-                color: marbleDarkGray,
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "600",
-                cursor: "pointer"
-              }}
-            >
-              + Add Test Coins
-            </button>
+                }}
+                style={{
+                  backgroundColor: marbleGold,
+                  color: marbleDarkGray,
+                  border: "none",
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer"
+                }}
+              >
+                + Add Test Coins
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -313,6 +339,40 @@ export default function Shop() {
         margin: "0 auto",
         padding: "48px 24px"
       }}>
+        {(message || actionError) && (
+          <div
+            role="status"
+            style={{
+              marginBottom: "24px",
+              padding: "12px 16px",
+              borderRadius: "12px",
+              backgroundColor: message ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+              color: message ? '#166534' : '#991b1b',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "12px"
+            }}
+          >
+            <span>{message || actionError}</span>
+            <button
+              onClick={() => { setMessage(null); setActionError(null); }}
+              aria-label="Dismiss message"
+              style={{
+                backgroundColor: "transparent",
+                border: "none",
+                color: "inherit",
+                fontSize: "18px",
+                lineHeight: 1,
+                cursor: "pointer",
+                padding: "0 4px"
+              }}
+            >
+              ×
+            </button>
+          </div>
+        )}
+
         {/* Categories */}
         <div style={{
           display: "flex",
@@ -342,11 +402,7 @@ export default function Shop() {
         </div>
 
         {/* Items Grid */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-          gap: "24px"
-        }}>
+        <div className="shop-items-grid">
           {filteredItems.map(item => (
             <div
               key={item.id}

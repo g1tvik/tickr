@@ -76,7 +76,8 @@ export const articles = [
                 'To grow wealth over time',
                 'To spend money immediately',
                 'To avoid taxes'
-              ]
+              ],
+              correct: 1
             },
             {
               question: 'Which of the following is NOT a common investment type?',
@@ -85,7 +86,8 @@ export const articles = [
                 'Bonds',
                 'Real Estate',
                 'Grocery shopping'
-              ]
+              ],
+              correct: 3
             }
           ]
         }
@@ -138,7 +140,8 @@ export const articles = [
                 'Income Statement',
                 'Cash Flow Statement',
                 'Statement of Equity'
-              ]
+              ],
+              correct: 1
             },
             {
               question: 'What does a high P/E ratio typically indicate?',
@@ -147,7 +150,8 @@ export const articles = [
                 'Investors expect high growth',
                 'The company is in financial trouble',
                 'The stock pays high dividends'
-              ]
+              ],
+              correct: 1
             }
           ]
         }
@@ -200,7 +204,8 @@ export const articles = [
                 'Technology',
                 'Energy',
                 'Consumer Goods'
-              ]
+              ],
+              correct: 1
             },
             {
               question: 'What does ESG stand for in sustainable investing?',
@@ -209,7 +214,8 @@ export const articles = [
                 'Environmental, Social, Governance',
                 'Energy, Sustainability, Goals',
                 'Enterprise, Strategy, Growth'
-              ]
+              ],
+              correct: 1
             }
           ]
         }
@@ -262,7 +268,8 @@ export const articles = [
                 '1-2%',
                 '10-15%',
                 '20-25%'
-              ]
+              ],
+              correct: 1
             },
             {
               question: 'When should day traders typically close their positions?',
@@ -271,7 +278,8 @@ export const articles = [
                 'Before market close',
                 'After holding for a month',
                 'When the stock pays dividends'
-              ]
+              ],
+              correct: 1
             }
           ]
         }

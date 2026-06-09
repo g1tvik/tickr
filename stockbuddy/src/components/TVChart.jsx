@@ -28,6 +28,7 @@ export default function TVChart({
       const end = Math.floor(new Date(endDate + 'T23:59:59Z').getTime() / 1000);
       return { start, end };
     } catch {
+      /* invalid date input — fall back to default range */
       return null;
     }
   }, [startDate, endDate]);
@@ -40,9 +41,9 @@ export default function TVChart({
   };
 
   const cleanup = () => {
-    try { roRef.current?.disconnect(); } catch {}
+    try { roRef.current?.disconnect(); } catch { /* ignore */ }
     roRef.current = null;
-    try { widgetRef.current?.remove?.(); } catch {}
+    try { widgetRef.current?.remove?.(); } catch { /* ignore */ }
     widgetRef.current = null;
     if (hostRef.current) hostRef.current.replaceChildren();
   };
@@ -59,7 +60,7 @@ export default function TVChart({
         k.startsWith("tradingview.chartproperties") ||
         k.includes("chartsettings")
       ) {
-        try { localStorage.removeItem(k); } catch {}
+        try { localStorage.removeItem(k); } catch { /* ignore */ }
       }
     });
   }, [scenarioId]);
@@ -129,7 +130,7 @@ export default function TVChart({
         w.onChartReady?.(() => {
           try {
             w?.chart?.().timeScale?.().fitContent?.();
-          } catch {}
+          } catch { /* ignore */ }
         });
 
         widgetRef.current = w;
@@ -156,7 +157,7 @@ export default function TVChart({
       try {
         widgetRef.current?.resize?.();
         widgetRef.current?.chart?.().timeScale?.().fitContent?.();
-      } catch {}
+      } catch { /* ignore */ }
     });
     ro.observe(hostRef.current);
     roRef.current = ro;
@@ -171,18 +172,38 @@ export default function TVChart({
       try {
         widgetRef.current?.resize?.();
         widgetRef.current?.chart?.().timeScale?.().fitContent?.();
-      } catch {}
+      } catch { /* ignore */ }
     });
     return () => cancelAnimationFrame(id);
   }, [active]);
 
   return (
-    <div className="w-full" style={{ height: 420, minHeight: 420 }}>
+    <div className="w-full" style={{ height: 420, minHeight: 420, position: "relative" }}>
       <div
         ref={hostRef}
         className="tvchart-container"
         style={{ width: "100%", height: "100%" }}
       />
+      {hadError && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+            padding: 24,
+            color: "#B69C60",
+            fontSize: 14,
+            fontWeight: 500,
+            background: "rgba(20, 24, 36, 0.85)",
+            borderRadius: 8,
+          }}
+        >
+          Chart failed to load. Please try again.
+        </div>
+      )}
     </div>
   );
 }

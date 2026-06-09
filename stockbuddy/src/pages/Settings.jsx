@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api, getCurrentUser, logout } from '../services/api';
+import { api, logout } from '../services/api';
 import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
+import { useSEO } from '../lib/seo';
 
 const Settings = () => {
+  useSEO({ title: 'Settings' });
   const navigate = useNavigate();
   const [userProfile, setUserProfile] = useState(null);
   const [learningPreferences, setLearningPreferences] = useState({
@@ -14,11 +16,21 @@ const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+
+  // Track viewport width so the fixed-width settings grid collapses to a
+  // single column on small screens (<= 768px).
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Modal states
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
-  const [showSecurity, setShowSecurity] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
@@ -37,13 +49,11 @@ const Settings = () => {
     // Check if user is authenticated
     const token = localStorage.getItem('token');
     if (!token) {
-      console.log('❌ No authentication token found');
       setIsAuthenticated(false);
       setLoading(false);
       return;
     }
-    
-    console.log('✅ User is authenticated, fetching data...');
+
     setIsAuthenticated(true);
     fetchUserData();
   }, []);
@@ -51,30 +61,18 @@ const Settings = () => {
   const fetchUserData = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Fetching user data...');
-      
-      // Check if user is authenticated
-      const token = localStorage.getItem('token');
-      console.log('🔍 Token exists:', !!token);
-      console.log('🔍 Token preview:', token ? token.substring(0, 50) + '...' : 'No token');
-      
-      // Test the API endpoint directly
-      console.log('🔍 API Base URL:', import.meta.env.VITE_API_URL || 'http://localhost:5001/api');
-      
+
       const [profileResponse, preferencesResponse] = await Promise.all([
         api.getProfile().catch(err => {
-          console.error('❌ Profile API error:', err);
+          if (import.meta.env.DEV) console.error('Profile API error:', err);
           return { success: false, error: err.message };
         }),
         api.getLearningPreferences().catch(err => {
-          console.error('❌ Preferences API error:', err);
+          if (import.meta.env.DEV) console.error('Preferences API error:', err);
           return { success: false, error: err.message };
         })
       ]);
-      
-      console.log('🔍 Profile response:', profileResponse);
-      console.log('🔍 Preferences response:', preferencesResponse);
-      
+
       if (profileResponse.success) {
         setUserProfile(profileResponse.user);
         setEditForm({
@@ -82,20 +80,18 @@ const Settings = () => {
           username: profileResponse.user.username || '',
           email: profileResponse.user.email || ''
         });
-      } else {
-        console.error('❌ Profile API failed:', profileResponse.error);
+      } else if (import.meta.env.DEV) {
+        console.error('Profile API failed:', profileResponse.error);
       }
-      
-      if (preferencesResponse.success) {
+
+      if (preferencesResponse.success && preferencesResponse.preferences) {
         setLearningPreferences(preferencesResponse.preferences);
         setPreferencesForm(preferencesResponse.preferences);
-      } else {
-        console.error('❌ Preferences API failed:', preferencesResponse.error);
+      } else if (import.meta.env.DEV) {
+        console.error('Preferences API failed:', preferencesResponse.error);
       }
     } catch (err) {
-      console.error('❌ Error fetching user data:', err);
-      console.error('❌ Error details:', err.message);
-      console.error('❌ Error stack:', err.stack);
+      if (import.meta.env.DEV) console.error('Error fetching user data:', err);
     } finally {
       setLoading(false);
     }
@@ -111,7 +107,7 @@ const Settings = () => {
         alert('Profile updated successfully!');
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
+      if (import.meta.env.DEV) console.error('Error updating profile:', error);
       alert('Failed to update profile. Please try again.');
     } finally {
       setSaving(false);
@@ -121,16 +117,22 @@ const Settings = () => {
   const handleUpdatePreferences = async () => {
     try {
       setSaving(true);
+      // Persist to the real API. updateLearningPreferences saves the
+      // preferences server-side so they survive a reload.
       const response = await api.updateLearningPreferences(preferencesForm);
       if (response.success) {
-        setLearningPreferences(response.preferences);
-        // Update the form with the new values
-        setPreferencesForm(response.preferences);
+        // Prefer the server's canonical values, but fall back to what the
+        // user just submitted so the UI always reflects the saved state.
+        const saved = response.preferences || preferencesForm;
+        setLearningPreferences(saved);
+        setPreferencesForm(saved);
         setShowPreferences(false);
         alert('Learning preferences updated successfully!');
+      } else {
+        alert('Failed to update preferences. Please try again.');
       }
     } catch (error) {
-      console.error('Error updating preferences:', error);
+      if (import.meta.env.DEV) console.error('Error updating preferences:', error);
       alert('Failed to update preferences. Please try again.');
     } finally {
       setSaving(false);
@@ -152,7 +154,7 @@ const Settings = () => {
       document.body.removeChild(a);
       alert('Data exported successfully!');
     } catch (error) {
-      console.error('Error exporting data:', error);
+      if (import.meta.env.DEV) console.error('Error exporting data:', error);
       alert('Failed to export data. Please try again.');
     }
   };
@@ -168,7 +170,7 @@ const Settings = () => {
         fetchUserData();
       }
     } catch (error) {
-      console.error('Error resetting progress:', error);
+      if (import.meta.env.DEV) console.error('Error resetting progress:', error);
       alert('Failed to reset progress. Please try again.');
     } finally {
       setSaving(false);
@@ -185,7 +187,7 @@ const Settings = () => {
         logout();
       }
     } catch (error) {
-      console.error('Error deleting account:', error);
+      if (import.meta.env.DEV) console.error('Error deleting account:', error);
       alert('Failed to delete account. Please try again.');
     } finally {
       setSaving(false);
@@ -200,7 +202,7 @@ const Settings = () => {
         alert('Goal reminder email sent successfully! Check your inbox.');
       }
     } catch (error) {
-      console.error('Error sending reminder:', error);
+      if (import.meta.env.DEV) console.error('Error sending reminder:', error);
       alert('Failed to send reminder. Please try again.');
     } finally {
       setSaving(false);
@@ -284,7 +286,7 @@ const Settings = () => {
       {/* Header */}
       <div style={{
         backgroundColor: lightGray,
-        padding: '24px',
+        padding: isMobile ? '20px 16px' : '24px',
         borderBottom: `1px solid ${gray}`
       }}>
         <div style={{
@@ -309,7 +311,7 @@ const Settings = () => {
           </button>
           
           <h1 style={{
-            fontSize: '32px',
+            fontSize: isMobile ? '26px' : '32px',
             fontWeight: 'bold',
             color: marbleDarkGray,
             fontFamily: fontHeading,
@@ -317,9 +319,9 @@ const Settings = () => {
           }}>
             Settings
           </h1>
-          
+
           <p style={{
-            fontSize: '18px',
+            fontSize: isMobile ? '16px' : '18px',
             color: gray,
             marginBottom: '16px'
           }}>
@@ -332,19 +334,21 @@ const Settings = () => {
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto',
-        padding: '48px 24px'
+        padding: isMobile ? '32px 16px' : '48px 24px'
       }}>
         {/* Settings Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+          gridTemplateColumns: isMobile
+            ? '1fr'
+            : 'repeat(auto-fit, minmax(360px, 1fr))',
           gap: '24px'
         }}>
           {/* Account Settings */}
           <div style={{
             backgroundColor: lightGray,
             borderRadius: '20px',
-            padding: '32px'
+            padding: isMobile ? '24px 20px' : '32px'
           }}>
             <div style={{
               display: 'flex',
@@ -445,7 +449,7 @@ const Settings = () => {
           <div style={{
             backgroundColor: lightGray,
             borderRadius: '20px',
-            padding: '32px'
+            padding: isMobile ? '24px 20px' : '32px'
           }}>
             <div style={{
               display: 'flex',
@@ -504,23 +508,22 @@ const Settings = () => {
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '12px'
+                alignItems: 'center'
               }}>
                 <span style={{ color: gray }}>Notifications</span>
                 <span style={{ color: marbleDarkGray, fontWeight: '500' }}>
                   {learningPreferences.notifications ? 'Enabled' : 'Disabled'}
                 </span>
               </div>
-
             </div>
             
             <div style={{
               display: 'flex',
+              flexWrap: 'wrap',
               gap: '12px',
               marginTop: '16px'
             }}>
-              <button 
+              <button
                 onClick={() => setShowPreferences(true)}
                 style={{
                   backgroundColor: marbleDarkGray,
@@ -560,7 +563,7 @@ const Settings = () => {
           <div style={{
             backgroundColor: lightGray,
             borderRadius: '20px',
-            padding: '32px'
+            padding: isMobile ? '24px 20px' : '32px'
           }}>
             <div style={{
               display: 'flex',
@@ -612,7 +615,16 @@ const Settings = () => {
                 marginBottom: '12px'
               }}>
                 <span style={{ color: gray }}>Two-Factor Auth</span>
-                <span style={{ color: gray, fontWeight: '500' }}>Not enabled</span>
+                <span style={{
+                  color: marbleGold,
+                  fontWeight: '500',
+                  fontSize: '13px',
+                  border: `1px solid ${marbleGold}`,
+                  borderRadius: '999px',
+                  padding: '2px 10px'
+                }}>
+                  Coming soon
+                </span>
               </div>
               <div style={{
                 display: 'flex',
@@ -636,30 +648,13 @@ const Settings = () => {
                 </span>
               </div>
             </div>
-            
-            <button 
-              onClick={() => setShowSecurity(true)}
-              style={{
-                backgroundColor: marbleDarkGray,
-                color: white,
-                border: 'none',
-                padding: '12px 24px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                width: '100%'
-              }}
-            >
-              Security Settings
-            </button>
           </div>
 
           {/* Data Management */}
           <div style={{
             backgroundColor: lightGray,
             borderRadius: '20px',
-            padding: '32px'
+            padding: isMobile ? '24px 20px' : '32px'
           }}>
             <div style={{
               display: 'flex',
@@ -734,10 +729,11 @@ const Settings = () => {
             
             <div style={{
               display: 'flex',
+              flexWrap: 'wrap',
               gap: '12px',
               marginBottom: '12px'
             }}>
-              <button 
+              <button
                 onClick={handleExportData}
                 style={{
                   backgroundColor: marbleDarkGray,
@@ -973,6 +969,7 @@ const Settings = () => {
                 Daily Goal (lessons)
               </label>
               <select
+                aria-label="Daily goal in lessons"
                 value={preferencesForm.dailyGoal}
                 onChange={(e) => setPreferencesForm({...preferencesForm, dailyGoal: parseInt(e.target.value)})}
                 style={{
@@ -1001,6 +998,7 @@ const Settings = () => {
                 Notifications
               </label>
               <select
+                aria-label="Notifications enabled or disabled"
                 value={preferencesForm.notifications.toString()}
                 onChange={(e) => setPreferencesForm({...preferencesForm, notifications: e.target.value === 'true'})}
                 style={{
@@ -1015,9 +1013,7 @@ const Settings = () => {
                 <option value="false">Disabled</option>
               </select>
             </div>
-            
 
-            
             <div style={{
               display: 'flex',
               gap: '12px',
@@ -1054,76 +1050,6 @@ const Settings = () => {
                 }}
               >
                 {saving ? 'Saving...' : 'Save Preferences'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Security Settings Modal */}
-      {showSecurity && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: white,
-            borderRadius: '20px',
-            padding: '32px',
-            maxWidth: '500px',
-            width: '90%'
-          }}>
-            <h3 style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: marbleDarkGray,
-              marginBottom: '24px',
-              fontFamily: fontHeading
-            }}>
-              Security Settings
-            </h3>
-            
-            <div style={{
-              backgroundColor: lightGray,
-              borderRadius: '12px',
-              padding: '20px',
-              marginBottom: '24px'
-            }}>
-              <p style={{
-                color: gray,
-                fontSize: '16px',
-                lineHeight: '1.5'
-              }}>
-                Two-factor authentication is not yet implemented. This feature will be available in a future update.
-              </p>
-            </div>
-            
-            <div style={{
-              display: 'flex',
-              justifyContent: 'flex-end'
-            }}>
-              <button
-                onClick={() => setShowSecurity(false)}
-                style={{
-                  backgroundColor: marbleGold,
-                  color: marbleDarkGray,
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-              >
-                Close
               </button>
             </div>
           </div>

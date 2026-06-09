@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2A4580"/>
+      <stop offset="0.55" stop-color="#3D538C"/>
+      <stop offset="1" stop-color="#2C2C2C"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.85" cy="0.15" r="0.5">
+      <stop offset="0" stop-color="#B69C60" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#B69C60" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <!-- logo mark -->
+  <g transform="translate(96,150)">
+    <rect width="90" height="90" rx="20" fill="#F4F1E9"/>
+    <path d="M20 60 L40 42 L52 52 L72 28" fill="none" stroke="#2A4580" stroke-width="7"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="72" cy="28" r="6" fill="#B69C60"/>
+  </g>
+  <text x="208" y="218" font-family="Helvetica, Arial, sans-serif" font-size="64" font-weight="700" fill="#F4F1E9">tickr</text>
+  <text x="96" y="360" font-family="Helvetica, Arial, sans-serif" font-size="68" font-weight="700" fill="#FFFFFF">Investing, explained.</text>
+  <text x="96" y="430" font-family="Helvetica, Arial, sans-serif" font-size="34" fill="#EDE9DF">Learn the markets, paper-trade with confidence,</text>
+  <text x="96" y="478" font-family="Helvetica, Arial, sans-serif" font-size="34" fill="#EDE9DF">and level up with an AI coach.</text>
+  <g transform="translate(96,520)">
+    <rect width="220" height="58" rx="12" fill="#B69C60"/>
+    <text x="110" y="38" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="700" fill="#2C2C2C">Start free</text>
+  </g>
+</svg>

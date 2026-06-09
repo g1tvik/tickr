@@ -1,19 +1,58 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 
+// localStorage key for persisting the coach conversation across reloads
+const HISTORY_STORAGE_KEY = 'tickr_coach_history';
+
+// Safely read any previously saved conversation so a reload doesn't wipe it.
+const loadPersistedMessages = () => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(HISTORY_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    if (import.meta.env.DEV) {
+      console.warn('Failed to load coach history from storage:', err);
+    }
+    return [];
+  }
+};
+
 /**
  * Custom hook for managing AI Coach chat functionality
- * 
+ *
  * @param {Object} scenario - The current trading scenario
  * @param {boolean} enabled - Whether chat is enabled (default: true)
+ * @param {Object} [options]
+ * @param {boolean} [options.persist=true] - Persist the transcript to localStorage.
+ *   The component that owns the conversation should leave this on; a secondary
+ *   (controlled) instance should pass false to avoid clobbering the shared key.
  * @returns {Object} Chat state and handlers
  */
-export function useCoachChat(scenario, enabled = true) {
-  const [chatMessages, setChatMessages] = useState([]);
+export function useCoachChat(scenario, enabled = true, { persist = true } = {}) {
+  const [chatMessages, setChatMessages] = useState(() => (persist ? loadPersistedMessages() : []));
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const chatEndRef = useRef(null);
+
+  // Persist the conversation to localStorage so a reload keeps the transcript.
+  useEffect(() => {
+    if (!persist || typeof window === 'undefined') return;
+    try {
+      if (chatMessages.length === 0) {
+        window.localStorage.removeItem(HISTORY_STORAGE_KEY);
+      } else {
+        window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(chatMessages));
+      }
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.warn('Failed to persist coach history to storage:', err);
+      }
+    }
+  }, [chatMessages, persist]);
 
   // Initialize welcome message when scenario changes
   // Note: This is controlled externally via setChatMessages for bounce scenario logic
@@ -83,50 +122,62 @@ export function useCoachChat(scenario, enabled = true) {
         const aiMessage = {
           type: 'ai',
           content: response.response || response.message || 'No response content',
+          // Backend may flag responses generated without a live AI key.
+          demo: response.demo === true || response.source === 'demo',
           timestamp: Date.now()
         };
         setChatMessages(prev => [...prev, aiMessage]);
       } else {
         // More helpful fallback response based on error type
         let fallbackContent = "I'm here to help you learn about trading! Ask me about market psychology, technical analysis, risk management, or any trading concepts you'd like to understand better.";
-        
+        // Detect when the backend is running without an AI key so the UI can show a demo note.
+        let isDemo = response?.demo === true || response?.source === 'demo';
+
         if (response?.error) {
           if (response.error.includes('not configured') || response.error.includes('503')) {
             fallbackContent = "I apologize, but the AI coach service isn't configured right now. Please check with the administrator to set up the AI service.";
+            isDemo = true;
           } else if (response.error.includes('timeout')) {
             fallbackContent = "I apologize, but my response is taking longer than expected. Please try asking your question again in a moment.";
           } else {
             fallbackContent = `I'm having trouble connecting right now. ${response.error}. Please try again in a moment, or ask a different question.`;
           }
         }
-        
+
         const fallbackMessage = {
           type: 'ai',
           content: fallbackContent,
+          demo: isDemo,
           timestamp: Date.now()
         };
         setChatMessages(prev => [...prev, fallbackMessage]);
         setError(response?.error || response?.message || 'Failed to get response');
       }
     } catch (err) {
-      console.error('Chat error:', err.message);
-      
+      if (import.meta.env.DEV) {
+        console.error('Chat error:', err.message);
+      }
+
       // More helpful error message based on error type
       let errorContent = "I apologize, but I'm having trouble connecting right now. ";
-      
+      // A 503 / "not configured" response means there's no AI key — surface demo mode.
+      let isDemo = false;
+
       if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
         errorContent += "It looks like there's a network issue. Please check your internet connection and try again.";
       } else if (err.message.includes('timeout')) {
         errorContent += "The request timed out. Please try asking your question again - sometimes I need a moment to process complex questions.";
-      } else if (err.message.includes('503') || err.message.includes('Service Unavailable')) {
-        errorContent += "The AI service is temporarily unavailable. Please try again in a few moments.";
+      } else if (err.message.includes('503') || err.message.includes('Service Unavailable') || err.message.includes('not configured')) {
+        errorContent += "The AI coach isn't connected to a live AI service right now, so it's running in demo mode. You can still explore the scenario, charts, and decision tools.";
+        isDemo = true;
       } else {
         errorContent += `Error: ${err.message || 'Unknown error'}. Please try again or rephrase your question.`;
       }
-      
+
       const errorMessage = {
         type: 'ai',
         content: errorContent,
+        demo: isDemo,
         timestamp: Date.now()
       };
       setChatMessages(prev => [...prev, errorMessage]);
@@ -168,6 +219,24 @@ export function useCoachChat(scenario, enabled = true) {
     setError(null);
   };
 
+  /**
+   * Clear the persisted conversation history (user-facing affordance).
+   * Empties messages; the persistence effect removes the stored copy.
+   */
+  const clearHistory = () => {
+    clearMessages();
+    setUserInput('');
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.removeItem(HISTORY_STORAGE_KEY);
+      } catch (err) {
+        if (import.meta.env.DEV) {
+          console.warn('Failed to clear coach history from storage:', err);
+        }
+      }
+    }
+  };
+
   return {
     // State
     chatMessages,
@@ -175,11 +244,12 @@ export function useCoachChat(scenario, enabled = true) {
     isLoading,
     error,
     chatEndRef,
-    
+
     // Handlers
     sendMessage,
     addMessage,
     clearMessages,
+    clearHistory,
     resetChat,
     setUserInput,
     setChatMessages

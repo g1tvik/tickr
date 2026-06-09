@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
-import { fontHeading, fontBody } from '../fontPalette';
+import { fontHeading } from '../fontPalette';
 
 const SimpleChart = ({ 
   symbol, 
@@ -12,6 +12,22 @@ const SimpleChart = ({
   const [timeframe, setTimeframe] = useState('1D');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Reflect the incoming stockData prop into loading/error state so the
+  // dedicated indicators below render while data is fetched or on failure.
+  useEffect(() => {
+    if (!symbol) return;
+    if (stockData?.error) {
+      setError(typeof stockData.error === 'string' ? stockData.error : 'Failed to load chart data');
+      setIsLoading(false);
+    } else if (!stockData?.candles) {
+      setIsLoading(true);
+      setError(null);
+    } else {
+      setIsLoading(false);
+      setError(null);
+    }
+  }, [symbol, stockData]);
 
   useEffect(() => {
     if (!canvasRef.current || !stockData?.candles) return;

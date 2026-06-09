@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
+import { useSEO } from '../lib/seo';
 
 const defaultInventoryState = {
   purchasedItems: [],
@@ -16,6 +17,7 @@ const defaultInventoryState = {
 };
 
 export default function Inventory() {
+  useSEO({ title: 'Inventory' });
   const navigate = useNavigate();
   const [inventoryData, setInventoryData] = useState(defaultInventoryState);
   const [loading, setLoading] = useState(true);
@@ -40,7 +42,7 @@ export default function Inventory() {
         setActiveEffects(response.activeEffects || {});
       }
     } catch (err) {
-      console.error('❌ Inventory: Error fetching active effects:', err);
+      if (import.meta.env.DEV) console.error('Inventory: Error fetching active effects:', err);
     }
   };
 
@@ -50,14 +52,16 @@ export default function Inventory() {
     setMessage(null);
     
     try {
-      console.log('🎒 Inventory: Fetching user data...');
+      if (import.meta.env.DEV) console.log('Inventory: Fetching user data...');
       const [userDataResponse, activeEffectsResponse] = await Promise.all([
         api.getUserData(),
         api.getActiveEffects()
       ]);
-      
-      console.log('🎒 Inventory: User data received:', userDataResponse);
-      console.log('🎒 Inventory: Active effects received:', activeEffectsResponse);
+
+      if (import.meta.env.DEV) {
+        console.log('Inventory: User data received:', userDataResponse);
+        console.log('Inventory: Active effects received:', activeEffectsResponse);
+      }
 
       const activeEffectsData = activeEffectsResponse.success 
         ? (activeEffectsResponse.activeEffects || {})
@@ -72,7 +76,7 @@ export default function Inventory() {
       });
       setActiveEffects(activeEffectsData);
     } catch (err) {
-      console.error('❌ Inventory: Error fetching data:', err);
+      if (import.meta.env.DEV) console.error('Inventory: Error fetching data:', err);
       setError(err.message || 'Failed to load inventory data');
     } finally {
       setLoading(false);
@@ -259,7 +263,7 @@ export default function Inventory() {
 
     try {
       const response = await api.useInventoryItem(purchaseId);
-      console.log('🎒 Inventory: Item used response:', response);
+      if (import.meta.env.DEV) console.log('Inventory: Item used response:', response);
 
       // Refresh active effects to get updated remaining duration
       const activeEffectsResponse = await api.getActiveEffects();
@@ -282,7 +286,7 @@ export default function Inventory() {
       const activatedName = response.purchase?.itemName || 'Ability';
       setMessage(response.message || `${activatedName} activated!`);
     } catch (err) {
-      console.error('❌ Inventory: Error using item:', err);
+      if (import.meta.env.DEV) console.error('Inventory: Error using item:', err);
       setError(err.message || 'Failed to use item');
     } finally {
       setUsingItemId(null);
@@ -347,6 +351,13 @@ export default function Inventory() {
       backgroundColor: white,
       fontFamily: fontBody
     }}>
+      {/* Scoped styles: responsive grid collapse (<=768px). */}
+      <style>{`
+        .inv-items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+        @media (max-width: 768px) {
+          .inv-items-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
       {/* Header */}
       <div style={{
         backgroundColor: lightGray,
@@ -486,22 +497,40 @@ export default function Inventory() {
         padding: "48px 24px"
       }}>
         {(message || error) && (
-          <div style={{
-            marginBottom: "24px",
-            padding: "12px 16px",
-            borderRadius: "12px",
-            backgroundColor: message ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-            color: message ? '#166534' : '#991b1b'
-          }}>
-            {message || error}
+          <div
+            role="status"
+            style={{
+              marginBottom: "24px",
+              padding: "12px 16px",
+              borderRadius: "12px",
+              backgroundColor: message ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+              color: message ? '#166534' : '#991b1b',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "12px"
+            }}
+          >
+            <span>{message || error}</span>
+            <button
+              onClick={() => { setMessage(null); setError(null); }}
+              aria-label="Dismiss message"
+              style={{
+                backgroundColor: "transparent",
+                border: "none",
+                color: "inherit",
+                fontSize: "18px",
+                lineHeight: 1,
+                cursor: "pointer",
+                padding: "0 4px"
+              }}
+            >
+              ×
+            </button>
           </div>
         )}
 
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-          gap: "24px"
-        }}>
+        <div className="inv-items-grid">
           {purchasedItems.length === 0 ? (
             <div style={{
               gridColumn: "1 / -1",

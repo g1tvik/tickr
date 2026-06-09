@@ -3,7 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Shop from '../Shop';
 
-const mockApi = {
+// vi.mock is hoisted above this declaration, so mockApi must be hoisted too.
+const mockApi = vi.hoisted(() => ({
   getShopItems: vi.fn().mockResolvedValue({
     items: [
       {
@@ -32,7 +33,7 @@ const mockApi = {
   }),
   purchaseItem: vi.fn(),
   addTestCoins: vi.fn().mockResolvedValue({ success: true, newBalance: 600 })
-};
+}));
 
 vi.mock('../../services/api', () => ({
   api: mockApi

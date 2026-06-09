@@ -48,7 +48,7 @@ function AppContent() {
       
       // In lockdown mode, only allow /waitlist - redirect everything else
       if (LOCKDOWN && location.pathname !== '/waitlist') {
-        console.log('Lockdown mode: redirecting to waitlist');
+        if (import.meta.env.DEV) console.log('Lockdown mode: redirecting to waitlist');
         navigate('/waitlist', { replace: true });
         return;
       }
@@ -59,7 +59,7 @@ function AppContent() {
         const isProtectedRoute = protectedRoutes.some(route => location.pathname.startsWith(route));
         
         if (isProtectedRoute && !authenticated) {
-          console.log('User not authenticated, redirecting to sign in...');
+          if (import.meta.env.DEV) console.log('User not authenticated, redirecting to sign in...');
           navigate('/signin', { replace: true });
         }
       }
@@ -70,7 +70,7 @@ function AppContent() {
 
   // Handle page background transitions and navbar coordination
   useEffect(() => {
-    console.log(`App: Route changed to ${location.pathname}`);
+    if (import.meta.env.DEV) console.log(`App: Route changed to ${location.pathname}`);
     const mainContent = document.querySelector('.main-content');
     const pageTransition = document.querySelector('.page-transition');
     const body = document.body;
@@ -80,7 +80,7 @@ function AppContent() {
     if (mainContent && pageTransition) {
       // Determine page type based on route
       const isDarkPage = location.pathname === '/trade' || location.pathname === '/ai-coach';
-      console.log(`App: isDarkPage = ${isDarkPage} for route ${location.pathname}`);
+      if (import.meta.env.DEV) console.log(`App: isDarkPage = ${isDarkPage} for route ${location.pathname}`);
       
       // Add appropriate classes
       if (isDarkPage) {
@@ -100,7 +100,7 @@ function AppContent() {
           navbar.classList.add('page-dark');
           navbar.classList.remove('page-light');
           setNavbarBackground('var(--color-ink)', { theme: 'dark' });
-          console.log('App: Setting navbar to dark theme for Trade/AI Coach page');
+          if (import.meta.env.DEV) console.log('App: Setting navbar to dark theme for Trade/AI Coach page');
         }
       } else {
         const isHomePage = location.pathname === '/';
@@ -124,10 +124,10 @@ function AppContent() {
 
           if (isHomePage) {
             setNavbarBackground('transparent', { theme: 'dark' });
-            console.log('App: Leaving navbar dark on Home for hero sync');
+            if (import.meta.env.DEV) console.log('App: Leaving navbar dark on Home for hero sync');
           } else {
             setNavbarBackground('var(--color-gray-100)', { theme: 'light' });
-            console.log('App: Setting navbar to light theme for non-home light pages');
+            if (import.meta.env.DEV) console.log('App: Setting navbar to light theme for non-home light pages');
           }
         }
       }

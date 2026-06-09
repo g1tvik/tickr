@@ -1,34 +1,45 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { white, lightGray, gray, marbleDarkGray, marbleGold } from "../marblePalette";
-import { fontHeading, fontBody } from "../fontPalette";
+import { useNavigate, useLocation } from "react-router-dom";
 import { api } from "../services/api";
+import { useSEO, SEO_CONFIG } from "../lib/seo";
 import GoogleOAuth from "../components/GoogleOAuth";
 import './SignIn.css';
 
+// Demo account: email is pre-fillable, but no real password ships in client code.
+const DEMO_EMAIL = "demo@tickr.app";
+
 function SignIn({ setIsLoggedIn }) {
+  useSEO(SEO_CONFIG.signin);
+
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Where to send the user after a successful login (from Protected's ?next=)
+  const getNextPath = () => {
+    const next = new URLSearchParams(location.search).get('next');
+    // Only allow internal paths to avoid open-redirect issues.
+    if (next && next.startsWith('/') && !next.startsWith('//')) {
+      return next;
+    }
+    return '/dashboard';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted, preventing default behavior');
-    console.log('Form data:', { emailOrUsername, password });
     setIsLoading(true);
     setError("");
 
     try {
-      console.log('Calling API...');
       const response = await api.login({ emailOrUsername, password });
-      console.log('API response:', response);
-      
+
       if (response.success) {
         localStorage.setItem('token', response.token);
         setIsLoggedIn(true);
-        navigate('/dashboard');
+        navigate(getNextPath());
       } else {
         // More user-friendly error messages
         if (response.message?.includes('Invalid credentials')) {
@@ -41,11 +52,13 @@ function SignIn({ setIsLoggedIn }) {
           setError(response.message || 'Login failed. Please try again.');
         }
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      if (error.message?.includes('400')) {
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.error('Login error:', err);
+      }
+      if (err.message?.includes('400')) {
         setError('Login failed. Please check that all fields are filled correctly.');
-      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+      } else if (err.message?.includes('network') || err.message?.includes('fetch')) {
         setError('Unable to connect to the server. Please check your internet connection and try again.');
       } else {
         setError('Login failed. Please try again.');
@@ -55,44 +68,12 @@ function SignIn({ setIsLoggedIn }) {
     }
   };
 
-  const handleDemoLogin = async () => {
-    setIsLoading(true);
+  // Pre-fill the demo email and let the user proceed with their own demo password.
+  // No real credentials are embedded in the client bundle.
+  const handleTryDemo = () => {
     setError("");
-
-    try {
-      // Create a demo user or use existing one
-      const response = await api.register({
-        email: "demo@stockbuddy.com",
-        password: "demo123",
-        name: "Demo User",
-        username: "demo_user"
-      });
-      
-      if (response.success) {
-        localStorage.setItem('token', response.token);
-        setIsLoggedIn(true);
-        navigate('/dashboard');
-      } else {
-        // Try to login if user already exists
-        const loginResponse = await api.login({
-          emailOrUsername: "demo@stockbuddy.com",
-          password: "demo123"
-        });
-        
-        if (loginResponse.success) {
-          localStorage.setItem('token', loginResponse.token);
-          setIsLoggedIn(true);
-          navigate('/dashboard');
-        } else {
-          setError('Demo login failed');
-        }
-      }
-    } catch (error) {
-      console.error('Demo login error:', error);
-      setError('Demo login failed. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    setEmailOrUsername(DEMO_EMAIL);
+    setPassword("");
   };
 
   return (
@@ -103,42 +84,46 @@ function SignIn({ setIsLoggedIn }) {
             Welcome Back
           </h1>
           <p className="signin-subtitle">
-            Sign in to access your StockBuddy account
+            Sign in to access your tickr account
           </p>
         </div>
 
         {error && (
-          <div className="error-message">
+          <div className="error-message" role="alert">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="signin-form">
           <div className="form-group">
-            <label className="form-label">
+            <label className="form-label" htmlFor="signin-identifier">
               Email or Username
             </label>
             <input
+              id="signin-identifier"
               type="text"
               value={emailOrUsername}
               onChange={(e) => setEmailOrUsername(e.target.value)}
               required
               className="form-input"
               placeholder="Enter your email or username"
+              autoComplete="username"
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label">
+            <label className="form-label" htmlFor="signin-password">
               Password
             </label>
             <input
+              id="signin-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               className="form-input"
               placeholder="Enter your password"
+              autoComplete="current-password"
             />
           </div>
 
@@ -152,12 +137,21 @@ function SignIn({ setIsLoggedIn }) {
         </form>
 
         <div className="demo-section">
+          <button
+            type="button"
+            onClick={handleTryDemo}
+            className="demo-button"
+            disabled={isLoading}
+          >
+            Try demo account
+          </button>
+
           <div className="demo-divider">
             Or
           </div>
-          
-          <GoogleOAuth 
-            setIsLoggedIn={setIsLoggedIn} 
+
+          <GoogleOAuth
+            setIsLoggedIn={setIsLoggedIn}
             onError={setError}
           />
         </div>
@@ -176,4 +170,4 @@ function SignIn({ setIsLoggedIn }) {
   );
 }
 
-export default SignIn; 
+export default SignIn;

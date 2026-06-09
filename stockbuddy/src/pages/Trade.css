@@ -106,12 +106,286 @@
   color: var(--marbleGray);
 }
 
+/* ---------------------------------------------------------------------------
+   Trade page — production polish
+   The page renders on a dark (ink) background. To resolve the
+   light-cards-on-dark clash, all cards share one cohesive dark-surface
+   treatment with subtle gold-tinted borders and soft shadows.
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* Lifted dark surfaces derived from the ink/near-black palette */
+  --trade-surface: #343434;
+  --trade-surface-2: #2f2f2f;
+  --trade-border: rgba(182, 156, 96, 0.22); /* muted gold */
+  --trade-text: #F4F1E9;                     /* cream */
+  --trade-text-muted: #b8b4a8;               /* warm muted */
+  --trade-divider: rgba(244, 241, 233, 0.12);
+}
+
+.trade-page {
+  min-height: 100vh;
+  padding: 24px 16px;
+  font-family: var(--fontBody);
+}
+
+.trade-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.trade-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0; /* allow children to shrink instead of overflowing */
+}
+
+/* Cohesive dark card used everywhere on this page */
+.trade-card {
+  background-color: var(--trade-surface);
+  border: 1px solid var(--trade-border);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  color: var(--trade-text);
+}
+
+.trade-card--inset {
+  background-color: var(--trade-surface-2);
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+.trade-heading {
+  font-family: var(--fontHeading);
+  color: var(--trade-text);
+  font-weight: bold;
+  margin: 0;
+}
+
+.trade-muted {
+  color: var(--trade-text-muted);
+}
+
+/* Chart + trading panel split inside the trading card */
+.trade-chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 16px;
+  align-items: start;
+}
+
+.trade-chart-grid > * {
+  min-width: 0;
+}
+
+/* Chart data fetch status (loading / error) — marble gold accent */
+.trade-chart-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #B69C60;
+  background: rgba(182, 156, 96, 0.10);
+  border: 1px solid rgba(182, 156, 96, 0.30);
+}
+
+.trade-chart-status--error {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.10);
+  border-color: rgba(239, 68, 68, 0.30);
+}
+
+.trade-chart-status__spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(182, 156, 96, 0.35);
+  border-top-color: #B69C60;
+  border-radius: 50%;
+  animation: trade-chart-spin 0.8s linear infinite;
+}
+
+@keyframes trade-chart-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Manual market-data refresh (muted gold outline) */
+.trade-refresh-btn {
+  font-size: 12px;
+  font-weight: 600;
+  color: #B69C60;
+  background: transparent;
+  border: 1px solid rgba(182, 156, 96, 0.45);
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.trade-refresh-btn:hover {
+  background: #B69C60;
+  color: var(--marbleDarkGray, #1b1f2a);
+}
+
+/* Demo-data pill (muted gold) */
+.trade-demo-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--marbleGold);
+  background-color: rgba(182, 156, 96, 0.12);
+  border: 1px solid rgba(182, 156, 96, 0.35);
+}
+
+.trade-demo-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--marbleGold);
+}
+
+/* Inline error banner near the order form */
+.trade-error-banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background-color: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.trade-error-banner__text {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.trade-error-banner__dismiss {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: #fca5a5;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 2px;
+  border-radius: 6px;
+}
+
+.trade-error-banner__dismiss:hover {
+  color: #fecaca;
+}
+
+/* Success toast — stays visible ~6s, fixed bottom-right */
+.trade-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 360px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background-color: #1f7a46;
+  border: 1px solid rgba(34, 197, 94, 0.6);
+  color: #fff;
+  font-weight: 500;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  animation: trade-toast-in 0.28s ease;
+}
+
+.trade-toast__icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: #fff;
+  color: #1f7a46;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+@keyframes trade-toast-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Persistent success indicator (lives in the account card after a fill) */
+.trade-success-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6ee7a8;
+  background-color: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+/* ---- Skeleton loading placeholders ---- */
+.trade-skeleton {
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    rgba(244, 241, 233, 0.06) 25%,
+    rgba(244, 241, 233, 0.14) 37%,
+    rgba(244, 241, 233, 0.06) 63%
+  );
+  background-size: 400% 100%;
+  animation: trade-shimmer 1.4s ease infinite;
+}
+
+.trade-skeleton--line { height: 14px; margin-bottom: 10px; }
+.trade-skeleton--line.is-short { width: 45%; }
+.trade-skeleton--line.is-mid { width: 70%; }
+.trade-skeleton--amount { height: 34px; width: 60%; margin-bottom: 10px; }
+.trade-skeleton--row { height: 18px; margin-bottom: 14px; }
+.trade-skeleton--card { height: 76px; border-radius: 12px; margin-bottom: 12px; }
+
+@keyframes trade-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* Respect reduced-motion preferences (global rule also covers this, kept local for clarity) */
+@media (prefers-reduced-motion: reduce) {
+  .trade-skeleton { animation: none; }
+  .trade-toast { animation: none; }
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
   .trade-layout {
     grid-template-columns: 1fr;
   }
-  
+
   .trade-sidebar {
     order: -1;
   }
@@ -121,16 +395,36 @@
   .trade-container {
     padding: 16px;
   }
-  
+
   .trading-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .search-section,
   .trading-interface,
   .market-watch-wrapper {
     padding: 16px;
+  }
+
+  /* Collapse the two fixed-pixel grids to a single column */
+  .trade-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trade-chart-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trade-page {
+    padding: 16px 12px;
+  }
+
+  .trade-toast {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    max-width: none;
   }
 }
 
@@ -138,8 +432,8 @@
   .trade-container {
     padding: 12px;
   }
-  
+
   .section-title {
     font-size: 18px;
   }
-} 
+}

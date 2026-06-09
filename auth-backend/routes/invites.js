@@ -5,10 +5,9 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('node:crypto');
-const fs = require('node:fs/promises');
-const path = require('node:path');
 const { z } = require('zod');
 const { sendInviteEmail } = require('../services/emailService');
+const { requireAdmin } = require('../middleware/requireAdmin');
 
 const createInviteSchema = z.object({
   email: z.string().email().optional(),
@@ -19,57 +18,12 @@ const redeemSchema = z.object({
   token: z.string().uuid('Invalid invite token')
 });
 
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
-const INVITES_FILE = path.join(DATA_DIR, 'invites.json');
-const WAITLIST_FILE = path.join(DATA_DIR, 'waitlist.json');
-
-/**
- * Load invites from JSON file
- */
-async function loadInvites() {
-  try {
-    const data = await fs.readFile(INVITES_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Save invites to JSON file
- */
-async function saveInvites(list) {
-  await fs.mkdir(path.dirname(INVITES_FILE), { recursive: true });
-  await fs.writeFile(INVITES_FILE, JSON.stringify(list, null, 2));
-}
-
-/**
- * Load waitlist from JSON file
- */
-async function loadWaitlist() {
-  try {
-    const data = await fs.readFile(WAITLIST_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Save waitlist to JSON file
- */
-async function saveWaitlist(list) {
-  await fs.mkdir(path.dirname(WAITLIST_FILE), { recursive: true });
-  await fs.writeFile(WAITLIST_FILE, JSON.stringify(list, null, 2));
-}
-
 /**
  * POST /api/invites
  * Create a new single-use invite token (admin only)
  */
-router.post('/', async (req, res) => {
+router.post('/', requireAdmin, async (req, res) => {
   try {
-    // TODO: Add admin authentication middleware
     const parsed = createInviteSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -91,9 +45,9 @@ router.post('/', async (req, res) => {
       createdAt: new Date().toISOString()
     };
 
-    const invites = await loadInvites();
+    const invites = await req.app.locals.storage.getInvites();
     invites.push(invite);
-    await saveInvites(invites);
+    await req.app.locals.storage.saveInvites(invites);
 
     // If email provided, send invite email
     if (email) {
@@ -125,7 +79,8 @@ router.post('/redeem', async (req, res) => {
     }
 
     const { token } = parsed.data;
-    const invites = await loadInvites();
+    const storage = req.app.locals.storage;
+    const invites = await storage.getInvites();
     const invite = invites.find(i => i.token === token);
 
     if (!invite) {
@@ -163,26 +118,25 @@ router.post('/redeem', async (req, res) => {
     invite.used = true;
     invite.usedBy = userId;
     invite.usedAt = new Date().toISOString();
-    await saveInvites(invites);
+    await storage.saveInvites(invites);
 
-    // Update user's approved status in users.json
-    const fileStorage = req.app.locals.fileStorage;
-    const users = fileStorage.getUsers();
-    if (users[userId]) {
-      users[userId].approved = true;
-      users[userId].approvedAt = new Date().toISOString();
-      users[userId].inviteToken = token;
-      fileStorage.saveUsers(users);
+    // Update user's approved status
+    const user = await storage.getUserById(userId);
+    if (user) {
+      user.approved = true;
+      user.approvedAt = new Date().toISOString();
+      user.inviteToken = token;
+      await storage.saveUser(user);
     }
 
     // Also update waitlist entry if exists
-    const waitlist = await loadWaitlist();
+    const waitlist = await storage.getWaitlist();
     const waitlistEntry = waitlist.find(w => w.email === userEmail.toLowerCase());
     if (waitlistEntry) {
       waitlistEntry.approved = true;
       waitlistEntry.approvedAt = new Date().toISOString();
       waitlistEntry.inviteToken = token;
-      await saveWaitlist(waitlist);
+      await storage.saveWaitlist(waitlist);
     }
 
     console.log(`[Invites] Redeemed: ${token} by ${userEmail}`);
@@ -197,10 +151,9 @@ router.post('/redeem', async (req, res) => {
  * GET /api/invites (admin)
  * List all invites
  */
-router.get('/', async (req, res) => {
+router.get('/', requireAdmin, async (req, res) => {
   try {
-    // TODO: Add admin authentication middleware
-    const invites = await loadInvites();
+    const invites = await req.app.locals.storage.getInvites();
     res.json({ ok: true, invites, count: invites.length });
   } catch (err) {
     console.error('[Invites] List error:', err);
@@ -209,4 +162,3 @@ router.get('/', async (req, res) => {
 });
 
 module.exports = router;
-

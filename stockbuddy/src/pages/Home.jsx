@@ -7,6 +7,9 @@ import { marbleWhite, marbleLightGray, marbleGray, marbleDarkGray, marbleBlack, 
 import { fontHeading } from "../fontPalette";
 import { useNavbar } from "../context/NavbarContext";
 import { api } from "../services/api";
+import AppImage from "../components/AppImage";
+import useReducedMotion from "../hooks/useReducedMotion";
+import { useSEO, SEO_CONFIG } from "../lib/seo";
 
 // ============ ANIMATIONS ============
 const pulse = keyframes`
@@ -162,8 +165,9 @@ const CursorRing = styled.div`
 `;
 
 // ============ MAGNETIC BUTTON WRAPPER ============
-function MagneticButton({ children, className, ...props }) {
+function MagneticButton({ children }) {
   const ref = useRef(null);
+  const reduceMotion = useReducedMotion();
 
   const handleMouseMove = useCallback((e) => {
     const el = ref.current;
@@ -179,6 +183,11 @@ function MagneticButton({ children, className, ...props }) {
     if (!el) return;
     el.style.transform = 'translate(0px, 0px)';
   }, []);
+
+  // Respect reduced motion: render the child untouched (no magnetic transform).
+  if (reduceMotion) {
+    return children;
+  }
 
   return React.cloneElement(children, {
     ref,
@@ -974,10 +983,280 @@ const FloatingStats = styled.div`
   }
 `;
 
-// CTA Section
+// Subtle "Demo data" pill — shown when the preview is running on fallback data
+const DemoPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: ${marbleGold};
+  background: rgba(182, 156, 96, 0.12);
+  border: 1px solid rgba(182, 156, 96, 0.4);
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+
+  &::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: ${marbleGold};
+  }
+`;
+
+// ─── HOW IT WORKS ────────────────────────────────────────────────────────────
+const StepsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  margin-top: 72px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+`;
+
+const StepCard = styled.div`
+  position: relative;
+  background: rgba(245, 243, 233, 0.04);
+  border: 1px solid rgba(182, 156, 96, 0.22);
+  border-radius: 18px;
+  padding: 32px 28px;
+  text-align: left;
+
+  .num {
+    font-family: ${fontHeading};
+    font-size: 1rem;
+    font-weight: 600;
+    color: ${marbleBlack};
+    background: ${marbleGold};
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 22px;
+    box-shadow: 0 6px 18px rgba(182, 156, 96, 0.3);
+  }
+  h3 {
+    font-family: ${fontHeading};
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: ${marbleWhite};
+    margin: 0 0 10px;
+    letter-spacing: -0.01em;
+  }
+  p {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 0.98rem;
+    line-height: 1.6;
+    color: ${marbleLightGray};
+    margin: 0;
+  }
+`;
+
+// ─── FAQ ─────────────────────────────────────────────────────────────────────
+const FaqList = styled.div`
+  max-width: 760px;
+  margin: 56px auto 0;
+`;
+
+const FaqItem = styled.details`
+  border-top: 1px solid rgba(182, 156, 96, 0.2);
+  padding: 4px 0;
+
+  &:last-child {
+    border-bottom: 1px solid rgba(182, 156, 96, 0.2);
+  }
+
+  summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 4px;
+    font-family: ${fontHeading};
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: ${marbleWhite};
+    letter-spacing: -0.005em;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary .chev {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    color: ${marbleGold};
+    transition: transform 0.25s ease;
+  }
+  &[open] summary .chev {
+    transform: rotate(45deg);
+  }
+  .answer {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 1rem;
+    line-height: 1.65;
+    color: ${marbleLightGray};
+    padding: 0 4px 24px;
+    margin: 0;
+    max-width: 680px;
+  }
+`;
+
+// ─── FINAL CTA BAND ──────────────────────────────────────────────────────────
+const CtaBand = styled.section`
+  position: relative;
+  z-index: 5;
+  padding: 110px 24px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(182, 156, 96, 0.18) 0%, transparent 60%),
+    ${marbleBlack};
+  border-top: 1px solid rgba(182, 156, 96, 0.18);
+
+  h2 {
+    font-family: ${fontHeading};
+    font-size: clamp(1.9rem, 5vw, 3rem);
+    font-weight: 300;
+    color: ${marbleWhite};
+    margin: 0 0 18px;
+    letter-spacing: -0.01em;
+  }
+  p {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 1.1rem;
+    color: ${marbleLightGray};
+    max-width: 520px;
+    margin: 0 auto 40px;
+    line-height: 1.6;
+  }
+`;
+
+const CtaButton = styled(Link)`
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  display: inline-block;
+  background: ${marbleGold};
+  color: ${marbleBlack};
+  padding: 18px 44px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-decoration: none;
+  box-shadow: 0 12px 40px rgba(182, 156, 96, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 48px rgba(182, 156, 96, 0.42);
+    color: ${marbleBlack};
+    background: #C9AC6E;
+  }
+`;
+
+// ─── FOOTER ──────────────────────────────────────────────────────────────────
+const Footer = styled.footer`
+  background: ${marbleBlack};
+  border-top: 1px solid ${marbleGray};
+  padding: 72px 24px 40px;
+`;
+
+const FooterInner = styled.div`
+  max-width: 1120px;
+  margin: 0 auto;
+`;
+
+const FooterGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1.5fr repeat(3, 1fr);
+  gap: 40px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid rgba(245, 243, 233, 0.1);
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+`;
+
+const FooterBrand = styled.div`
+  img {
+    height: 28px;
+    width: auto;
+    display: block;
+    margin-bottom: 16px;
+  }
+  p {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: ${marbleLightGray};
+    max-width: 280px;
+    margin: 0;
+  }
+`;
+
+const FooterCol = styled.nav`
+  h4 {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: ${marbleGold};
+    margin: 0 0 18px;
+  }
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  a {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 0.95rem;
+    color: ${marbleLightGray};
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  a:hover {
+    color: ${marbleWhite};
+  }
+`;
+
+const FooterBottom = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 28px;
+
+  p {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 0.85rem;
+    color: ${marbleLightGray};
+    margin: 0;
+  }
+  .disclaimer {
+    color: rgba(245, 243, 233, 0.45);
+  }
+`;
 
 // ============ COMPONENT ============
 function Home({ isLoggedIn }) {
+  useSEO(SEO_CONFIG.home);
+  const reduceMotion = useReducedMotion();
   const { setNavbarBackground } = useNavbar();
   const containerRef = useRef(null);
   const statsRef = useRef(null);
@@ -1002,6 +1281,19 @@ function Home({ isLoggedIn }) {
   const [livePrice, setLivePrice] = useState(138.55);
   const [liveChange, setLiveChange] = useState(2.85);
   const [liveCandles, setLiveCandles] = useState(PLACEHOLDER_CANDLES);
+  // True while the preview is showing placeholder/demo data (no live market keys).
+  const [isDemoData, setIsDemoData] = useState(true);
+
+  // Optional phone-screen artwork. We only mount the image once we've confirmed
+  // it actually loads, so the branded fallback content stays visible otherwise.
+  const [phoneArtReady, setPhoneArtReady] = useState(false);
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setPhoneArtReady(true);
+    img.onerror = () => setPhoneArtReady(false);
+    img.src = '/images/phone-app.png';
+    return () => { img.onload = null; img.onerror = null; };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -1021,8 +1313,13 @@ function Home({ isLoggedIn }) {
           o: c.open, c: c.close, h: c.high, l: c.low,
         }));
         if (tail.length) setLiveCandles(tail);
+        // Backend marks synthetic responses with source:'demo' / demo:true when
+        // live market keys are missing. Treat real responses as live.
+        const demo = res.source === 'demo' || res.demo === true ||
+          res.chartData?.source === 'demo' || res.chartData?.demo === true;
+        setIsDemoData(Boolean(demo));
       })
-      .catch(() => { /* keep placeholders */ });
+      .catch(() => { /* keep placeholders (stays flagged as demo) */ });
     return () => { cancelled = true; };
   }, []);
 
@@ -1138,6 +1435,7 @@ function Home({ isLoggedIn }) {
 
   // ---- Custom cursor ----
   useEffect(() => {
+    if (reduceMotion) return;
     const isTouchDevice = 'ontouchstart' in window;
     if (isTouchDevice) return;
 
@@ -1193,10 +1491,24 @@ function Home({ isLoggedIn }) {
       document.body.style.cursor = '';
       styleTag.remove();
     };
-  }, []);
+  }, [reduceMotion]);
 
-  // Track scroll for 3D parallax effects
+  // Track scroll for 3D parallax effects.
+  // When reduced motion is preferred we still track the resize (so layout stays
+  // correct) but freeze scrollY at 0 so the page renders static.
   useEffect(() => {
+    const handleResize = () => {
+      setWindowHeight(window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    if (reduceMotion) {
+      setScrollY(0);
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+
     let rafId;
     const handleScroll = () => {
       cancelAnimationFrame(rafId);
@@ -1205,12 +1517,7 @@ function Home({ isLoggedIn }) {
       });
     };
 
-    const handleResize = () => {
-      setWindowHeight(window.innerHeight);
-    };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleResize);
 
     // Initial call
     handleScroll();
@@ -1220,7 +1527,7 @@ function Home({ isLoggedIn }) {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(rafId);
     };
-  }, []);
+  }, [reduceMotion]);
 
   useEffect(() => {
     if (!statsRef.current || typeof IntersectionObserver === 'undefined') return;
@@ -1301,39 +1608,45 @@ function Home({ isLoggedIn }) {
     <PageWrapper ref={containerRef}>
       {/* Polka dots: scattered, fade out as you scroll so content clears into view */}
       <PolkaDotOverlay $opacity={polkaDotOpacity} />
-      {/* ============ FILM GRAIN OVERLAY ============ */}
-      <FilmGrain />
 
-      {/* ============ CUSTOM CURSOR ============ */}
-      <CursorDot ref={cursorDotRef} className={cursorHovering ? 'hovering' : ''} />
-      <CursorRing ref={cursorRingRef} className={cursorHovering ? 'hovering' : ''} />
+      {/* Heavy decorative motion is skipped entirely when reduced motion is preferred */}
+      {!reduceMotion && (
+        <>
+          {/* ============ FILM GRAIN OVERLAY ============ */}
+          <FilmGrain />
 
-      {/* ============ CASCADING ELEMENTS ============ */}
-      <CascadeContainer>
-        {cascadeElements.map((el, i) => {
-          // Calculate Y position based on scroll - creates falling effect
-          const fallDistance = (scrollY * el.speed + el.delay * 1000) % (windowHeight + 200);
-          const opacity = fallDistance < 100 ? fallDistance / 100 : 
-                         fallDistance > windowHeight ? Math.max(0, 1 - (fallDistance - windowHeight) / 200) : 
-                         0.4;
-          
-          return (
-            <CascadeElement
-              key={i}
-              style={{
-                left: `${el.x}%`,
-                top: `${fallDistance - 100}px`,
-                width: `${el.size}px`,
-                height: `${el.size}px`,
-                borderRadius: '50%',
-                background: marbleGold,
-                opacity: opacity * 0.5,
-                transform: `rotate(${scrollY * el.speed * 0.5}deg)`
-              }}
-            />
-          );
-        })}
-      </CascadeContainer>
+          {/* ============ CUSTOM CURSOR ============ */}
+          <CursorDot ref={cursorDotRef} className={cursorHovering ? 'hovering' : ''} />
+          <CursorRing ref={cursorRingRef} className={cursorHovering ? 'hovering' : ''} />
+
+          {/* ============ CASCADING ELEMENTS ============ */}
+          <CascadeContainer>
+            {cascadeElements.map((el, i) => {
+              // Calculate Y position based on scroll - creates falling effect
+              const fallDistance = (scrollY * el.speed + el.delay * 1000) % (windowHeight + 200);
+              const opacity = fallDistance < 100 ? fallDistance / 100 :
+                             fallDistance > windowHeight ? Math.max(0, 1 - (fallDistance - windowHeight) / 200) :
+                             0.4;
+
+              return (
+                <CascadeElement
+                  key={i}
+                  style={{
+                    left: `${el.x}%`,
+                    top: `${fallDistance - 100}px`,
+                    width: `${el.size}px`,
+                    height: `${el.size}px`,
+                    borderRadius: '50%',
+                    background: marbleGold,
+                    opacity: opacity * 0.5,
+                    transform: `rotate(${scrollY * el.speed * 0.5}deg)`
+                  }}
+                />
+              );
+            })}
+          </CascadeContainer>
+        </>
+      )}
 
       {/* ============ HERO SECTION ============ */}
       <HeroSection ref={heroRef} data-theme="dark">
@@ -1403,6 +1716,7 @@ function Home({ isLoggedIn }) {
               <SymbolBlock>
                 <span className="ticker">NVDA</span>
                 <span className="name">NVIDIA Corp.</span>
+                {isDemoData && <DemoPill title="Sample data shown while live market keys are unavailable">Demo data</DemoPill>}
               </SymbolBlock>
               <PriceBlock>
                 <span className="price">{fmtPrice(livePrice)}</span>
@@ -1458,43 +1772,65 @@ function Home({ isLoggedIn }) {
             }}
           >
             <PhoneScreen>
-              <ScreenCascadeWrapper>
-                {cascadeElements.map((el, i) => {
-                  const screenCycle = 380;
-                  const fallDistance = (scrollY * el.speed + el.delay * 1000) % (screenCycle + 120);
-                  const top = fallDistance - 60;
-                  const opacity = top < 0 ? Math.max(0, 1 + top / 60) * 0.5 : top > screenCycle ? Math.max(0, 1 - (top - screenCycle) / 60) * 0.5 : 0.5;
-                  return (
-                    <CascadeElement
-                      key={`screen-${i}`}
-                      style={{
-                        left: `${el.x}%`,
-                        top: `${top}px`,
-                        width: `${el.size}px`,
-                        height: `${el.size}px`,
-                        borderRadius: '50%',
-                        background: marbleGold,
-                        opacity: opacity * 0.6,
-                        transform: `rotate(${scrollY * el.speed * 0.5}deg)`
-                      }}
-                    />
-                  );
-                })}
-              </ScreenCascadeWrapper>
+              {!reduceMotion && (
+                <ScreenCascadeWrapper>
+                  {cascadeElements.map((el, i) => {
+                    const screenCycle = 380;
+                    const fallDistance = (scrollY * el.speed + el.delay * 1000) % (screenCycle + 120);
+                    const top = fallDistance - 60;
+                    const opacity = top < 0 ? Math.max(0, 1 + top / 60) * 0.5 : top > screenCycle ? Math.max(0, 1 - (top - screenCycle) / 60) * 0.5 : 0.5;
+                    return (
+                      <CascadeElement
+                        key={`screen-${i}`}
+                        style={{
+                          left: `${el.x}%`,
+                          top: `${top}px`,
+                          width: `${el.size}px`,
+                          height: `${el.size}px`,
+                          borderRadius: '50%',
+                          background: marbleGold,
+                          opacity: opacity * 0.6,
+                          transform: `rotate(${scrollY * el.speed * 0.5}deg)`
+                        }}
+                      />
+                    );
+                  })}
+                </ScreenCascadeWrapper>
+              )}
+              {/* Optional real app screenshot — only mounts once it has loaded,
+                  so the branded content below is the graceful default. */}
+              {phoneArtReady && (
+                <AppImage
+                  src="/images/phone-app.png"
+                  alt="tickr mobile app preview"
+                  rounded={0}
+                  objectFit="cover"
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    aspectRatio: 'auto',
+                    borderRadius: 0,
+                    background: 'transparent',
+                    zIndex: 2,
+                  }}
+                />
+              )}
               <PhoneContent>
-                <img src="/marbleWhitelogo.png" alt="tickr" />
+                <img src="/marbleWhitelogo.png" alt="tickr logo" />
                 <p style={{ color: marbleWhite }}>your personal trading mentor</p>
-                <div style={{ 
+                <div style={{
                   marginTop: '20px',
                   background: `${marbleGray}33`,
                   borderRadius: '12px',
                   padding: '12px'
                 }}>
                   <div style={{ color: marbleGold, fontSize: '1.5rem', fontWeight: '700' }}>
-                    +$1,247.32
+                    $10K
                   </div>
                   <div style={{ color: marbleWhite, fontSize: '0.8rem' }}>
-                    Today's P&L
+                    Starting balance
                   </div>
                 </div>
               </PhoneContent>
@@ -1502,12 +1838,12 @@ function Home({ isLoggedIn }) {
           </PhoneMockup>
           
           <FloatingStats $position="left">
-            <h5>10K+</h5>
-            <span>Virtual Trades</span>
+            <h5>$10K</h5>
+            <span>Starting balance</span>
           </FloatingStats>
-          
+
           <FloatingStats $position="right">
-            <h5>20+</h5>
+            <h5>25+</h5>
             <span>Lessons</span>
           </FloatingStats>
         </div>
@@ -1568,13 +1904,16 @@ function Home({ isLoggedIn }) {
             margin: '0 auto',
           }}>
             {[
-              { title: 'real market data', desc: 'live prices and candles powered by Alpaca — same data the pros see.' },
-              { title: 'paper trading', desc: 'start with $10,000 in virtual money. every win and loss is real, only the dollars aren\'t.' },
-              { title: 'guided lessons', desc: 'short, interactive modules build from "what is a stock" to risk management.' },
-              { title: 'ai coach', desc: 'a personal tutor that reads your portfolio and suggests the next lesson.' },
+              { title: 'real market data', desc: 'live prices and candles powered by Alpaca — same data the pros see.', icon: '/images/feature-data.png' },
+              { title: 'paper trading', desc: 'start with $10,000 in virtual money. every win and loss is real, only the dollars aren\'t.', icon: '/images/feature-trade.png' },
+              { title: 'guided lessons', desc: 'short, interactive modules build from "what is a stock" to risk management.', icon: '/images/feature-learn.png' },
+              { title: 'ai coach', desc: 'a personal tutor that reads your portfolio and suggests the next lesson.', icon: '/images/feature-coach.png' },
             ].map((f, i) => (
               <div key={i} style={{ display: 'flex', gap: '14px' }}>
+                {/* Gold check is the default; an optional icon image overlays it
+                    when present and hides itself (revealing the check) if absent. */}
                 <div style={{
+                  position: 'relative',
                   flexShrink: 0,
                   width: '24px',
                   height: '24px',
@@ -1588,8 +1927,23 @@ function Home({ isLoggedIn }) {
                   fontSize: '0.85rem',
                   marginTop: '2px',
                   boxShadow: '0 4px 14px rgba(230, 200, 122, 0.35)',
+                  overflow: 'hidden',
                 }}>
                   ✓
+                  <img
+                    src={f.icon}
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
                 </div>
                 <div>
                   <div style={{
@@ -1668,7 +2022,7 @@ function Home({ isLoggedIn }) {
               <p style={{ color: marbleLightGray }}>Virtual Trading Balance</p>
             </div>
             <div>
-              <StatValue>50+</StatValue>
+              <StatValue>25+</StatValue>
               <p style={{ color: marbleLightGray }}>Interactive Lessons</p>
             </div>
             <div>
@@ -1683,17 +2037,132 @@ function Home({ isLoggedIn }) {
         </SectionInner>
       </Section>
 
-      {/* Footer */}
-      <footer ref={footerRef} data-theme="dark" style={{ 
-        padding: '40px 20px', 
-        textAlign: 'center', 
-        borderTop: `1px solid ${marbleGray}`,
-        background: marbleBlack
-      }}>
-        <p style={{ color: marbleLightGray, fontSize: '0.9rem' }}>
-          © {new Date().getFullYear()} tickr. Learn responsibly. Paper trading only.
+      {/* ============ HOW IT WORKS ============ */}
+      <Section data-theme="dark" style={{ background: 'transparent', padding: '120px 20px 100px' }}>
+        <SectionInner>
+          <SectionTitle>how it works</SectionTitle>
+          <SectionSubtitle>
+            three steps from curious to confident — at your own pace, with zero risk.
+          </SectionSubtitle>
+          <StepsGrid>
+            <StepCard>
+              <div className="num" aria-hidden="true">1</div>
+              <h3>learn the basics</h3>
+              <p>start with short, interactive lessons that build from "what is a stock?" to reading charts and managing risk.</p>
+            </StepCard>
+            <StepCard>
+              <div className="num" aria-hidden="true">2</div>
+              <h3>practice with $10K paper money</h3>
+              <p>put it into action on real market data with a $10,000 virtual balance. real prices, real lessons, none of the risk.</p>
+            </StepCard>
+            <StepCard>
+              <div className="num" aria-hidden="true">3</div>
+              <h3>get AI coaching</h3>
+              <p>your AI coach reviews your trades and progress, then points you to the next lesson or habit to work on.</p>
+            </StepCard>
+          </StepsGrid>
+        </SectionInner>
+      </Section>
+
+      {/* ============ FAQ ============ */}
+      <Section data-theme="dark" style={{ background: 'transparent', padding: '40px 20px 110px' }}>
+        <SectionInner>
+          <SectionTitle>questions, answered</SectionTitle>
+          <SectionSubtitle>
+            the short version of what people ask before signing up.
+          </SectionSubtitle>
+          <FaqList>
+            {[
+              {
+                q: 'is this real money?',
+                a: 'no. tickr is paper trading only — you practice with a $10,000 virtual balance, so you can learn and make mistakes without risking a cent of real money.',
+              },
+              {
+                q: 'do I need any experience?',
+                a: 'none at all. the lessons start from the very beginning — what a stock is, how prices move, how to read a chart — and build up from there.',
+              },
+              {
+                q: 'is it free?',
+                a: 'yes. you can create an account and start learning and paper-trading for free. tickr is currently in beta.',
+              },
+              {
+                q: 'what market data do you use?',
+                a: 'live prices and candles come from Alpaca, the same market data used by real brokerages. when live keys are unavailable we clearly label sample data as "demo".',
+              },
+              {
+                q: 'will I lose real money?',
+                a: 'never on tickr. everything here is simulated. the goal is to build the skills and confidence to invest for real, on your own terms, when you are ready.',
+              },
+            ].map((item, i) => (
+              <FaqItem key={i}>
+                <summary>
+                  {item.q}
+                  <svg className="chev" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </summary>
+                <p className="answer">{item.a}</p>
+              </FaqItem>
+            ))}
+          </FaqList>
+        </SectionInner>
+      </Section>
+
+      {/* ============ FINAL CTA BAND ============ */}
+      <CtaBand data-theme="dark">
+        <h2>start learning to invest — free</h2>
+        <p>
+          join the beta, get your $10,000 paper portfolio, and let an AI coach guide you from your first lesson to your first trade.
         </p>
-      </footer>
+        <MagneticButton>
+          <CtaButton to={isLoggedIn ? "/dashboard" : "/signup"}>
+            {isLoggedIn ? "go to dashboard" : "get started free"}
+          </CtaButton>
+        </MagneticButton>
+      </CtaBand>
+
+      {/* ============ FOOTER ============ */}
+      <Footer ref={footerRef} data-theme="dark">
+        <FooterInner>
+          <FooterGrid>
+            <FooterBrand>
+              <img src="/marbleWhitelogo.png" alt="tickr logo" />
+              <p>learn to invest the way you'd actually want to — real markets, virtual money, and an AI coach in your corner.</p>
+            </FooterBrand>
+
+            <FooterCol aria-label="Product">
+              <h4>Product</h4>
+              <ul>
+                <li><Link to="/learn">Learn</Link></li>
+                <li><Link to="/trade">Trade</Link></li>
+                <li><Link to="/ai-coach">AI Coach</Link></li>
+                <li><Link to="/dashboard">Dashboard</Link></li>
+              </ul>
+            </FooterCol>
+
+            <FooterCol aria-label="Company">
+              <h4>Company</h4>
+              <ul>
+                <li><Link to="/about">About</Link></li>
+              </ul>
+            </FooterCol>
+
+            <FooterCol aria-label="Legal">
+              <h4>Legal</h4>
+              <ul>
+                {/* TODO: link to dedicated /privacy and /terms routes once they exist */}
+                <li><Link to="/about">Privacy</Link></li>
+                <li><Link to="/about">Terms</Link></li>
+              </ul>
+            </FooterCol>
+          </FooterGrid>
+
+          <FooterBottom>
+            <p>© {new Date().getFullYear()} tickr. Learn responsibly.</p>
+            <p className="disclaimer">Paper trading only — not investment advice.</p>
+          </FooterBottom>
+        </FooterInner>
+      </Footer>
 
     </PageWrapper>
   );

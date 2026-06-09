@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
-import { fontHeading, fontBody } from '../fontPalette';
 import { api } from '../services/api';
 import './StockSearch.css';
 
@@ -23,7 +21,7 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
     const preloadSearch = async () => {
       try {
         // First warm up the backend cache
-        await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/trading/health`);
+        await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api'}/trading/health`);
         console.log('✅ Backend cache warmed up');
         
         // Then preload a common search

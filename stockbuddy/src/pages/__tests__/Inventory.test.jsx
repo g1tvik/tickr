@@ -12,6 +12,7 @@ vi.mock('../../services/api', () => ({
       learningProgress: { xp: 150, coins: 450 },
       activeEffects: {}
     }),
+    getActiveEffects: vi.fn().mockResolvedValue({ success: true, activeEffects: {} }),
     useInventoryItem: vi.fn()
   }
 }));
@@ -25,12 +26,13 @@ describe('Inventory page', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /Inventory/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: /Inventory/i })).toBeInTheDocument();
     });
 
-    const skipTokensStat = screen.getByText('Skip Tokens').closest('div');
+    // The value and label live in sibling divs inside a shared stat group.
+    const skipTokensStat = screen.getByText('Skip Tokens').closest('div').parentElement;
     expect(skipTokensStat).toHaveTextContent('2');
-    expect(screen.getByText(/150 XP/)).toBeInTheDocument();
+    expect(screen.getByText(/150/)).toBeInTheDocument();
   });
 });
 

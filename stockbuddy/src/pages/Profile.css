@@ -116,7 +116,83 @@
 .tier-bar-gold   .tier-groove { background: rgba(90, 56, 0, 0.18); }
 .tier-bar-silver .tier-groove { background: rgba(50, 50, 50, 0.14); }
 
+/* ── Identity card ───────────────────────────────────────────────── */
+.profile-identity {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.profile-avatar {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+}
+
+/* AppImage renders a wrapper div; keep its placeholder initials legible. */
+.profile-avatar .app-image {
+  font-family: 'Creato Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* ── Stats row ───────────────────────────────────────────────────── */
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+/* ── Badge wall ──────────────────────────────────────────────────── */
+.badge-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.badge-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 12px;
+  min-width: 72px;
+}
+
+.badge-chip-earned {
+  background: rgba(230, 200, 122, 0.10);
+  border: 1px solid rgba(230, 200, 122, 0.35);
+}
+
+.badge-chip-locked {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  opacity: 0.55;
+}
+
+/* ── Allocation grid ─────────────────────────────────────────────── */
+.alloc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
 /* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .profile-stats {
+    grid-template-columns: 1fr;
+  }
+  .alloc-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-identity {
+    flex-wrap: wrap;
+  }
+  /* Let the edit button take the full row beneath name/avatar on phones. */
+  .profile-edit-btn {
+    width: 100%;
+    margin-top: 4px;
+  }
+}
+
 @media (max-width: 480px) {
   .tier-bar {
     height: 60px;
@@ -127,5 +203,9 @@
   }
   .tier-bar-grooves {
     display: none;
+  }
+  .badge-chip {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
   }
 }

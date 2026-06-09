@@ -2,9 +2,12 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const { z } = require('zod');
 const rateLimit = require('express-rate-limit');
 const { OAuth2Client } = require('google-auth-library');
 const { sendGoalReminder, sendWelcomeEmail } = require('../services/emailService');
+const { requireApproved } = require('../middleware/requireApproved');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -46,6 +49,25 @@ const authLimiter = rateLimit({
   handler: rateLimitHandler
 });
 
+// Dedicated limiter for sensitive account mutations (profile/data/delete).
+const accountMutationLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: rateLimitHandler
+});
+
+// Stricter limiter for the public (unauthenticated) leaderboard endpoint to
+// protect this user-enumerating read from abuse/scraping.
+const leaderboardLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: rateLimitHandler
+});
+
 // Middleware to verify JWT token
 const authenticateToken = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -69,33 +91,113 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
-// File-based user management
-const getUsers = (req) => req.app.locals.fileStorage.getUsers();
-const saveUsers = (req, users) => req.app.locals.fileStorage.saveUsers(users);
+// Async storage access
+const storageOf = (req) => req.app.locals.storage;
 
-// Generate unique user ID
-const generateUserId = () => {
-  return 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-};
+// Generate unique user ID (cryptographically random)
+const generateUserId = () => `user_${crypto.randomUUID()}`;
 
 const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
 
 // Validate username format
 const validateUsername = (username) => {
-  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+  const usernameRegex = /^[a-zA-Z0-9_]{3,30}$/;
   return usernameRegex.test(username);
 };
+
+// Basic email format validation
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const validateEmail = (email) => EMAIL_REGEX.test(email);
+
+// Password complexity: min 8 chars and at least one lowercase, uppercase, digit, symbol
+const validatePasswordComplexity = (password) => {
+  if (typeof password !== 'string' || password.length < 8) return false;
+  if (!/[a-z]/.test(password)) return false;
+  if (!/[A-Z]/.test(password)) return false;
+  if (!/[0-9]/.test(password)) return false;
+  if (!/[^a-zA-Z0-9]/.test(password)) return false;
+  return true;
+};
+
+// Whitelist schema for bulk user-data writes. Only learning-progress-style fields
+// are accepted from the client; server owns money/inventory (balance/coins/xp) via
+// trading/shop, so those are never trusted from this endpoint.
+//
+// learningProgress: validated as a record of progress fields. `coins` and `xp`
+// are server-owned currency — they are explicitly stripped here and re-merged
+// from the persisted user record below so a client can never mint currency by
+// POSTing {learningProgress:{coins:999999, xp:999999}}.
+const learningProgressSchema = z
+  .object({
+    completedLessons: z.array(z.any()).max(10000).optional(),
+    completedUnitTests: z.array(z.any()).max(10000).optional(),
+    finalTestCompleted: z.boolean().optional(),
+    finalTestLastAttempt: z.any().optional(),
+    unitTestAttempts: z.record(z.string(), z.any()).optional(),
+    lessonAttempts: z.record(z.string(), z.any()).optional(),
+    dailyGoal: z.number().int().optional(),
+    streak: z.number().int().optional(),
+  })
+  // Drop unknown/extra fields (including any client-supplied coins/xp) entirely.
+  .strip();
+
+// purchasedItems: the shop endpoints own purchases/effects, but the frontend
+// syncs item state (e.g. consumed/active) through /user-data, so we keep the
+// field but constrain each entry to a known, effect-free shape and drop any
+// extra fields. Capped to a sane max length.
+const purchasedItemSchema = z
+  .object({
+    id: z.string(),
+    itemId: z.union([z.string(), z.number()]).optional(),
+    itemName: z.string().optional(),
+    price: z.number().optional(),
+    consumed: z.boolean().optional(),
+    active: z.boolean().optional(),
+  })
+  .strip();
+
+const userDataSchema = z
+  .object({
+    learningProgress: learningProgressSchema.optional(),
+    purchasedItems: z.array(purchasedItemSchema).max(500).optional(),
+  })
+  .passthrough();
+
+// Validation for learning preferences updates.
+const learningPreferencesSchema = z
+  .object({
+    dailyGoal: z.number().int().min(1).max(100).optional(),
+    notifications: z.boolean().optional(),
+  })
+  .strip();
 
 // Register new user
 router.post('/register', authLimiter, async (req, res) => {
   try {
     const { email, password, name, username } = req.body;
     const normalizedEmail = normalizeEmail(email);
-    
-    if (!normalizedEmail || !password || !name || !username) {
+    const normalizedName = typeof name === 'string' ? name.trim() : '';
+
+    if (!normalizedEmail || !password || !normalizedName || !username) {
       return res.status(400).json({
         success: false,
         message: 'Email, password, name, and username are required'
+      });
+    }
+
+    // Validate email format
+    if (!validateEmail(normalizedEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address'
+      });
+    }
+
+    // Validate name length
+    if (normalizedName.length < 1 || normalizedName.length > 60) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name must be between 1 and 60 characters'
       });
     }
 
@@ -103,14 +205,22 @@ router.post('/register', authLimiter, async (req, res) => {
     if (!validateUsername(username)) {
       return res.status(400).json({
         success: false,
-        message: 'Username must be 3-20 characters long and contain only letters, numbers, and underscores'
+        message: 'Username must be 3-30 characters long and contain only letters, numbers, and underscores'
       });
     }
 
-    const users = getUsers(req);
-    
+    // Validate password complexity
+    if (!validatePasswordComplexity(password)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters and include a lowercase letter, an uppercase letter, a number, and a symbol'
+      });
+    }
+
+    const storage = storageOf(req);
+
     // Check if user already exists by email or username
-    const existingUserByEmail = Object.values(users).find(user => normalizeEmail(user.email) === normalizedEmail);
+    const existingUserByEmail = await storage.getUserByEmail(normalizedEmail);
     if (existingUserByEmail) {
       return res.status(400).json({
         success: false,
@@ -118,7 +228,7 @@ router.post('/register', authLimiter, async (req, res) => {
       });
     }
 
-    const existingUserByUsername = Object.values(users).find(user => user.username === username);
+    const existingUserByUsername = await storage.getUserByUsername(username);
     if (existingUserByUsername) {
       return res.status(400).json({
         success: false,
@@ -136,7 +246,7 @@ router.post('/register', authLimiter, async (req, res) => {
       email: normalizedEmail,
       username,
       password: hashedPassword,
-      name,
+      name: normalizedName,
       createdAt: new Date().toISOString(),
       lastLogin: new Date().toISOString(),
       // Initialize user-specific data
@@ -158,8 +268,7 @@ router.post('/register', authLimiter, async (req, res) => {
       purchasedItems: []
     };
 
-    users[userId] = newUser;
-    saveUsers(req, users);
+    await storage.saveUser(newUser);
 
     // Generate JWT token
     const token = jwt.sign(
@@ -225,13 +334,14 @@ router.post('/login', authLimiter, async (req, res) => {
       });
     }
 
-    const users = getUsers(req);
-    
-    // Find user by email or username
-    const user = Object.values(users).find(u => 
-      normalizeEmail(u.email) === normalizedEmailIdentity || u.username === normalizedIdentity
-    );
-    
+    const storage = storageOf(req);
+
+    // Find user by email (case-insensitive) or username
+    let user = await storage.getUserByEmail(normalizedEmailIdentity);
+    if (!user) {
+      user = await storage.getUserByUsername(normalizedIdentity);
+    }
+
     if (!user) {
       logAuthAttempt(req, {
         action: 'login',
@@ -262,8 +372,7 @@ router.post('/login', authLimiter, async (req, res) => {
 
     // Update last login
     user.lastLogin = new Date().toISOString();
-    users[user.id] = user;
-    saveUsers(req, users);
+    await storage.saveUser(user);
 
     // Generate JWT token
     const token = jwt.sign(
@@ -332,17 +441,17 @@ router.post('/google', authLimiter, async (req, res) => {
     const { email, name, picture } = payload;
     const normalizedEmail = normalizeEmail(email);
 
-    const users = getUsers(req);
-    
+    const storage = storageOf(req);
+
     // Check if user exists
-    let user = Object.values(users).find(u => normalizeEmail(u.email) === normalizedEmail);
+    let user = await storage.getUserByEmail(normalizedEmail);
     const isNewUser = !user;
-    
+
     if (!user) {
       // Create new user with generated username
       const userId = generateUserId();
-      const username = `user_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-      
+      const username = `user_${crypto.randomUUID()}`;
+
       user = {
         id: userId,
         email: normalizedEmail,
@@ -370,7 +479,6 @@ router.post('/google', authLimiter, async (req, res) => {
         },
         purchasedItems: []
       };
-      users[userId] = user;
 
       logAuthAttempt(req, {
         action: 'google-auth',
@@ -382,7 +490,6 @@ router.post('/google', authLimiter, async (req, res) => {
       // Update existing user
       user.lastLogin = new Date().toISOString();
       user.picture = picture;
-      users[user.id] = user;
 
       logAuthAttempt(req, {
         action: 'google-auth',
@@ -392,7 +499,7 @@ router.post('/google', authLimiter, async (req, res) => {
       });
     }
 
-    saveUsers(req, users);
+    await storage.saveUser(user);
 
     // Generate JWT token
     const jwtToken = jwt.sign(
@@ -448,8 +555,8 @@ router.get('/profile', async (req, res) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    const users = getUsers(req);
-    const user = users[decoded.userId];
+    const storage = storageOf(req);
+    const user = await storage.getUserById(decoded.userId);
 
     if (!user) {
       return res.status(404).json({
@@ -465,8 +572,7 @@ router.get('/profile', async (req, res) => {
         notifications: true,
         difficulty: 'auto'
       };
-      users[user.id] = user;
-      saveUsers(req, users);
+      await storage.saveUser(user);
     }
 
     res.json({
@@ -503,8 +609,8 @@ router.get('/user-data', async (req, res) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    const users = getUsers(req);
-    const user = users[decoded.userId];
+    const storage = storageOf(req);
+    const user = await storage.getUserById(decoded.userId);
 
     if (!user) {
       return res.status(404).json({
@@ -530,8 +636,7 @@ router.get('/user-data', async (req, res) => {
 
     if (purchasesUpdated) {
       user.purchasedItems = sanitizedPurchases;
-      users[user.id] = user;
-      saveUsers(req, users);
+      await storage.saveUser(user);
     }
 
     res.json({
@@ -566,20 +671,10 @@ router.get('/user-data', async (req, res) => {
 });
 
 // Update user data (portfolio and learning progress)
-router.post('/user-data', async (req, res) => {
+router.post('/user-data', accountMutationLimiter, authenticateToken, requireApproved, async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'No token provided'
-      });
-    }
-
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const users = getUsers(req);
-    const user = users[decoded.userId];
+    const storage = storageOf(req);
+    const user = await storage.getUserById(req.user.userId);
 
     if (!user) {
       return res.status(404).json({
@@ -588,15 +683,36 @@ router.post('/user-data', async (req, res) => {
       });
     }
 
-    const { portfolio, learningProgress, purchasedItems } = req.body;
+    // Validate/whitelist client input: only learningProgress and purchasedItems
+    // may be set here. Money/inventory (balance/coins/xp) are server-owned and
+    // must never be set arbitrarily from this bulk-write endpoint.
+    const parsed = userDataSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user data payload'
+      });
+    }
 
-    // Update user data
-    if (portfolio) user.portfolio = portfolio;
-    if (learningProgress) user.learningProgress = learningProgress;
+    const { learningProgress, purchasedItems } = parsed.data;
+
+    // Update only whitelisted user data. `portfolio` from the client is ignored
+    // here — its balance/coins/xp are owned by the trading/shop flows.
+    if (learningProgress) {
+      // Currency (coins/xp) is server-owned: always preserve the EXISTING server
+      // values and ignore anything the client supplied. The schema already strips
+      // client coins/xp, but we re-assert them explicitly to be safe.
+      const existing = user.learningProgress || {};
+      user.learningProgress = {
+        ...existing,
+        ...learningProgress,
+        coins: existing.coins || 0,
+        xp: existing.xp || 0
+      };
+    }
     if (purchasedItems) user.purchasedItems = purchasedItems;
 
-    users[user.id] = user;
-    saveUsers(req, users);
+    await storage.saveUser(user);
 
     res.json({
       success: true,
@@ -612,20 +728,10 @@ router.post('/user-data', async (req, res) => {
 });
 
 // Update user profile (name, username, email)
-router.put('/profile', async (req, res) => {
+router.put('/profile', accountMutationLimiter, authenticateToken, requireApproved, async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'No token provided'
-      });
-    }
-
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const users = getUsers(req);
-    const user = users[decoded.userId];
+    const storage = storageOf(req);
+    const user = await storage.getUserById(req.user.userId);
 
     if (!user) {
       return res.status(404).json({
@@ -635,19 +741,37 @@ router.put('/profile', async (req, res) => {
     }
 
     const { name, username, email } = req.body;
+    const normalizedName = name !== undefined ? String(name).trim() : undefined;
+    const normalizedEmail = email !== undefined ? normalizeEmail(email) : undefined;
+
+    // Validate name length if provided
+    if (normalizedName !== undefined && (normalizedName.length < 1 || normalizedName.length > 60)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name must be between 1 and 60 characters'
+      });
+    }
 
     // Validate username format if provided
     if (username && !validateUsername(username)) {
       return res.status(400).json({
         success: false,
-        message: 'Username must be 3-20 characters long and contain only letters, numbers, and underscores'
+        message: 'Username must be 3-30 characters long and contain only letters, numbers, and underscores'
+      });
+    }
+
+    // Validate email format if provided
+    if (normalizedEmail !== undefined && !validateEmail(normalizedEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address'
       });
     }
 
     // Check if username is already taken (if changing)
     if (username && username !== user.username) {
-      const existingUserByUsername = Object.values(users).find(u => u.username === username);
-      if (existingUserByUsername) {
+      const existingUserByUsername = await storage.getUserByUsername(username);
+      if (existingUserByUsername && existingUserByUsername.id !== user.id) {
         return res.status(400).json({
           success: false,
           message: 'Username already taken. Please choose a different username.'
@@ -656,9 +780,9 @@ router.put('/profile', async (req, res) => {
     }
 
     // Check if email is already taken (if changing)
-    if (email && email !== user.email) {
-      const existingUserByEmail = Object.values(users).find(u => u.email === email);
-      if (existingUserByEmail) {
+    if (normalizedEmail !== undefined && normalizedEmail !== user.email) {
+      const existingUserByEmail = await storage.getUserByEmail(normalizedEmail);
+      if (existingUserByEmail && existingUserByEmail.id !== user.id) {
         return res.status(400).json({
           success: false,
           message: 'Email already registered. This email may be associated with a Google account. Please try logging in instead, or use a different email address.'
@@ -667,12 +791,11 @@ router.put('/profile', async (req, res) => {
     }
 
     // Update user profile
-    if (name) user.name = name;
+    if (normalizedName) user.name = normalizedName;
     if (username) user.username = username;
-    if (email) user.email = email;
+    if (normalizedEmail) user.email = normalizedEmail;
 
-    users[user.id] = user;
-    saveUsers(req, users);
+    await storage.saveUser(user);
 
     res.json({
       success: true,
@@ -697,20 +820,10 @@ router.put('/profile', async (req, res) => {
 });
 
 // Update learning preferences
-router.put('/learning-preferences', async (req, res) => {
+router.put('/learning-preferences', accountMutationLimiter, authenticateToken, requireApproved, async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'No token provided'
-      });
-    }
-
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const users = getUsers(req);
-    const user = users[decoded.userId];
+    const storage = storageOf(req);
+    const user = await storage.getUserById(req.user.userId);
 
     if (!user) {
       return res.status(404).json({
@@ -719,7 +832,16 @@ router.put('/learning-preferences', async (req, res) => {
       });
     }
 
-    const { dailyGoal, notifications } = req.body;
+    // Validate input: dailyGoal int 1..100 optional, notifications boolean optional.
+    const parsedPrefs = learningPreferencesSchema.safeParse(req.body || {});
+    if (!parsedPrefs.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid learning preferences payload'
+      });
+    }
+
+    const { dailyGoal, notifications } = parsedPrefs.data;
 
     // Initialize learning preferences if they don't exist
     if (!user.learningPreferences) {
@@ -733,8 +855,7 @@ router.put('/learning-preferences', async (req, res) => {
     if (dailyGoal !== undefined) user.learningPreferences.dailyGoal = dailyGoal;
     if (notifications !== undefined) user.learningPreferences.notifications = notifications;
 
-    users[user.id] = user;
-    saveUsers(req, users);
+    await storage.saveUser(user);
 
     res.json({
       success: true,
@@ -763,8 +884,8 @@ router.get('/learning-preferences', async (req, res) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    const users = getUsers(req);
-    const user = users[decoded.userId];
+    const storage = storageOf(req);
+    const user = await storage.getUserById(decoded.userId);
 
     if (!user) {
       return res.status(404).json({
@@ -779,8 +900,7 @@ router.get('/learning-preferences', async (req, res) => {
         dailyGoal: 3,
         notifications: true
       };
-      users[user.id] = user;
-      saveUsers(req, users);
+      await storage.saveUser(user);
     }
 
     res.json({
@@ -809,8 +929,8 @@ router.get('/export-data', async (req, res) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    const users = getUsers(req);
-    const user = users[decoded.userId];
+    const storage = storageOf(req);
+    const user = await storage.getUserById(decoded.userId);
 
     if (!user) {
       return res.status(404).json({
@@ -864,7 +984,7 @@ router.get('/export-data', async (req, res) => {
 });
 
 // Reset learning progress
-router.post('/reset-progress', async (req, res) => {
+router.post('/reset-progress', accountMutationLimiter, async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     
@@ -876,8 +996,8 @@ router.post('/reset-progress', async (req, res) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    const users = getUsers(req);
-    const user = users[decoded.userId];
+    const storage = storageOf(req);
+    const user = await storage.getUserById(decoded.userId);
 
     if (!user) {
       return res.status(404).json({
@@ -898,8 +1018,7 @@ router.post('/reset-progress', async (req, res) => {
       lessonAttempts: {}
     };
 
-    users[user.id] = user;
-    saveUsers(req, users);
+    await storage.saveUser(user);
 
     res.json({
       success: true,
@@ -915,10 +1034,10 @@ router.post('/reset-progress', async (req, res) => {
 });
 
 // Delete account
-router.delete('/account', async (req, res) => {
+router.delete('/account', accountMutationLimiter, async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
-    
+
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -927,8 +1046,8 @@ router.delete('/account', async (req, res) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    const users = getUsers(req);
-    const user = users[decoded.userId];
+    const storage = storageOf(req);
+    const user = await storage.getUserById(decoded.userId);
 
     if (!user) {
       return res.status(404).json({
@@ -937,9 +1056,8 @@ router.delete('/account', async (req, res) => {
       });
     }
 
-    // Delete user account
-    delete users[decoded.userId];
-    saveUsers(req, users);
+    // Delete user account (cascades portfolio + transactions)
+    await storage.deleteUser(decoded.userId);
 
     res.json({
       success: true,
@@ -958,8 +1076,8 @@ router.delete('/account', async (req, res) => {
 router.post('/send-goal-reminder', authenticateToken, async (req, res) => {
   console.log('Received goal reminder request');
   try {
-    const users = getUsers(req);
-    const user = users[req.user.userId];
+    const storage = storageOf(req);
+    const user = await storage.getUserById(req.user.userId);
 
     if (!user) {
       return res.status(404).json({
@@ -1025,12 +1143,20 @@ router.post('/send-goal-reminder', authenticateToken, async (req, res) => {
 });
 
 // Test endpoint to add coins (for testing shop functionality)
-router.post('/add-test-coins', authenticateToken, (req, res) => {
+router.post('/add-test-coins', authenticateToken, async (req, res) => {
   try {
+    // Test-only endpoint: never allow in production.
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({
+        success: false,
+        message: 'This endpoint is not available in production'
+      });
+    }
+
     const { amount } = req.body;
-    const users = getUsers(req);
-    const user = users[req.user.userId];
-    
+    const storage = storageOf(req);
+    const user = await storage.getUserById(req.user.userId);
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -1044,9 +1170,9 @@ router.post('/add-test-coins', authenticateToken, (req, res) => {
 
     const coinsToAdd = amount || 100;
     user.learningProgress.coins += coinsToAdd;
-    
-    saveUsers(req, users);
-    
+
+    await storage.saveUser(user);
+
     console.log(`[TEST] Added ${coinsToAdd} coins to user ${req.user.userId}. New balance: ${user.learningProgress.coins}`);
 
     res.json({
@@ -1064,10 +1190,10 @@ router.post('/add-test-coins', authenticateToken, (req, res) => {
 });
 
 // Get leaderboard
-router.get('/leaderboard', async (req, res) => {
+router.get('/leaderboard', leaderboardLimiter, async (req, res) => {
   try {
-    const users = getUsers(req);
-    
+    const users = await storageOf(req).getUsers();
+
     // Convert users object to array and extract relevant data
     const leaderboardData = Object.values(users)
       .map(user => ({

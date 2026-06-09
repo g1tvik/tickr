@@ -54,3 +54,4 @@ AGENTS.md
 buglog.csv
 auth-backend/data/invites.json
 auth-backend/data/waitlist.json
+auth-backend/.env.old

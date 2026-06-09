@@ -4,8 +4,10 @@ import { lessonStructure } from '../data/lessonStructure';
 import progressManager from '../utils/progressManager';
 import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
+import { useSEO, SEO_CONFIG } from '../lib/seo';
 
 export default function Learn() {
+  useSEO(SEO_CONFIG.learn);
   const navigate = useNavigate();
   const location = useLocation();
   const [showLessonsModal, setShowLessonsModal] = useState(false);
@@ -49,7 +51,7 @@ export default function Learn() {
       const overallProgress = await progressManager.getOverallProgress();
       setProgress(overallProgress);
     } catch (error) {
-      console.error('Error loading progress:', error);
+      if (import.meta.env.DEV) console.error('Error loading progress:', error);
     } finally {
       setLoading(false);
     }
@@ -71,7 +73,7 @@ export default function Learn() {
       }
       setLessonScores(scores);
     } catch (error) {
-      console.error('Error loading lesson scores:', error);
+      if (import.meta.env.DEV) console.error('Error loading lesson scores:', error);
     }
   };
 
@@ -136,14 +138,8 @@ export default function Learn() {
     }
   };
 
+  // Jump straight to the next incomplete lesson in a unit (Start / Continue CTA)
   const handleStartUnit = (unit) => {
-    const nextLesson = getNextIncompleteLesson(unit.id);
-    if (nextLesson) {
-      navigate(`/learn/lesson/${nextLesson.id}`);
-    }
-  };
-
-  const handleContinueLesson = (unit) => {
     const nextLesson = getNextIncompleteLesson(unit.id);
     if (nextLesson) {
       navigate(`/learn/lesson/${nextLesson.id}`);
@@ -181,7 +177,7 @@ export default function Learn() {
         alert(result.message);
       }
     } catch (error) {
-      console.error('Error unlocking final test:', error);
+      if (import.meta.env.DEV) console.error('Error unlocking final test:', error);
       alert('Failed to unlock final test. Please try again.');
     }
   };
@@ -219,7 +215,7 @@ export default function Learn() {
         alert(result.message);
       }
     } catch (error) {
-      console.error('Test submission error:', error);
+      if (import.meta.env.DEV) console.error('Test submission error:', error);
       alert('Failed to submit test. Please try again.');
     }
   };
@@ -334,7 +330,7 @@ export default function Learn() {
         position: "relative"
       }}>
         {/* Roadmap Path */}
-        {lessonStructure.units.map((unit, unitIndex) => {
+        {lessonStructure.units.map((unit) => {
             const completedLessons = Array.isArray(progress?.completedLessons) ? progress.completedLessons : [];
             const completedUnitTests = Array.isArray(progress?.completedUnitTests) ? progress.completedUnitTests : [];
             const unitCompleted = completedUnitTests.includes(unit.id);
@@ -389,13 +385,33 @@ export default function Learn() {
                     {unit.lessons.length} lessons • {unit.unitTest.xp} XP
                   </div>
                 </div>
-                {isUnlocked && (
+                {isUnlocked && !unitCompleted && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleStartUnit(unit); }}
+                    style={{
+                      backgroundColor: marbleGold,
+                      color: marbleDarkGray,
+                      border: "none",
+                      borderRadius: "10px",
+                      padding: "8px 16px",
+                      fontSize: "13px",
+                      fontWeight: 700,
+                      fontFamily: fontHeading,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      boxShadow: currentActiveUnit?.id === unit.id ? "0 0 0 2px rgba(182,156,96,0.4)" : "none"
+                    }}
+                  >
+                    {getNextIncompleteLesson(unit.id) && unit.lessons.some(l => (progress?.completedLessons || []).includes(l.id)) ? "Continue" : "Start"}
+                  </button>
+                )}
+                {isUnlocked && unitCompleted && (
                   <div style={{
                     fontSize: "20px",
-                    color: unitCompleted ? marbleDarkGray : white,
+                    color: marbleDarkGray,
                     opacity: 0.6
                   }}>
-                    ›
+                    ✓
                   </div>
                 )}
               </div>

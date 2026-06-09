@@ -1,6 +1,4 @@
 import React from 'react';
-import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
-import { fontHeading, fontBody } from '../fontPalette';
 
 // Market Status Component
 export const MarketStatus = ({ marketStatus, lastUpdate }) => {
@@ -227,6 +225,17 @@ export const MarketWatch = ({ stocks, lastUpdate, loadMarketData, isLoading }) =
             <span className="last-update-time">
               Last: {lastUpdate.toLocaleTimeString()}
             </span>
+          )}
+          {loadMarketData && (
+            <button
+              type="button"
+              className="market-watch-refresh"
+              onClick={loadMarketData}
+              disabled={isLoading}
+              aria-label="Refresh market data"
+            >
+              {isLoading ? 'Refreshing…' : 'Refresh'}
+            </button>
           )}
         </div>
       </div>

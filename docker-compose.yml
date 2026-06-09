@@ -1,22 +1,68 @@
+# tickr — full stack: Postgres + API + static frontend (nginx).
+#
+# Quick start:
+#   1. cp auth-backend/.env.example auth-backend/.env   and fill in real values
+#      (especially a strong JWT_SECRET — see .env.example).
+#   2. docker compose up --build
+#   3. App at http://localhost:3000  (API proxied at /api, Postgres on 5432)
+#
+# DATABASE_URL is injected automatically below and points at the `db` service,
+# overriding anything in auth-backend/.env.
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tickr}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tickr}
+      POSTGRES_DB: ${POSTGRES_DB:-tickr}
+    volumes:
+      - tickr-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tickr} -d ${POSTGRES_DB:-tickr}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   backend:
     build: ./auth-backend
-    ports:
-      - "5001:5001"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_URL: postgres://${POSTGRES_USER:-tickr}:${POSTGRES_PASSWORD:-tickr}@db:5432/${POSTGRES_DB:-tickr}
+      AUTH_LOG_DIR: /app/logs
     env_file:
       - auth-backend/.env
-    volumes:
-      - ./auth-backend/data:/app/data
+    ports:
+      - "5001:5001"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     restart: unless-stopped
 
   frontend:
     build:
       context: ./stockbuddy
       args:
-        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
         VITE_LOCKDOWN: ${VITE_LOCKDOWN:-false}
+        VITE_SITE_URL: ${VITE_SITE_URL:-http://localhost:3000}
     ports:
       - "3000:80"
     depends_on:
       - backend
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
+
+volumes:
+  tickr-db-data:

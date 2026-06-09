@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import "../globals.css";
 import { useNavigate } from "react-router-dom";
-import { marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 import { api, isAuthenticated, getCurrentUser } from '../services/api';
 import { getLevelProgress, lessonStructure } from '../data/lessonStructure';
+import useReducedMotion from '../hooks/useReducedMotion';
+import { useSEO, SEO_CONFIG } from '../lib/seo';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const BG        = '#F4F1E9';
@@ -12,6 +13,7 @@ const SURFACE   = '#FFFFFF';
 const BORDER    = 'rgba(230, 200, 122, 0.18)';
 const SHADOW    = '0 1px 2px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.06)';
 const GOLD      = '#E6C87A';
+const DEMO_GOLD = '#B69C60'; // muted gold for "Demo data" labels
 const DARK      = '#222222';
 const MUTED     = '#A0998A';
 const MUTED2    = '#B0B0B0';
@@ -24,6 +26,66 @@ const card = {
   boxShadow: SHADOW,
   padding: '24px',
 };
+
+// ─── Numeric safety helpers ────────────────────────────────────────────────────
+// Coerce to a finite number or return the fallback (guards null/undefined/NaN/Infinity).
+const num = (v, fallback = 0) => {
+  const n = typeof v === 'number' ? v : parseFloat(v);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+// ─── "Demo data" pill ──────────────────────────────────────────────────────────
+const DemoPill = ({ style }) => (
+  <span
+    title="Showing sample data — live data is unavailable right now."
+    style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '4px',
+      fontFamily: fontBody,
+      fontSize: '10px',
+      fontWeight: '600',
+      letterSpacing: '0.06em',
+      textTransform: 'uppercase',
+      color: DEMO_GOLD,
+      background: 'rgba(182, 156, 96, 0.10)',
+      border: `1px solid rgba(182, 156, 96, 0.35)`,
+      borderRadius: '20px',
+      padding: '2px 9px',
+      ...style,
+    }}
+  >
+    <span aria-hidden="true">●</span>
+    Demo data
+  </span>
+);
+
+// ─── Skeleton shimmer ──────────────────────────────────────────────────────────
+const Skeleton = ({ width = '100%', height = '14px', radius = '8px', style, reduced }) => (
+  <div
+    aria-hidden="true"
+    style={{
+      width,
+      height,
+      borderRadius: radius,
+      background: reduced
+        ? 'rgba(0,0,0,0.06)'
+        : 'linear-gradient(90deg, rgba(0,0,0,0.05) 25%, rgba(0,0,0,0.10) 37%, rgba(0,0,0,0.05) 63%)',
+      backgroundSize: '400% 100%',
+      animation: reduced ? 'none' : 'dashShimmer 1.4s ease-in-out infinite',
+      ...style,
+    }}
+  />
+);
+
+const SkeletonCard = ({ reduced, lines = 3 }) => (
+  <div role="status" aria-busy="true" aria-label="Loading" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <Skeleton reduced={reduced} width="40%" height="18px" />
+    {Array.from({ length: lines }).map((_, i) => (
+      <Skeleton key={i} reduced={reduced} width={i === lines - 1 ? '70%' : '100%'} />
+    ))}
+  </div>
+);
 
 const sectionLabel = {
   fontFamily: fontBody,
@@ -38,16 +100,18 @@ const sectionLabel = {
 };
 
 // ─── XP Progress Bar ─────────────────────────────────────────────────────────
-const XPBar = ({ xp, levelInfo }) => {
-  const percent = Math.min((levelInfo.xpIntoLevel / levelInfo.xpNeeded) * 100, 100);
+const XPBar = ({ levelInfo }) => {
+  const xpInto = num(levelInfo?.xpIntoLevel, 0);
+  const xpNeeded = num(levelInfo?.xpNeeded, 0);
+  const percent = xpNeeded > 0 ? Math.min((xpInto / xpNeeded) * 100, 100) : 0;
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
         <span style={{ fontFamily: fontBody, fontSize: '12px', color: MUTED }}>
-          level {levelInfo.currentLevel}
+          level {levelInfo?.currentLevel ?? 1}
         </span>
         <span style={{ fontFamily: fontBody, fontSize: '12px', color: MUTED }}>
-          {levelInfo.xpIntoLevel} / {levelInfo.xpNeeded} xp
+          {xpInto} / {xpNeeded} xp
         </span>
       </div>
       <div style={{
@@ -203,9 +267,9 @@ const RecentActivity = ({ userData, portfolio }) => {
       });
     }
 
-    if (userData.transactions) {
+    if (Array.isArray(userData.transactions)) {
       userData.transactions.forEach(t => {
-        list.push({ id: `t_${t.id}`, type: 'trade', title: `${t.type.toUpperCase()} ${t.shares} × ${t.symbol}`, timestamp: new Date(t.timestamp), amount: t.total });
+        list.push({ id: `t_${t.id}`, type: 'trade', title: `${(t.type || '').toUpperCase()} ${t.shares} × ${t.symbol}`, timestamp: new Date(t.timestamp), amount: num(t.total, null) });
       });
     }
 
@@ -246,10 +310,20 @@ const RecentActivity = ({ userData, portfolio }) => {
 };
 
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
-const Leaderboard = ({ userData }) => {
+// Sample rankings shown ONLY when live data can't be reached — always clearly
+// labelled as "Demo data" so they never masquerade as real standings.
+const DEMO_LEADERBOARD = [
+  { username: 'TraderPro',    xp: 1250, rank: 1, completedLessons: 15 },
+  { username: 'StockMaster',  xp: 1100, rank: 2, completedLessons: 12 },
+  { username: 'InvestorGuru', xp: 950,  rank: 3, completedLessons: 10 },
+  { username: 'MarketWiz',    xp: 800,  rank: 4, completedLessons: 8 },
+];
+
+const Leaderboard = ({ reduced }) => {
   const [leaderboard, setLeaderboard] = useState([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -258,17 +332,17 @@ const Leaderboard = ({ userData }) => {
         if (response.success) {
           setLeaderboard(response.leaderboard || []);
           setTotalUsers(response.totalUsers || 0);
+          // Some responses flag synthetic data; surface it honestly.
+          setIsDemo(response.source === 'demo' || response.demo === true);
         } else {
           throw new Error('failed');
         }
-      } catch {
-        setLeaderboard([
-          { username: 'TraderPro', xp: 1250, rank: 1, completedLessons: 15 },
-          { username: 'StockMaster', xp: 1100, rank: 2, completedLessons: 12 },
-          { username: 'InvestorGuru', xp: 950, rank: 3, completedLessons: 10 },
-          { username: 'MarketWiz', xp: 800, rank: 4, completedLessons: 8 },
-        ]);
-        setTotalUsers(4);
+      } catch (err) {
+        if (import.meta.env.DEV) console.warn('Leaderboard fetch failed, showing demo data:', err);
+        // Show clearly-labelled demo rankings instead of silently faking real ones.
+        setLeaderboard(DEMO_LEADERBOARD);
+        setTotalUsers(DEMO_LEADERBOARD.length);
+        setIsDemo(true);
       } finally {
         setLoading(false);
       }
@@ -277,52 +351,93 @@ const Leaderboard = ({ userData }) => {
     else setLoading(false);
   }, []);
 
-  if (loading) return <p style={{ fontSize: '13px', color: MUTED }}>Loading…</p>;
+  if (loading) {
+    return (
+      <div role="status" aria-busy="true" aria-label="Loading leaderboard" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Skeleton reduced={reduced} width="28px" height="28px" radius="50%" />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <Skeleton reduced={reduced} width="55%" height="12px" />
+              <Skeleton reduced={reduced} width="35%" height="10px" />
+            </div>
+            <Skeleton reduced={reduced} width="40px" height="12px" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!leaderboard.length) {
+    return (
+      <p style={{ fontSize: '13px', color: MUTED, padding: '8px 0' }}>
+        No rankings yet — earn XP to claim your spot on the leaderboard.
+      </p>
+    );
+  }
 
   const rankColor = (r) => r === 1 ? GOLD : r === 2 ? '#C0C0C0' : r === 3 ? '#CD7F32' : 'rgba(0,0,0,0.15)';
 
   return (
     <div>
-      {totalUsers > 0 && (
+      {isDemo ? (
+        <DemoPill style={{ marginBottom: '14px' }} />
+      ) : totalUsers > 0 ? (
         <p style={{ fontSize: '11px', color: MUTED, marginBottom: '14px' }}>{totalUsers} users ranked</p>
-      )}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {leaderboard.map((u, i) => (
-          <div key={u.userId || i} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* Rank badge */}
-            <div style={{
-              width: '28px', height: '28px', borderRadius: '50%',
-              background: rankColor(u.rank || i + 1),
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '11px', fontWeight: '700',
-              color: (u.rank || i + 1) <= 3 ? DARK : MUTED,
-              flexShrink: 0,
-            }}>
-              {u.rank || i + 1}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '13px', fontWeight: '600', color: DARK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {u.name || u.username}
+      ) : null}
+      <ol
+        aria-label={isDemo ? 'Sample leaderboard rankings (demo data)' : 'Leaderboard rankings'}
+        style={{ display: 'flex', flexDirection: 'column', gap: '10px', listStyle: 'none', margin: 0, padding: 0 }}
+      >
+        {leaderboard.map((u, i) => {
+          const rank = u.rank || i + 1;
+          const name = u.name || u.username || 'Anonymous';
+          const lessons = num(u.completedLessons, 0);
+          const xp = num(u.xp, 0);
+          return (
+            <li
+              key={u.userId || i}
+              aria-label={`Rank ${rank}: ${name}, ${xp} XP, ${lessons} lessons completed`}
+              style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+            >
+              {/* Rank badge */}
+              <div aria-hidden="true" style={{
+                width: '28px', height: '28px', borderRadius: '50%',
+                background: rankColor(rank),
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '11px', fontWeight: '700',
+                color: rank <= 3 ? DARK : MUTED,
+                flexShrink: 0,
+              }}>
+                {rank}
               </div>
-              <div style={{ fontSize: '11px', color: MUTED }}>{u.completedLessons || 0} lessons</div>
-            </div>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: GOLD, flexShrink: 0 }}>
-              {u.xp} XP
-            </div>
-          </div>
-        ))}
-      </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '13px', fontWeight: '600', color: DARK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {name}
+                </div>
+                <div style={{ fontSize: '11px', color: MUTED }}>{lessons} lessons</div>
+              </div>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: GOLD, flexShrink: 0 }}>
+                {xp} XP
+              </div>
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 };
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function Dashboard() {
+  useSEO(SEO_CONFIG.dashboard);
+  const reduced = useReducedMotion();
   const navigate = useNavigate();
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState(null);
+  const [userDataLoading, setUserDataLoading] = useState(isAuthenticated());
   const [userProfile, setUserProfile] = useState(null);
   const [learningPreferences, setLearningPreferences] = useState({ dailyGoal: 3, notifications: true, difficulty: 'auto' });
 
@@ -332,18 +447,25 @@ export default function Dashboard() {
       const response = await api.getPortfolio();
       if (response.success && response.portfolio) {
         const p = response.portfolio;
-        const totalCost = p.positions.reduce((s, x) => s + x.shares * x.avgPrice, 0);
-        const totalCurr = p.positions.reduce((s, x) => s + x.shares * (x.currentPrice || x.avgPrice), 0);
+        const positions = Array.isArray(p.positions) ? p.positions : [];
+        // Use avgPrice as a safe fallback when currentPrice is missing/non-finite.
+        const effPrice = (x) => {
+          const cur = num(x.currentPrice, NaN);
+          return Number.isFinite(cur) ? cur : num(x.avgPrice, 0);
+        };
+        const totalCost = positions.reduce((s, x) => s + num(x.shares, 0) * num(x.avgPrice, 0), 0);
+        const totalCurr = positions.reduce((s, x) => s + num(x.shares, 0) * effPrice(x), 0);
         setPortfolio({
-          totalValue: p.totalValue,
-          cash: p.balance,
+          totalValue: num(p.totalValue, 0),
+          cash: num(p.balance, 0),
           totalReturn: totalCost > 0 ? (totalCurr - totalCost) / totalCost : 0,
-          positions: p.positions.map(x => ({
+          isDemo: p.source === 'demo' || p.demo === true || response.source === 'demo',
+          positions: positions.map(x => ({
             symbol: x.symbol,
-            shares: x.shares,
-            currentValue: x.shares * (x.currentPrice || x.avgPrice),
-            changePercent: x.changePercent || 0,
-            avgPrice: x.avgPrice,
+            shares: num(x.shares, 0),
+            currentValue: num(x.shares, 0) * effPrice(x),
+            changePercent: num(x.changePercent, 0),
+            avgPrice: num(x.avgPrice, 0),
           })),
         });
       } else {
@@ -356,9 +478,9 @@ export default function Dashboard() {
     }
   };
 
-  const fetchUserData     = async () => { if (!isAuthenticated()) return; try { const r = await api.getUserData();   if (r.success) setUserData(r); } catch {} };
-  const fetchUserProfile  = async () => { if (!isAuthenticated()) return; try { const r = await api.getProfile();   if (r.success) setUserProfile(r.user); } catch {} };
-  const fetchPreferences  = async () => { if (!isAuthenticated()) return; try { const r = await api.getLearningPreferences(); if (r.success) setLearningPreferences(r.preferences); } catch {} };
+  const fetchUserData     = async () => { if (!isAuthenticated()) { setUserDataLoading(false); return; } try { const r = await api.getUserData(); if (r.success) setUserData(r); } catch (err) { if (import.meta.env.DEV) console.warn('getUserData failed:', err); } finally { setUserDataLoading(false); } };
+  const fetchUserProfile  = async () => { if (!isAuthenticated()) return; try { const r = await api.getProfile();   if (r.success) setUserProfile(r.user); } catch { /* non-critical: profile stays at defaults */ } };
+  const fetchPreferences  = async () => { if (!isAuthenticated()) return; try { const r = await api.getLearningPreferences(); if (r.success) setLearningPreferences(r.preferences); } catch { /* non-critical: preferences stay at defaults */ } };
 
   useEffect(() => {
     fetchPortfolio();
@@ -367,9 +489,19 @@ export default function Dashboard() {
     fetchPreferences();
   }, []);
 
-  const fmt = (n) => n == null ? '$0.00' : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
-  const fmtPct = (v) => v == null ? '0.00%' : `${(v * 100).toFixed(2)}%`;
-  const changeColor = (v) => !v ? MUTED : v >= 0 ? '#22c55e' : '#ef4444';
+  const fmt = (n) => {
+    const v = num(n, NaN);
+    return Number.isFinite(v) ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v) : '$0.00';
+  };
+  const fmtPct = (v) => {
+    const n = num(v, NaN);
+    return Number.isFinite(n) ? `${(n * 100).toFixed(2)}%` : '0.00%';
+  };
+  const changeColor = (v) => {
+    const n = num(v, NaN);
+    if (!Number.isFinite(n) || n === 0) return MUTED;
+    return n >= 0 ? '#22c55e' : '#ef4444';
+  };
 
   const currentUser   = getCurrentUser();
   const displayName   = userProfile?.name || currentUser?.username || 'there';
@@ -380,14 +512,35 @@ export default function Dashboard() {
   const dailyGoalCalc = () => {
     const today = new Date().toDateString();
     const attempts = learningProg.lessonAttempts || {};
-    const done = Object.values(attempts).filter(a => a.completed && a.lastAttempt && new Date(a.lastAttempt).toDateString() === today).length;
-    const goal = learningPreferences.dailyGoal || 3;
-    return { completed: done, total: goal, pct: Math.round(Math.min((done / goal) * 100, 100)) };
+    const done = Object.values(attempts).filter(a => a?.completed && a?.lastAttempt && new Date(a.lastAttempt).toDateString() === today).length;
+    // Prefer the user's saved daily goal (preferences → learningProgress), else 3.
+    const savedGoal = num(learningPreferences?.dailyGoal ?? learningProg?.dailyGoal, NaN);
+    const goal = Number.isFinite(savedGoal) && savedGoal > 0 ? savedGoal : 3;
+    const pct = goal > 0 ? Math.round(Math.min((done / goal) * 100, 100)) : 0;
+    return { completed: done, total: goal, pct };
   };
   const dg = dailyGoalCalc();
 
   return (
     <div style={{ minHeight: '100vh', background: BG, padding: '32px 24px', fontFamily: fontBody }}>
+      {/* Scoped styles: shimmer keyframes + responsive grid collapse (<=768px). */}
+      <style>{`
+        @keyframes dashShimmer {
+          0%   { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .dash-stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .dash-main-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+        .dash-portfolio-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        @media (max-width: 768px) {
+          .dash-stat-row,
+          .dash-main-grid,
+          .dash-portfolio-summary { grid-template-columns: 1fr; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .dash-shimmer { animation: none !important; }
+        }
+      `}</style>
       <div style={{ maxWidth: '1160px', margin: '0 auto' }}>
 
         {/* ── Header ── */}
@@ -403,37 +556,43 @@ export default function Dashboard() {
             </div>
             {/* XP pill */}
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <div style={{
-                background: SURFACE,
-                border: `1px solid ${BORDER}`,
-                borderRadius: '20px',
-                padding: '6px 16px',
-                fontSize: '13px',
-                fontWeight: '600',
-                color: DARK,
-                display: 'flex',
-                gap: '6px',
-                alignItems: 'center',
-                boxShadow: SHADOW,
-              }}>
-                <span style={{ color: GOLD }}>◆</span>
-                {learningProg.xp} XP
+              <div
+                aria-label={`${num(learningProg.xp, 0)} experience points`}
+                style={{
+                  background: SURFACE,
+                  border: `1px solid ${BORDER}`,
+                  borderRadius: '20px',
+                  padding: '6px 16px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: DARK,
+                  display: 'flex',
+                  gap: '6px',
+                  alignItems: 'center',
+                  boxShadow: SHADOW,
+                }}
+              >
+                <span aria-hidden="true" style={{ color: GOLD }}>◆</span>
+                {num(learningProg.xp, 0)} XP
               </div>
-              <div style={{
-                background: SURFACE,
-                border: `1px solid ${BORDER}`,
-                borderRadius: '20px',
-                padding: '6px 16px',
-                fontSize: '13px',
-                fontWeight: '600',
-                color: DARK,
-                display: 'flex',
-                gap: '6px',
-                alignItems: 'center',
-                boxShadow: SHADOW,
-              }}>
-                <span style={{ color: GOLD, fontSize: '11px' }}>●</span>
-                {learningProg.coins} coins
+              <div
+                aria-label={`${num(learningProg.coins, 0)} coins`}
+                style={{
+                  background: SURFACE,
+                  border: `1px solid ${BORDER}`,
+                  borderRadius: '20px',
+                  padding: '6px 16px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: DARK,
+                  display: 'flex',
+                  gap: '6px',
+                  alignItems: 'center',
+                  boxShadow: SHADOW,
+                }}
+              >
+                <span aria-hidden="true" style={{ color: GOLD, fontSize: '11px' }}>●</span>
+                {num(learningProg.coins, 0)} coins
               </div>
               <button
                 onClick={() => navigate('/shop')}
@@ -446,27 +605,36 @@ export default function Dashboard() {
 
           {/* Level progress bar */}
           <div style={{ marginTop: '20px', ...card, padding: '20px 24px' }}>
-            <XPBar xp={learningProg.xp} levelInfo={levelInfo} />
+            <XPBar levelInfo={levelInfo} />
           </div>
         </div>
 
         {/* ── Top stat row ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
+        <div className="dash-stat-row" style={{ marginBottom: '24px' }}>
           {[
-            { label: 'level', value: `${levelInfo.currentLevel}` },
-            { label: 'daily goal', value: `${dg.completed} / ${dg.total}`, sub: `${dg.pct}% complete` },
-            { label: 'portfolio', value: fmt(portfolio?.totalValue), sub: portfolio ? fmtPct(portfolio.totalReturn) : '—', subColor: portfolio ? changeColor(portfolio.totalReturn) : MUTED },
+            { label: 'level', value: `${levelInfo?.currentLevel ?? 1}`, loading: false },
+            { label: 'daily goal', value: `${dg.completed} / ${dg.total}`, sub: `${dg.pct}% complete`, loading: false },
+            { label: 'portfolio', value: fmt(portfolio?.totalValue), sub: portfolio ? fmtPct(portfolio.totalReturn) : '—', subColor: portfolio ? changeColor(portfolio.totalReturn) : MUTED, loading: loading },
           ].map((s, i) => (
             <div key={i} style={card}>
               <div style={sectionLabel}>{s.label}</div>
-              <div style={{ fontFamily: fontHeading, fontSize: '26px', fontWeight: '400', color: DARK, letterSpacing: '-0.01em' }}>{s.value}</div>
-              {s.sub && <div style={{ fontSize: '12px', color: s.subColor || MUTED, marginTop: '4px' }}>{s.sub}</div>}
+              {s.loading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <Skeleton reduced={reduced} width="60%" height="26px" />
+                  <Skeleton reduced={reduced} width="40%" height="12px" />
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontFamily: fontHeading, fontSize: '26px', fontWeight: '400', color: DARK, letterSpacing: '-0.01em' }}>{s.value}</div>
+                  {s.sub && <div style={{ fontSize: '12px', color: s.subColor || MUTED, marginTop: '4px' }}>{s.sub}</div>}
+                </>
+              )}
             </div>
           ))}
         </div>
 
         {/* ── Main grid ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '20px' }}>
+        <div className="dash-main-grid">
 
           {/* Left column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -474,7 +642,10 @@ export default function Dashboard() {
             {/* Portfolio */}
             <div style={card}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                <div style={sectionLabel}>portfolio</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', paddingBottom: '12px', borderBottom: `1px solid ${FAINT_SEP}` }}>
+                  <span style={{ ...sectionLabel, margin: 0, padding: 0, border: 'none' }}>portfolio</span>
+                  {portfolio?.isDemo && <DemoPill />}
+                </div>
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
                   <button onClick={() => { setLoading(true); fetchPortfolio(); }} style={{ background: 'rgba(0,0,0,0.05)', border: 'none', padding: '5px 12px', borderRadius: '8px', fontSize: '12px', cursor: 'pointer', color: DARK }}>Refresh</button>
                   <button onClick={() => navigate('/trade')} style={{ background: GOLD, border: 'none', padding: '5px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', color: DARK }}>Trade →</button>
@@ -482,7 +653,7 @@ export default function Dashboard() {
               </div>
 
               {loading ? (
-                <p style={{ color: MUTED, fontSize: '13px' }}>Loading portfolio…</p>
+                <SkeletonCard reduced={reduced} lines={4} />
               ) : error ? (
                 <p style={{ color: '#ef4444', fontSize: '13px' }}>Error: {error}</p>
               ) : !portfolio ? (
@@ -493,7 +664,7 @@ export default function Dashboard() {
               ) : (
                 <div>
                   {/* Summary row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
+                  <div className="dash-portfolio-summary" style={{ marginBottom: '20px' }}>
                     {[
                       { l: 'total value', v: fmt(portfolio.totalValue) },
                       { l: 'cash', v: fmt(portfolio.cash) },
@@ -535,7 +706,9 @@ export default function Dashboard() {
             {/* Weekly Progress */}
             <div style={card}>
               <div style={sectionLabel}>weekly lessons</div>
-              <WeeklyProgressChart userData={userData} />
+              {userDataLoading
+                ? <Skeleton reduced={reduced} width="100%" height="120px" radius="10px" />
+                : <WeeklyProgressChart userData={userData} />}
             </div>
 
             {/* Trading Journey */}
@@ -544,7 +717,9 @@ export default function Dashboard() {
                 <div style={sectionLabel}>trading journey</div>
                 <button onClick={() => navigate('/learn')} style={{ background: 'none', border: 'none', fontSize: '12px', color: GOLD, fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>View all →</button>
               </div>
-              <TradingMilestones userData={userData} portfolio={portfolio} />
+              {userDataLoading
+                ? <SkeletonCard reduced={reduced} lines={4} />
+                : <TradingMilestones userData={userData} portfolio={portfolio} />}
             </div>
 
             {/* Continue Learning */}
@@ -565,13 +740,15 @@ export default function Dashboard() {
             {/* Leaderboard */}
             <div style={card}>
               <div style={sectionLabel}>leaderboard</div>
-              <Leaderboard userData={userData} />
+              <Leaderboard reduced={reduced} />
             </div>
 
             {/* Recent Activity */}
             <div style={card}>
               <div style={sectionLabel}>recent activity</div>
-              <RecentActivity userData={userData} portfolio={portfolio} />
+              {userDataLoading
+                ? <SkeletonCard reduced={reduced} lines={4} />
+                : <RecentActivity userData={userData} portfolio={portfolio} />}
             </div>
           </div>
         </div>

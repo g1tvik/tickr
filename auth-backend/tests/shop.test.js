@@ -16,18 +16,17 @@ describe('Shop routes - Integration tests', () => {
   const testPassword = 'TestPassword123!';
   const testUsername = `shopuser${Math.floor(Math.random() * 10000)}`;
 
-  // Helper to get users from file storage
-  const getTestUser = () => {
-    const users = app.locals.fileStorage.getUsers();
-    return users[userId];
+  // Helper to get the test user from storage (async)
+  const getTestUser = async () => {
+    return app.locals.storage.getUserById(userId);
   };
 
-  // Helper to update test user
-  const updateTestUser = (updates) => {
-    const users = app.locals.fileStorage.getUsers();
-    if (users[userId]) {
-      Object.assign(users[userId], updates);
-      app.locals.fileStorage.saveUsers(users);
+  // Helper to update test user (async)
+  const updateTestUser = async (updates) => {
+    const user = await app.locals.storage.getUserById(userId);
+    if (user) {
+      Object.assign(user, updates);
+      await app.locals.storage.saveUser(user);
     }
   };
 
@@ -51,13 +50,13 @@ describe('Shop routes - Integration tests', () => {
     userId = decoded.userId;
 
     // Get initial user state
-    testUser = getTestUser();
+    testUser = await getTestUser();
     expect(testUser).toBeDefined();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Reset user state before each test
-    testUser = getTestUser();
+    testUser = await getTestUser();
     if (testUser) {
       // Reset coins to a known amount for each test
       if (!testUser.learningProgress) {
@@ -69,14 +68,14 @@ describe('Shop routes - Integration tests', () => {
       testUser.activeEffects = {};
       testUser.skipTokens = 0;
       testUser.streakFreezes = 0;
-      updateTestUser(testUser);
+      await updateTestUser(testUser);
     }
   });
 
   describe('POST /api/shop/purchase', () => {
     it('should successfully purchase an item with sufficient coins', async () => {
       // Ensure user has enough coins
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 100 }
       });
 
@@ -96,7 +95,7 @@ describe('Shop routes - Integration tests', () => {
       expect(response.body.remainingCoins).toBe(75); // 100 - 25
 
       // Verify user state was updated
-      const user = getTestUser();
+      const user = await getTestUser();
       expect(user.learningProgress.coins).toBe(75);
       expect(user.purchasedItems.length).toBe(1);
       expect(user.purchasedItems[0].itemId).toBe(1);
@@ -104,7 +103,7 @@ describe('Shop routes - Integration tests', () => {
 
     it('should fail with insufficient coins', async () => {
       // Set user to have insufficient coins
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 10 }
       });
 
@@ -120,7 +119,7 @@ describe('Shop routes - Integration tests', () => {
       expect(response.body.itemPrice).toBe(25);
 
       // Verify user state was not changed
-      const user = getTestUser();
+      const user = await getTestUser();
       expect(user.learningProgress.coins).toBe(10);
       expect(user.purchasedItems.length).toBe(0);
     });
@@ -148,7 +147,7 @@ describe('Shop routes - Integration tests', () => {
     });
 
     it('should allow purchasing multiple boosters of the same type', async () => {
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 100 }
       });
 
@@ -171,7 +170,7 @@ describe('Shop routes - Integration tests', () => {
       expect(secondPurchase.body.success).toBe(true);
 
       // Verify both purchases exist
-      const user = getTestUser();
+      const user = await getTestUser();
       expect(user.purchasedItems.length).toBe(2);
       expect(user.purchasedItems.every(p => p.itemId === 1)).toBe(true);
       expect(user.learningProgress.coins).toBe(50); // 100 - 25 - 25
@@ -179,7 +178,7 @@ describe('Shop routes - Integration tests', () => {
 
 
     it('should generate unique purchase IDs for rapid purchases in the same millisecond', async () => {
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 100 }
       });
 
@@ -201,7 +200,7 @@ describe('Shop routes - Integration tests', () => {
       expect(secondPurchase.status).toBe(200);
       expect(firstPurchase.body.purchase.id).not.toBe(secondPurchase.body.purchase.id);
 
-      const user = getTestUser();
+      const user = await getTestUser();
       const uniqueIds = new Set(user.purchasedItems.map(p => p.id));
       expect(uniqueIds.size).toBe(user.purchasedItems.length);
     });
@@ -212,7 +211,7 @@ describe('Shop routes - Integration tests', () => {
 
     beforeEach(async () => {
       // Purchase an item before each test
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 100 }
       });
 
@@ -243,7 +242,7 @@ describe('Shop routes - Integration tests', () => {
       expect(effectKeys.length).toBeGreaterThan(0);
 
       // Verify user state was updated
-      const user = getTestUser();
+      const user = await getTestUser();
       expect(user.purchasedItems[0].consumed).toBe(true);
       expect(user.purchasedItems[0].active).toBe(true);
       expect(user.activeEffects).toBeDefined();
@@ -252,7 +251,7 @@ describe('Shop routes - Integration tests', () => {
 
     it('should successfully use an instant XP utility item', async () => {
       // Purchase XP Bundle instead
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 100 },
         purchasedItems: []
       });
@@ -277,14 +276,14 @@ describe('Shop routes - Integration tests', () => {
       expect(useResponse.body.learningProgress.xp).toBe(200); // Instant 200 XP
 
       // Verify user state was updated
-      const user = getTestUser();
+      const user = await getTestUser();
       expect(user.learningProgress.xp).toBe(200);
       expect(user.purchasedItems[0].consumed).toBe(true);
     });
 
     it('should successfully use a skip token utility item', async () => {
       // Purchase Lesson Skip Token
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 100 },
         purchasedItems: []
       });
@@ -309,7 +308,7 @@ describe('Shop routes - Integration tests', () => {
       expect(useResponse.body.skipTokens).toBe(1);
 
       // Verify user state was updated
-      const user = getTestUser();
+      const user = await getTestUser();
       expect(user.skipTokens).toBe(1);
       expect(user.purchasedItems[0].consumed).toBe(true);
     });
@@ -360,7 +359,7 @@ describe('Shop routes - Integration tests', () => {
 
     it('should fail when user has no purchased items', async () => {
       // Clear purchased items
-      updateTestUser({
+      await updateTestUser({
         purchasedItems: []
       });
 
@@ -376,7 +375,7 @@ describe('Shop routes - Integration tests', () => {
 
     it('should successfully use a streak freeze utility item', async () => {
       // Purchase Streak Freeze
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 100 },
         purchasedItems: []
       });
@@ -401,7 +400,7 @@ describe('Shop routes - Integration tests', () => {
       expect(useResponse.body.streakFreezes).toBe(3); // 3 days
 
       // Verify user state was updated
-      const user = getTestUser();
+      const user = await getTestUser();
       expect(user.streakFreezes).toBe(3);
       expect(user.purchasedItems[0].consumed).toBe(true);
     });
@@ -454,7 +453,7 @@ describe('Shop routes - Integration tests', () => {
     });
 
     it('should reject string itemId (prevents type coercion attacks)', async () => {
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 100 }
       });
 
@@ -473,7 +472,7 @@ describe('Shop routes - Integration tests', () => {
     });
 
     it('should prevent coins from going negative', async () => {
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 25 }
       });
 
@@ -497,13 +496,13 @@ describe('Shop routes - Integration tests', () => {
       expect(secondPurchase.body.userCoins).toBe(0);
 
       // Verify coins are still 0, not negative
-      const user = getTestUser();
+      const user = await getTestUser();
       expect(user.learningProgress.coins).toBe(0);
     });
 
     it('should prevent using another user\'s purchase ID', async () => {
       // User 1 purchases an item
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 100 }
       });
 
@@ -528,14 +527,14 @@ describe('Shop routes - Integration tests', () => {
       expect(useResponse.body.message).toBe('No purchased items found');
 
       // Verify User 1's purchase is still unused and belongs to User 1
-      const user1 = getTestUser();
+      const user1 = await getTestUser();
       const user1Purchase = user1.purchasedItems.find(p => p.id === user1PurchaseId);
       expect(user1Purchase).toBeDefined();
       expect(user1Purchase.consumed).toBe(false);
     });
 
     it('should not allow using itemId as purchaseId for consumed items', async () => {
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 100 }
       });
 
@@ -613,7 +612,7 @@ describe('Shop routes - Integration tests', () => {
     });
 
     it('should handle purchase with exactly enough coins (edge case)', async () => {
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 25 } // Exactly the price of item 1
       });
 
@@ -626,14 +625,14 @@ describe('Shop routes - Integration tests', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.remainingCoins).toBe(0);
 
-      const user = getTestUser();
+      const user = await getTestUser();
       expect(user.learningProgress.coins).toBe(0);
       expect(user.learningProgress.coins).not.toBeLessThan(0);
     });
 
     it('should prevent using purchaseId that belongs to a different user even if guessed', async () => {
       // User 1 makes a purchase
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 100 }
       });
 
@@ -656,7 +655,7 @@ describe('Shop routes - Integration tests', () => {
       expect(maliciousUse.body.message).toBe('No purchased items found');
 
       // Verify User 1's purchase is still unused and belongs to User 1
-      const user1 = getTestUser();
+      const user1 = await getTestUser();
       const user1Purchase = user1.purchasedItems.find(p => p.id === user1PurchaseId);
       expect(user1Purchase).toBeDefined();
       expect(user1Purchase.consumed).toBe(false);
@@ -664,7 +663,7 @@ describe('Shop routes - Integration tests', () => {
 
     it('should prevent User 2 from using User 1\'s purchase ID even when User 2 has purchases', async () => {
       // User 1 makes a purchase
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 100 }
       });
 
@@ -676,10 +675,9 @@ describe('Shop routes - Integration tests', () => {
       const user1PurchaseId = user1PurchaseResponse.body.purchase.id;
 
       // User 2 makes their own purchase
-      const users = app.locals.fileStorage.getUsers();
-      const secondUser = users[secondUserId];
+      const secondUser = await app.locals.storage.getUserById(secondUserId);
       secondUser.learningProgress = { xp: 0, coins: 100 };
-      app.locals.fileStorage.saveUsers(users);
+      await app.locals.storage.saveUser(secondUser);
 
       const user2PurchaseResponse = await request(app)
         .post('/api/shop/purchase')
@@ -700,7 +698,7 @@ describe('Shop routes - Integration tests', () => {
       expect(maliciousUse.body.message).toBe('Purchase not found');
 
       // Verify User 1's purchase is still unused
-      const user1 = getTestUser();
+      const user1 = await getTestUser();
       const user1Purchase = user1.purchasedItems.find(p => p.id === user1PurchaseId);
       expect(user1Purchase).toBeDefined();
       expect(user1Purchase.consumed).toBe(false);
@@ -716,7 +714,7 @@ describe('Shop routes - Integration tests', () => {
     });
 
     it('should handle missing effect data gracefully', async () => {
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 100 },
         purchasedItems: [{
           id: 'test-purchase-1',
@@ -742,7 +740,7 @@ describe('Shop routes - Integration tests', () => {
     });
 
     it('should prevent purchasing when coins are exactly 0', async () => {
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 0 }
       });
 
@@ -769,7 +767,7 @@ describe('Shop routes - Integration tests', () => {
     });
 
     it('should handle concurrent purchase attempts (race condition simulation)', async () => {
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 30 } // Enough for one purchase of item 4 (30 coins)
       });
 
@@ -793,12 +791,12 @@ describe('Shop routes - Integration tests', () => {
       expect(failureCount).toBe(1);
 
       // Verify coins are not negative
-      const user = getTestUser();
+      const user = await getTestUser();
       expect(user.learningProgress.coins).toBeGreaterThanOrEqual(0);
     });
 
     it('should prevent using purchaseId with invalid JWT token', async () => {
-      updateTestUser({
+      await updateTestUser({
         learningProgress: { xp: 0, coins: 100 }
       });
 

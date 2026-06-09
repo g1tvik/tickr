@@ -5,15 +5,35 @@ import StockSearch from '../components/StockSearch';
 import { SuperChart } from '../components/SuperChart';
 import { useTrading } from '../hooks/useTrading';
 import { getPositionValue, calculateOrderTotal } from '../utils/tradeUtils';
-import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 import { api } from '../services/api';
 import { useNavbarBackground } from '../hooks/useNavbarBackground';
+import { useSEO, SEO_CONFIG } from '../lib/seo';
+import './Trade.css';
+
+const isDev = import.meta.env.DEV;
+
+// A response/quote/chart is "demo" when live market keys are missing.
+const isDemoData = (obj) =>
+  !!obj && (obj.source === 'demo' || obj.demo === true || obj.isDemo === true);
+
+// Small muted-gold pill shown next to demo-sourced data.
+function DemoPill({ title = 'Live market keys are missing — showing simulated data' }) {
+  return (
+    <span className="trade-demo-pill" title={title}>
+      Demo data
+    </span>
+  );
+}
 
 function Trade() {
   const location = useLocation();
   const { setNavbarBackground } = useNavbarBackground();
-  
+
+  // Per-page <title>/meta
+  useSEO(SEO_CONFIG.trade);
+
   const {
     selectedStock,
     orderType,
@@ -31,13 +51,57 @@ function Trade() {
     handleStockSelect,
     handleOrderSubmit,
     loadMarketData,
+    clearError,
   } = useTrading();
 
   // Chart data state
   const [chartData, setChartData] = useState(null);
   const [chartLoading, setChartLoading] = useState(false);
   const [chartError, setChartError] = useState(null);
-  const [timeframe, setTimeframe] = useState('1D');
+  // Timeframe for the demo/source chart-data fetch that powers the "Demo data" pill.
+  // The interactive interval selector lives inside <SuperChart>, so this stays fixed.
+  const timeframe = '1D';
+
+  // Initial-load skeletons: true until the first portfolio + market fetch lands.
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  // Success UX: a toast that stays ~6s, plus a persistent "last filled" indicator.
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [lastFill, setLastFill] = useState(null); // { type, shares, symbol, at }
+
+  // Once portfolio data (or market data) arrives, drop the skeletons.
+  useEffect(() => {
+    if (portfolio || (stocks && stocks.length > 0)) {
+      setInitialLoading(false);
+    }
+  }, [portfolio, stocks]);
+
+  // Safety: never let skeletons hang forever if a fetch quietly fails.
+  useEffect(() => {
+    const t = setTimeout(() => setInitialLoading(false), 8000);
+    return () => clearTimeout(t);
+  }, []);
+
+  // When the hook confirms an order, surface a longer-lived toast (~6s) and
+  // record a persistent success indicator.
+  useEffect(() => {
+    if (!showOrderConfirmation) return;
+    setLastFill({
+      type: orderType,
+      shares,
+      symbol: selectedStock?.symbol,
+      at: new Date(),
+    });
+    setShowSuccessToast(true);
+    const t = setTimeout(() => setShowSuccessToast(false), 6000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showOrderConfirmation]);
+
+  const quoteIsDemo = isDemoData(selectedStock);
+  const chartIsDemo = isDemoData(chartData);
+  // Market data arrives as an array of stocks; flag if any item is demo-sourced.
+  const marketIsDemo = Array.isArray(stocks) && stocks.some(isDemoData);
 
   // Load chart data when stock is selected
   useEffect(() => {
@@ -53,12 +117,12 @@ function Trade() {
       return;
     }
 
-    console.log('Trade: Setting up overscroll behavior for dark theme');
-    
+    if (isDev) console.log('Trade: Setting up overscroll behavior for dark theme');
+
     // Get the current setNavbarBackground function
     const currentSetNavbarBackground = setNavbarBackground;
 
-    const updateBackground = (useDarkColor) => {
+    const updateBackground = () => {
       const pageTransition = document.querySelector('.page-transition');
       const mainContent = document.querySelector('.main-content');
       const appContainer = document.querySelector('.app-container');
@@ -79,7 +143,7 @@ function Trade() {
       }
       // Update navbar background using the centralized system
       currentSetNavbarBackground('var(--marbleDarkGray)'); // Use CSS variable for consistency
-      console.log('Trade: Navbar set to dark theme (var(--marbleDarkGray))');
+      if (isDev) console.log('Trade: Navbar set to dark theme (var(--marbleDarkGray))');
       
       if (body) {
         body.style.backgroundColor = backgroundColor;
@@ -103,24 +167,24 @@ function Trade() {
       
       // Always maintain dark theme for Trade page
       if (isOverscrollingTop || isOverscrollingBottom) {
-        console.log('Trade: Overscroll detected, maintaining dark theme');
-        updateBackground(true);
+        if (isDev) console.log('Trade: Overscroll detected, maintaining dark theme');
+        updateBackground();
       }
     };
-    
+
     // Handle touch events for mobile overscroll
-    const handleTouchMove = (e) => {
+    const handleTouchMove = () => {
       const scrollPosition = window.scrollY;
       const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
-      
+
       // Check for overscroll
       const isOverscrollingTop = scrollPosition < 0;
       const isOverscrollingBottom = scrollPosition + windowHeight > documentHeight;
-      
+
       if (isOverscrollingTop || isOverscrollingBottom) {
-        console.log('Trade: Touch overscroll detected, maintaining dark theme');
-        updateBackground(true);
+        if (isDev) console.log('Trade: Touch overscroll detected, maintaining dark theme');
+        updateBackground();
       }
     };
 
@@ -141,7 +205,7 @@ function Trade() {
     return () => {
       window.removeEventListener('scroll', handleScroll);
       document.removeEventListener('touchmove', handleTouchMove);
-      console.log('Trade: Cleanup - overscroll listeners removed');
+      if (isDev) console.log('Trade: Cleanup - overscroll listeners removed');
     };
   }, [location.pathname]); // Remove setNavbarBackground from dependencies
 
@@ -153,15 +217,19 @@ function Trade() {
       // Try to get data from API first
       const response = await api.getChartData(symbol, tf, 100);
       if (response.success) {
-        setChartData(response.chartData);
+        // Carry any demo/source flag onto the chart data so the UI can label it.
+        const flagged = isDemoData(response)
+          ? { ...response.chartData, demo: true }
+          : response.chartData;
+        setChartData(flagged);
       } else {
-        // Fallback to mock data
-        setChartData(generateMockChartData(symbol, tf));
+        // Fallback to mock data (clearly flagged as demo)
+        setChartData({ ...generateMockChartData(symbol, tf), demo: true });
       }
     } catch (error) {
-      console.error('Error loading chart data:', error);
-      // Fallback to mock data
-      setChartData(generateMockChartData(symbol, tf));
+      if (isDev) console.error('Error loading chart data:', error);
+      // Fallback to mock data (clearly flagged as demo)
+      setChartData({ ...generateMockChartData(symbol, tf), demo: true });
     } finally {
       setChartLoading(false);
     }
@@ -220,34 +288,30 @@ function Trade() {
     };
   };
 
-  const handleTimeframeChange = (newTimeframe) => {
-    setTimeframe(newTimeframe);
-    if (selectedStock?.symbol) {
-      loadChartData(selectedStock.symbol, newTimeframe);
-    }
-  };
-
   if (!isAuthenticated) {
     return (
-      <div style={{
+      <div className="page-dark" style={{
         minHeight: '100vh',
         backgroundColor: marbleDarkGray,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        padding: '24px',
+        fontFamily: fontBody
       }}>
         <div style={{ textAlign: 'center', maxWidth: '400px' }}>
           <div style={{
             fontSize: '24px',
             fontWeight: 'bold',
-            color: marbleDarkGray,
-            marginBottom: '12px'
+            color: 'var(--trade-text, #F4F1E9)',
+            marginBottom: '12px',
+            fontFamily: fontHeading
           }}>
-            {error}
+            {error || 'Sign in required'}
           </div>
           <div style={{
             fontSize: '16px',
-            color: gray
+            color: 'var(--trade-text-muted, #b8b4a8)'
           }}>
             Please sign in to access the trading features.
           </div>
@@ -257,96 +321,94 @@ function Trade() {
   }
 
   return (
-    <div className="page-dark" style={{
-      minHeight: '100vh',
-      padding: '16px',
-      fontFamily: fontBody
-    }}>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 320px',
-        gap: '16px',
-        maxWidth: '1400px',
-        margin: '0 auto'
-      }}>
+    <div className="page-dark trade-page">
+      <div className="trade-grid">
         {/* Main Trading Area */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px'
-        }}>
+        <div className="trade-col">
           {/* Header */}
-          <div style={{
-            backgroundColor: lightGray,
-            borderRadius: '20px',
-            padding: '16px'
-          }}>
+          <div className="trade-card">
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '12px'
+              marginBottom: '12px',
+              flexWrap: 'wrap',
+              gap: '8px'
             }}>
-              <h1 style={{
-                fontSize: '28px',
-                fontWeight: 'bold',
-                color: marbleDarkGray,
-                margin: 0,
-                fontFamily: fontHeading
-              }}>
+              <h1 className="trade-heading" style={{ fontSize: '28px' }}>
                 📈 Paper Trading
               </h1>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '14px',
-                color: gray
-              }}>
-                <div style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: marketStatus === 'open' ? '#22c55e' : '#ef4444'
-                }}></div>
+              <div
+                className="trade-muted"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '14px'
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    backgroundColor: marketStatus === 'open' ? '#22c55e' : '#ef4444'
+                  }}
+                ></span>
                 <span>{marketStatus === 'open' ? 'Market Open' : 'Market Closed'}</span>
               </div>
             </div>
-            <p style={{
-              color: gray,
-              fontSize: '14px',
-              margin: 0
-            }}>
+            <p className="trade-muted" style={{ fontSize: '14px', margin: 0 }}>
               Practice trading with virtual money. Real-time data powered by Alpaca API.
             </p>
-            {lastUpdate && (
-              <div style={{
-                marginLeft: '12px',
-                fontSize: '12px',
-                opacity: 0.8,
-                color: marbleGold
-              }}>
-                Last updated: {new Date(lastUpdate).toLocaleTimeString()}
-              </div>
-            )}
+            <div style={{
+              marginTop: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              flexWrap: 'wrap'
+            }}>
+              {lastUpdate && (
+                <span style={{ fontSize: '12px', opacity: 0.85, color: marbleGold }}>
+                  Last updated: {new Date(lastUpdate).toLocaleTimeString()}
+                </span>
+              )}
+              <button
+                type="button"
+                className="trade-refresh-btn"
+                onClick={loadMarketData}
+                aria-label="Refresh market data"
+              >
+                ↻ Refresh
+              </button>
+            </div>
           </div>
 
+          {/* Surface order/validation errors so failed buys/sells aren't silent */}
+          {error && (
+            <div className="trade-error-banner" role="alert" aria-live="assertive">
+              <span className="trade-error-banner__text">
+                <span aria-hidden="true">⚠️</span>
+                <span>{error}</span>
+              </span>
+              <button
+                type="button"
+                className="trade-error-banner__dismiss"
+                onClick={clearError}
+                aria-label="Dismiss error"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
           {/* Stock Search */}
-          <div style={{
-            backgroundColor: lightGray,
-            borderRadius: '20px',
-            padding: '16px'
-          }}>
-            <h2 style={{
-              fontSize: '20px',
-              fontWeight: 'bold',
-              color: marbleDarkGray,
-              marginBottom: '16px',
-              fontFamily: fontHeading
-            }}>
+          <div className="trade-card">
+            <h2 className="trade-heading" style={{ fontSize: '20px', marginBottom: '16px' }}>
               Search Stocks
             </h2>
-            <StockSearch 
+            <StockSearch
               onStockSelect={handleStockSelect}
               placeholder="Search by symbol or company name (e.g., AAPL, Apple, TSLA)..."
             />
@@ -354,19 +416,26 @@ function Trade() {
 
           {/* Chart and Trading Section */}
           {selectedStock && (
-            <div style={{
-              backgroundColor: lightGray,
-              borderRadius: '20px',
-              padding: '16px'
-            }}>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 280px',
-                gap: '16px',
-                alignItems: 'start'
-              }}>
+            <div className="trade-card">
+              {(quoteIsDemo || chartIsDemo) && (
+                <div style={{ marginBottom: '12px' }}>
+                  <DemoPill />
+                </div>
+              )}
+              <div className="trade-chart-grid">
                 {/* Chart */}
                 <div>
+                  {chartLoading && (
+                    <div className="trade-chart-status" role="status" aria-live="polite">
+                      <span className="trade-chart-status__spinner" aria-hidden="true" />
+                      Loading chart data…
+                    </div>
+                  )}
+                  {chartError && !chartLoading && (
+                    <div className="trade-chart-status trade-chart-status--error" role="alert">
+                      <span aria-hidden="true">⚠️</span> {chartError}
+                    </div>
+                  )}
                   <SuperChart
                     symbol={selectedStock.symbol}
                     initialInterval="1d"
@@ -374,21 +443,19 @@ function Trade() {
                     realtime={false}
                     height={400}
                     onChartReady={(chart) => {
-                      console.log('SuperChart ready:', chart);
+                      if (isDev) console.log('SuperChart ready:', chart);
                     }}
                     onDataUpdate={(data) => {
-                      console.log('Chart data updated:', data);
+                      if (isDev) console.log('Chart data updated:', data);
                     }}
                     onDrawingUpdate={(drawings) => {
-                      console.log('Drawings updated:', drawings);
+                      if (isDev) console.log('Drawings updated:', drawings);
                     }}
                   />
                 </div>
 
                 {/* Trading Panel */}
-                <div style={{
-                  backgroundColor: white,
-                  borderRadius: '16px',
+                <div className="trade-card--inset" style={{
                   padding: '16px',
                   height: 'fit-content'
                 }}>
@@ -396,7 +463,7 @@ function Trade() {
                   <div style={{
                     marginBottom: '20px',
                     paddingBottom: '16px',
-                    borderBottom: '1px solid #e0e0e0'
+                    borderBottom: '1px solid var(--trade-divider)'
                   }}>
                     <div style={{
                       display: 'flex',
@@ -408,14 +475,11 @@ function Trade() {
                         <div style={{
                           fontSize: '20px',
                           fontWeight: 'bold',
-                          color: marbleDarkGray
+                          color: 'var(--trade-text)'
                         }}>
                           {selectedStock.symbol}
                         </div>
-                        <div style={{
-                          color: gray,
-                          fontSize: '12px'
-                        }}>
+                        <div className="trade-muted" style={{ fontSize: '12px' }}>
                           {selectedStock.name}
                         </div>
                       </div>
@@ -423,7 +487,7 @@ function Trade() {
                         <div style={{
                           fontSize: '24px',
                           fontWeight: 'bold',
-                          color: marbleDarkGray
+                          color: 'var(--trade-text)'
                         }}>
                           ${selectedStock.price?.toFixed(2) || 'N/A'}
                         </div>
@@ -431,18 +495,15 @@ function Trade() {
                           fontSize: '14px',
                           color: selectedStock.changePercent && selectedStock.changePercent !== 'N/A' && parseFloat(selectedStock.changePercent) >= 0 ? '#22c55e' : '#ef4444'
                         }}>
-                          {selectedStock.changePercent && selectedStock.changePercent !== 'N/A' ? 
-                            `${parseFloat(selectedStock.changePercent) >= 0 ? '+' : ''}${selectedStock.changePercent}%` : 
+                          {selectedStock.changePercent && selectedStock.changePercent !== 'N/A' ?
+                            `${parseFloat(selectedStock.changePercent) >= 0 ? '+' : ''}${selectedStock.changePercent}%` :
                             'N/A'
                           }
                         </div>
                       </div>
                     </div>
                     {selectedStock.volume && (
-                      <div style={{
-                        color: gray,
-                        fontSize: '12px'
-                      }}>
+                      <div className="trade-muted" style={{ fontSize: '12px' }}>
                         Volume: {selectedStock.volume.toLocaleString()}
                       </div>
                     )}
@@ -451,21 +512,28 @@ function Trade() {
                   {/* Order Form */}
                   <div>
                     <div style={{ marginBottom: '16px' }}>
-                      <label style={{
-                        display: 'block',
-                        marginBottom: '6px',
-                        color: marbleDarkGray,
-                        fontWeight: '500',
-                        fontSize: '14px'
-                      }}>
+                      <label
+                        htmlFor="trade-order-type"
+                        style={{
+                          display: 'block',
+                          marginBottom: '6px',
+                          color: 'var(--trade-text)',
+                          fontWeight: '500',
+                          fontSize: '14px'
+                        }}
+                      >
                         Order Type
                       </label>
-                      <div style={{
-                        display: 'flex',
-                        gap: '6px'
-                      }}>
+                      <div
+                        id="trade-order-type"
+                        role="group"
+                        aria-label="Order type"
+                        style={{ display: 'flex', gap: '6px' }}
+                      >
                         <button
+                          type="button"
                           onClick={() => setOrderType('buy')}
+                          aria-pressed={orderType === 'buy'}
                           style={{
                             flex: 1,
                             padding: '10px',
@@ -482,7 +550,9 @@ function Trade() {
                           Buy
                         </button>
                         <button
+                          type="button"
                           onClick={() => setOrderType('sell')}
+                          aria-pressed={orderType === 'sell'}
                           style={{
                             flex: 1,
                             padding: '10px',
@@ -502,25 +572,32 @@ function Trade() {
                     </div>
 
                     <div style={{ marginBottom: '16px' }}>
-                      <label style={{
-                        display: 'block',
-                        marginBottom: '6px',
-                        color: marbleDarkGray,
-                        fontWeight: '500',
-                        fontSize: '14px'
-                      }}>
+                      <label
+                        htmlFor="trade-shares"
+                        style={{
+                          display: 'block',
+                          marginBottom: '6px',
+                          color: 'var(--trade-text)',
+                          fontWeight: '500',
+                          fontSize: '14px'
+                        }}
+                      >
                         Shares
                       </label>
                       <input
+                        id="trade-shares"
                         type="number"
                         value={shares}
                         onChange={(e) => setShares(parseInt(e.target.value) || 1)}
                         min="1"
+                        aria-label="Number of shares"
                         style={{
                           width: '100%',
                           padding: '10px',
                           borderRadius: '6px',
-                          border: '2px solid #e0e0e0',
+                          border: '1px solid var(--trade-border)',
+                          backgroundColor: 'var(--trade-surface)',
+                          color: 'var(--trade-text)',
                           fontSize: '14px'
                         }}
                       />
@@ -528,7 +605,7 @@ function Trade() {
 
                     <div style={{
                       padding: '12px',
-                      backgroundColor: lightGray,
+                      backgroundColor: 'var(--trade-surface)',
                       borderRadius: '6px',
                       marginBottom: '16px',
                       fontSize: '12px'
@@ -538,33 +615,34 @@ function Trade() {
                         justifyContent: 'space-between',
                         marginBottom: '4px'
                       }}>
-                        <span style={{ color: gray }}>Price per share</span>
-                        <span style={{ fontWeight: '500' }}>${selectedStock.price?.toFixed(2) || 'N/A'}</span>
+                        <span className="trade-muted">Price per share</span>
+                        <span style={{ fontWeight: '500', color: 'var(--trade-text)' }}>${selectedStock.price?.toFixed(2) || 'N/A'}</span>
                       </div>
                       <div style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         marginBottom: '4px'
                       }}>
-                        <span style={{ color: gray }}>Number of shares</span>
-                        <span style={{ fontWeight: '500' }}>{shares}</span>
+                        <span className="trade-muted">Number of shares</span>
+                        <span style={{ fontWeight: '500', color: 'var(--trade-text)' }}>{shares}</span>
                       </div>
                       <div style={{
                         display: 'flex',
                         justifyContent: 'space-between',
-                        borderTop: '1px solid #e0e0e0',
+                        borderTop: '1px solid var(--trade-divider)',
                         paddingTop: '4px',
                         marginBottom: 0,
                         fontWeight: 'bold'
                       }}>
-                        <span style={{ color: marbleDarkGray }}>Total</span>
-                        <span style={{ color: marbleDarkGray }}>
+                        <span style={{ color: 'var(--trade-text)' }}>Total</span>
+                        <span style={{ color: 'var(--trade-text)' }}>
                           ${calculateOrderTotal(selectedStock, shares).toFixed(2)}
                         </span>
                       </div>
                     </div>
 
                     <button
+                      type="button"
                       onClick={handleOrderSubmit}
                       disabled={isLoading}
                       style={{
@@ -582,11 +660,11 @@ function Trade() {
                       }}
                       onMouseEnter={(e) => {
                         if (!isLoading) {
-                          e.target.style.transform = 'scale(1.02)';
+                          e.currentTarget.style.transform = 'scale(1.02)';
                         }
                       }}
                       onMouseLeave={(e) => {
-                        e.target.style.transform = 'scale(1)';
+                        e.currentTarget.style.transform = 'scale(1)';
                       }}
                     >
                       {isLoading ? 'Processing...' : `${orderType === 'buy' ? 'Buy' : 'Sell'} ${shares} ${shares === 1 ? 'Share' : 'Shares'}`}
@@ -596,80 +674,60 @@ function Trade() {
               </div>
             </div>
           )}
-
-          {/* Order Confirmation */}
-          {showOrderConfirmation && (
-            <div style={{
-              backgroundColor: '#22c55e',
-              color: 'white',
-              padding: '16px',
-              borderRadius: '12px',
-              textAlign: 'center',
-              fontWeight: '500'
-            }}>
-              Order executed successfully!
-            </div>
-          )}
         </div>
 
         {/* Sidebar */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px'
-        }}>
+        <div className="trade-col">
           {/* Account Balance */}
-          <div style={{
-            backgroundColor: lightGray,
-            borderRadius: '20px',
-            padding: '16px'
-          }}>
-            <h3 style={{
-              fontSize: '20px',
-              fontWeight: 'bold',
-              color: marbleDarkGray,
-              marginBottom: '16px',
-              fontFamily: fontHeading
-            }}>
+          <div className="trade-card">
+            <h3 className="trade-heading" style={{ fontSize: '20px', marginBottom: '16px' }}>
               Account Balance
             </h3>
-            <div style={{
-              fontSize: '32px',
-              fontWeight: 'bold',
-              color: marbleDarkGray,
-              marginBottom: '8px'
-            }}>
-              ${portfolio?.balance?.toFixed(2) || '0.00'}
-            </div>
-            <div style={{
-              color: gray,
-              fontSize: '14px'
-            }}>
-              Available for trading
-            </div>
+            {initialLoading ? (
+              <>
+                <div className="trade-skeleton trade-skeleton--amount" />
+                <div className="trade-skeleton trade-skeleton--line is-short" />
+              </>
+            ) : (
+              <>
+                <div style={{
+                  fontSize: '32px',
+                  fontWeight: 'bold',
+                  color: 'var(--trade-text)',
+                  marginBottom: '8px'
+                }}>
+                  ${portfolio?.balance?.toFixed(2) || '0.00'}
+                </div>
+                <div className="trade-muted" style={{ fontSize: '14px' }}>
+                  Available for trading
+                </div>
+                {/* Persistent success indicator after a fill */}
+                {lastFill && (
+                  <div className="trade-success-chip" aria-live="polite">
+                    <span aria-hidden="true">✓</span>
+                    Last order filled:&nbsp;
+                    {lastFill.type === 'buy' ? 'Bought' : 'Sold'} {lastFill.shares}{' '}
+                    {lastFill.shares === 1 ? 'share' : 'shares'}
+                    {lastFill.symbol ? ` of ${lastFill.symbol}` : ''} at{' '}
+                    {lastFill.at.toLocaleTimeString()}
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           {/* Portfolio */}
-          <div style={{
-            backgroundColor: lightGray,
-            borderRadius: '20px',
-            padding: '16px'
-          }}>
-            <h3 style={{
-              fontSize: '20px',
-              fontWeight: 'bold',
-              color: marbleDarkGray,
-              marginBottom: '16px',
-              fontFamily: fontHeading
-            }}>
+          <div className="trade-card">
+            <h3 className="trade-heading" style={{ fontSize: '20px', marginBottom: '16px' }}>
               Portfolio
             </h3>
-            {!portfolio?.positions || portfolio.positions.length === 0 ? (
-              <div style={{
-                color: gray,
-                textAlign: 'center',
-                padding: '20px'
-              }}>
+            {initialLoading ? (
+              <div>
+                <div className="trade-skeleton trade-skeleton--card" />
+                <div className="trade-skeleton trade-skeleton--card" />
+              </div>
+            ) : !portfolio?.positions || portfolio.positions.length === 0 ? (
+              <div className="trade-muted" style={{ textAlign: 'center', padding: '20px' }}>
                 No positions yet
               </div>
             ) : (
@@ -679,9 +737,7 @@ function Trade() {
                 gap: '12px'
               }}>
                 {portfolio.positions.map((position, index) => (
-                  <div key={index} style={{
-                    backgroundColor: white,
-                    borderRadius: '12px',
+                  <div key={index} className="trade-card--inset" style={{
                     padding: '16px'
                   }}>
                     <div style={{
@@ -693,14 +749,11 @@ function Trade() {
                       <div style={{
                         fontSize: '16px',
                         fontWeight: 'bold',
-                        color: marbleDarkGray
+                        color: 'var(--trade-text)'
                       }}>
                         {position.symbol}
                       </div>
-                      <div style={{
-                        fontSize: '14px',
-                        color: gray
-                      }}>
+                      <div className="trade-muted" style={{ fontSize: '14px' }}>
                         {position.shares} shares
                       </div>
                     </div>
@@ -709,16 +762,13 @@ function Trade() {
                       justifyContent: 'space-between',
                       alignItems: 'center'
                     }}>
-                      <div style={{
-                        fontSize: '14px',
-                        color: gray
-                      }}>
+                      <div className="trade-muted" style={{ fontSize: '14px' }}>
                         Avg: ${(position.avgPrice ?? position.avgCost)?.toFixed(2) || '0.00'}
                       </div>
                       <div style={{
                         fontSize: '16px',
                         fontWeight: 'bold',
-                        color: marbleDarkGray
+                        color: 'var(--trade-text)'
                       }}>
                         ${getPositionValue(position).currentValue?.toFixed(2) || '0.00'}
                       </div>
@@ -730,59 +780,74 @@ function Trade() {
           </div>
 
           {/* Market Watch */}
-          <div style={{
-            backgroundColor: lightGray,
-            borderRadius: '20px',
-            padding: '16px'
-          }}>
-            <h3 style={{
-              fontSize: '20px',
-              fontWeight: 'bold',
-              color: marbleDarkGray,
-              marginBottom: '16px',
-              fontFamily: fontHeading
-            }}>
-              Market Watch
-            </h3>
-            <div style={{
-              color: gray,
-              fontSize: '14px',
-              marginBottom: '16px'
-            }}>
-              Last: {new Date().toLocaleTimeString()}
-            </div>
+          <div className="trade-card">
             <div style={{
               display: 'flex',
-              flexDirection: 'column',
-              gap: '8px'
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '8px',
+              flexWrap: 'wrap',
+              marginBottom: '8px'
             }}>
-              {stocks.slice(0, 5).map((stock, index) => (
-                <div key={index} style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '8px 0',
-                  borderBottom: index < stocks.length - 1 ? '1px solid #e0e0e0' : 'none'
-                }}>
-                  <div style={{
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    color: marbleDarkGray
-                  }}>
-                    {stock.symbol}
-                  </div>
-                  <div style={{
-                    fontSize: '14px',
-                    color: marbleDarkGray
-                  }}>
-                    ${stock.price?.toFixed(2) || 'N/A'}
-                  </div>
-                </div>
-              ))}
+              <h3 className="trade-heading" style={{ fontSize: '20px' }}>
+                Market Watch
+              </h3>
+              {marketIsDemo && <DemoPill />}
             </div>
+            <div className="trade-muted" style={{ fontSize: '14px', marginBottom: '16px' }}>
+              Last: {lastUpdate ? new Date(lastUpdate).toLocaleTimeString() : new Date().toLocaleTimeString()}
+            </div>
+            {initialLoading ? (
+              <div>
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <div key={i} className="trade-skeleton trade-skeleton--row" />
+                ))}
+              </div>
+            ) : (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
+              }}>
+                {stocks.slice(0, 5).map((stock, index) => (
+                  <div key={index} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '8px 0',
+                    borderBottom: index < Math.min(stocks.length, 5) - 1 ? '1px solid var(--trade-divider)' : 'none'
+                  }}>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: 'var(--trade-text)'
+                    }}>
+                      {stock.symbol}
+                    </div>
+                    <div style={{
+                      fontSize: '14px',
+                      color: 'var(--trade-text)'
+                    }}>
+                      ${stock.price?.toFixed(2) || 'N/A'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Success toast — persists ~6s so a fill is clearly visible */}
+      {showSuccessToast && (
+        <div className="trade-toast" role="status" aria-live="polite">
+          <span className="trade-toast__icon" aria-hidden="true">✓</span>
+          <span>
+            Order executed successfully
+            {lastFill?.symbol ? ` — ${lastFill.type === 'buy' ? 'bought' : 'sold'} ${lastFill.shares} ${lastFill.symbol}` : '!'}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

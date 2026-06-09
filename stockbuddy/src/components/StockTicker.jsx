@@ -118,14 +118,6 @@ const StockTicker = ({ stocks = [] }) => {
     return () => { running = false; };
   }, []);
 
-  // Helper function to safely format change percent
-  const formatChangePercent = (changePercent) => {
-    if (changePercent === null || changePercent === undefined) return '0.00';
-    const num = parseFloat(changePercent);
-    if (isNaN(num)) return '0.00';
-    return num.toFixed(2);
-  };
-
   // Helper function to format percentage display with proper minus sign
   const formatPercentageDisplay = (changePercent) => {
     if (changePercent === null || changePercent === undefined) return '+0.00';

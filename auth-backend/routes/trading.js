@@ -1,11 +1,54 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const Alpaca = require('@alpacahq/alpaca-trade-api');
 const authRoutes = require('./auth');
+const { requireApproved } = require('../middleware/requireApproved');
 
 // Reuse shared middleware and helpers
 const authenticateToken = authRoutes.authenticateToken;
+
+// Whether to emit verbose per-request debug logs (raw userIds, query strings,
+// operation details). Disabled in production to avoid leaking PII / noise.
+const VERBOSE_LOGS = process.env.NODE_ENV !== 'production';
+
+// Timeout (ms) applied to every outbound call to external services (Alpaca / Yahoo)
+// so a hung upstream can't tie up a request indefinitely.
+const EXTERNAL_TIMEOUT_MS = 8000;
+
+// Cap on the number of entries any in-memory cache may hold. Prevents unbounded
+// growth / cache-pollution memory exhaustion. Oldest entry is evicted when over cap.
+const CACHE_MAX_ENTRIES = 500;
+
+// Max length of a user-supplied search query we'll accept (reject longer to avoid
+// cache pollution and wasted work).
+const MAX_QUERY_LENGTH = 100;
+
+// Evict the oldest insertion-order entry from a Map-backed cache once it exceeds the cap.
+const enforceCacheCap = (map) => {
+  while (map.size > CACHE_MAX_ENTRIES) {
+    const oldestKey = map.keys().next().value;
+    map.delete(oldestKey);
+  }
+};
+
+// Rate limiter for public quote/chart/market reads (60 requests / minute / IP).
+const quoteLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// Stricter limiter for the more expensive public search endpoints (30 / minute / IP).
+const searchLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 // Helper function to get formatted timestamp
 const getTimestamp = () => {
@@ -18,11 +61,15 @@ const getTimestamp = () => {
   });
 };
 
-// File-based storage access
-const getPortfolios = (req) => req.app.locals.fileStorage.getPortfolios();
-const savePortfolios = (req, portfolios) => req.app.locals.fileStorage.savePortfolios(portfolios);
-const getTransactions = (req) => req.app.locals.fileStorage.getTransactions();
-const saveTransactions = (req, transactions) => req.app.locals.fileStorage.saveTransactions(transactions);
+// Detect whether real Alpaca credentials are configured (not missing / placeholder)
+const hasAlpacaKeys = () => {
+  const key = process.env.ALPACA_API_KEY;
+  const secret = process.env.ALPACA_SECRET_KEY;
+  const placeholders = ['', 'demo', 'your_api_key', 'your_secret_key', 'placeholder'];
+  if (!key || !secret) return false;
+  if (placeholders.includes(key.toLowerCase()) || placeholders.includes(secret.toLowerCase())) return false;
+  return true;
+};
 
 // Alpaca API configuration
 const alpaca = new Alpaca({
@@ -34,35 +81,28 @@ const alpaca = new Alpaca({
 });
 
 // Initialize portfolio for new users
-const initializePortfolio = (req, userId) => {
-  const portfolios = getPortfolios(req);
-  
-  if (!portfolios[userId]) {
-    portfolios[userId] = {
+const initializePortfolio = async (req, userId) => {
+  let portfolio = await req.app.locals.storage.getPortfolio(userId);
+
+  if (!portfolio) {
+    portfolio = {
       balance: 10000, // Starting with $10,000
       positions: [],
       totalValue: 10000,
       createdAt: new Date().toISOString(),
       lastUpdated: new Date().toISOString()
     };
-    savePortfolios(req, portfolios);
+    await req.app.locals.storage.savePortfolio(userId, portfolio);
   }
-  
-  // Initialize transactions if needed
-  const transactions = getTransactions(req);
-  if (!transactions[userId]) {
-    transactions[userId] = [];
-    saveTransactions(req, transactions);
-  }
-  
-  return portfolios[userId];
+
+  return portfolio;
 };
 
-// Cache for company names to reduce API calls
-let companyNameCache = {};
+// Cache for company names to reduce API calls (Map for capped insertion-order eviction)
+const companyNameCache = new Map();
 
-// Cache for search results to improve performance
-let searchCache = {};
+// Cache for search results to improve performance (Map for capped insertion-order eviction)
+const searchCache = new Map();
 const SEARCH_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Cache for Alpaca assets to avoid repeated API calls
@@ -126,15 +166,17 @@ const companyNameMapping = {
 const getCompanyName = async (symbol) => {
   try {
     // Check cache first
-    if (companyNameCache[symbol]) {
-      return companyNameCache[symbol];
+    if (companyNameCache.has(symbol)) {
+      return companyNameCache.get(symbol);
     }
 
     // Check if Alpaca API keys are configured
-    if (!process.env.ALPACA_API_KEY || !process.env.ALPACA_SECRET_KEY) {
-      console.warn(`[${getTimestamp()}] Alpaca API keys not configured, using symbol as company name`);
-      companyNameCache[symbol] = symbol.toUpperCase();
-      return symbol.toUpperCase();
+    if (!hasAlpacaKeys()) {
+      if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] Alpaca API keys not configured, using fallback company name`);
+      const fallbackName = companyNameMapping[symbol.toUpperCase()] || symbol.toUpperCase();
+      companyNameCache.set(symbol, fallbackName);
+      enforceCacheCap(companyNameCache);
+      return fallbackName;
     }
 
     const headers = {
@@ -143,13 +185,14 @@ const getCompanyName = async (symbol) => {
     };
 
     // Use the working Alpaca Paper Trading API endpoint
-          console.log(`[${getTimestamp()}] 🔍 Fetching company name for ${symbol} from Alpaca Paper Trading API...`);
+          if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 🔍 Fetching company name for ${symbol} from Alpaca Paper Trading API...`);
     try {
       const response = await axios.get(`https://paper-api.alpaca.markets/v2/assets/${symbol}`, {
-        headers
+        headers,
+        timeout: EXTERNAL_TIMEOUT_MS
       });
 
-              console.log(`[${getTimestamp()}] 📄 Alpaca Paper Trading API response for ${symbol}:`, JSON.stringify(response.data, null, 2));
+              if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📄 Alpaca Paper Trading API responded for ${symbol} (status ${response.status})`);
 
       const asset = response.data;
       if (asset && asset.name) {
@@ -161,69 +204,196 @@ const getCompanyName = async (symbol) => {
         if (companyName.includes(' Inc.')) {
           companyName = companyName.replace(' Inc.', ' Inc.');
         }
-        
-        console.log(`[${getTimestamp()}] ✅ Found company name for ${symbol}: ${companyName}`);
+
+        if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] ✅ Found company name for ${symbol}: ${companyName}`);
         // Cache the company name
-        companyNameCache[symbol] = companyName;
+        companyNameCache.set(symbol, companyName);
+        enforceCacheCap(companyNameCache);
         return companyName;
       } else {
-        console.warn(`[${getTimestamp()}] ⚠️ No company name found in Alpaca response for ${symbol}, checking fallback mapping`);
+        if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] ⚠️ No company name found in Alpaca response for ${symbol}, checking fallback mapping`);
       }
     } catch (alpacaError) {
       console.error(`[${getTimestamp()}] ❌ Alpaca API failed for ${symbol}:`, alpacaError.message);
-      if (alpacaError.response) {
+      if (VERBOSE_LOGS && alpacaError.response) {
         console.error(`[${getTimestamp()}]    Status: ${alpacaError.response.status}`);
-        console.error(`[${getTimestamp()}]    Data:`, alpacaError.response.data);
       }
     }
 
     // If Alpaca API fails, use fallback mapping
-    console.warn(`[${getTimestamp()}] ⚠️ Alpaca API failed for ${symbol}, checking fallback mapping`);
+    if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] ⚠️ Alpaca API failed for ${symbol}, checking fallback mapping`);
     if (companyNameMapping[symbol.toUpperCase()]) {
       const fallbackName = companyNameMapping[symbol.toUpperCase()];
-      console.log(`[${getTimestamp()}] ✅ Using fallback company name for ${symbol}: ${fallbackName}`);
-      companyNameCache[symbol] = fallbackName;
+      if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] ✅ Using fallback company name for ${symbol}: ${fallbackName}`);
+      companyNameCache.set(symbol, fallbackName);
+      enforceCacheCap(companyNameCache);
       return fallbackName;
     } else {
-      console.warn(`[${getTimestamp()}] ⚠️ No fallback name found for ${symbol}, using symbol`);
+      if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] ⚠️ No fallback name found for ${symbol}, using symbol`);
       // Final fallback to symbol
-      companyNameCache[symbol] = symbol.toUpperCase();
+      companyNameCache.set(symbol, symbol.toUpperCase());
+      enforceCacheCap(companyNameCache);
       return symbol.toUpperCase();
     }
   } catch (error) {
     console.error(`[${getTimestamp()}] ❌ Failed to get company name for ${symbol}:`, error.message);
-    
+
     // Try fallback mapping first
     if (companyNameMapping[symbol.toUpperCase()]) {
       const fallbackName = companyNameMapping[symbol.toUpperCase()];
-      console.log(`[${getTimestamp()}] ✅ Using fallback company name for ${symbol}: ${fallbackName}`);
-      companyNameCache[symbol] = fallbackName;
+      if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] ✅ Using fallback company name for ${symbol}: ${fallbackName}`);
+      companyNameCache.set(symbol, fallbackName);
+      enforceCacheCap(companyNameCache);
       return fallbackName;
     } else {
-      console.warn(`[${getTimestamp()}] ⚠️ No fallback name found for ${symbol}, using symbol`);
+      if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] ⚠️ No fallback name found for ${symbol}, using symbol`);
       // Final fallback to symbol
-      companyNameCache[symbol] = symbol.toUpperCase();
+      companyNameCache.set(symbol, symbol.toUpperCase());
+      enforceCacheCap(companyNameCache);
       return symbol.toUpperCase();
     }
   }
 };
 
+// ---- Demo / sample data generators (used when Alpaca is unavailable) ----
+
+// Deterministic-ish base price seeded from the symbol so demo data is stable per symbol
+const demoBasePrice = (symbol) => {
+  const s = (symbol || 'XXXX').toUpperCase();
+  let hash = 0;
+  for (let i = 0; i < s.length; i++) {
+    hash = (hash * 31 + s.charCodeAt(i)) % 100000;
+  }
+  // Range roughly $20 - $520
+  return parseFloat((20 + (hash % 500)).toFixed(2));
+};
+
+// Generate a plausible sample quote when Alpaca is unavailable
+const generateDemoQuote = (symbol) => {
+  const sym = (symbol || '').toUpperCase();
+  const basePrice = demoBasePrice(sym);
+  const change = parseFloat(((Math.random() - 0.5) * (basePrice * 0.03)).toFixed(2));
+  const price = parseFloat((basePrice + change).toFixed(2));
+  const changePercent = ((change / basePrice) * 100).toFixed(2);
+  const volume = Math.floor(Math.random() * 10000000) + 1000000;
+
+  return {
+    symbol: sym,
+    name: companyNameMapping[sym] || sym,
+    price,
+    change,
+    changePercent,
+    volume,
+    timestamp: new Date().toISOString(),
+    source: 'demo',
+    hasHistoricalData: true,
+    hasVolumeData: true
+  };
+};
+
+// Generate plausible sample candles for a symbol/timeframe
+const generateDemoCandles = (symbol, timeframe, limit, start, end) => {
+  const basePrice = demoBasePrice(symbol);
+
+  let intervalMs;
+  switch (timeframe) {
+    case '1m': intervalMs = 60 * 1000; break;
+    case '5m': intervalMs = 5 * 60 * 1000; break;
+    case '15m': intervalMs = 15 * 60 * 1000; break;
+    case '1h': intervalMs = 60 * 60 * 1000; break;
+    case '4h': intervalMs = 4 * 60 * 60 * 1000; break;
+    case '1d': intervalMs = 24 * 60 * 60 * 1000; break;
+    case '1w': intervalMs = 7 * 24 * 60 * 60 * 1000; break;
+    case '1M': intervalMs = 30 * 24 * 60 * 60 * 1000; break;
+    default: intervalMs = 24 * 60 * 60 * 1000;
+  }
+
+  const candles = [];
+  let currentPrice = basePrice;
+
+  if (start && end) {
+    const startTsSec = Math.floor(new Date(start + 'T00:00:00Z').getTime() / 1000);
+    const endTsSec = Math.floor(new Date(end + 'T23:59:59Z').getTime() / 1000);
+    const totalSpanMs = Math.max(0, (endTsSec - startTsSec) * 1000);
+    const steps = Math.max(1, Math.min(limit, Math.floor(totalSpanMs / intervalMs) + 1));
+    for (let i = 0; i < steps; i++) {
+      const timeMs = (startTsSec * 1000) + (i * intervalMs);
+      const priceChange = (Math.random() - 0.5) * (basePrice * 0.02);
+      currentPrice = Math.max(currentPrice + priceChange, basePrice * 0.8);
+      const open = currentPrice;
+      const high = open + Math.random() * (basePrice * 0.01);
+      const low = open - Math.random() * (basePrice * 0.01);
+      const close = open + (Math.random() - 0.5) * (basePrice * 0.005);
+      const volume = Math.floor(Math.random() * 10000000) + 1000000;
+      candles.push({
+        timestamp: Math.floor(timeMs / 1000),
+        open: parseFloat(open.toFixed(2)),
+        high: parseFloat(high.toFixed(2)),
+        low: parseFloat(low.toFixed(2)),
+        close: parseFloat(close.toFixed(2)),
+        volume
+      });
+    }
+  } else {
+    const now = new Date();
+    for (let i = limit - 1; i >= 0; i--) {
+      const time = new Date(now.getTime() - (i * intervalMs));
+      const priceChange = (Math.random() - 0.5) * (basePrice * 0.02);
+      currentPrice = Math.max(currentPrice + priceChange, basePrice * 0.8);
+      const open = currentPrice;
+      const high = open + Math.random() * (basePrice * 0.01);
+      const low = open - Math.random() * (basePrice * 0.01);
+      const close = open + (Math.random() - 0.5) * (basePrice * 0.005);
+      const volume = Math.floor(Math.random() * 10000000) + 1000000;
+      candles.push({
+        timestamp: Math.floor(time.getTime() / 1000),
+        open: parseFloat(open.toFixed(2)),
+        high: parseFloat(high.toFixed(2)),
+        low: parseFloat(low.toFixed(2)),
+        close: parseFloat(close.toFixed(2)),
+        volume
+      });
+    }
+  }
+
+  return {
+    symbol,
+    timeframe,
+    candles,
+    source: 'demo',
+    lastUpdated: new Date().toISOString()
+  };
+};
+
+// Generate sample search results from the known company mapping
+const generateDemoSearchResults = (query) => {
+  const q = (query || '').toLowerCase().trim();
+  const matches = Object.keys(companyNameMapping).filter((sym) => {
+    return sym.toLowerCase().includes(q) || companyNameMapping[sym].toLowerCase().includes(q);
+  });
+  const symbols = (matches.length > 0 ? matches : Object.keys(companyNameMapping)).slice(0, 10);
+  return symbols.map((sym) => generateDemoQuote(sym));
+};
+
 // Get stock quote - REST API for everything
 const getStockQuote = async (symbol) => {
   try {
-    // Check if Alpaca API keys are configured
-    if (!process.env.ALPACA_API_KEY || !process.env.ALPACA_SECRET_KEY) {
-      throw new Error('Alpaca API keys not configured. Please set ALPACA_API_KEY and ALPACA_SECRET_KEY in your .env file.');
+    // Graceful demo fallback when Alpaca keys are missing/placeholder
+    if (!hasAlpacaKeys()) {
+      if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] Quote for ${symbol}: using demo data (no Alpaca keys)`);
+      return generateDemoQuote(symbol);
     }
 
-    console.log(`[${getTimestamp()}] 📡 Using REST API for ${symbol} (WebSocket disabled)`);
+    if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📡 Using REST API for ${symbol} (WebSocket disabled)`);
 
     // Use REST API for non-FAANG stocks or when WebSocket fails
     return await getStockQuoteFromREST(symbol);
-    
+
   } catch (error) {
     console.error(`[${getTimestamp()}] Error fetching data for ${symbol}:`, error.message);
-    throw new Error(`Failed to get quote for ${symbol}: ${error.message}`);
+    // Graceful demo fallback on any Alpaca failure
+    if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] Quote for ${symbol}: falling back to demo data`);
+    return generateDemoQuote(symbol);
   }
 };
 
@@ -244,6 +414,7 @@ const getPreviousClose = async (symbol) => {
 
       const response = await axios.get(`https://data.alpaca.markets/v2/stocks/${symbol}/bars`, {
         headers,
+        timeout: EXTERNAL_TIMEOUT_MS,
         params: {
           start: yesterdayStr,
           end: yesterdayStr,
@@ -256,7 +427,7 @@ const getPreviousClose = async (symbol) => {
 
       const bars = response.data.bars;
       if (bars && bars.length > 0) {
-        console.log(`[${getTimestamp()}] 📊 Previous close for ${symbol}: $${bars[0].c} (from yesterday's bar)`);
+        if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📊 Previous close for ${symbol}: $${bars[0].c} (from yesterday's bar)`);
         return bars[0].c;
       }
       throw new Error('No bars data available');
@@ -271,6 +442,7 @@ const getPreviousClose = async (symbol) => {
       
       const response = await axios.get(`https://data.alpaca.markets/v2/stocks/${symbol}/bars`, {
         headers,
+        timeout: EXTERNAL_TIMEOUT_MS,
         params: {
           start: startDate.toISOString().split('T')[0],
           end: endDate.toISOString().split('T')[0],
@@ -284,7 +456,7 @@ const getPreviousClose = async (symbol) => {
       const bars = response.data.bars;
       if (bars && bars.length > 0) {
         const lastBar = bars[bars.length - 1];
-        console.log(`[${getTimestamp()}] 📊 Previous close for ${symbol}: $${lastBar.c} (from historical bars)`);
+        if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📊 Previous close for ${symbol}: $${lastBar.c} (from historical bars)`);
         return lastBar.c;
       }
       throw new Error('No historical bars available');
@@ -298,6 +470,7 @@ const getPreviousClose = async (symbol) => {
 
       const response = await axios.get(`https://data.alpaca.markets/v2/stocks/${symbol}/trades`, {
         headers,
+        timeout: EXTERNAL_TIMEOUT_MS,
         params: {
           start: yesterdayStr,
           end: yesterdayStr,
@@ -309,7 +482,7 @@ const getPreviousClose = async (symbol) => {
       const trades = response.data.trades;
       if (trades && trades.length > 0) {
         const lastTrade = trades[trades.length - 1];
-        console.log(`[${getTimestamp()}] 📊 Previous close for ${symbol}: $${lastTrade.p} (from yesterday's last trade)`);
+        if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📊 Previous close for ${symbol}: $${lastTrade.p} (from yesterday's last trade)`);
         return lastTrade.p;
       }
       throw new Error('No yesterday trades available');
@@ -322,6 +495,7 @@ const getPreviousClose = async (symbol) => {
       
       const response = await axios.get(`https://data.alpaca.markets/v2/stocks/${symbol}/bars`, {
         headers,
+        timeout: EXTERNAL_TIMEOUT_MS,
         params: {
           start: todayStr,
           end: todayStr,
@@ -336,7 +510,7 @@ const getPreviousClose = async (symbol) => {
       if (bars && bars.length > 0) {
         // Use the first bar of the day (open) as previous close for intraday change
         const openBar = bars[0];
-        console.log(`[${getTimestamp()}] 📊 Intraday open for ${symbol}: $${openBar.o} (from today's bars)`);
+        if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📊 Intraday open for ${symbol}: $${openBar.o} (from today's bars)`);
         return openBar.o;
       }
       throw new Error('No today bars available');
@@ -350,6 +524,7 @@ const getPreviousClose = async (symbol) => {
       
       const response = await axios.get(`https://data.alpaca.markets/v2/stocks/${symbol}/bars`, {
         headers,
+        timeout: EXTERNAL_TIMEOUT_MS,
         params: {
           start: startDate.toISOString().split('T')[0],
           end: endDate.toISOString().split('T')[0],
@@ -364,7 +539,7 @@ const getPreviousClose = async (symbol) => {
       if (bars && bars.length >= 2) {
         // Use the second-to-last bar as previous close
         const previousBar = bars[bars.length - 2];
-        console.log(`[${getTimestamp()}] 📊 Previous close for ${symbol}: $${previousBar.c} (from recent bars)`);
+        if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📊 Previous close for ${symbol}: $${previousBar.c} (from recent bars)`);
         return previousBar.c;
       }
       throw new Error('No recent bars available');
@@ -373,27 +548,29 @@ const getPreviousClose = async (symbol) => {
     // Approach 6: Try Yahoo Finance as fallback for percentage change
     async () => {
       try {
-        const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`);
+        const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`, {
+          timeout: EXTERNAL_TIMEOUT_MS
+        });
         const data = response.data;
-        
+
         if (data.chart && data.chart.result && data.chart.result[0]) {
           const result = data.chart.result[0];
           const timestamps = result.timestamp;
           const closes = result.indicators.quote[0].close;
-          
+
           if (closes && closes.length >= 2) {
             const currentClose = closes[closes.length - 1];
             const previousClose = closes[closes.length - 2];
-            
+
             if (currentClose && previousClose) {
-              console.log(`[${getTimestamp()}] 📊 Previous close for ${symbol}: $${previousClose} (from Yahoo Finance)`);
+              if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📊 Previous close for ${symbol}: $${previousClose} (from Yahoo Finance)`);
               return previousClose;
             }
           }
         }
         throw new Error('No Yahoo Finance data available');
       } catch (yahooError) {
-        console.warn(`[${getTimestamp()}] ⚠️ Yahoo Finance failed for ${symbol}:`, yahooError.message);
+        if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] ⚠️ Yahoo Finance failed for ${symbol}:`, yahooError.message);
         throw new Error('Yahoo Finance data not available');
       }
     },
@@ -410,7 +587,7 @@ const getPreviousClose = async (symbol) => {
       const result = await approaches[i]();
       return result;
     } catch (error) {
-      console.warn(`[${getTimestamp()}] ⚠️ Approach ${i + 1} failed for ${symbol}:`, error.message);
+      if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] ⚠️ Approach ${i + 1} failed for ${symbol}:`, error.message);
       if (i === approaches.length - 1) {
         // This was the last approach, throw the error
         throw new Error(`All approaches failed to get previous close for ${symbol}`);
@@ -422,9 +599,9 @@ const getPreviousClose = async (symbol) => {
 // Get stock quote using REST API (fallback method)
 const getStockQuoteFromREST = async (symbol) => {
   try {
-    // Check if Alpaca API keys are configured
-    if (!process.env.ALPACA_API_KEY || !process.env.ALPACA_SECRET_KEY) {
-      throw new Error('Alpaca API keys not configured. Please set ALPACA_API_KEY and ALPACA_SECRET_KEY in your .env file.');
+    // Check if Alpaca API keys are configured; fall back to demo data otherwise
+    if (!hasAlpacaKeys()) {
+      return generateDemoQuote(symbol);
     }
 
     const headers = {
@@ -437,13 +614,12 @@ const getStockQuoteFromREST = async (symbol) => {
     try {
       tradeResponse = await axios.get(`https://data.alpaca.markets/v2/stocks/${symbol}/trades/latest`, {
         headers,
-        timeout: 10000 // 10 second timeout
+        timeout: EXTERNAL_TIMEOUT_MS
       });
     } catch (tradeError) {
       console.error(`[${getTimestamp()}] ❌ Alpaca API error for ${symbol}:`, tradeError.message);
-      if (tradeError.response) {
+      if (VERBOSE_LOGS && tradeError.response) {
         console.error(`[${getTimestamp()}]    Status: ${tradeError.response.status}`);
-        console.error(`[${getTimestamp()}]    Data:`, tradeError.response.data);
       }
       throw new Error(`Failed to fetch trade data for ${symbol}: ${tradeError.message}`);
     }
@@ -464,6 +640,7 @@ const getStockQuoteFromREST = async (symbol) => {
   try {
     const barsResponse = await axios.get(`https://data.alpaca.markets/v2/stocks/${symbol}/bars`, {
       headers,
+      timeout: EXTERNAL_TIMEOUT_MS,
       params: {
         start: todayStr,
         end: todayStr,
@@ -476,10 +653,10 @@ const getStockQuoteFromREST = async (symbol) => {
     const bars = barsResponse.data.bars;
     if (bars && bars.length > 0) {
       dailyVolume = bars[0].v;
-      console.log(`[${getTimestamp()}] 📊 ${symbol} daily volume (REST): ${dailyVolume.toLocaleString()}`);
+      if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📊 ${symbol} daily volume (REST): ${dailyVolume.toLocaleString()}`);
     }
   } catch (barsError) {
-    console.warn(`[${getTimestamp()}] ⚠️ Failed to get daily volume for ${symbol}:`, barsError.message);
+    if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] ⚠️ Failed to get daily volume for ${symbol}:`, barsError.message);
     // Use trade volume as fallback only if available from API
     dailyVolume = trade.trade.s || null;
   }
@@ -493,17 +670,19 @@ const getStockQuoteFromREST = async (symbol) => {
             change = currentPrice - previousClose;
             changePercent = ((change / previousClose) * 100).toFixed(2);
           } catch (prevCloseError) {
-            console.warn(`[${getTimestamp()}] ⚠️ Could not calculate change for ${symbol}:`, prevCloseError.message);
+            if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] ⚠️ Could not calculate change for ${symbol}:`, prevCloseError.message);
             // Be honest about not having historical data
             change = null;
             changePercent = "N/A";
           }
-  
-            if (change !== null) {
-            console.log(`[${getTimestamp()}] ${symbol} (REST API): $${currentPrice} (${change >= 0 ? '+' : ''}${changePercent}%) - Volume: ${dailyVolume.toLocaleString()}`);
-    } else {
-            console.log(`[${getTimestamp()}] ${symbol} (REST API): $${currentPrice} (change: N/A - no historical data) - Volume: ${dailyVolume.toLocaleString()}`);
-          }
+
+            if (VERBOSE_LOGS) {
+              if (change !== null) {
+                console.log(`[${getTimestamp()}] ${symbol} (REST API): $${currentPrice} (${change >= 0 ? '+' : ''}${changePercent}%) - Volume: ${dailyVolume.toLocaleString()}`);
+              } else {
+                console.log(`[${getTimestamp()}] ${symbol} (REST API): $${currentPrice} (change: N/A - no historical data) - Volume: ${dailyVolume.toLocaleString()}`);
+              }
+            }
   
     // Get company name from Alpaca API
     const companyName = await getCompanyName(symbol);
@@ -529,9 +708,10 @@ const getStockQuoteFromREST = async (symbol) => {
 // AI-powered search stocks with multiple data sources and intelligent matching
 const searchStocks = async (query) => {
   try {
-    // Check if Alpaca API keys are configured
-    if (!process.env.ALPACA_API_KEY || !process.env.ALPACA_SECRET_KEY) {
-      throw new Error('Alpaca API keys not configured. Please set ALPACA_API_KEY and ALPACA_SECRET_KEY in your .env file.');
+    // Check if Alpaca API keys are configured; fall back to demo results otherwise
+    if (!hasAlpacaKeys()) {
+      if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] Search: using demo data (no Alpaca keys)`);
+      return generateDemoSearchResults(query);
     }
 
     const queryLower = query.toLowerCase().trim();
@@ -547,6 +727,7 @@ const searchStocks = async (query) => {
     try {
       const response = await axios.get('https://paper-api.alpaca.markets/v2/assets', {
         headers,
+        timeout: EXTERNAL_TIMEOUT_MS,
         params: {
           status: 'active',
           asset_class: 'us_equity'
@@ -554,8 +735,9 @@ const searchStocks = async (query) => {
       });
       alpacaAssets = response.data;
     } catch (alpacaError) {
-      console.warn(`[${getTimestamp()}] Failed to fetch Alpaca assets:`, alpacaError.message);
-      throw new Error('Failed to fetch stock data');
+      if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] Failed to fetch Alpaca assets:`, alpacaError.message);
+      // Graceful demo fallback so the UI still works
+      return generateDemoSearchResults(query);
     }
 
     // Step 2: Professional search algorithm (like Robinhood/Fidelity)
@@ -660,11 +842,13 @@ const searchStocks = async (query) => {
     });
 
     // Debug logging for search results
-    console.log(`[${getTimestamp()}] 🔍 Professional search results for "${query}":`, searchResults.slice(0, 5).map(asset => ({
-      symbol: asset.symbol,
-      name: asset.name,
-      score: asset.relevanceScore
-    })));
+    if (VERBOSE_LOGS) {
+      console.log(`[${getTimestamp()}] 🔍 Professional search results for "${query}":`, searchResults.slice(0, 5).map(asset => ({
+        symbol: asset.symbol,
+        name: asset.name,
+        score: asset.relevanceScore
+      })));
+    }
 
     // Step 4: Get quotes for top results
     const finalResults = [];
@@ -672,11 +856,11 @@ const searchStocks = async (query) => {
     
     for (const asset of topAssets) {
       try {
-        console.log(`[${getTimestamp()}] 🔍 Getting quote for ${asset.symbol}...`);
+        if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 🔍 Getting quote for ${asset.symbol}...`);
         const quote = await getStockQuoteFromREST(asset.symbol);
         finalResults.push(quote);
       } catch (quoteError) {
-        console.warn(`[${getTimestamp()}] Failed to get quote for ${asset.symbol}:`, quoteError.message);
+        if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] Failed to get quote for ${asset.symbol}:`, quoteError.message);
         // Add asset without quote data
         finalResults.push({
           symbol: asset.symbol,
@@ -695,7 +879,8 @@ const searchStocks = async (query) => {
     return finalResults;
   } catch (error) {
     console.error(`[${getTimestamp()}] Error searching stocks:`, error);
-    throw new Error(`Failed to search stocks: ${error.message}`);
+    // Graceful demo fallback so the UI still works
+    return generateDemoSearchResults(query);
   }
 };
 
@@ -706,21 +891,19 @@ let marketDataCache = {
   ttl: 30000 // 30 seconds cache
 };
 
-// Cache for chart data to reduce API calls
-let chartDataCache = {
-  data: {},
-  timestamp: {},
-  ttl: 300000 // 5 minutes cache for chart data (increased due to larger datasets)
-};
+// Cache for chart data to reduce API calls.
+// Map keyed by cacheKey -> { data, timestamp }; capped with insertion-order eviction.
+const chartDataCache = new Map();
+const CHART_CACHE_TTL = 300000; // 5 minutes cache for chart data (increased due to larger datasets)
 
 // Get market data (FAANG companies) with caching
-router.get('/market', async (req, res) => {
+router.get('/market', quoteLimiter, async (req, res) => {
   try {
     // Check cache first
     const now = Date.now();
-    if (marketDataCache.data && marketDataCache.timestamp && 
+    if (marketDataCache.data && marketDataCache.timestamp &&
         (now - marketDataCache.timestamp) < marketDataCache.ttl) {
-      console.log(`[${getTimestamp()}] 📦 Returning cached FAANG market data`);
+      if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📦 Returning cached FAANG market data`);
       return res.json({
         success: true,
         marketData: marketDataCache.data,
@@ -730,34 +913,34 @@ router.get('/market', async (req, res) => {
 
     const faangStocks = ['META', 'AAPL', 'AMZN', 'NFLX', 'GOOGL'];
     const marketData = [];
-    
-    console.log(`[${getTimestamp()}] 🔄 Fetching fresh FAANG market data for:`, faangStocks.join(', '));
-    
+
+    if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 🔄 Fetching fresh FAANG market data for:`, faangStocks.join(', '));
+
     // Use Promise.all to fetch all stocks concurrently (faster, fewer API calls)
     const quotePromises = faangStocks.map(async (symbol) => {
       try {
       const quote = await getStockQuote(symbol);
-      console.log(`[${getTimestamp()}] ✅ ${symbol}: $${quote.price} (${quote.changePercent}%)`);
+      if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] ✅ ${symbol}: $${quote.price} (${quote.changePercent}%)`);
         return quote;
       } catch (quoteError) {
-        console.warn(`[${getTimestamp()}] ❌ Failed to get quote for ${symbol}:`, quoteError.message);
+        if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] ❌ Failed to get quote for ${symbol}:`, quoteError.message);
         return null;
       }
     });
 
     const results = await Promise.all(quotePromises);
     const validResults = results.filter(quote => quote !== null);
-    
+
     if (validResults.length === 0) {
       throw new Error('No market data available');
     }
-    
+
     // Update cache
     marketDataCache.data = validResults;
     marketDataCache.timestamp = now;
-    
-    console.log(`[${getTimestamp()}] 📊 FAANG market data summary:`, validResults.map(q => `${q.symbol}: ${q.changePercent}%`).join(', '));
-    
+
+    if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📊 FAANG market data summary:`, validResults.map(q => `${q.symbol}: ${q.changePercent}%`).join(', '));
+
     res.json({
       success: true,
       marketData: validResults,
@@ -773,58 +956,69 @@ router.get('/market', async (req, res) => {
 });
 
 // Get historical chart data for a stock
-router.get('/chart/:symbol', async (req, res) => {
+router.get('/chart/:symbol', quoteLimiter, async (req, res) => {
   try {
     const { symbol } = req.params;
     const { timeframe = '1D', limit = 500, start, end } = req.query;
-    
-    console.log(`[${getTimestamp()}] 📈 Fetching chart data for ${symbol} (${timeframe})` + (start && end ? ` range ${start}→${end}` : ''));
-    console.log(`[${getTimestamp()}] 📊 Request details:`, { symbol, timeframe, limit, start, end });
-    
+
+    if (VERBOSE_LOGS) {
+      console.log(`[${getTimestamp()}] 📈 Fetching chart data for ${symbol} (${timeframe})` + (start && end ? ` range ${start}→${end}` : ''));
+      console.log(`[${getTimestamp()}] 📊 Request details:`, { symbol, timeframe, limit, start, end });
+    }
+
     // Check cache first
     const cacheKey = `${symbol}_${timeframe}_${start || 'NA'}_${end || 'NA'}`;
     const now = Date.now();
-    if (chartDataCache.data[cacheKey] && chartDataCache.timestamp[cacheKey] && 
-        (now - chartDataCache.timestamp[cacheKey]) < chartDataCache.ttl) {
-      console.log(`[${getTimestamp()}] 📦 Returning cached chart data for ${symbol}`);
+    const cachedEntry = chartDataCache.get(cacheKey);
+    if (cachedEntry && (now - cachedEntry.timestamp) < CHART_CACHE_TTL) {
+      if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📦 Returning cached chart data for ${symbol}`);
+      const cachedChart = cachedEntry.data;
       return res.json({
         success: true,
-        chartData: chartDataCache.data[cacheKey],
-        cached: true
+        chartData: cachedChart,
+        cached: true,
+        ...(cachedChart && cachedChart.source === 'demo' ? { demo: true } : {})
       });
     }
 
     // Generate historical data with optional date slicing
-    console.log(`[${getTimestamp()}] 🔍 Calling generateHistoricalData for ${symbol}`);
+    if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 🔍 Calling generateHistoricalData for ${symbol}`);
     const chartData = await generateHistoricalData(symbol, timeframe, parseInt(limit), start, end);
-    
-    // Update cache
-    chartDataCache.data[cacheKey] = chartData;
-    chartDataCache.timestamp[cacheKey] = now;
-    
-    console.log(`[${getTimestamp()}] ✅ Chart data generated for ${symbol}: ${chartData.candles.length} candles`);
-    
+
+    // Update cache (capped, insertion-order eviction)
+    chartDataCache.set(cacheKey, { data: chartData, timestamp: now });
+    enforceCacheCap(chartDataCache);
+
+    if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] ✅ Chart data generated for ${symbol}: ${chartData.candles.length} candles`);
+
     res.json({
       success: true,
       chartData,
-      cached: false
+      cached: false,
+      ...(chartData.source === 'demo' ? { demo: true } : {})
     });
   } catch (error) {
     console.error(`[${getTimestamp()}] Error getting chart data:`, error);
-    res.status(500).json({
-      success: false,
-      message: `Failed to get chart data: ${error.message}`
+    // Graceful demo fallback so the UI still works
+    const { symbol } = req.params;
+    const { timeframe = '1D', limit = 500, start, end } = req.query;
+    const chartData = generateDemoCandles(symbol, timeframe, parseInt(limit), start, end);
+    res.json({
+      success: true,
+      chartData,
+      cached: false,
+      demo: true
     });
   }
 });
 
 // Get real-time chart updates
-router.get('/chart/:symbol/live', async (req, res) => {
+router.get('/chart/:symbol/live', quoteLimiter, async (req, res) => {
   try {
     const { symbol } = req.params;
-    
-    console.log(`[${getTimestamp()}] 🔄 Getting live chart update for ${symbol}`);
-    
+
+    if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 🔄 Getting live chart update for ${symbol}`);
+
     // Get current quote
     const quote = await getStockQuote(symbol);
     
@@ -848,9 +1042,11 @@ router.get('/chart/:symbol/live', async (req, res) => {
 // Helper function to generate historical data
 async function generateHistoricalData(symbol, timeframe, limit, start, end) {
   try {
-    console.log(`[${getTimestamp()}] 🔍 Fetching real historical data for ${symbol} (${timeframe})`);
-    console.log(`[${getTimestamp()}] 📅 Date range: ${start} → ${end}, limit: ${limit}`);
-    
+    if (VERBOSE_LOGS) {
+      console.log(`[${getTimestamp()}] 🔍 Fetching real historical data for ${symbol} (${timeframe})`);
+      console.log(`[${getTimestamp()}] 📅 Date range: ${start} → ${end}, limit: ${limit}`);
+    }
+
     // Map frontend timeframes to Alpaca timeframes with full year coverage
     let alpacaTimeframe;
     let yahooInterval;
@@ -904,8 +1100,8 @@ async function generateHistoricalData(symbol, timeframe, limit, start, end) {
     }
     
     // Try Alpaca API first
-    if (process.env.ALPACA_API_KEY && process.env.ALPACA_SECRET_KEY) {
-      console.log(`[${getTimestamp()}] 🔑 Alpaca API keys found, trying Alpaca first...`);
+    if (hasAlpacaKeys()) {
+      if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 🔑 Alpaca API keys found, trying Alpaca first...`);
       try {
         const headers = {
           'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
@@ -925,10 +1121,10 @@ async function generateHistoricalData(symbol, timeframe, limit, start, end) {
         const alpacaParams = start && end 
           ? `timeframe=${alpacaTimeframe}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
           : `timeframe=${alpacaTimeframe}&limit=${alpacaLimit}`;
-        console.log(`[${getTimestamp()}] 📡 Alpaca URL params: ${alpacaParams}`);
+        if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📡 Alpaca URL params: ${alpacaParams}`);
         const response = await axios.get(`https://data.alpaca.markets/v2/stocks/${symbol}/bars?${alpacaParams}&adjustment=split`, {
           headers,
-          timeout: 10000
+          timeout: EXTERNAL_TIMEOUT_MS
         });
         
         if (response.data.bars && response.data.bars.length > 0) {
@@ -947,8 +1143,8 @@ async function generateHistoricalData(symbol, timeframe, limit, start, end) {
             const endTs = Math.floor(new Date(end + 'T23:59:59Z').getTime() / 1000);
             slicedCandles = candles.filter(c => c.timestamp >= startTs && c.timestamp <= endTs);
           }
-          console.log(`[${getTimestamp()}] ✅ Got ${slicedCandles.length} candles from Alpaca for ${symbol}`);
-          
+          if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] ✅ Got ${slicedCandles.length} candles from Alpaca for ${symbol}`);
+
           return {
             symbol,
             timeframe,
@@ -957,25 +1153,25 @@ async function generateHistoricalData(symbol, timeframe, limit, start, end) {
           };
         }
       } catch (alpacaError) {
-        console.warn(`[${getTimestamp()}] ⚠️ Alpaca API failed for ${symbol}: ${alpacaError.message}`);
+        if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] ⚠️ Alpaca API failed for ${symbol}: ${alpacaError.message}`);
       }
     } else {
-      console.log(`[${getTimestamp()}] ⚠️ No Alpaca API keys found, skipping Alpaca API call`);
+      if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] ⚠️ No Alpaca API keys found, skipping Alpaca API call`);
     }
-    
+
     // Fallback to Yahoo Finance API
     try {
-      console.log(`[${getTimestamp()}] 🔄 Trying Yahoo Finance API for ${symbol}...`);
+      if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 🔄 Trying Yahoo Finance API for ${symbol}...`);
       // Get maximum historical data for all timeframes
       const yahooRangeAdjusted = yahooRange; // Use the full year range we set above
-      console.log(`[${getTimestamp()}] 📡 Yahoo interval: ${yahooInterval}, range: ${yahooRangeAdjusted}`);
+      if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📡 Yahoo interval: ${yahooInterval}, range: ${yahooRangeAdjusted}`);
         // For Yahoo, if a specific date range is requested, switch to explicit period1/period2
         const yahooUrl = start && end
           ? `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${yahooInterval}&period1=${Math.floor(new Date(start + 'T00:00:00Z').getTime() / 1000)}&period2=${Math.floor(new Date(end + 'T23:59:59Z').getTime() / 1000)}`
           : `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${yahooInterval}&range=${yahooRangeAdjusted}`;
-        console.log(`[${getTimestamp()}] 🌐 Yahoo URL: ${yahooUrl}`);
+        if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 🌐 Yahoo URL: ${yahooUrl}`);
         const yahooResponse = await axios.get(yahooUrl, {
-        timeout: 10000
+        timeout: EXTERNAL_TIMEOUT_MS
       });
       
       if (yahooResponse.data.chart.result && yahooResponse.data.chart.result[0]) {
@@ -1038,8 +1234,8 @@ async function generateHistoricalData(symbol, timeframe, limit, start, end) {
           limitedCandles = candles.filter(c => c.timestamp >= startTs && c.timestamp <= endTs);
         }
         
-        console.log(`[${getTimestamp()}] ✅ Got ${limitedCandles.length} candles from Yahoo Finance for ${symbol}`);
-        
+        if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] ✅ Got ${limitedCandles.length} candles from Yahoo Finance for ${symbol}`);
+
         return {
           symbol,
           timeframe,
@@ -1048,139 +1244,24 @@ async function generateHistoricalData(symbol, timeframe, limit, start, end) {
         };
       }
     } catch (yahooError) {
-      console.warn(`[${getTimestamp()}] ⚠️ Yahoo Finance API failed for ${symbol}: ${yahooError.message}`);
+      if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] ⚠️ Yahoo Finance API failed for ${symbol}: ${yahooError.message}`);
     }
-    
-    // Final fallback - generate realistic mock data based on current price
-    console.log(`[${getTimestamp()}] ⚠️ Using fallback mock data for ${symbol}`);
-    
+
+    // Final fallback - generate realistic sample (demo) data
+    if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] ⚠️ Using fallback demo data for ${symbol}`);
+
     try {
-      // Get current price to base mock data on, or use a default price if API keys are missing
-      let basePrice = 100; // Default price for historical scenarios
-      
-      try {
-        const quote = await getStockQuote(symbol);
-        basePrice = parseFloat(quote.price) || basePrice;
-        console.log(`[${getTimestamp()}] 💰 Got quote price for ${symbol}: $${basePrice}`);
-      } catch (quoteError) {
-        console.log(`[${getTimestamp()}] ⚠️ Could not get quote for ${symbol}, using default price ${basePrice}:`, quoteError.message);
-        // Use default price for historical scenarios when API keys are missing
-      }
-      
-      const candles = [];
-      const now = new Date();
-
-      // Generate data points based on timeframe
-      let intervalMs;
-      switch (timeframe) {
-        case '1m':
-          intervalMs = 60 * 1000;
-          break;
-        case '5m':
-          intervalMs = 5 * 60 * 1000;
-          break;
-        case '15m':
-          intervalMs = 15 * 60 * 1000;
-          break;
-        case '1h':
-          intervalMs = 60 * 60 * 1000;
-          break;
-        case '4h':
-          intervalMs = 4 * 60 * 60 * 1000;
-          break;
-        case '1d':
-          intervalMs = 24 * 60 * 60 * 1000;
-          break;
-        case '1w':
-          intervalMs = 7 * 24 * 60 * 60 * 1000;
-          break;
-        case '1M':
-          intervalMs = 30 * 24 * 60 * 60 * 1000;
-          break;
-        default:
-          intervalMs = 24 * 60 * 60 * 1000;
-      }
-
-      // If a historical date range is provided, generate candles anchored to that window
-      if (start && end) {
-        const startTsSec = Math.floor(new Date(start + 'T00:00:00Z').getTime() / 1000);
-        const endTsSec = Math.floor(new Date(end + 'T23:59:59Z').getTime() / 1000);
-        const totalSpanMs = Math.max(0, (endTsSec - startTsSec) * 1000);
-        // Compute how many steps fit in the window; ensure at least 1 and cap by limit
-        const steps = Math.max(1, Math.min(limit, Math.floor(totalSpanMs / intervalMs) + 1));
-
-        let currentPrice = basePrice;
-        for (let i = 0; i < steps; i++) {
-          const timeMs = (startTsSec * 1000) + (i * intervalMs);
-
-          // More realistic price movement
-          const priceChange = (Math.random() - 0.5) * (basePrice * 0.02); // 2% max change
-          currentPrice = Math.max(currentPrice + priceChange, basePrice * 0.8);
-
-          const open = currentPrice;
-          const high = open + Math.random() * (basePrice * 0.01);
-          const low = open - Math.random() * (basePrice * 0.01);
-          const close = open + (Math.random() - 0.5) * (basePrice * 0.005);
-          const volume = Math.floor(Math.random() * 10000000) + 1000000;
-
-          candles.push({
-            timestamp: Math.floor(timeMs / 1000),
-            open: parseFloat(open.toFixed(2)),
-            high: parseFloat(high.toFixed(2)),
-            low: parseFloat(low.toFixed(2)),
-            close: parseFloat(close.toFixed(2)),
-            volume: volume
-          });
-        }
-
-        console.log(`[${getTimestamp()}] 🎭 Generated ${candles.length} mock candles for ${symbol} (${timeframe}) within ${start} → ${end}`);
-        return {
-          symbol,
-          timeframe,
-          candles,
-          lastUpdated: new Date().toISOString()
-        };
-      }
-
-      // Otherwise, generate recent candles ending at now
-      let currentPrice = basePrice;
-      for (let i = limit - 1; i >= 0; i--) {
-        const time = new Date(now.getTime() - (i * intervalMs));
-
-        // More realistic price movement
-        const priceChange = (Math.random() - 0.5) * (basePrice * 0.02); // 2% max change
-        currentPrice = Math.max(currentPrice + priceChange, basePrice * 0.8);
-
-        const open = currentPrice;
-        const high = open + Math.random() * (basePrice * 0.01);
-        const low = open - Math.random() * (basePrice * 0.01);
-        const close = open + (Math.random() - 0.5) * (basePrice * 0.005);
-        const volume = Math.floor(Math.random() * 10000000) + 1000000;
-
-        candles.push({
-          timestamp: Math.floor(time.getTime() / 1000),
-          open: parseFloat(open.toFixed(2)),
-          high: parseFloat(high.toFixed(2)),
-          low: parseFloat(low.toFixed(2)),
-          close: parseFloat(close.toFixed(2)),
-          volume: volume
-        });
-      }
-
-      console.log(`[${getTimestamp()}] 🎭 Generated ${candles.length} mock candles for ${symbol} (${timeframe}) ending at now`);
-      return {
-        symbol,
-        timeframe,
-        candles,
-        lastUpdated: new Date().toISOString()
-      };
+      const demoData = generateDemoCandles(symbol, timeframe, limit, start, end);
+      if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 🎭 Generated ${demoData.candles.length} demo candles for ${symbol} (${timeframe})`);
+      return demoData;
     } catch (error) {
       console.error(`[${getTimestamp()}] Error generating fallback data for ${symbol}:`, error);
       throw new Error(`Failed to generate chart data for ${symbol}`);
     }
   } catch (error) {
     console.error(`[${getTimestamp()}] Error in generateHistoricalData for ${symbol}:`, error);
-    throw error;
+    // Graceful demo fallback so the UI still works
+    return generateDemoCandles(symbol, timeframe, limit, start, end);
   }
 }
 
@@ -1229,7 +1310,7 @@ const checkTradingAllowed = (req) => {
 };
 
 // Buy stock
-router.post('/buy', authenticateToken, async (req, res) => {
+router.post('/buy', authenticateToken, requireApproved, async (req, res) => {
   try {
     // Validate trading is allowed
     checkTradingAllowed(req);
@@ -1249,89 +1330,98 @@ router.post('/buy', authenticateToken, async (req, res) => {
     
     const { symbol, shares, type, limitPrice } = parsed.data;
     const userId = req.user.userId;
-    
-    // Get current quote
+
+    // Get current quote FIRST (network), OUTSIDE the lock
     const quote = await getStockQuote(symbol);
     const price = type === 'limit' && limitPrice ? limitPrice : quote.price;
     const totalCost = price * shares;
-    
-    // Get user portfolio
-    const portfolios = getPortfolios(req);
-    let portfolio = portfolios[userId];
-    
-    if (!portfolio) {
-      portfolio = initializePortfolio(req, userId);
-    }
-    
-    // Check if user has enough balance
-    if (portfolio.balance < totalCost) {
-      return res.status(400).json({
-        success: false,
-        message: `Insufficient funds. Need $${totalCost.toFixed(2)}, have $${portfolio.balance.toFixed(2)}`
-      });
-    }
-    
-    // Execute buy
-    portfolio.balance -= totalCost;
-    
-    // Update or create position
-    const existingPosition = portfolio.positions.find(p => p.symbol === symbol);
-    if (existingPosition) {
-      // Backwards compatibility: migrate avgCost to avgPrice if needed
-      const currentAvgPrice = existingPosition.avgPrice ?? existingPosition.avgCost ?? price;
-      
-      // Average price calculation
-      const totalShares = existingPosition.shares + shares;
-      const totalValue = (existingPosition.shares * currentAvgPrice) + totalCost;
-      existingPosition.avgPrice = totalValue / totalShares;
-      existingPosition.shares = totalShares;
-      existingPosition.currentPrice = price;
-      existingPosition.change = quote.change || 0;
-      existingPosition.changePercent = quote.changePercent || "0.00";
-      
-      // Clean up legacy field if it exists
-      if (existingPosition.avgCost !== undefined) {
-        delete existingPosition.avgCost;
+
+    // Mutate balance + positions atomically inside the per-user lock
+    const result = await req.app.locals.storage.withUserLock(userId, async (tx) => {
+      // Read (or init) the portfolio inside the lock
+      let portfolio = await tx.getPortfolio(userId);
+      if (!portfolio) {
+        portfolio = { balance: 10000, positions: [], totalValue: 10000 };
       }
-    } else {
-      portfolio.positions.push({
+
+      // Re-check funds inside the lock
+      if (portfolio.balance < totalCost) {
+        return {
+          error: {
+            status: 400,
+            body: {
+              success: false,
+              message: `Insufficient funds. Need $${totalCost.toFixed(2)}, have $${portfolio.balance.toFixed(2)}`
+            }
+          }
+        };
+      }
+
+      // Execute buy
+      portfolio.balance -= totalCost;
+
+      // Update or create position
+      const existingPosition = portfolio.positions.find(p => p.symbol === symbol);
+      if (existingPosition) {
+        // Backwards compatibility: migrate avgCost to avgPrice if needed
+        const currentAvgPrice = existingPosition.avgPrice ?? existingPosition.avgCost ?? price;
+
+        // Average price calculation
+        const totalShares = existingPosition.shares + shares;
+        const totalValue = (existingPosition.shares * currentAvgPrice) + totalCost;
+        existingPosition.avgPrice = totalValue / totalShares;
+        existingPosition.shares = totalShares;
+        existingPosition.currentPrice = price;
+        existingPosition.change = quote.change || 0;
+        existingPosition.changePercent = quote.changePercent || "0.00";
+
+        // Clean up legacy field if it exists
+        if (existingPosition.avgCost !== undefined) {
+          delete existingPosition.avgCost;
+        }
+      } else {
+        portfolio.positions.push({
+          symbol,
+          shares,
+          avgPrice: price,
+          currentPrice: price,
+          change: quote.change || 0,
+          changePercent: quote.changePercent || "0.00"
+        });
+      }
+
+      // Update total value
+      portfolio.totalValue = portfolio.balance + portfolio.positions.reduce((sum, p) =>
+        sum + (p.shares * p.currentPrice), 0);
+      portfolio.lastUpdated = new Date().toISOString();
+
+      await tx.savePortfolio(userId, portfolio);
+
+      // Record transaction
+      await tx.addTransaction(userId, {
+        id: `tx_${crypto.randomUUID()}`,
+        type: 'buy',
         symbol,
         shares,
-        avgPrice: price,
-        currentPrice: price,
-        change: quote.change || 0,
-        changePercent: quote.changePercent || "0.00"
+        price,
+        total: totalCost,
+        timestamp: new Date().toISOString()
       });
-    }
-    
-    // Update total value
-    portfolio.totalValue = portfolio.balance + portfolio.positions.reduce((sum, p) => 
-      sum + (p.shares * p.currentPrice), 0);
-    portfolio.lastUpdated = new Date().toISOString();
-    
-    savePortfolios(req, portfolios);
-    
-    // Record transaction
-    const transactions = getTransactions(req);
-    if (!transactions[userId]) transactions[userId] = [];
-    transactions[userId].push({
-      id: `tx_${Date.now()}`,
-      type: 'buy',
-      symbol,
-      shares,
-      price,
-      total: totalCost,
-      timestamp: new Date().toISOString()
+
+      return { portfolio };
     });
-    saveTransactions(req, transactions);
-    
-    console.log(`[${getTimestamp()}] 📈 BUY: ${userId} bought ${shares} ${symbol} @ $${price}`);
-    
+
+    if (result.error) {
+      return res.status(result.error.status).json(result.error.body);
+    }
+
+    if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📈 BUY: ${userId} bought ${shares} ${symbol} @ $${price}`);
+
     res.json({
       success: true,
       message: `Bought ${shares} shares of ${symbol}`,
       order: { symbol, shares, price, total: totalCost },
-      portfolio
+      portfolio: result.portfolio
     });
   } catch (error) {
     console.error(`[${getTimestamp()}] Buy error:`, error);
@@ -1343,7 +1433,7 @@ router.post('/buy', authenticateToken, async (req, res) => {
 });
 
 // Sell stock
-router.post('/sell', authenticateToken, async (req, res) => {
+router.post('/sell', authenticateToken, requireApproved, async (req, res) => {
   try {
     // Validate trading is allowed
     checkTradingAllowed(req);
@@ -1363,76 +1453,89 @@ router.post('/sell', authenticateToken, async (req, res) => {
     
     const { symbol, shares, type, limitPrice } = parsed.data;
     const userId = req.user.userId;
-    
-    // Get user portfolio
-    const portfolios = getPortfolios(req);
-    const portfolio = portfolios[userId];
-    
-    if (!portfolio) {
-      return res.status(400).json({
-        success: false,
-        message: 'No portfolio found'
-      });
-    }
-    
-    // Check if user has the position
-    const position = portfolio.positions.find(p => p.symbol === symbol);
-    if (!position || position.shares < shares) {
-      return res.status(400).json({
-        success: false,
-        message: `Insufficient shares. Have ${position?.shares || 0} ${symbol}, trying to sell ${shares}`
-      });
-    }
-    
-    // Get current quote
+
+    // Get current quote FIRST (network), OUTSIDE the lock
     const quote = await getStockQuote(symbol);
     const price = type === 'limit' && limitPrice ? limitPrice : quote.price;
     const totalProceeds = price * shares;
-    
-    // Execute sell
-    portfolio.balance += totalProceeds;
-    position.shares -= shares;
-    position.currentPrice = price;
-    // Update change data from current quote to prevent stale values
-    position.change = quote.change || 0;
-    position.changePercent = quote.changePercent || "0.00";
-    
-    // Remove position if fully sold
-    if (position.shares === 0) {
-      portfolio.positions = portfolio.positions.filter(p => p.symbol !== symbol);
-    }
-    
-    // Update total value
-    portfolio.totalValue = portfolio.balance + portfolio.positions.reduce((sum, p) => 
-      sum + (p.shares * p.currentPrice), 0);
-    portfolio.lastUpdated = new Date().toISOString();
-    
-    savePortfolios(req, portfolios);
-    
-    // Record transaction
-    const transactions = getTransactions(req);
-    if (!transactions[userId]) transactions[userId] = [];
-    // Backwards compatibility: use avgPrice or legacy avgCost
-    const positionAvgPrice = position.avgPrice ?? position.avgCost ?? price;
-    transactions[userId].push({
-      id: `tx_${Date.now()}`,
-      type: 'sell',
-      symbol,
-      shares,
-      price,
-      total: totalProceeds,
-      profit: (price - positionAvgPrice) * shares,
-      timestamp: new Date().toISOString()
+
+    // Mutate balance + positions atomically inside the per-user lock
+    const result = await req.app.locals.storage.withUserLock(userId, async (tx) => {
+      // Read the portfolio inside the lock
+      const portfolio = await tx.getPortfolio(userId);
+
+      if (!portfolio) {
+        return {
+          error: {
+            status: 400,
+            body: { success: false, message: 'No portfolio found' }
+          }
+        };
+      }
+
+      // Re-check holdings inside the lock
+      const position = portfolio.positions.find(p => p.symbol === symbol);
+      if (!position || position.shares < shares) {
+        return {
+          error: {
+            status: 400,
+            body: {
+              success: false,
+              message: `Insufficient shares. Have ${position?.shares || 0} ${symbol}, trying to sell ${shares}`
+            }
+          }
+        };
+      }
+
+      // Backwards compatibility: use avgPrice or legacy avgCost (capture before mutation)
+      const positionAvgPrice = position.avgPrice ?? position.avgCost ?? price;
+
+      // Execute sell
+      portfolio.balance += totalProceeds;
+      position.shares -= shares;
+      position.currentPrice = price;
+      // Update change data from current quote to prevent stale values
+      position.change = quote.change || 0;
+      position.changePercent = quote.changePercent || "0.00";
+
+      // Remove position if fully sold
+      if (position.shares === 0) {
+        portfolio.positions = portfolio.positions.filter(p => p.symbol !== symbol);
+      }
+
+      // Update total value
+      portfolio.totalValue = portfolio.balance + portfolio.positions.reduce((sum, p) =>
+        sum + (p.shares * p.currentPrice), 0);
+      portfolio.lastUpdated = new Date().toISOString();
+
+      await tx.savePortfolio(userId, portfolio);
+
+      // Record transaction
+      await tx.addTransaction(userId, {
+        id: `tx_${crypto.randomUUID()}`,
+        type: 'sell',
+        symbol,
+        shares,
+        price,
+        total: totalProceeds,
+        profit: (price - positionAvgPrice) * shares,
+        timestamp: new Date().toISOString()
+      });
+
+      return { portfolio };
     });
-    saveTransactions(req, transactions);
-    
-    console.log(`[${getTimestamp()}] 📉 SELL: ${userId} sold ${shares} ${symbol} @ $${price}`);
-    
+
+    if (result.error) {
+      return res.status(result.error.status).json(result.error.body);
+    }
+
+    if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📉 SELL: ${userId} sold ${shares} ${symbol} @ $${price}`);
+
     res.json({
       success: true,
       message: `Sold ${shares} shares of ${symbol}`,
       order: { symbol, shares, price, total: totalProceeds },
-      portfolio
+      portfolio: result.portfolio
     });
   } catch (error) {
     console.error(`[${getTimestamp()}] Sell error:`, error);
@@ -1447,40 +1550,56 @@ router.post('/sell', authenticateToken, async (req, res) => {
 router.get('/portfolio', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const portfolios = getPortfolios(req);
-    let portfolio = portfolios[userId];
-    
+    let portfolio = await req.app.locals.storage.getPortfolio(userId);
+
     if (!portfolio) {
-      portfolio = initializePortfolio(req, userId);
+      portfolio = await initializePortfolio(req, userId);
     }
-    
-    // Update current prices and change data
+
+    // Fetch current quotes FIRST (network), OUTSIDE the lock
+    const quotesBySymbol = {};
     for (const position of portfolio.positions) {
       try {
-        const quote = await getStockQuote(position.symbol);
-        position.currentPrice = quote.price;
-        position.change = quote.change || 0;
-        position.changePercent = quote.changePercent || "0.00";
-        
+        quotesBySymbol[position.symbol] = await getStockQuote(position.symbol);
+      } catch (error) {
+        if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] Failed to update price for ${position.symbol}`);
+      }
+    }
+
+    // Apply price updates atomically inside the per-user lock
+    const updatedPortfolio = await req.app.locals.storage.withUserLock(userId, async (tx) => {
+      let pf = await tx.getPortfolio(userId);
+      if (!pf) {
+        pf = { balance: 10000, positions: [], totalValue: 10000 };
+      }
+
+      // Update current prices and change data
+      for (const position of pf.positions) {
+        const quote = quotesBySymbol[position.symbol];
+        if (quote) {
+          position.currentPrice = quote.price;
+          position.change = quote.change || 0;
+          position.changePercent = quote.changePercent || "0.00";
+        }
+
         // Migrate legacy avgCost to avgPrice if needed
         if (position.avgCost !== undefined && position.avgPrice === undefined) {
           position.avgPrice = position.avgCost;
           delete position.avgCost;
         }
-      } catch (error) {
-        console.warn(`[${getTimestamp()}] Failed to update price for ${position.symbol}`);
       }
-    }
-    
-    // Recalculate total value
-    portfolio.totalValue = portfolio.balance + portfolio.positions.reduce((sum, p) => 
-      sum + (p.shares * p.currentPrice), 0);
-    
-    savePortfolios(req, portfolios);
-    
+
+      // Recalculate total value
+      pf.totalValue = pf.balance + pf.positions.reduce((sum, p) =>
+        sum + (p.shares * p.currentPrice), 0);
+
+      await tx.savePortfolio(userId, pf);
+      return pf;
+    });
+
     res.json({
       success: true,
-      portfolio
+      portfolio: updatedPortfolio
     });
   } catch (error) {
     console.error(`[${getTimestamp()}] Portfolio error:`, error);
@@ -1495,12 +1614,11 @@ router.get('/portfolio', authenticateToken, async (req, res) => {
 router.get('/transactions', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const transactions = getTransactions(req);
-    const userTransactions = transactions[userId] || [];
-    
+    const userTransactions = await req.app.locals.storage.getUserTransactions(userId) || [];
+
     res.json({
       success: true,
-      transactions: userTransactions.sort((a, b) => 
+      transactions: userTransactions.sort((a, b) =>
         new Date(b.timestamp) - new Date(a.timestamp)
       )
     });
@@ -1514,7 +1632,7 @@ router.get('/transactions', authenticateToken, async (req, res) => {
 });
 
 // Get stock quote
-router.get('/quote/:symbol', async (req, res) => {
+router.get('/quote/:symbol', quoteLimiter, async (req, res) => {
   try {
     const symbol = req.params.symbol.toUpperCase();
     const quote = await getStockQuote(symbol);
@@ -1533,7 +1651,7 @@ router.get('/quote/:symbol', async (req, res) => {
 });
 
 // Search stocks
-router.get('/search', async (req, res) => {
+router.get('/search', searchLimiter, async (req, res) => {
   try {
     const query = req.query.query || req.query.q;
     if (!query || query.length < 1) {
@@ -1542,7 +1660,15 @@ router.get('/search', async (req, res) => {
         message: 'Search query required'
       });
     }
-    
+
+    // Reject overly long queries to prevent cache pollution / wasted work
+    if (query.length > MAX_QUERY_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        message: 'Search query too long'
+      });
+    }
+
     const results = await searchStocks(query);
     
     res.json({
@@ -1559,28 +1685,38 @@ router.get('/search', async (req, res) => {
 });
 
 // Autocomplete search
-router.get('/autocomplete', async (req, res) => {
+router.get('/autocomplete', searchLimiter, async (req, res) => {
   try {
     const query = req.query.query || req.query.q;
     if (!query || query.length < 1) {
       return res.json({ success: true, results: [] });
     }
-    
+
+    // Reject overly long queries to prevent cache pollution / wasted work
+    if (query.length > MAX_QUERY_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        message: 'Search query too long'
+      });
+    }
+
     // Quick cached lookup for autocomplete
     const cacheKey = `autocomplete_${query.toLowerCase()}`;
     const now = Date.now();
-    if (searchCache[cacheKey] && (now - searchCache[cacheKey].timestamp) < SEARCH_CACHE_DURATION) {
+    const cachedEntry = searchCache.get(cacheKey);
+    if (cachedEntry && (now - cachedEntry.timestamp) < SEARCH_CACHE_DURATION) {
       return res.json({
         success: true,
-        results: searchCache[cacheKey].data
+        results: cachedEntry.data
       });
     }
-    
+
     const results = await searchStocks(query);
     const limitedResults = results.slice(0, 5); // Limit for autocomplete
-    
-    searchCache[cacheKey] = { data: limitedResults, timestamp: now };
-    
+
+    searchCache.set(cacheKey, { data: limitedResults, timestamp: now });
+    enforceCacheCap(searchCache);
+
     res.json({
       success: true,
       results: limitedResults

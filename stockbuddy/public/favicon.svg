@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="14" fill="#2A4580"/>
+  <!-- upward tick / chart line -->
+  <path d="M14 42 L27 30 L36 37 L50 20" fill="none" stroke="#B69C60" stroke-width="5"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="50" cy="20" r="4.5" fill="#F4F1E9"/>
+</svg>

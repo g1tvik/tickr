@@ -132,7 +132,7 @@ const fetchStockData = async (symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'
     // Fetch quotes for stocks in parallel
     const stockPromises = symbols.map(async (symbol) => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/trading/quote/${symbol}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api'}/trading/quote/${symbol}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'

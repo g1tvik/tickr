@@ -1,55 +1,8 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
 import { useCoachChat } from '../hooks/useCoachChat';
 import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
-
-const escapeHtml = (text = '') =>
-  text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-
-const renderMarkdown = (raw = '') => {
-  if (!raw) return '';
-
-  let html = escapeHtml(raw);
-
-  html = html.replace(/^###\s?(.*)$/gim, '<h3>$1</h3>');
-  html = html.replace(/^##\s?(.*)$/gim, '<h2>$1</h2>');
-  html = html.replace(/^#\s?(.*)$/gim, '<h1>$1</h1>');
-
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  html = html.replace(/_(.+?)_/g, '<em>$1</em>');
-  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-  html = html.replace(
-    /(^|\n)(- .*(\n- .*)+)/g,
-    (match) => {
-      const items = match
-        .trim()
-        .split('\n')
-        .map((line) => line.replace(/^- /, '').trim());
-      return `\n<ul>${items.map((item) => `<li>${item}</li>`).join('')}</ul>`;
-    }
-  );
-
-  const blocks = html
-    .split(/\n{2,}/)
-    .map((block) => {
-      const withBreaks = block.replace(/\n/g, '<br/>');
-      return `<p>${withBreaks}</p>`;
-    })
-    .join('');
-
-  return blocks
-    .replace(/<p>(<ul>.*?<\/ul>)<\/p>/g, '$1')
-    .replace(/<p>(<h\d>.*?<\/h\d>)<\/p>/g, '$1')
-    .replace(/<p>/g, '<p style="margin:0 0 8px 0;">');
-};
 
 /**
  * CoachChat Component
@@ -64,28 +17,31 @@ const renderMarkdown = (raw = '') => {
  * @param {string} props.placeholder - Custom placeholder text for input
  * @param {Function} props.onMessageSent - Callback when a message is sent
  * @param {Function} props.onError - Callback when an error occurs
+ * @param {Function} props.onClearHistory - Callback to clear the persisted conversation
  */
-export function CoachChat({ 
-  scenario, 
-  enabled = true, 
+export function CoachChat({
+  scenario,
+  enabled = true,
   disabled = false,
   placeholder = null,
   onMessageSent = null,
   onError = null,
   messages = null,
   onSendMessage = null,
+  onClearHistory = null,
   isLoading = false,
   error = null
 }) {
   // If props are provided (controlled mode), use them. Otherwise use internal hook (uncontrolled mode).
-  const internalHook = useCoachChat(scenario, enabled);
-  
+  // Skip persistence here: when controlled, the parent owns (and persists) the conversation.
   const isControlled = messages !== null;
+  const internalHook = useCoachChat(scenario, enabled, { persist: !isControlled });
   
   const displayMessages = isControlled ? messages : internalHook.chatMessages;
   const sendMessage = isControlled ? onSendMessage : internalHook.sendMessage;
   const loading = isControlled ? isLoading : internalHook.isLoading;
   const displayError = isControlled ? error : internalHook.error;
+  const clearHistory = isControlled ? onClearHistory : internalHook.clearHistory;
   
   const [internalInput, setInternalInput] = React.useState('');
   const userInput = isControlled ? internalInput : internalHook.userInput;
@@ -136,9 +92,18 @@ export function CoachChat({
     }
   };
 
-  const defaultPlaceholder = scenario 
+  const defaultPlaceholder = scenario
     ? `Ask about ${scenario.symbol}, ${scenario.puzzleType?.toUpperCase()} puzzle, or any trading concept...`
     : 'Ask me about trading...';
+
+  // The coach is in demo mode when the backend has no live AI key configured.
+  const isDemoMode = displayMessages.some((m) => m && m.demo);
+  const canClearHistory = typeof clearHistory === 'function' && displayMessages.length > 0;
+
+  const handleClearHistory = () => {
+    if (!canClearHistory) return;
+    clearHistory();
+  };
 
   return (
     <div style={{
@@ -147,17 +112,71 @@ export function CoachChat({
       padding: '16px',
       height: '500px',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      border: '1px solid rgba(42, 69, 128, 0.06)',
+      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)'
     }}>
-      <h3 style={{
-        fontSize: '20px',
-        fontWeight: 'bold',
-        color: marbleDarkGray,
-        marginBottom: '16px',
-        fontFamily: fontHeading
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '8px',
+        marginBottom: '16px'
       }}>
-        💬 AI Trading Coach
-      </h3>
+        <h3 style={{
+          fontSize: '20px',
+          fontWeight: 'bold',
+          color: marbleDarkGray,
+          margin: 0,
+          fontFamily: fontHeading
+        }}>
+          💬 AI Trading Coach
+        </h3>
+        <button
+          type="button"
+          onClick={handleClearHistory}
+          disabled={!canClearHistory}
+          aria-label="Clear chat history"
+          title="Clear chat history"
+          style={{
+            padding: '6px 12px',
+            borderRadius: '8px',
+            border: `1px solid ${gray}`,
+            backgroundColor: 'transparent',
+            color: gray,
+            fontSize: '12px',
+            fontWeight: '600',
+            fontFamily: fontBody,
+            cursor: canClearHistory ? 'pointer' : 'not-allowed',
+            opacity: canClearHistory ? 1 : 0.5
+          }}
+        >
+          Clear chat
+        </button>
+      </div>
+
+      {isDemoMode && (
+        <div
+          role="status"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            alignSelf: 'flex-start',
+            marginBottom: '12px',
+            padding: '4px 10px',
+            borderRadius: '999px',
+            backgroundColor: 'rgba(182, 156, 96, 0.12)',
+            border: '1px solid rgba(182, 156, 96, 0.35)',
+            color: marbleGold,
+            fontSize: '11px',
+            fontWeight: '600',
+            fontFamily: fontBody
+          }}
+        >
+          ● Demo mode — coach running without a live AI key
+        </div>
+      )}
 
       {/* Chat Messages */}
       <div 
@@ -188,11 +207,21 @@ export function CoachChat({
               fontFamily: fontBody
             }}
             >
-              <div
-                className="coach-message-content"
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(message.content) }}
-              />
+              <div className="coach-message-content">
+                <ReactMarkdown>{message.content || ''}</ReactMarkdown>
+              </div>
             </div>
+            {message.type === 'ai' && message.demo && (
+              <div style={{
+                marginTop: '4px',
+                fontSize: '11px',
+                fontStyle: 'italic',
+                color: marbleGold,
+                fontFamily: fontBody
+              }}>
+                Demo response — no live AI key configured.
+              </div>
+            )}
           </div>
         ))}
         {loading && (
@@ -228,6 +257,7 @@ export function CoachChat({
             onChange={(e) => setUserInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={placeholder || defaultPlaceholder}
+            aria-label="Ask the AI trading coach a question"
             disabled={loading}
             style={{
               flex: 1,
@@ -243,6 +273,7 @@ export function CoachChat({
           <button
             onClick={handleSendMessage}
             disabled={loading || !userInput.trim()}
+            aria-label="Send message to AI coach"
             style={{
               padding: '8px 16px',
               borderRadius: '8px',

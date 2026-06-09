@@ -34,6 +34,22 @@
   font-size: 16px;
 }
 
+/* Error banner — on-brand but clearly an error (muted red on a soft red wash) */
+.error-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #FCEDEC;
+  border: 1px solid #E3B3AE;
+  border-left: 4px solid #B23A36;
+  color: #8C2A26;
+  font-size: 14px;
+  line-height: 1.45;
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
 .signin-form {
   margin-bottom: 24px;
 }
@@ -63,6 +79,44 @@
 .form-input:focus {
   outline: none;
   border-color: var(--marbleGold);
+}
+
+.form-hint {
+  display: block;
+  color: var(--marbleGray);
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+/* Password requirement checklist */
+.password-rules {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.password-rule {
+  color: var(--marbleGray);
+  font-size: 12px;
+  line-height: 1.4;
+  transition: color 0.2s ease;
+}
+
+.password-rule span {
+  display: inline-block;
+  width: 14px;
+  text-align: center;
+  color: var(--marbleGray);
+}
+
+.password-rule--met {
+  color: #2E7D32;
+}
+
+.password-rule--met span {
+  color: #2E7D32;
 }
 
 .signin-button {
@@ -111,6 +165,7 @@
 .demo-divider {
   color: var(--marbleGray);
   font-size: 14px;
+  margin-top: 16px;
   margin-bottom: 16px;
 }
 

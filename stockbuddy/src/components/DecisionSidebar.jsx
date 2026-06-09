@@ -94,7 +94,9 @@ export function DecisionSidebar({
     <div style={{
       backgroundColor: lightGray,
       borderRadius: '20px',
-      padding: '16px'
+      padding: '16px',
+      border: '1px solid rgba(42, 69, 128, 0.06)',
+      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)'
     }}>
       <h3 style={{
         fontSize: '18px',

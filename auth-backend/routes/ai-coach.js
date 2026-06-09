@@ -39,8 +39,13 @@ async function callGemini({
     };
   }
 
-  const endpoint = `${GEMINI_ENDPOINT(model)}?key=${process.env.GEMINI_API_KEY}`;
-  const resp = await axios.post(endpoint, body, { timeout });
+  // Pass the API key as a header (x-goog-api-key) rather than a URL query param,
+  // so it never leaks into request logs, proxies, or error traces.
+  const endpoint = GEMINI_ENDPOINT(model);
+  const resp = await axios.post(endpoint, body, {
+    timeout,
+    headers: { 'x-goog-api-key': process.env.GEMINI_API_KEY },
+  });
   const candidate = resp?.data?.candidates?.[0];
   const parts = candidate?.content?.parts || [];
   const text = parts.map((part) => part.text || '').join('').trim();
@@ -51,7 +56,7 @@ async function callGemini({
     // Special handling for MAX_TOKENS: it's not really blocked, just cut off.
     if (blockReason === 'MAX_TOKENS') {
       // If we have parts but they joined to empty string (unlikely), or if text is just missing
-      console.warn('[GEMINI] Response cut off due to MAX_TOKENS. Candidate:', JSON.stringify(candidate, null, 2));
+      console.warn('[GEMINI] Response cut off due to MAX_TOKENS. finishReason:', candidate?.finishReason);
       throw new Error('AI response was truncated. Please try asking a shorter question.');
     }
     
@@ -221,7 +226,11 @@ Remember: This is a learning exercise. Your analysis should help them understand
 }
 
 // Lightweight diagnostics to verify env + Ollama/Gemini connectivity
-router.get('/diagnostics', async (req, res) => {
+router.get('/diagnostics', async (req, res, next) => {
+  // Diagnostic-only: leaks config (models, key presence, endpoints). Dev-only.
+  if (process.env.NODE_ENV === 'production') {
+    return next();
+  }
   const baseUrl = process.env.OLLAMA_BASE_URL;
   const model = process.env.OLLAMA_MODEL;
   const result = { 
@@ -273,7 +282,11 @@ router.get('/diagnostics', async (req, res) => {
 });
 
 // Test endpoint to verify which AI is being used
-router.get('/test-ai', async (req, res) => {
+router.get('/test-ai', async (req, res, next) => {
+  // Diagnostic-only: leaks config (models, key presence, endpoints). Dev-only.
+  if (process.env.NODE_ENV === 'production') {
+    return next();
+  }
   try {
     const result = {
       hasGemini,
@@ -360,13 +373,8 @@ router.post('/chat', async (req, res) => {
       return res.json({ success: true, response: content });
     }
 
-    // If Gemini is not configured, return 503 immediately.
-    // We are intentionally disabling Ollama fallback to ensure we know exactly which model is being used.
-    return res.status(503).json({
-      success: false,
-      error: 'AI chat is not configured',
-      details: 'Gemini API key is missing. Please configure GEMINI_API_KEY in the backend environment variables.',
-    });
+    // No Gemini key configured → graceful demo coaching so the feature still works.
+    return res.json({ success: true, response: demoChatResponse(message, scenario), demo: true });
     } catch (error) {
       console.error('[AI-CHAT] Error:', error?.response?.data || error.message);
       
@@ -391,11 +399,11 @@ router.post('/chat', async (req, res) => {
         errorMessage = 'AI service returned an empty response. Please try again.';
       }
       
-      res.status(statusCode).json({ 
-        success: false, 
-        error: errorMessage, 
-        details: error.message 
-      });
+      const chatErrorResponse = { success: false, error: errorMessage };
+      if (process.env.NODE_ENV !== 'production') {
+        chatErrorResponse.details = error.message;
+      }
+      res.status(statusCode).json(chatErrorResponse);
     }
 });
 
@@ -487,13 +495,8 @@ router.post('/analyze', async (req, res) => {
       return res.json({ success: true, analysis: parsed });
     }
 
-    // If Gemini is not configured, return 503 immediately.
-    // We are intentionally disabling Ollama fallback to ensure we know exactly which model is being used.
-    return res.status(503).json({
-      success: false,
-      error: 'AI analysis is not configured',
-      details: 'Gemini API key is missing. Please configure GEMINI_API_KEY in the backend environment variables.',
-    });
+    // No Gemini key configured → graceful demo analysis so the feature still works.
+    return res.json({ success: true, analysis: demoAnalysis(userDecisions, scenario), demo: true });
   } catch (error) {
     console.error('[AI-ANALYZE] Error:', error?.response?.data || error.message);
     
@@ -515,13 +518,80 @@ router.post('/analyze', async (req, res) => {
       errorMessage = 'AI service returned an empty response. Please try again.';
     }
     
-    res.status(statusCode).json({ 
-      success: false, 
-      error: errorMessage, 
-      details: error.message 
-    });
+    const analyzeErrorResponse = { success: false, error: errorMessage };
+    if (process.env.NODE_ENV !== 'production') {
+      analyzeErrorResponse.details = error.message;
+    }
+    res.status(statusCode).json(analyzeErrorResponse);
   }
 });
+
+// ── Demo-mode coaching (used when GEMINI_API_KEY is not configured) ──────────
+// Provides genuinely useful, on-topic educational responses without an LLM so
+// the AI Coach is fully functional out of the box. Responses are flagged with
+// `demo: true` so the UI can show a subtle "demo mode" note.
+function demoChatResponse(message, scenario) {
+  const title = scenario?.title || 'this scenario';
+  const msg = (message || '').toLowerCase();
+  let topic;
+  if (/risk|stop|loss|position siz|how much/.test(msg)) {
+    topic = '**Risk management** is about survival first. Size each position so a single bad trade can\'t sink you — many traders risk no more than 1–2% of their account per idea, and decide their exit *before* entering.';
+  } else if (/buy|enter|entry|get in/.test(msg)) {
+    topic = 'Strong **entries** come from a plan, not a feeling. Wait for confirmation — a level holding, a trend resuming — instead of chasing a move that has already happened.';
+  } else if (/sell|exit|take profit|get out|hold/.test(msg)) {
+    topic = '**Exits** decide your P&L more than entries do. Define a target and a stop in advance, and consider scaling out so you lock in gains without trying to call the exact top.';
+  } else if (/fundamental|earnings|valuation|company/.test(msg)) {
+    topic = '**Fundamentals** ask whether the business is actually worth more — earnings, growth, competitive position. They tell you *what* to own; technicals help with *when*.';
+  } else if (/technical|chart|pattern|support|resistance|trend/.test(msg)) {
+    topic = '**Technical analysis** reads price and volume for clues about supply and demand. Trend, plus support/resistance levels, are the highest-value basics to start with.';
+  } else if (/psycholog|fear|greed|emotion|fomo|panic/.test(msg)) {
+    topic = '**Trading psychology** is the hidden edge. Fear and greed make people sell bottoms and buy tops — a written plan you commit to in advance is the antidote.';
+  } else {
+    topic = 'The key is to separate the **decision** from the **outcome**: a sound process can still lose on any single trade, and a reckless one can get lucky. Judge yourself on the process, not the result.';
+  }
+  return `*(Demo coach — add a \`GEMINI_API_KEY\` on the backend for personalized AI answers.)*\n\n` +
+    `On **${title}**: ${topic}\n\n` +
+    `A good next step: open the **Learn** section for a short lesson on this, then come back and apply it here. ` +
+    `Want to go deeper on entries, exits, or risk?`;
+}
+
+function demoAnalysis(userDecisions = [], scenario = null) {
+  const decisions = Array.isArray(userDecisions) ? userDecisions : [];
+  const reasoned = decisions.filter((d) => d && typeof d.reasoning === 'string' && d.reasoning.trim().length >= 20).length;
+  const hasActivity = decisions.length > 0;
+  // Heuristic score: rewards making decisions and explaining the reasoning.
+  let score = 55;
+  if (hasActivity) score += 10;
+  if (decisions.length >= 2) score += 10;
+  if (reasoned > 0) score += Math.min(20, reasoned * 8);
+  score = Math.max(40, Math.min(92, score));
+  const part = Math.round(score / 5);
+  return {
+    totalScore: score,
+    breakdown: {
+      decisionQuality: part,
+      timing: part,
+      reasoning: part,
+      riskManagement: part,
+      marketUnderstanding: score - part * 4,
+    },
+    coaching: {
+      overall: hasActivity
+        ? 'You engaged with the scenario and committed to decisions — that\'s how real skill is built. Focus next on making your reasoning explicit before each trade.'
+        : 'Try making at least one decision in the scenario, and write a sentence on *why* — the reasoning is where the learning happens.',
+      strengths: reasoned > 0 ? ['You explained the thinking behind your trades'] : ['You took part in the scenario'],
+      improvements: ['Define your exit and risk *before* entering', 'Tie each decision to the scenario\'s key events'],
+      marketPsychology: 'Notice when fear or greed is driving a choice — that awareness alone improves results.',
+      fundamentals: 'Ask whether the underlying story (earnings, demand, catalysts) actually changed, or only the price.',
+      technicalAnalysis: 'Mark the key support/resistance levels and the prevailing trend before deciding.',
+      riskManagement: 'Size positions so no single trade can do serious damage; always know your stop.',
+      nextSteps: ['Review a related lesson in Learn', 'Replay the scenario with a written plan', 'Compare your exits to the optimal path'],
+    },
+    scenarioComparison: scenario
+      ? `This scenario was based on real historical events. Your decisions show ${score >= 70 ? 'solid' : 'developing'} grasp of the core trading principles.`
+      : '',
+  };
+}
 
 // Ollama legacy prompts (kept for fallback)
 function generateChatPrompt(message, scenario, chatHistory) {

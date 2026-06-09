@@ -117,34 +117,21 @@ npm install
 
 4. **Configure environment variables**
 
-Create a `.env` file in `auth-backend/`:
-```env
-# Required
-PORT=5001
-JWT_SECRET=replace-with-strong-secret-min-16-chars
-ALPACA_API_KEY=your-alpaca-key
-ALPACA_SECRET_KEY=your-alpaca-secret
-GOOGLE_CLIENT_ID=your-google-client-id
+Copy the example files and fill them in — they are fully documented:
 
-# Optional
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-EMAIL_USER=service-account@example.com
-EMAIL_PASSWORD=super-secret-password
-FRONTEND_URL=http://localhost:5173
-
-# Lockdown mode (only approved users can access)
-LOCKDOWN=false
-
-# Trading safety (paper = sandbox, live = real money)
-ALPACA_ENV=paper
+```bash
+cp auth-backend/.env.example auth-backend/.env
+cp stockbuddy/.env.example  stockbuddy/.env
 ```
 
-Create a `.env` file in `stockbuddy/`:
-```env
-VITE_API_BASE_URL=http://localhost:5001/api
-VITE_LOCKDOWN=false
-VITE_GOOGLE_CLIENT_ID=your-google-client-id
-```
+Backend essentials (`auth-backend/.env`): `JWT_SECRET` (strong, 32+ chars in prod),
+`DATABASE_URL` (Postgres — required in production; omit locally to use file storage),
+`ALPACA_API_KEY`/`ALPACA_SECRET_KEY` (optional → demo data), `GOOGLE_CLIENT_ID`,
+`GEMINI_API_KEY` (optional → demo coach), `ADMIN_API_KEY` (enables admin endpoints),
+`LOCKDOWN`, `ALPACA_ENV=paper`.
+
+Frontend (`stockbuddy/.env`): `VITE_API_BASE_URL`, `VITE_GOOGLE_CLIENT_ID`,
+`VITE_LOCKDOWN`, `VITE_SITE_URL`. (Vite only reads `VITE_`-prefixed variables.)
 
 5. **Start the development servers**
 
@@ -248,16 +235,47 @@ The application is actively under development with a focus on:
 
 This project is private and proprietary.
 
-## 🗄️ Data Storage Migration Note
+## 🗄️ Data Storage
 
-Current authentication and trading data live in JSON files under `auth-backend/data/`, which is ideal for demos but brittle for growth. We recommend adopting SQLite as the first persistent store: it runs locally without external services and gives us transactional safety for purchases and portfolio updates. Prisma can sit on top of SQLite to provide schema migrations, type-safe queries, and an easy upgrade path to PostgreSQL when we outgrow a single-file database. The proposed migration plan is:
+Storage runs behind a single async interface (`auth-backend/services/storage/`) with two
+interchangeable backends, selected automatically:
 
-1. Define Prisma models that mirror our existing `users`, `portfolios`, and `transactions` JSON structures.
-2. Ship a CLI script that reads the JSON files and seeds the SQLite database.
-3. Swap route handlers to read/write via Prisma while keeping the seeding script for QA resets.
-4. When ready for multi-user deployments, flip Prisma's datasource to PostgreSQL—no route changes required.
+- **Postgres** — used whenever `DATABASE_URL` is set (required in production). Money and
+  inventory operations (buy/sell/purchase) run inside per-user locked transactions, so
+  concurrent requests can never corrupt balances or positions.
+- **File storage** — used in local dev/tests when `DATABASE_URL` is absent. Atomic writes +
+  an in-process per-user mutex give the same correctness for a single process.
 
-This approach removes plaintext storage, unlocks relational constraints, and positions us for future analytics without a ground-up rewrite.
+Setup:
+
+```bash
+# 1. Point DATABASE_URL at a Postgres instance (see .env.example), then:
+cd auth-backend
+npm run db:setup          # create the schema (idempotent)
+npm run db:setup:import   # OPTIONAL: import existing data/*.json into Postgres
+```
+
+Schema lives in `auth-backend/db/schema.sql` and is also ensured automatically on server
+startup. With `docker compose up`, a Postgres service is provisioned and wired for you.
+
+## 🚢 Deploy with Docker
+
+A production-style stack (Postgres + API + nginx-served frontend) ships in `docker-compose.yml`:
+
+```bash
+cp auth-backend/.env.example auth-backend/.env   # then fill in real values
+docker compose up --build
+# → frontend at http://localhost:3000, API proxied at /api, Postgres on 5432
+```
+
+> ⚠️ **Before deploying, rotate every secret** in `auth-backend/.env`
+> (`JWT_SECRET`, Alpaca keys, Gemini key, email password, Google OAuth). In production the
+> server refuses to boot with a weak `JWT_SECRET` or a missing `DATABASE_URL`, and real-money
+> trading (`ALPACA_ENV=live`) requires `CONFIRM_LIVE_TRADING=true`. Admin endpoints (waitlist
+> export, invites) are disabled unless `ADMIN_API_KEY` is set.
+
+Without live API keys the app still runs end-to-end: market data and the AI coach fall back to
+clearly-labeled demo data, and the "Sign in with Google" button hides itself.
 
 ## 👤 Author
 
