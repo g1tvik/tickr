@@ -1269,36 +1269,42 @@ function Home({ isLoggedIn }) {
     };
   }, [reduceMotion]);
 
-  // ─── Adaptive navbar: switch theme based on the section directly under it ──
+  // ─── Adaptive navbar ──────────────────────────────────────────────────────
+  // The page is dark except for ONE cream "features" band. So the navbar is
+  // light only while that band actually sits under the navbar line, and dark
+  // (transparent over the dark shell) everywhere else. This is deterministic —
+  // it can't be "stuck light" over the unobserved dark sections — and only
+  // changes at the two crossing points, so the navbar's CSS background-color
+  // transition animates the switch smoothly.
   useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') return;
+    const NAV_H = 64; // navbar height (matches .navbar-color min-height)
+    let raf = 0;
+    let current = null; // 'light' | 'dark' — only act on real changes
 
-    const sections = [
-      { ref: heroRef,     theme: 'dark'  },
-      { ref: featuresRef, theme: 'light' },
-      { ref: footerRef,   theme: 'dark'  },
-    ].filter(s => s.ref.current);
+    const apply = () => {
+      raf = 0;
+      const el = featuresRef.current;
+      const rect = el ? el.getBoundingClientRect() : null;
+      // The cream band crosses the navbar baseline when its top is at/above the
+      // line and its bottom is still below it.
+      const light = rect ? rect.top <= NAV_H && rect.bottom > NAV_H : false;
+      const next = light ? 'light' : 'dark';
+      if (next === current) return;
+      current = next;
+      if (light) setNavbarBackground('rgba(244, 241, 233, 0.92)', { theme: 'light' });
+      else setNavbarBackground('transparent', { theme: 'dark' });
+    };
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Pick the section with the largest intersection — that's "under" the navbar
-        const top = entries
-          .filter(e => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (!top) return;
-        const theme = top.target.dataset.theme;
-        if (theme === 'light') {
-          setNavbarBackground('rgba(244, 241, 233, 0.92)', { theme: 'light' });
-        } else {
-          setNavbarBackground('transparent', { theme: 'dark' });
-        }
-      },
-      // Trigger when the section's TOP edge crosses just under the navbar
-      { rootMargin: '-64px 0px -60% 0px', threshold: [0, 0.1, 0.5] }
-    );
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(apply); };
 
-    sections.forEach(s => observer.observe(s.ref.current));
-    return () => observer.disconnect();
+    apply(); // set initial state for current scroll position
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
   }, [setNavbarBackground]);
 
   // Calculate scroll progress (0 to 1) for different sections
