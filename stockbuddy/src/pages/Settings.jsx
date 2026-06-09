@@ -357,7 +357,9 @@ const Settings = () => {
           <div style={{
             backgroundColor: cardBg2,
             borderRadius: '20px',
-            padding: isMobile ? '24px 20px' : '32px'
+            padding: isMobile ? '24px 20px' : '32px',
+            border: `1px solid ${cardBorder}`,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.28)'
           }}>
             <div style={{
               display: 'flex',
@@ -458,7 +460,9 @@ const Settings = () => {
           <div style={{
             backgroundColor: cardBg2,
             borderRadius: '20px',
-            padding: isMobile ? '24px 20px' : '32px'
+            padding: isMobile ? '24px 20px' : '32px',
+            border: `1px solid ${cardBorder}`,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.28)'
           }}>
             <div style={{
               display: 'flex',
@@ -572,7 +576,9 @@ const Settings = () => {
           <div style={{
             backgroundColor: cardBg2,
             borderRadius: '20px',
-            padding: isMobile ? '24px 20px' : '32px'
+            padding: isMobile ? '24px 20px' : '32px',
+            border: `1px solid ${cardBorder}`,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.28)'
           }}>
             <div style={{
               display: 'flex',
@@ -663,7 +669,9 @@ const Settings = () => {
           <div style={{
             backgroundColor: cardBg2,
             borderRadius: '20px',
-            padding: isMobile ? '24px 20px' : '32px'
+            padding: isMobile ? '24px 20px' : '32px',
+            border: `1px solid ${cardBorder}`,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.28)'
           }}>
             <div style={{
               display: 'flex',
@@ -844,7 +852,12 @@ const Settings = () => {
                   padding: '12px',
                   borderRadius: '8px',
                   border: `1px solid ${cardBorder}`,
-                  fontSize: '16px'
+                  background: cardBg2,
+                  color: cardText,
+                  fontSize: '16px',
+                  fontFamily: fontBody,
+                  outline: 'none',
+                  boxSizing: 'border-box'
                 }}
               />
             </div>
@@ -867,7 +880,12 @@ const Settings = () => {
                   padding: '12px',
                   borderRadius: '8px',
                   border: `1px solid ${cardBorder}`,
-                  fontSize: '16px'
+                  background: cardBg2,
+                  color: cardText,
+                  fontSize: '16px',
+                  fontFamily: fontBody,
+                  outline: 'none',
+                  boxSizing: 'border-box'
                 }}
               />
             </div>
@@ -890,7 +908,12 @@ const Settings = () => {
                   padding: '12px',
                   borderRadius: '8px',
                   border: `1px solid ${cardBorder}`,
-                  fontSize: '16px'
+                  background: cardBg2,
+                  color: cardText,
+                  fontSize: '16px',
+                  fontFamily: fontBody,
+                  outline: 'none',
+                  boxSizing: 'border-box'
                 }}
               />
             </div>
@@ -986,7 +1009,12 @@ const Settings = () => {
                   padding: '12px',
                   borderRadius: '8px',
                   border: `1px solid ${cardBorder}`,
-                  fontSize: '16px'
+                  background: cardBg2,
+                  color: cardText,
+                  fontSize: '16px',
+                  fontFamily: fontBody,
+                  outline: 'none',
+                  boxSizing: 'border-box'
                 }}
               >
                 <option value={1}>1 lesson</option>
@@ -1015,7 +1043,12 @@ const Settings = () => {
                   padding: '12px',
                   borderRadius: '8px',
                   border: `1px solid ${cardBorder}`,
-                  fontSize: '16px'
+                  background: cardBg2,
+                  color: cardText,
+                  fontSize: '16px',
+                  fontFamily: fontBody,
+                  outline: 'none',
+                  boxSizing: 'border-box'
                 }}
               >
                 <option value="true">Enabled</option>
