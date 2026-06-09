@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 import { useSEO, SEO_CONFIG } from '../lib/seo';
 
 export default function Shop() {
   useSEO(SEO_CONFIG.shop);
   const navigate = useNavigate();
+  // Local dark "marble" theme constants (imported palette bindings can't be reassigned)
+  const pageBg = '#2C2C2C';
+  const cardBg = '#343434';
+  const cardBg2 = '#2f2f2f';
+  const cardText = '#F4F1E9';
+  const cardMuted = '#b8b4a8';
+  const cardBorder = 'rgba(182,156,96,0.22)';
+  const cardDivider = 'rgba(244, 241, 233, 0.12)';
   const [shopItems, setShopItems] = useState([]);
   const [userCoins, setUserCoins] = useState(0);
   const [purchasedItems, setPurchasedItems] = useState([]);
@@ -160,12 +168,13 @@ export default function Shop() {
 
   if (loading) {
     return (
-      <div style={{
+      <div className="page-dark" style={{
         minHeight: "100vh",
-        backgroundColor: white,
+        backgroundColor: pageBg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        color: cardText,
         fontFamily: fontBody
       }}>
         <div>Loading shop...</div>
@@ -175,9 +184,9 @@ export default function Shop() {
 
   if (error) {
     return (
-      <div style={{
+      <div className="page-dark" style={{
         minHeight: "100vh",
-        backgroundColor: white,
+        backgroundColor: pageBg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -185,7 +194,7 @@ export default function Shop() {
         gap: "16px",
         fontFamily: fontBody
       }}>
-        <div style={{ color: marbleDarkGray, fontSize: "18px" }}>❌ {error}</div>
+        <div style={{ color: cardText, fontSize: "18px" }}>❌ {error}</div>
         <button
           onClick={fetchShopData}
           style={{
@@ -206,9 +215,9 @@ export default function Shop() {
   }
 
   return (
-    <div style={{
+    <div className="page-dark" style={{
       minHeight: "100vh",
-      backgroundColor: white,
+      backgroundColor: pageBg,
       fontFamily: fontBody
     }}>
       {/* Scoped styles: responsive grid collapse + header layout (<=768px). */}
@@ -223,9 +232,9 @@ export default function Shop() {
       `}</style>
       {/* Header */}
       <div style={{
-        backgroundColor: lightGray,
+        backgroundColor: cardBg2,
         padding: "24px",
-        borderBottom: `1px solid ${gray}`
+        borderBottom: `1px solid ${cardDivider}`
       }}>
         <div style={{
           maxWidth: "1200px",
@@ -236,7 +245,7 @@ export default function Shop() {
             style={{
               backgroundColor: "transparent",
               border: "none",
-              color: marbleDarkGray,
+              color: cardText,
               fontSize: "16px",
               cursor: "pointer",
               marginBottom: "16px",
@@ -251,7 +260,7 @@ export default function Shop() {
           <h1 style={{
             fontSize: "32px",
             fontWeight: "bold",
-            color: marbleDarkGray,
+            color: cardText,
             fontFamily: fontHeading,
             marginBottom: "8px"
           }}>
@@ -260,7 +269,7 @@ export default function Shop() {
           
           <p style={{
             fontSize: "18px",
-            color: gray,
+            color: cardMuted,
             marginBottom: "24px"
           }}>
             Spend your coins on upgrades and exclusive content
@@ -268,9 +277,10 @@ export default function Shop() {
 
           {/* User Balance */}
           <div className="shop-balance-bar" style={{
-            backgroundColor: white,
+            backgroundColor: cardBg,
             borderRadius: "12px",
-            padding: "16px"
+            padding: "16px",
+            border: `1px solid ${cardBorder}`
           }}>
             <div style={{
               display: "flex",
@@ -286,13 +296,13 @@ export default function Shop() {
                 <div style={{
                   fontSize: "20px",
                   fontWeight: "bold",
-                  color: marbleDarkGray
+                  color: cardText
                 }}>
                   {userCoins} Coins
                 </div>
                 <div style={{
                   fontSize: "14px",
-                  color: gray
+                  color: cardMuted
                 }}>
                   Available Balance
                 </div>
@@ -347,7 +357,7 @@ export default function Shop() {
               padding: "12px 16px",
               borderRadius: "12px",
               backgroundColor: message ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-              color: message ? '#166534' : '#991b1b',
+              color: message ? '#22c55e' : '#ef4444',
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
@@ -385,8 +395,8 @@ export default function Shop() {
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
               style={{
-                backgroundColor: selectedCategory === category.id ? marbleGold : lightGray,
-                color: selectedCategory === category.id ? marbleDarkGray : marbleDarkGray,
+                backgroundColor: selectedCategory === category.id ? marbleGold : cardBg2,
+                color: selectedCategory === category.id ? marbleDarkGray : cardText,
                 border: "none",
                 padding: "12px 20px",
                 borderRadius: "12px",
@@ -407,7 +417,7 @@ export default function Shop() {
             <div
               key={item.id}
               style={{
-                backgroundColor: lightGray,
+                backgroundColor: cardBg2,
                 borderRadius: "20px",
                 padding: "24px",
                 border: `2px solid ${getRarityColor(item.rarity)}`,
@@ -446,7 +456,7 @@ export default function Shop() {
                   <div style={{
                     fontSize: "18px",
                     fontWeight: "bold",
-                    color: marbleDarkGray,
+                    color: cardText,
                     marginBottom: "4px"
                   }}>
                     {item.name}
@@ -464,7 +474,7 @@ export default function Shop() {
 
               <p style={{
                 fontSize: "14px",
-                color: gray,
+                color: cardMuted,
                 marginBottom: "20px",
                 lineHeight: "1.5"
               }}>
@@ -489,7 +499,7 @@ export default function Shop() {
                   <span style={{
                     fontSize: "18px",
                     fontWeight: "bold",
-                    color: marbleDarkGray
+                    color: cardText
                   }}>
                     {item.price}
                   </span>
@@ -500,7 +510,7 @@ export default function Shop() {
                     disabled
                     style={{
                       backgroundColor: gray,
-                      color: white,
+                      color: cardText,
                       border: "none",
                       padding: "8px 16px",
                       borderRadius: "8px",
@@ -517,7 +527,7 @@ export default function Shop() {
                     disabled={userCoins < item.price}
                     style={{
                       backgroundColor: userCoins >= item.price ? marbleGold : gray,
-                      color: userCoins >= item.price ? marbleDarkGray : white,
+                      color: userCoins >= item.price ? marbleDarkGray : cardText,
                       border: "none",
                       padding: "8px 16px",
                       borderRadius: "8px",
@@ -539,7 +549,7 @@ export default function Shop() {
           <div style={{
             textAlign: "center",
             padding: "48px",
-            color: gray
+            color: cardMuted
           }}>
             <div style={{
               fontSize: "48px",
@@ -550,7 +560,7 @@ export default function Shop() {
             <h3 style={{
               fontSize: "20px",
               fontWeight: "bold",
-              color: marbleDarkGray,
+              color: cardText,
               marginBottom: "8px"
             }}>
               No items in this category
@@ -568,19 +578,21 @@ export default function Shop() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: "rgba(0,0,0,0.5)",
+          backgroundColor: "rgba(0,0,0,0.6)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: white,
+            backgroundColor: cardBg,
             borderRadius: "20px",
             padding: "32px",
             maxWidth: "400px",
             width: "90%",
-            textAlign: "center"
+            textAlign: "center",
+            border: `1px solid ${cardBorder}`,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.28)"
           }}>
             <div style={{
               fontSize: "48px",
@@ -592,7 +604,7 @@ export default function Shop() {
             <h3 style={{
               fontSize: "24px",
               fontWeight: "bold",
-              color: marbleDarkGray,
+              color: cardText,
               marginBottom: "16px"
             }}>
               Confirm Purchase
@@ -600,7 +612,7 @@ export default function Shop() {
             
             <p style={{
               fontSize: "16px",
-              color: gray,
+              color: cardMuted,
               marginBottom: "24px"
             }}>
               Purchase <strong>{selectedItem.name}</strong> for <strong>{selectedItem.price} coins</strong>?
@@ -615,7 +627,7 @@ export default function Shop() {
                 onClick={() => setShowPurchaseModal(false)}
                 style={{
                   backgroundColor: gray,
-                  color: white,
+                  color: cardText,
                   border: "none",
                   padding: "12px 24px",
                   borderRadius: "12px",

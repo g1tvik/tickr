@@ -8,13 +8,13 @@ import AppImage from '../components/AppImage';
 import { useSEO } from '../lib/seo';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
-const BG      = '#F4F1E9';
-const SURFACE = '#FFFFFF';
-const BORDER  = 'rgba(230,200,122,0.18)';
-const SHADOW  = '0 1px 2px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.06)';
+const BG      = '#2C2C2C';
+const SURFACE = '#343434';
+const BORDER  = 'rgba(182,156,96,0.22)';
+const SHADOW  = '0 8px 24px rgba(0,0,0,0.28)';
 const GOLD    = '#E6C87A';
-const DARK    = '#222222';
-const MUTED   = '#A0998A';
+const DARK    = '#F4F1E9';
+const MUTED   = '#b8b4a8';
 
 // A muted-gold palette of allocation slice colours, used in order of weight.
 const ALLOC_COLORS = ['#B69C60', '#C8AE76', '#D8C397', '#A0998A'];
@@ -125,7 +125,7 @@ function DemoPill() {
         fontWeight: 600,
         letterSpacing: '0.06em',
         textTransform: 'uppercase',
-        color: '#8A7634',
+        color: '#E6C87A',
         background: 'rgba(182,156,96,0.12)',
         border: '1px solid rgba(182,156,96,0.35)',
       }}
@@ -169,7 +169,7 @@ function ProfileXPBar({ xp }) {
         aria-valuenow={Math.round(pct)}
         aria-valuemin={0}
         aria-valuemax={100}
-        style={{ height: '4px', background: 'rgba(0,0,0,0.08)', borderRadius: '2px', overflow: 'hidden' }}
+        style={{ height: '4px', background: 'rgba(244,241,233,0.08)', borderRadius: '2px', overflow: 'hidden' }}
       >
         <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${GOLD} 0%, #F0D586 100%)`, borderRadius: '2px', transition: 'width 0.6s ease' }} />
       </div>
@@ -239,7 +239,7 @@ function AllocationSection({ allocation }) {
           'Portfolio allocation: ' +
           allocation.slices.map((s) => `${s.label} ${s.pct} percent`).join(', ')
         }
-        style={{ display: 'flex', height: '10px', borderRadius: '999px', overflow: 'hidden', marginBottom: '16px', background: 'rgba(0,0,0,0.05)' }}
+        style={{ display: 'flex', height: '10px', borderRadius: '999px', overflow: 'hidden', marginBottom: '16px', background: 'rgba(244,241,233,0.08)' }}
       >
         {allocation.slices.map((s, i) => (
           <div key={i} style={{ width: `${s.pct}%`, background: s.color }} />
@@ -256,8 +256,8 @@ function AllocationSection({ allocation }) {
               gap: '10px',
               padding: '12px 14px',
               borderRadius: '12px',
-              background: 'rgba(0,0,0,0.025)',
-              border: '1px solid rgba(0,0,0,0.05)',
+              background: '#2f2f2f',
+              border: '1px solid rgba(182,156,96,0.22)',
             }}
           >
             <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: '3px', background: s.color, flexShrink: 0 }} />
@@ -373,7 +373,7 @@ function Profile() {
             <div style={{ fontSize: '13px', color: MUTED }}>@{username} · joined {joinedYear}</div>
             {email && <div style={{ fontSize: '12px', color: MUTED, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{email}</div>}
           </div>
-          <button onClick={() => navigate('/settings')} className="profile-edit-btn" style={{ background: 'rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '8px', padding: '7px 14px', fontSize: '12px', fontWeight: '600', color: DARK, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          <button onClick={() => navigate('/settings')} className="profile-edit-btn" style={{ background: 'rgba(244,241,233,0.06)', border: '1px solid rgba(182,156,96,0.22)', borderRadius: '8px', padding: '7px 14px', fontSize: '12px', fontWeight: '600', color: DARK, cursor: 'pointer', whiteSpace: 'nowrap' }}>
             Edit profile
           </button>
         </div>
@@ -410,13 +410,13 @@ function Profile() {
 
         {/* Badge wall */}
         <SectionCard style={{ marginTop: '16px' }}>
-          <div style={{ fontSize: '10px', color: MUTED, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: '600', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>badges</div>
+          <div style={{ fontSize: '10px', color: MUTED, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: '600', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid rgba(244,241,233,0.12)' }}>badges</div>
           <BadgeWall badges={badges} />
         </SectionCard>
 
         {/* Portfolio allocation */}
         <SectionCard style={{ marginTop: '16px', marginBottom: '32px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid rgba(244,241,233,0.12)' }}>
             <div style={{ fontSize: '10px', color: MUTED, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: '600' }}>allocation</div>
             {isDemo && allocation.hasPositions && <DemoPill />}
           </div>

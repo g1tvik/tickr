@@ -2,9 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { lessonStructure } from '../data/lessonStructure';
 import progressManager from '../utils/progressManager';
-import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 import { useSEO, SEO_CONFIG } from '../lib/seo';
+
+// ─── Marble dark theme tokens ───────────────────────────────────────────────
+const BG        = '#2C2C2C'; // page background
+const SURFACE   = '#343434'; // cards / modals / elevated banners
+const INSET     = '#2f2f2f'; // nested / inset surface
+const BORDER    = 'rgba(182, 156, 96, 0.22)';
+const DIVIDER   = 'rgba(244, 241, 233, 0.12)';
+const SHADOW    = '0 8px 24px rgba(0,0,0,0.28)';
+// Remapped (formerly light) palette tokens → dark theme
+const white          = '#F4F1E9'; // cream — light text on dark/gold
+const lightGray      = '#2f2f2f'; // inset / nested surface (was light)
+const gray           = '#b8b4a8'; // muted text / lines
+const marbleDarkGray = '#F4F1E9'; // primary text (cream)
 
 export default function Learn() {
   useSEO(SEO_CONFIG.learn);
@@ -224,12 +237,12 @@ export default function Learn() {
     return (
       <div style={{
         minHeight: "100vh",
-        backgroundColor: "#F4F1E9",
+        backgroundColor: BG,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         fontFamily: fontBody,
-        color: "#A0998A",
+        color: gray,
         fontSize: "14px",
         letterSpacing: "0.04em",
       }}>
@@ -243,15 +256,15 @@ export default function Learn() {
   return (
     <div style={{
       minHeight: "100vh",
-      backgroundColor: "#F4F1E9",
+      backgroundColor: BG,
       fontFamily: fontBody
     }}>
       {/* Header */}
       <div style={{
-        backgroundColor: "#FFFFFF",
-        borderBottom: "1px solid rgba(230,200,122,0.18)",
+        backgroundColor: SURFACE,
+        borderBottom: `1px solid ${BORDER}`,
         padding: "28px 24px",
-        boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.05)",
+        boxShadow: SHADOW,
       }}>
         <div style={{ maxWidth: "560px", margin: "0 auto" }}>
           <button
@@ -259,7 +272,7 @@ export default function Learn() {
             style={{
               backgroundColor: "transparent",
               border: "none",
-              color: "#A0998A",
+              color: gray,
               fontSize: "12px",
               letterSpacing: "0.06em",
               textTransform: "uppercase",
@@ -278,7 +291,7 @@ export default function Learn() {
           <h1 style={{
             fontSize: "26px",
             fontWeight: "400",
-            color: "#222222",
+            color: marbleDarkGray,
             fontFamily: fontHeading,
             marginBottom: "6px",
             letterSpacing: "-0.01em",
@@ -288,7 +301,7 @@ export default function Learn() {
 
           <p style={{
             fontSize: "14px",
-            color: "#A0998A",
+            color: gray,
             marginBottom: progress ? "20px" : "0",
             lineHeight: "1.5",
           }}>
@@ -310,9 +323,9 @@ export default function Learn() {
                   borderRadius: "20px",
                   fontSize: "12px",
                   fontWeight: "600",
-                  background: p.gold ? "rgba(230,200,122,0.15)" : "rgba(0,0,0,0.05)",
-                  color: p.gold ? "#B8860B" : "#6B6B6B",
-                  border: p.gold ? "1px solid rgba(230,200,122,0.3)" : "1px solid rgba(0,0,0,0.06)",
+                  background: p.gold ? "rgba(230,200,122,0.15)" : "rgba(244,241,233,0.06)",
+                  color: p.gold ? "#E6C87A" : gray,
+                  border: p.gold ? "1px solid rgba(230,200,122,0.3)" : "1px solid rgba(244,241,233,0.12)",
                 }}>
                   {p.label}
                 </span>
@@ -342,7 +355,7 @@ export default function Learn() {
               <div
                 onClick={() => isUnlocked && handleUnitClick(unit)}
                 style={{
-                  backgroundColor: unitCompleted ? marbleGold : isUnlocked ? marbleDarkGray : gray,
+                  backgroundColor: unitCompleted ? marbleGold : isUnlocked ? SURFACE : INSET,
                   borderRadius: "16px",
                   padding: "16px 20px",
                   marginBottom: "24px",
@@ -358,7 +371,7 @@ export default function Learn() {
                   width: "40px",
                   height: "40px",
                   borderRadius: "50%",
-                  backgroundColor: unitCompleted ? marbleDarkGray : "rgba(255,255,255,0.2)",
+                  backgroundColor: unitCompleted ? "#2C2C2C" : "rgba(255,255,255,0.2)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -480,8 +493,8 @@ export default function Learn() {
                           height: "64px",
                     borderRadius: "50%",
                           backgroundColor: lessonCompleted ? marbleGold :
-                                          isNext ? marbleDarkGray :
-                                          isLocked ? lightGray : marbleDarkGray,
+                                          isNext ? SURFACE :
+                                          isLocked ? lightGray : SURFACE,
                           border: isNext ? `4px solid ${marbleGold}` : lessonCompleted ? "4px solid rgba(0,0,0,0.1)" : `4px solid ${gray}`,
                     display: "flex",
                     alignItems: "center",
@@ -576,7 +589,7 @@ export default function Learn() {
                           height: "72px",
                           borderRadius: "50%",
                           background: unitCompleted ? `linear-gradient(135deg, ${marbleGold} 0%, #f4d03f 100%)` :
-                                      allLessonsCompleted ? `linear-gradient(135deg, ${marbleDarkGray} 0%, #444 100%)` :
+                                      allLessonsCompleted ? `linear-gradient(135deg, #343434 0%, #444 100%)` :
                                       lightGray,
                           border: unitCompleted ? "4px solid rgba(0,0,0,0.1)" :
                                   allLessonsCompleted && canTakeUnitTest.canTake ? `4px solid ${marbleGold}` :
@@ -625,8 +638,8 @@ export default function Learn() {
         {/* Final Test Section */}
         {progress?.unitProgress === 100 && (
           <div style={{
-            backgroundColor: `linear-gradient(135deg, ${marbleDarkGray} 0%, #333 100%)`,
-            background: `linear-gradient(135deg, ${marbleDarkGray} 0%, #333 100%)`,
+            backgroundColor: `linear-gradient(135deg, #2C2C2C 0%, #333 100%)`,
+            background: `linear-gradient(135deg, #2C2C2C 0%, #333 100%)`,
             borderRadius: "20px",
             padding: "32px",
             textAlign: "center",
@@ -670,7 +683,7 @@ export default function Learn() {
               onClick={handleFinalTest}
               disabled={!progressManager.canTakeFinalTest().canTake && !progressManager.canTakeFinalTest().needsUnlock}
               style={{
-                backgroundColor: (progressManager.canTakeFinalTest().canTake || progressManager.canTakeFinalTest().needsUnlock) ? marbleGold : gray,
+                backgroundColor: (progressManager.canTakeFinalTest().canTake || progressManager.canTakeFinalTest().needsUnlock) ? marbleGold : "rgba(244,241,233,0.10)",
                 color: (progressManager.canTakeFinalTest().canTake || progressManager.canTakeFinalTest().needsUnlock) ? marbleDarkGray : white,
                 border: "none",
                 padding: "14px 28px",
@@ -715,7 +728,7 @@ export default function Learn() {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: white,
+            backgroundColor: SURFACE,
             borderRadius: "20px",
             padding: "32px",
             maxWidth: "600px",
@@ -739,7 +752,7 @@ export default function Learn() {
               <button
                 onClick={() => setShowLessonsModal(false)}
                 style={{
-                  backgroundColor: gray,
+                  backgroundColor: "rgba(244,241,233,0.10)",
                   color: white,
                   border: "none",
                   padding: "8px 12px",
@@ -823,8 +836,8 @@ export default function Learn() {
                       </div>
                       <div style={{
                         backgroundColor: lessonProgress ? marbleGold :
-                                       isLocked ? gray : marbleDarkGray,
-                        color: lessonProgress ? marbleDarkGray : white,
+                                       isLocked ? "rgba(244,241,233,0.10)" : "#F4F1E9",
+                        color: lessonProgress ? "#2C2C2C" : isLocked ? white : "#2C2C2C",
                         padding: "4px 8px",
                         borderRadius: "8px",
                         fontSize: "12px",
@@ -846,7 +859,7 @@ export default function Learn() {
                 return (
                   <div
                     style={{
-                      backgroundColor: allLessonsCompleted ? lightGray : gray,
+                      backgroundColor: allLessonsCompleted ? lightGray : INSET,
                       borderRadius: "12px",
                       padding: "16px",
                       cursor: allLessonsCompleted && canTakeUnitTest.canTake ? "pointer" : "not-allowed",
@@ -890,8 +903,8 @@ export default function Learn() {
                         </div>
                       </div>
                       <div style={{
-                        backgroundColor: allLessonsCompleted && canTakeUnitTest.canTake ? "#ffd700" : gray,
-                        color: allLessonsCompleted && canTakeUnitTest.canTake ? marbleDarkGray : white,
+                        backgroundColor: allLessonsCompleted && canTakeUnitTest.canTake ? "#ffd700" : "rgba(244,241,233,0.10)",
+                        color: allLessonsCompleted && canTakeUnitTest.canTake ? "#2C2C2C" : white,
                         padding: "4px 8px",
                         borderRadius: "8px",
                         fontSize: "12px",
@@ -927,7 +940,7 @@ export default function Learn() {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: white,
+            backgroundColor: SURFACE,
             borderRadius: "20px",
             padding: "32px",
             maxWidth: "600px",
@@ -951,7 +964,7 @@ export default function Learn() {
               <button
                 onClick={() => setShowUnitTest(false)}
                 style={{
-                  backgroundColor: gray,
+                  backgroundColor: "rgba(244,241,233,0.10)",
                   color: white,
                   border: "none",
                   padding: "8px 12px",
@@ -1016,7 +1029,7 @@ export default function Learn() {
               <button
                 onClick={() => setShowUnitTest(false)}
                 style={{
-                  backgroundColor: gray,
+                  backgroundColor: "rgba(244,241,233,0.10)",
                   color: white,
                   border: "none",
                   padding: "12px 24px",
@@ -1063,7 +1076,7 @@ export default function Learn() {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: white,
+            backgroundColor: SURFACE,
             borderRadius: "20px",
             padding: "32px",
             maxWidth: "600px",
@@ -1087,7 +1100,7 @@ export default function Learn() {
               <button
                 onClick={() => setShowFinalTest(false)}
                 style={{
-                  backgroundColor: gray,
+                  backgroundColor: "rgba(244,241,233,0.10)",
                   color: white,
                   border: "none",
                   padding: "8px 12px",
@@ -1152,7 +1165,7 @@ export default function Learn() {
               <button
                 onClick={() => setShowFinalTest(false)}
                 style={{
-                  backgroundColor: gray,
+                  backgroundColor: "rgba(244,241,233,0.10)",
                   color: white,
                   border: "none",
                   padding: "12px 24px",
@@ -1199,7 +1212,7 @@ export default function Learn() {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: white,
+            backgroundColor: SURFACE,
             borderRadius: "20px",
             padding: "32px",
             maxWidth: "500px",
@@ -1257,7 +1270,7 @@ export default function Learn() {
               <button
                 onClick={() => setShowUnlockModal(false)}
                 style={{
-                  backgroundColor: gray,
+                  backgroundColor: "rgba(244,241,233,0.10)",
                   color: white,
                   border: "none",
                   padding: "12px 24px",
@@ -1273,7 +1286,7 @@ export default function Learn() {
                 onClick={handleUnlockFinalTest}
                 disabled={(progress?.coins || 0) < lessonStructure.finalTest.unlockCost}
                 style={{
-                  backgroundColor: (progress?.coins || 0) >= lessonStructure.finalTest.unlockCost ? marbleGold : gray,
+                  backgroundColor: (progress?.coins || 0) >= lessonStructure.finalTest.unlockCost ? marbleGold : "rgba(244,241,233,0.10)",
                   color: (progress?.coins || 0) >= lessonStructure.finalTest.unlockCost ? marbleDarkGray : white,
                   border: "none",
                   padding: "12px 24px",

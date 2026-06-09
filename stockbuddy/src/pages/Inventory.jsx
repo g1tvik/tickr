@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 import { useSEO } from '../lib/seo';
 
@@ -19,6 +19,14 @@ const defaultInventoryState = {
 export default function Inventory() {
   useSEO({ title: 'Inventory' });
   const navigate = useNavigate();
+  // Local dark "marble" theme constants (imported palette bindings can't be reassigned)
+  const pageBg = '#2C2C2C';
+  const cardBg = '#343434';
+  const cardBg2 = '#2f2f2f';
+  const cardText = '#F4F1E9';
+  const cardMuted = '#b8b4a8';
+  const cardBorder = 'rgba(182,156,96,0.22)';
+  const cardDivider = 'rgba(244, 241, 233, 0.12)';
   const [inventoryData, setInventoryData] = useState(defaultInventoryState);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -227,7 +235,7 @@ export default function Inventory() {
   };
 
   const getStatusColor = (item) => {
-    if (!item) return marbleDarkGray;
+    if (!item) return cardText;
     
     // Check if there's an active effect for boosters
     if (item.itemType === 'booster') {
@@ -239,7 +247,7 @@ export default function Inventory() {
     
     if (item.active) return '#22c55e';
     if (item.consumed) return '#6b7280';
-    return marbleDarkGray;
+    return cardText;
   };
 
   const isItemUsable = (item) => {
@@ -295,12 +303,13 @@ export default function Inventory() {
 
   if (loading) {
     return (
-      <div style={{
+      <div className="page-dark" style={{
         minHeight: "100vh",
-        backgroundColor: white,
+        backgroundColor: pageBg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        color: cardText,
         fontFamily: fontBody
       }}>
         <div>Loading inventory...</div>
@@ -310,9 +319,9 @@ export default function Inventory() {
 
   if (error && inventoryData.purchasedItems.length === 0) {
     return (
-      <div style={{
+      <div className="page-dark" style={{
         minHeight: "100vh",
-        backgroundColor: white,
+        backgroundColor: pageBg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -320,7 +329,7 @@ export default function Inventory() {
         gap: "16px",
         fontFamily: fontBody
       }}>
-        <div style={{ color: marbleDarkGray, fontSize: "18px" }}>❌ {error}</div>
+        <div style={{ color: cardText, fontSize: "18px" }}>❌ {error}</div>
         <button
           onClick={fetchInventory}
           style={{
@@ -346,9 +355,9 @@ export default function Inventory() {
   const learningProgress = inventoryData.learningProgress || { xp: 0, coins: 0 };
 
   return (
-    <div style={{
+    <div className="page-dark" style={{
       minHeight: "100vh",
-      backgroundColor: white,
+      backgroundColor: pageBg,
       fontFamily: fontBody
     }}>
       {/* Scoped styles: responsive grid collapse (<=768px). */}
@@ -360,9 +369,9 @@ export default function Inventory() {
       `}</style>
       {/* Header */}
       <div style={{
-        backgroundColor: lightGray,
+        backgroundColor: cardBg2,
         padding: "24px",
-        borderBottom: `1px solid ${gray}`
+        borderBottom: `1px solid ${cardDivider}`
       }}>
         <div style={{
           maxWidth: "1200px",
@@ -373,7 +382,7 @@ export default function Inventory() {
             style={{
               backgroundColor: "transparent",
               border: "none",
-              color: marbleDarkGray,
+              color: cardText,
               fontSize: "16px",
               cursor: "pointer",
               marginBottom: "16px",
@@ -388,7 +397,7 @@ export default function Inventory() {
           <h1 style={{
             fontSize: "32px",
             fontWeight: "bold",
-            color: marbleDarkGray,
+            color: cardText,
             fontFamily: fontHeading,
             marginBottom: "8px"
           }}>
@@ -397,7 +406,7 @@ export default function Inventory() {
           
           <p style={{
             fontSize: "18px",
-            color: gray,
+            color: cardMuted,
             marginBottom: "24px"
           }}>
             Manage your purchased items and activate them when you're ready.
@@ -410,25 +419,26 @@ export default function Inventory() {
             flexWrap: "wrap"
           }}>
             <div style={{
-              backgroundColor: white,
+              backgroundColor: cardBg,
               borderRadius: "12px",
               padding: "16px",
               display: "flex",
               alignItems: "center",
-              gap: "12px"
+              gap: "12px",
+              border: `1px solid ${cardBorder}`
             }}>
               <div style={{ fontSize: "24px" }}>⏭️</div>
               <div>
                 <div style={{
                   fontSize: "18px",
                   fontWeight: "bold",
-                  color: marbleDarkGray
+                  color: cardText
                 }}>
                   {skipTokens}
                 </div>
                 <div style={{
                   fontSize: "14px",
-                  color: gray
+                  color: cardMuted
                 }}>
                   Skip Tokens
                 </div>
@@ -436,25 +446,26 @@ export default function Inventory() {
             </div>
 
             <div style={{
-              backgroundColor: white,
+              backgroundColor: cardBg,
               borderRadius: "12px",
               padding: "16px",
               display: "flex",
               alignItems: "center",
-              gap: "12px"
+              gap: "12px",
+              border: `1px solid ${cardBorder}`
             }}>
               <div style={{ fontSize: "24px" }}>🛡️</div>
               <div>
                 <div style={{
                   fontSize: "18px",
                   fontWeight: "bold",
-                  color: marbleDarkGray
+                  color: cardText
                 }}>
                   {streakFreezes}
                 </div>
                 <div style={{
                   fontSize: "14px",
-                  color: gray
+                  color: cardMuted
                 }}>
                   Streak Freeze Days
                 </div>
@@ -462,25 +473,26 @@ export default function Inventory() {
             </div>
 
             <div style={{
-              backgroundColor: white,
+              backgroundColor: cardBg,
               borderRadius: "12px",
               padding: "16px",
               display: "flex",
               alignItems: "center",
-              gap: "12px"
+              gap: "12px",
+              border: `1px solid ${cardBorder}`
             }}>
               <div style={{ fontSize: "24px" }}>⭐</div>
               <div>
                 <div style={{
                   fontSize: "18px",
                   fontWeight: "bold",
-                  color: marbleDarkGray
+                  color: cardText
                 }}>
                   {learningProgress.xp || 0} XP
                 </div>
                 <div style={{
                   fontSize: "14px",
-                  color: gray
+                  color: cardMuted
                 }}>
                   Current XP
                 </div>
@@ -504,7 +516,7 @@ export default function Inventory() {
               padding: "12px 16px",
               borderRadius: "12px",
               backgroundColor: message ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-              color: message ? '#166534' : '#991b1b',
+              color: message ? '#22c55e' : '#ef4444',
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
@@ -536,7 +548,7 @@ export default function Inventory() {
               gridColumn: "1 / -1",
               textAlign: "center",
               padding: "48px",
-              color: gray
+              color: cardMuted
             }}>
               <div style={{
                 fontSize: "48px",
@@ -547,7 +559,7 @@ export default function Inventory() {
               <h3 style={{
                 fontSize: "20px",
                 fontWeight: "bold",
-                color: marbleDarkGray,
+                color: cardText,
                 marginBottom: "8px"
               }}>
                 No items in inventory
@@ -577,10 +589,10 @@ export default function Inventory() {
               <div
                 key={resolvePurchaseId(item) || `${item.itemId}-${item.purchasedAt}`}
                 style={{
-                  backgroundColor: lightGray,
+                  backgroundColor: cardBg2,
                   borderRadius: "20px",
                   padding: "24px",
-                  border: `2px solid ${gray}`,
+                  border: `2px solid ${cardBorder}`,
                   position: "relative"
                 }}
               >
@@ -599,14 +611,14 @@ export default function Inventory() {
                     <div style={{
                       fontSize: "18px",
                       fontWeight: "bold",
-                      color: marbleDarkGray,
+                      color: cardText,
                       marginBottom: "4px"
                     }}>
                       {item.itemName}
                     </div>
                     <div style={{
                       fontSize: "12px",
-                      color: gray,
+                      color: cardMuted,
                       fontWeight: "600",
                       textTransform: "uppercase"
                     }}>
@@ -617,7 +629,7 @@ export default function Inventory() {
 
                 <p style={{
                   fontSize: "14px",
-                  color: gray,
+                  color: cardMuted,
                   marginBottom: "20px",
                   lineHeight: "1.5"
                 }}>
@@ -670,7 +682,7 @@ export default function Inventory() {
                   top: "12px",
                   right: "12px",
                   fontSize: "11px",
-                  color: gray,
+                  color: cardMuted,
                   textAlign: "right",
                   lineHeight: "1.4"
                 }}>

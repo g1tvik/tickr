@@ -14,25 +14,27 @@ const Container = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background: linear-gradient(135deg, #2C2C2C 0%, #1c1c1c 100%);
   padding: 20px;
   margin-top: -60px;
   padding-top: 80px;
 `;
 
 const Card = styled.div`
-  background: rgba(255, 255, 255, 0.95);
+  background: #343434;
+  color: #F4F1E9;
+  border: 1px solid rgba(182, 156, 96, 0.22);
   border-radius: 20px;
   padding: 40px;
   max-width: 480px;
   width: 100%;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
 `;
 
 const Logo = styled.h1`
   font-size: 2.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #C9A961 0%, #B69C60 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -41,7 +43,7 @@ const Logo = styled.h1`
 `;
 
 const Subtitle = styled.p`
-  color: #666;
+  color: #b8b4a8;
   text-align: center;
   margin-bottom: 32px;
   font-size: 1.1rem;
@@ -61,25 +63,27 @@ const InputGroup = styled.div`
 
 const Label = styled.label`
   font-weight: 500;
-  color: #333;
+  color: #F4F1E9;
   font-size: 0.9rem;
 `;
 
 const Input = styled.input`
   padding: 14px 16px;
-  border: 2px solid #e0e0e0;
+  border: 2px solid rgba(182, 156, 96, 0.22);
   border-radius: 12px;
   font-size: 1rem;
+  background: #2f2f2f;
+  color: #F4F1E9;
   transition: border-color 0.2s, box-shadow 0.2s;
-  
+
   &:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #B69C60;
+    box-shadow: 0 0 0 3px rgba(182, 156, 96, 0.15);
   }
-  
+
   &::placeholder {
-    color: #aaa;
+    color: #b8b4a8;
   }
 `;
 
@@ -91,13 +95,13 @@ const Button = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #C9A961 0%, #B69C60 100%);
+  color: #2C2C2C;
   margin-top: 8px;
-  
+
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 10px 20px rgba(182, 156, 96, 0.3);
   }
   
   &:disabled {
@@ -128,11 +132,11 @@ const Message = styled.div`
 const Footer = styled.div`
   margin-top: 24px;
   text-align: center;
-  color: #666;
+  color: #b8b4a8;
   font-size: 0.85rem;
-  
+
   a {
-    color: #667eea;
+    color: #B69C60;
     text-decoration: none;
     
     &:hover {
@@ -144,7 +148,7 @@ const Footer = styled.div`
 const InviteSection = styled.div`
   margin-top: 24px;
   padding-top: 24px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid rgba(244, 241, 233, 0.12);
 `;
 
 const InviteInput = styled.div`

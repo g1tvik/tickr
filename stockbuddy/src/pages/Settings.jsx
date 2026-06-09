@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, logout } from '../services/api';
-import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 import { useSEO } from '../lib/seo';
 
 const Settings = () => {
+  // Marble dark theme palette (local — imported palette constants are light).
+  const pageBg = '#2C2C2C';
+  const cardBg = '#343434';
+  const cardBg2 = '#2f2f2f';
+  const cardText = '#F4F1E9';
+  const cardMuted = '#b8b4a8';
+  const cardBorder = 'rgba(182,156,96,0.22)';
+  const divider = 'rgba(244,241,233,0.12)';
+
   useSEO({ title: 'Settings' });
   const navigate = useNavigate();
   const [userProfile, setUserProfile] = useState(null);
@@ -211,9 +220,9 @@ const Settings = () => {
 
   if (loading) {
     return (
-      <div style={{
+      <div className="page-dark" style={{
         minHeight: '100vh',
-        backgroundColor: white,
+        backgroundColor: pageBg,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -226,9 +235,9 @@ const Settings = () => {
 
   if (!isAuthenticated) {
     return (
-      <div style={{
+      <div className="page-dark" style={{
         minHeight: '100vh',
-        backgroundColor: white,
+        backgroundColor: pageBg,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -237,14 +246,14 @@ const Settings = () => {
         <div style={{
           textAlign: 'center',
           padding: '48px',
-          backgroundColor: lightGray,
+          backgroundColor: cardBg2,
           borderRadius: '20px',
           maxWidth: '500px'
         }}>
           <h2 style={{
             fontSize: '24px',
             fontWeight: 'bold',
-            color: marbleDarkGray,
+            color: cardText,
             marginBottom: '16px',
             fontFamily: fontHeading
           }}>
@@ -252,7 +261,7 @@ const Settings = () => {
           </h2>
           <p style={{
             fontSize: '16px',
-            color: gray,
+            color: cardMuted,
             marginBottom: '24px'
           }}>
             You need to be logged in to access your settings.
@@ -278,16 +287,16 @@ const Settings = () => {
   }
 
   return (
-    <div style={{
+    <div className="page-dark" style={{
       minHeight: '100vh',
-      backgroundColor: white,
+      backgroundColor: pageBg,
       fontFamily: fontBody
     }}>
       {/* Header */}
       <div style={{
-        backgroundColor: lightGray,
+        backgroundColor: cardBg2,
         padding: isMobile ? '20px 16px' : '24px',
-        borderBottom: `1px solid ${gray}`
+        borderBottom: `1px solid ${divider}`
       }}>
         <div style={{
           maxWidth: '1200px',
@@ -298,7 +307,7 @@ const Settings = () => {
             style={{
               backgroundColor: 'transparent',
               border: 'none',
-              color: marbleDarkGray,
+              color: cardText,
               fontSize: '16px',
               cursor: 'pointer',
               marginBottom: '16px',
@@ -313,7 +322,7 @@ const Settings = () => {
           <h1 style={{
             fontSize: isMobile ? '26px' : '32px',
             fontWeight: 'bold',
-            color: marbleDarkGray,
+            color: cardText,
             fontFamily: fontHeading,
             marginBottom: '8px'
           }}>
@@ -322,7 +331,7 @@ const Settings = () => {
 
           <p style={{
             fontSize: isMobile ? '16px' : '18px',
-            color: gray,
+            color: cardMuted,
             marginBottom: '16px'
           }}>
             Manage your account preferences and settings
@@ -346,7 +355,7 @@ const Settings = () => {
         }}>
           {/* Account Settings */}
           <div style={{
-            backgroundColor: lightGray,
+            backgroundColor: cardBg2,
             borderRadius: '20px',
             padding: isMobile ? '24px 20px' : '32px'
           }}>
@@ -372,7 +381,7 @@ const Settings = () => {
                 <h3 style={{
                   fontSize: '20px',
                   fontWeight: 'bold',
-                  color: marbleDarkGray,
+                  color: cardText,
                   fontFamily: fontHeading,
                   marginBottom: '4px'
                 }}>
@@ -380,7 +389,7 @@ const Settings = () => {
                 </h3>
                 <p style={{
                   fontSize: '14px',
-                  color: gray
+                  color: cardMuted
                 }}>
                   Manage your profile information
                 </p>
@@ -388,7 +397,7 @@ const Settings = () => {
             </div>
             
             <div style={{
-              backgroundColor: white,
+              backgroundColor: cardBg,
               borderRadius: '12px',
               padding: '24px',
               marginBottom: '16px'
@@ -399,8 +408,8 @@ const Settings = () => {
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
-                <span style={{ color: gray }}>Name</span>
-                <span style={{ color: marbleDarkGray, fontWeight: '500' }}>
+                <span style={{ color: cardMuted }}>Name</span>
+                <span style={{ color: cardText, fontWeight: '500' }}>
                   {userProfile?.name || 'Not set'}
                 </span>
               </div>
@@ -410,8 +419,8 @@ const Settings = () => {
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
-                <span style={{ color: gray }}>Username</span>
-                <span style={{ color: marbleDarkGray, fontWeight: '500' }}>
+                <span style={{ color: cardMuted }}>Username</span>
+                <span style={{ color: cardText, fontWeight: '500' }}>
                   @{userProfile?.username || 'Not set'}
                 </span>
               </div>
@@ -420,8 +429,8 @@ const Settings = () => {
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
-                <span style={{ color: gray }}>Email</span>
-                <span style={{ color: marbleDarkGray, fontWeight: '500' }}>
+                <span style={{ color: cardMuted }}>Email</span>
+                <span style={{ color: cardText, fontWeight: '500' }}>
                   {userProfile?.email || 'Not set'}
                 </span>
               </div>
@@ -431,7 +440,7 @@ const Settings = () => {
               onClick={() => setShowEditProfile(true)}
               style={{
                 backgroundColor: marbleDarkGray,
-                color: white,
+                color: cardText,
                 border: 'none',
                 padding: '12px 24px',
                 borderRadius: '12px',
@@ -447,7 +456,7 @@ const Settings = () => {
 
           {/* Learning Preferences */}
           <div style={{
-            backgroundColor: lightGray,
+            backgroundColor: cardBg2,
             borderRadius: '20px',
             padding: isMobile ? '24px 20px' : '32px'
           }}>
@@ -473,7 +482,7 @@ const Settings = () => {
                 <h3 style={{
                   fontSize: '20px',
                   fontWeight: 'bold',
-                  color: marbleDarkGray,
+                  color: cardText,
                   fontFamily: fontHeading,
                   marginBottom: '4px'
                 }}>
@@ -481,7 +490,7 @@ const Settings = () => {
                 </h3>
                 <p style={{
                   fontSize: '14px',
-                  color: gray
+                  color: cardMuted
                 }}>
                   Customize your learning experience
                 </p>
@@ -489,7 +498,7 @@ const Settings = () => {
             </div>
             
             <div style={{
-              backgroundColor: white,
+              backgroundColor: cardBg,
               borderRadius: '12px',
               padding: '24px',
               marginBottom: '16px'
@@ -500,8 +509,8 @@ const Settings = () => {
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
-                <span style={{ color: gray }}>Daily Goal</span>
-                <span style={{ color: marbleDarkGray, fontWeight: '500' }}>
+                <span style={{ color: cardMuted }}>Daily Goal</span>
+                <span style={{ color: cardText, fontWeight: '500' }}>
                   {learningPreferences.dailyGoal} lessons
                 </span>
               </div>
@@ -510,8 +519,8 @@ const Settings = () => {
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
-                <span style={{ color: gray }}>Notifications</span>
-                <span style={{ color: marbleDarkGray, fontWeight: '500' }}>
+                <span style={{ color: cardMuted }}>Notifications</span>
+                <span style={{ color: cardText, fontWeight: '500' }}>
                   {learningPreferences.notifications ? 'Enabled' : 'Disabled'}
                 </span>
               </div>
@@ -527,7 +536,7 @@ const Settings = () => {
                 onClick={() => setShowPreferences(true)}
                 style={{
                   backgroundColor: marbleDarkGray,
-                  color: white,
+                  color: cardText,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',
@@ -561,7 +570,7 @@ const Settings = () => {
 
           {/* Privacy & Security */}
           <div style={{
-            backgroundColor: lightGray,
+            backgroundColor: cardBg2,
             borderRadius: '20px',
             padding: isMobile ? '24px 20px' : '32px'
           }}>
@@ -587,7 +596,7 @@ const Settings = () => {
                 <h3 style={{
                   fontSize: '20px',
                   fontWeight: 'bold',
-                  color: marbleDarkGray,
+                  color: cardText,
                   fontFamily: fontHeading,
                   marginBottom: '4px'
                 }}>
@@ -595,7 +604,7 @@ const Settings = () => {
                 </h3>
                 <p style={{
                   fontSize: '14px',
-                  color: gray
+                  color: cardMuted
                 }}>
                   Manage your account security
                 </p>
@@ -603,7 +612,7 @@ const Settings = () => {
             </div>
             
             <div style={{
-              backgroundColor: white,
+              backgroundColor: cardBg,
               borderRadius: '12px',
               padding: '24px',
               marginBottom: '16px'
@@ -614,7 +623,7 @@ const Settings = () => {
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
-                <span style={{ color: gray }}>Two-Factor Auth</span>
+                <span style={{ color: cardMuted }}>Two-Factor Auth</span>
                 <span style={{
                   color: marbleGold,
                   fontWeight: '500',
@@ -632,8 +641,8 @@ const Settings = () => {
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
-                <span style={{ color: gray }}>Last Login</span>
-                <span style={{ color: marbleDarkGray, fontWeight: '500' }}>
+                <span style={{ color: cardMuted }}>Last Login</span>
+                <span style={{ color: cardText, fontWeight: '500' }}>
                   {userProfile?.lastLogin ? new Date(userProfile.lastLogin).toLocaleDateString() : 'Unknown'}
                 </span>
               </div>
@@ -642,8 +651,8 @@ const Settings = () => {
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
-                <span style={{ color: gray }}>Account Created</span>
-                <span style={{ color: marbleDarkGray, fontWeight: '500' }}>
+                <span style={{ color: cardMuted }}>Account Created</span>
+                <span style={{ color: cardText, fontWeight: '500' }}>
                   {userProfile?.createdAt ? new Date(userProfile.createdAt).toLocaleDateString() : 'Unknown'}
                 </span>
               </div>
@@ -652,7 +661,7 @@ const Settings = () => {
 
           {/* Data Management */}
           <div style={{
-            backgroundColor: lightGray,
+            backgroundColor: cardBg2,
             borderRadius: '20px',
             padding: isMobile ? '24px 20px' : '32px'
           }}>
@@ -678,7 +687,7 @@ const Settings = () => {
                 <h3 style={{
                   fontSize: '20px',
                   fontWeight: 'bold',
-                  color: marbleDarkGray,
+                  color: cardText,
                   fontFamily: fontHeading,
                   marginBottom: '4px'
                 }}>
@@ -686,7 +695,7 @@ const Settings = () => {
                 </h3>
                 <p style={{
                   fontSize: '14px',
-                  color: gray
+                  color: cardMuted
                 }}>
                   Manage your data and progress
                 </p>
@@ -694,7 +703,7 @@ const Settings = () => {
             </div>
             
             <div style={{
-              backgroundColor: white,
+              backgroundColor: cardBg,
               borderRadius: '12px',
               padding: '24px',
               marginBottom: '16px'
@@ -705,8 +714,8 @@ const Settings = () => {
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
-                <span style={{ color: gray }}>Export Data</span>
-                <span style={{ color: marbleDarkGray, fontWeight: '500' }}>Available</span>
+                <span style={{ color: cardMuted }}>Export Data</span>
+                <span style={{ color: cardText, fontWeight: '500' }}>Available</span>
               </div>
               <div style={{
                 display: 'flex',
@@ -714,7 +723,7 @@ const Settings = () => {
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
-                <span style={{ color: gray }}>Delete Account</span>
+                <span style={{ color: cardMuted }}>Delete Account</span>
                 <span style={{ color: '#ef4444', fontWeight: '500' }}>Danger Zone</span>
               </div>
               <div style={{
@@ -722,7 +731,7 @@ const Settings = () => {
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
-                <span style={{ color: gray }}>Reset Progress</span>
+                <span style={{ color: cardMuted }}>Reset Progress</span>
                 <span style={{ color: '#f59e0b', fontWeight: '500' }}>Warning</span>
               </div>
             </div>
@@ -737,7 +746,7 @@ const Settings = () => {
                 onClick={handleExportData}
                 style={{
                   backgroundColor: marbleDarkGray,
-                  color: white,
+                  color: cardText,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',
@@ -753,7 +762,7 @@ const Settings = () => {
                 onClick={() => setShowDeleteConfirm(true)}
                 style={{
                   backgroundColor: '#ef4444',
-                  color: white,
+                  color: cardText,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',
@@ -770,7 +779,7 @@ const Settings = () => {
               onClick={() => setShowResetConfirm(true)}
               style={{
                 backgroundColor: '#f59e0b',
-                color: white,
+                color: cardText,
                 border: 'none',
                 padding: '12px 24px',
                 borderRadius: '12px',
@@ -801,7 +810,7 @@ const Settings = () => {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: white,
+            backgroundColor: cardBg,
             borderRadius: '20px',
             padding: '32px',
             maxWidth: '500px',
@@ -810,7 +819,7 @@ const Settings = () => {
             <h3 style={{
               fontSize: '24px',
               fontWeight: 'bold',
-              color: marbleDarkGray,
+              color: cardText,
               marginBottom: '24px',
               fontFamily: fontHeading
             }}>
@@ -821,7 +830,7 @@ const Settings = () => {
               <label style={{
                 display: 'block',
                 marginBottom: '8px',
-                color: marbleDarkGray,
+                color: cardText,
                 fontWeight: '500'
               }}>
                 Name
@@ -834,7 +843,7 @@ const Settings = () => {
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: `1px solid ${gray}`,
+                  border: `1px solid ${cardBorder}`,
                   fontSize: '16px'
                 }}
               />
@@ -844,7 +853,7 @@ const Settings = () => {
               <label style={{
                 display: 'block',
                 marginBottom: '8px',
-                color: marbleDarkGray,
+                color: cardText,
                 fontWeight: '500'
               }}>
                 Username
@@ -857,7 +866,7 @@ const Settings = () => {
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: `1px solid ${gray}`,
+                  border: `1px solid ${cardBorder}`,
                   fontSize: '16px'
                 }}
               />
@@ -867,7 +876,7 @@ const Settings = () => {
               <label style={{
                 display: 'block',
                 marginBottom: '8px',
-                color: marbleDarkGray,
+                color: cardText,
                 fontWeight: '500'
               }}>
                 Email
@@ -880,7 +889,7 @@ const Settings = () => {
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: `1px solid ${gray}`,
+                  border: `1px solid ${cardBorder}`,
                   fontSize: '16px'
                 }}
               />
@@ -895,7 +904,7 @@ const Settings = () => {
                 onClick={() => setShowEditProfile(false)}
                 style={{
                   backgroundColor: gray,
-                  color: white,
+                  color: cardText,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',
@@ -943,7 +952,7 @@ const Settings = () => {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: white,
+            backgroundColor: cardBg,
             borderRadius: '20px',
             padding: '32px',
             maxWidth: '500px',
@@ -952,7 +961,7 @@ const Settings = () => {
             <h3 style={{
               fontSize: '24px',
               fontWeight: 'bold',
-              color: marbleDarkGray,
+              color: cardText,
               marginBottom: '24px',
               fontFamily: fontHeading
             }}>
@@ -963,7 +972,7 @@ const Settings = () => {
               <label style={{
                 display: 'block',
                 marginBottom: '8px',
-                color: marbleDarkGray,
+                color: cardText,
                 fontWeight: '500'
               }}>
                 Daily Goal (lessons)
@@ -976,7 +985,7 @@ const Settings = () => {
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: `1px solid ${gray}`,
+                  border: `1px solid ${cardBorder}`,
                   fontSize: '16px'
                 }}
               >
@@ -992,7 +1001,7 @@ const Settings = () => {
               <label style={{
                 display: 'block',
                 marginBottom: '8px',
-                color: marbleDarkGray,
+                color: cardText,
                 fontWeight: '500'
               }}>
                 Notifications
@@ -1005,7 +1014,7 @@ const Settings = () => {
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: `1px solid ${gray}`,
+                  border: `1px solid ${cardBorder}`,
                   fontSize: '16px'
                 }}
               >
@@ -1023,7 +1032,7 @@ const Settings = () => {
                 onClick={() => setShowPreferences(false)}
                 style={{
                   backgroundColor: gray,
-                  color: white,
+                  color: cardText,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',
@@ -1071,7 +1080,7 @@ const Settings = () => {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: white,
+            backgroundColor: cardBg,
             borderRadius: '20px',
             padding: '32px',
             maxWidth: '500px',
@@ -1095,7 +1104,7 @@ const Settings = () => {
             <h3 style={{
               fontSize: '24px',
               fontWeight: 'bold',
-              color: marbleDarkGray,
+              color: cardText,
               marginBottom: '16px',
               fontFamily: fontHeading
             }}>
@@ -1103,7 +1112,7 @@ const Settings = () => {
             </h3>
             
             <p style={{
-              color: gray,
+              color: cardMuted,
               fontSize: '16px',
               lineHeight: '1.5',
               marginBottom: '24px'
@@ -1120,7 +1129,7 @@ const Settings = () => {
                 onClick={() => setShowDeleteConfirm(false)}
                 style={{
                   backgroundColor: gray,
-                  color: white,
+                  color: cardText,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',
@@ -1136,7 +1145,7 @@ const Settings = () => {
                 disabled={saving}
                 style={{
                   backgroundColor: '#ef4444',
-                  color: white,
+                  color: cardText,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',
@@ -1168,7 +1177,7 @@ const Settings = () => {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: white,
+            backgroundColor: cardBg,
             borderRadius: '20px',
             padding: '32px',
             maxWidth: '500px',
@@ -1192,7 +1201,7 @@ const Settings = () => {
             <h3 style={{
               fontSize: '24px',
               fontWeight: 'bold',
-              color: marbleDarkGray,
+              color: cardText,
               marginBottom: '16px',
               fontFamily: fontHeading
             }}>
@@ -1200,7 +1209,7 @@ const Settings = () => {
             </h3>
             
             <p style={{
-              color: gray,
+              color: cardMuted,
               fontSize: '16px',
               lineHeight: '1.5',
               marginBottom: '24px'
@@ -1217,7 +1226,7 @@ const Settings = () => {
                 onClick={() => setShowResetConfirm(false)}
                 style={{
                   backgroundColor: gray,
-                  color: white,
+                  color: cardText,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',
@@ -1233,7 +1242,7 @@ const Settings = () => {
                 disabled={saving}
                 style={{
                   backgroundColor: '#f59e0b',
-                  color: white,
+                  color: cardText,
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '12px',

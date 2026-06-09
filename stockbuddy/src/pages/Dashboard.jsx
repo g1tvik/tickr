@@ -8,16 +8,17 @@ import useReducedMotion from '../hooks/useReducedMotion';
 import { useSEO, SEO_CONFIG } from '../lib/seo';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
-const BG        = '#F4F1E9';
-const SURFACE   = '#FFFFFF';
-const BORDER    = 'rgba(230, 200, 122, 0.18)';
-const SHADOW    = '0 1px 2px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.06)';
+const BG        = '#2C2C2C';
+const SURFACE   = '#343434';
+const INSET     = '#2f2f2f';
+const BORDER    = 'rgba(182, 156, 96, 0.22)';
+const SHADOW    = '0 8px 24px rgba(0,0,0,0.28)';
 const GOLD      = '#E6C87A';
 const DEMO_GOLD = '#B69C60'; // muted gold for "Demo data" labels
-const DARK      = '#222222';
-const MUTED     = '#A0998A';
-const MUTED2    = '#B0B0B0';
-const FAINT_SEP = 'rgba(0,0,0,0.07)';
+const DARK      = '#F4F1E9'; // primary text (cream) on dark surfaces
+const MUTED     = '#b8b4a8';
+const MUTED2    = '#b8b4a8';
+const FAINT_SEP = 'rgba(244, 241, 233, 0.12)';
 
 const card = {
   background: SURFACE,
@@ -69,8 +70,8 @@ const Skeleton = ({ width = '100%', height = '14px', radius = '8px', style, redu
       height,
       borderRadius: radius,
       background: reduced
-        ? 'rgba(0,0,0,0.06)'
-        : 'linear-gradient(90deg, rgba(0,0,0,0.05) 25%, rgba(0,0,0,0.10) 37%, rgba(0,0,0,0.05) 63%)',
+        ? 'rgba(244,241,233,0.06)'
+        : 'linear-gradient(90deg, rgba(244,241,233,0.06) 25%, rgba(244,241,233,0.14) 37%, rgba(244,241,233,0.06) 63%)',
       backgroundSize: '400% 100%',
       animation: reduced ? 'none' : 'dashShimmer 1.4s ease-in-out infinite',
       ...style,
@@ -116,7 +117,7 @@ const XPBar = ({ levelInfo }) => {
       </div>
       <div style={{
         height: '4px',
-        background: 'rgba(0,0,0,0.08)',
+        background: 'rgba(244,241,233,0.10)',
         borderRadius: '2px',
         overflow: 'hidden',
       }}>
@@ -176,7 +177,7 @@ const WeeklyProgressChart = ({ userData }) => {
               width: '100%',
               background: day.lessons > 0
                 ? `linear-gradient(180deg, ${GOLD} 0%, #D4A843 100%)`
-                : 'rgba(0,0,0,0.07)',
+                : 'rgba(244,241,233,0.10)',
               borderRadius: '4px 4px 2px 2px',
               transition: 'height 0.4s ease',
             }} />
@@ -222,8 +223,8 @@ const TradingMilestones = ({ userData, portfolio }) => {
           <div key={m.id} style={{
             padding: '14px',
             borderRadius: '12px',
-            background: done ? `rgba(230,200,122,0.10)` : 'rgba(0,0,0,0.03)',
-            border: `1px solid ${done ? 'rgba(230,200,122,0.3)' : active ? 'rgba(230,200,122,0.2)' : 'rgba(0,0,0,0.06)'}`,
+            background: done ? `rgba(230,200,122,0.10)` : 'rgba(244,241,233,0.05)',
+            border: `1px solid ${done ? 'rgba(230,200,122,0.3)' : active ? 'rgba(230,200,122,0.2)' : 'rgba(244,241,233,0.10)'}`,
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
               <span style={{ fontFamily: fontBody, fontSize: '13px', fontWeight: '600', color: done ? DARK : MUTED }}>{m.title}</span>
@@ -233,8 +234,8 @@ const TradingMilestones = ({ userData, portfolio }) => {
                 padding: '2px 7px',
                 borderRadius: '20px',
                 letterSpacing: '0.06em',
-                background: done ? GOLD : active ? DARK : 'rgba(0,0,0,0.08)',
-                color: done ? DARK : active ? '#FFF' : MUTED,
+                background: done ? GOLD : active ? DARK : 'rgba(244,241,233,0.10)',
+                color: done ? '#2C2C2C' : active ? '#2C2C2C' : MUTED,
               }}>
                 {done ? 'done' : active ? 'active' : 'locked'}
               </span>
@@ -300,7 +301,7 @@ const RecentActivity = ({ userData, portfolio }) => {
           </div>
           <div style={{
             width: '6px', height: '6px', borderRadius: '50%',
-            background: a.type === 'trade' ? GOLD : 'rgba(0,0,0,0.15)',
+            background: a.type === 'trade' ? GOLD : 'rgba(244,241,233,0.20)',
             flexShrink: 0,
           }} />
         </div>
@@ -376,7 +377,7 @@ const Leaderboard = ({ reduced }) => {
     );
   }
 
-  const rankColor = (r) => r === 1 ? GOLD : r === 2 ? '#C0C0C0' : r === 3 ? '#CD7F32' : 'rgba(0,0,0,0.15)';
+  const rankColor = (r) => r === 1 ? GOLD : r === 2 ? '#C0C0C0' : r === 3 ? '#CD7F32' : 'rgba(244,241,233,0.18)';
 
   return (
     <div>
@@ -596,7 +597,7 @@ export default function Dashboard() {
               </div>
               <button
                 onClick={() => navigate('/shop')}
-                style={{ background: DARK, color: '#FFF', border: 'none', padding: '7px 18px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', letterSpacing: '0.01em' }}
+                style={{ background: DARK, color: '#2C2C2C', border: 'none', padding: '7px 18px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', letterSpacing: '0.01em' }}
               >
                 Shop
               </button>
@@ -647,7 +648,7 @@ export default function Dashboard() {
                   {portfolio?.isDemo && <DemoPill />}
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                  <button onClick={() => { setLoading(true); fetchPortfolio(); }} style={{ background: 'rgba(0,0,0,0.05)', border: 'none', padding: '5px 12px', borderRadius: '8px', fontSize: '12px', cursor: 'pointer', color: DARK }}>Refresh</button>
+                  <button onClick={() => { setLoading(true); fetchPortfolio(); }} style={{ background: 'rgba(244,241,233,0.08)', border: 'none', padding: '5px 12px', borderRadius: '8px', fontSize: '12px', cursor: 'pointer', color: DARK }}>Refresh</button>
                   <button onClick={() => navigate('/trade')} style={{ background: GOLD, border: 'none', padding: '5px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', color: DARK }}>Trade →</button>
                 </div>
               </div>
@@ -670,7 +671,7 @@ export default function Dashboard() {
                       { l: 'cash', v: fmt(portfolio.cash) },
                       { l: 'total return', v: fmtPct(portfolio.totalReturn), vc: changeColor(portfolio.totalReturn) },
                     ].map((s, i) => (
-                      <div key={i} style={{ padding: '14px', background: 'rgba(0,0,0,0.02)', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.04)' }}>
+                      <div key={i} style={{ padding: '14px', background: INSET, borderRadius: '10px', border: '1px solid rgba(244,241,233,0.08)' }}>
                         <div style={{ fontSize: '10px', color: MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>{s.l}</div>
                         <div style={{ fontSize: '16px', fontWeight: '700', color: s.vc || DARK }}>{s.v}</div>
                       </div>
@@ -683,7 +684,7 @@ export default function Dashboard() {
                       <div style={{ fontSize: '11px', color: MUTED, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>holdings</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {portfolio.positions.map((h, i) => (
-                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'rgba(0,0,0,0.02)', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.04)' }}>
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: INSET, borderRadius: '10px', border: '1px solid rgba(244,241,233,0.08)' }}>
                             <div>
                               <div style={{ fontWeight: '700', fontSize: '14px', color: DARK }}>{h.symbol}</div>
                               <div style={{ fontSize: '11px', color: MUTED }}>{h.shares} shares</div>
@@ -728,7 +729,7 @@ export default function Dashboard() {
                 <div style={{ fontFamily: fontHeading, fontSize: '18px', fontWeight: '400', color: DARK, marginBottom: '6px' }}>continue learning</div>
                 <div style={{ fontSize: '13px', color: MUTED }}>Pick up where you left off.</div>
               </div>
-              <button onClick={() => navigate('/learn')} style={{ background: DARK, color: '#FFF', border: 'none', padding: '11px 22px', borderRadius: '12px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              <button onClick={() => navigate('/learn')} style={{ background: DARK, color: '#2C2C2C', border: 'none', padding: '11px 22px', borderRadius: '12px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 Go to Learn →
               </button>
             </div>

@@ -2,11 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { lessonStructure } from '../data/lessonStructure';
 import progressManager from '../utils/progressManager';
-import { white, lightGray, gray, marbleDarkGray, marbleGold } from '../marblePalette';
+import { gray, marbleDarkGray, marbleGold } from '../marblePalette';
 import { fontHeading, fontBody } from '../fontPalette';
 import { useSEO } from '../lib/seo';
 
 export default function LessonDetail() {
+  // Marble dark theme palette (local — imported palette constants are light).
+  const pageBg = '#2C2C2C';
+  const cardBg = '#343434';
+  const cardBg2 = '#2f2f2f';
+  const cardText = '#F4F1E9';
+  const cardMuted = '#b8b4a8';
+  const divider = 'rgba(244,241,233,0.12)';
+  const track = 'rgba(244,241,233,0.10)';
+
   const { lessonId } = useParams();
   const navigate = useNavigate();
   const [currentSection, setCurrentSection] = useState(0);
@@ -172,9 +181,9 @@ export default function LessonDetail() {
 
   if (loading) {
     return (
-      <div style={{
+      <div className="page-dark" style={{
         minHeight: "100vh",
-        backgroundColor: white,
+        backgroundColor: pageBg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -187,9 +196,9 @@ export default function LessonDetail() {
 
   if (!lesson) {
     return (
-      <div style={{
+      <div className="page-dark" style={{
         minHeight: "100vh",
-        backgroundColor: white,
+        backgroundColor: pageBg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -214,16 +223,16 @@ export default function LessonDetail() {
   const bestIncorrectCount = Math.max(0, totalQuestions - bestCorrectCount);
 
   return (
-    <div style={{
+    <div className="page-dark" style={{
       minHeight: "100vh",
-      backgroundColor: white,
+      backgroundColor: pageBg,
       fontFamily: fontBody
     }}>
       {/* Header */}
       <div style={{
-        backgroundColor: lightGray,
+        backgroundColor: cardBg2,
         padding: "24px",
-        borderBottom: `1px solid ${gray}`
+        borderBottom: `1px solid ${divider}`
       }}>
         <div style={{
           maxWidth: "1200px",
@@ -234,7 +243,7 @@ export default function LessonDetail() {
             style={{
               backgroundColor: "transparent",
               border: "none",
-              color: marbleDarkGray,
+              color: cardText,
               fontSize: "16px",
               cursor: "pointer",
               marginBottom: "16px",
@@ -249,7 +258,7 @@ export default function LessonDetail() {
           <h1 style={{
             fontSize: "32px",
             fontWeight: "bold",
-            color: marbleDarkGray,
+            color: cardText,
             fontFamily: fontHeading,
             marginBottom: "8px"
           }}>
@@ -258,7 +267,7 @@ export default function LessonDetail() {
           
           <p style={{
             fontSize: "18px",
-            color: gray,
+            color: cardMuted,
             marginBottom: "16px"
           }}>
             {lesson.description}
@@ -274,7 +283,7 @@ export default function LessonDetail() {
             <div style={{
               flex: 1,
               height: "8px",
-              backgroundColor: gray,
+              backgroundColor: track,
               borderRadius: "4px",
               overflow: "hidden"
             }}>
@@ -287,7 +296,7 @@ export default function LessonDetail() {
             </div>
             <span style={{
               fontSize: "14px",
-              color: gray,
+              color: cardMuted,
               fontWeight: "500"
             }}>
               {currentSection + 1} of {lesson.content.length}
@@ -299,7 +308,7 @@ export default function LessonDetail() {
             display: "flex",
             gap: "24px",
             fontSize: "14px",
-            color: gray
+            color: cardMuted
           }}>
             <span>Duration: {lesson.duration}</span>
             <span>XP: {lesson.xp}</span>
@@ -329,7 +338,7 @@ export default function LessonDetail() {
             <div>
               {/* Section Content */}
               <div style={{
-                backgroundColor: lightGray,
+                backgroundColor: cardBg2,
                 borderRadius: "20px",
                 padding: "32px",
                 marginBottom: "32px"
@@ -337,7 +346,7 @@ export default function LessonDetail() {
                 <h2 style={{
                   fontSize: "24px",
                   fontWeight: "bold",
-                  color: marbleDarkGray,
+                  color: cardText,
                   marginBottom: "24px",
                   fontFamily: fontHeading
                 }}>
@@ -347,7 +356,7 @@ export default function LessonDetail() {
                 <div style={{
                   fontSize: "18px",
                   lineHeight: "1.6",
-                  color: marbleDarkGray
+                  color: cardText
                 }}>
                   {currentContent.content}
                 </div>
@@ -364,7 +373,7 @@ export default function LessonDetail() {
                   disabled={currentSection === 0}
                   style={{
                     backgroundColor: currentSection === 0 ? gray : marbleDarkGray,
-                    color: white,
+                    color: cardText,
                     border: "none",
                     padding: "12px 24px",
                     borderRadius: "12px",
@@ -379,7 +388,7 @@ export default function LessonDetail() {
                 
                 <div style={{
                   fontSize: "14px",
-                  color: gray
+                  color: cardMuted
                 }}>
                   Section {currentSection + 1} of {lesson.content.length}
                 </div>
@@ -409,7 +418,7 @@ export default function LessonDetail() {
             }}>
               {/* Progress Card */}
               <div style={{
-                backgroundColor: lightGray,
+                backgroundColor: cardBg2,
                 borderRadius: "20px",
                 padding: "24px",
                 marginBottom: "24px"
@@ -417,7 +426,7 @@ export default function LessonDetail() {
                 <h3 style={{
                   fontSize: "18px",
                   fontWeight: "bold",
-                  color: marbleDarkGray,
+                  color: cardText,
                   marginBottom: "16px",
                   fontFamily: fontHeading
                 }}>
@@ -435,14 +444,14 @@ export default function LessonDetail() {
                   }}>
                     <span style={{
                       fontSize: "14px",
-                      color: gray
+                      color: cardMuted
                     }}>
                       Progress
                     </span>
                     <span style={{
                       fontSize: "14px",
                       fontWeight: "500",
-                      color: marbleDarkGray
+                      color: cardText
                     }}>
                       {currentSection + 1} of {lesson.content.length}
                     </span>
@@ -450,7 +459,7 @@ export default function LessonDetail() {
                   
                   <div style={{
                     height: "8px",
-                    backgroundColor: gray,
+                    backgroundColor: track,
                     borderRadius: "4px",
                     overflow: "hidden"
                   }}>
@@ -473,15 +482,15 @@ export default function LessonDetail() {
                     justifyContent: "space-between",
                     fontSize: "14px"
                   }}>
-                    <span style={{ color: gray }}>Duration:</span>
-                    <span style={{ color: marbleDarkGray, fontWeight: "500" }}>{lesson.duration}</span>
+                    <span style={{ color: cardMuted }}>Duration:</span>
+                    <span style={{ color: cardText, fontWeight: "500" }}>{lesson.duration}</span>
                   </div>
                   <div style={{
                     display: "flex",
                     justifyContent: "space-between",
                     fontSize: "14px"
                   }}>
-                    <span style={{ color: gray }}>XP Reward:</span>
+                    <span style={{ color: cardMuted }}>XP Reward:</span>
                     <span style={{ color: marbleGold, fontWeight: "500" }}>{lesson.xp} XP</span>
                   </div>
                   <div style={{
@@ -489,7 +498,7 @@ export default function LessonDetail() {
                     justifyContent: "space-between",
                     fontSize: "14px"
                   }}>
-                    <span style={{ color: gray }}>Coin Reward:</span>
+                    <span style={{ color: cardMuted }}>Coin Reward:</span>
                     <span style={{ color: marbleGold, fontWeight: "500" }}>{lesson.coins} 🪙</span>
                   </div>
                   {progress?.completed && (
@@ -498,7 +507,7 @@ export default function LessonDetail() {
                       justifyContent: "space-between",
                       fontSize: "14px"
                     }}>
-                      <span style={{ color: gray }}>Status:</span>
+                      <span style={{ color: cardMuted }}>Status:</span>
                       <span style={{ color: marbleGold, fontWeight: "500" }}>✓ Completed</span>
                     </div>
                   )}
@@ -508,7 +517,7 @@ export default function LessonDetail() {
                       justifyContent: "space-between",
                       fontSize: "14px"
                     }}>
-                      <span style={{ color: gray }}>Quiz Score:</span>
+                      <span style={{ color: cardMuted }}>Quiz Score:</span>
                       <span style={{ color: marbleGold, fontWeight: "500" }}>{bestScorePercent}% correct</span>
                     </div>
                   )}
@@ -518,8 +527,8 @@ export default function LessonDetail() {
                       justifyContent: "space-between",
                       fontSize: "14px"
                     }}>
-                      <span style={{ color: gray }}>Best Result:</span>
-                      <span style={{ color: marbleDarkGray, fontWeight: "500" }}>
+                      <span style={{ color: cardMuted }}>Best Result:</span>
+                      <span style={{ color: cardText, fontWeight: "500" }}>
                         {bestCorrectCount}/{totalQuestions} correct ({bestIncorrectCount} wrong)
                       </span>
                     </div>
@@ -529,14 +538,14 @@ export default function LessonDetail() {
 
               {/* Section Navigation */}
               <div style={{
-                backgroundColor: lightGray,
+                backgroundColor: cardBg2,
                 borderRadius: "20px",
                 padding: "24px"
               }}>
                 <h3 style={{
                   fontSize: "18px",
                   fontWeight: "bold",
-                  color: marbleDarkGray,
+                  color: cardText,
                   marginBottom: "16px",
                   fontFamily: fontHeading
                 }}>
@@ -553,8 +562,8 @@ export default function LessonDetail() {
                       key={index}
                       onClick={() => setCurrentSection(index)}
                       style={{
-                        backgroundColor: index === currentSection ? marbleGold : white,
-                        color: index === currentSection ? marbleDarkGray : marbleDarkGray,
+                        backgroundColor: index === currentSection ? marbleGold : cardBg,
+                        color: index === currentSection ? marbleDarkGray : cardText,
                         border: "none",
                         padding: "12px 16px",
                         borderRadius: "12px",
@@ -583,7 +592,7 @@ export default function LessonDetail() {
             <div>
               {/* Quiz */}
               <div style={{
-                backgroundColor: lightGray,
+                backgroundColor: cardBg2,
                 borderRadius: "20px",
                 padding: "32px",
                 marginBottom: "32px"
@@ -591,7 +600,7 @@ export default function LessonDetail() {
                 <h2 style={{
                   fontSize: "24px",
                   fontWeight: "bold",
-                  color: marbleDarkGray,
+                  color: cardText,
                   marginBottom: "24px",
                   fontFamily: fontHeading
                 }}>
@@ -600,7 +609,7 @@ export default function LessonDetail() {
                 
                 <p style={{
                   fontSize: "16px",
-                  color: gray,
+                  color: cardMuted,
                   marginBottom: "32px"
                 }}>
                   Test your knowledge with this quiz. You have unlimited attempts!
@@ -610,7 +619,7 @@ export default function LessonDetail() {
                   <div key={index} style={{ marginBottom: "32px" }}>
                     <p style={{
                       fontSize: "18px",
-                      color: marbleDarkGray,
+                      color: cardText,
                       marginBottom: "16px",
                       fontWeight: "500"
                     }}>
@@ -624,7 +633,7 @@ export default function LessonDetail() {
                           display: "block",
                           padding: "16px",
                           marginBottom: "12px",
-                          backgroundColor: white,
+                          backgroundColor: cardBg,
                           borderRadius: "12px",
                           cursor: "pointer",
                           border: quizAnswers[`q${index}`] === optionIndex ? `2px solid ${marbleGold}` : "2px solid transparent",
@@ -641,7 +650,7 @@ export default function LessonDetail() {
                         />
                         <span style={{
                           fontSize: "16px",
-                          color: marbleDarkGray
+                          color: cardText
                         }}>
                           {option}
                         </span>
@@ -659,7 +668,7 @@ export default function LessonDetail() {
                     onClick={() => setShowQuiz(false)}
                     style={{
                       backgroundColor: gray,
-                      color: white,
+                      color: cardText,
                       border: "none",
                       padding: "12px 24px",
                       borderRadius: "12px",
@@ -692,7 +701,7 @@ export default function LessonDetail() {
               {/* Completed Lesson Actions */}
               {progress?.completed && (
                 <div style={{
-                  backgroundColor: lightGray,
+                  backgroundColor: cardBg2,
                   borderRadius: "20px",
                   padding: "24px",
                   textAlign: "center"
@@ -700,7 +709,7 @@ export default function LessonDetail() {
                   <h3 style={{
                     fontSize: "20px",
                     fontWeight: "bold",
-                    color: marbleDarkGray,
+                    color: cardText,
                     marginBottom: "16px"
                   }}>
                     Lesson Completed! 🎉
@@ -715,7 +724,7 @@ export default function LessonDetail() {
                       onClick={handleRetakeQuiz}
                       style={{
                         backgroundColor: marbleDarkGray,
-                        color: white,
+                        color: cardText,
                         border: "none",
                         padding: "12px 24px",
                         borderRadius: "12px",
@@ -738,7 +747,7 @@ export default function LessonDetail() {
             }}>
               {/* Quiz Info Card */}
               <div style={{
-                backgroundColor: lightGray,
+                backgroundColor: cardBg2,
                 borderRadius: "20px",
                 padding: "24px",
                 marginBottom: "24px"
@@ -746,7 +755,7 @@ export default function LessonDetail() {
                 <h3 style={{
                   fontSize: "18px",
                   fontWeight: "bold",
-                  color: marbleDarkGray,
+                  color: cardText,
                   marginBottom: "16px",
                   fontFamily: fontHeading
                 }}>
@@ -763,23 +772,23 @@ export default function LessonDetail() {
                     justifyContent: "space-between",
                     fontSize: "14px"
                   }}>
-                    <span style={{ color: gray }}>Questions:</span>
-                    <span style={{ color: marbleDarkGray, fontWeight: "500" }}>{lesson.quiz.questions.length}</span>
+                    <span style={{ color: cardMuted }}>Questions:</span>
+                    <span style={{ color: cardText, fontWeight: "500" }}>{lesson.quiz.questions.length}</span>
                   </div>
                   <div style={{
                     display: "flex",
                     justifyContent: "space-between",
                     fontSize: "14px"
                   }}>
-                    <span style={{ color: gray }}>Attempts:</span>
-                    <span style={{ color: marbleDarkGray, fontWeight: "500" }}>Unlimited</span>
+                    <span style={{ color: cardMuted }}>Attempts:</span>
+                    <span style={{ color: cardText, fontWeight: "500" }}>Unlimited</span>
                   </div>
                   <div style={{
                     display: "flex",
                     justifyContent: "space-between",
                     fontSize: "14px"
                   }}>
-                    <span style={{ color: gray }}>Best Score:</span>
+                    <span style={{ color: cardMuted }}>Best Score:</span>
                     <span style={{ color: marbleGold, fontWeight: "500" }}>
                       {progress?.bestScore ? `${Math.round(progress.bestScore)}%` : "Not taken"}
                     </span>
@@ -789,7 +798,7 @@ export default function LessonDetail() {
                     justifyContent: "space-between",
                     fontSize: "14px"
                   }}>
-                    <span style={{ color: gray }}>Rewards:</span>
+                    <span style={{ color: cardMuted }}>Rewards:</span>
                     <span style={{ color: marbleGold, fontWeight: "500" }}>
                       {completionData?.rewardAlreadyGiven ? "Already claimed" : "One-time"}
                     </span>
@@ -800,7 +809,7 @@ export default function LessonDetail() {
                       justifyContent: "space-between",
                       fontSize: "14px"
                     }}>
-                      <span style={{ color: gray }}>Status:</span>
+                      <span style={{ color: cardMuted }}>Status:</span>
                       <span style={{ color: marbleGold, fontWeight: "500" }}>✓ Completed</span>
                     </div>
                   )}
@@ -809,14 +818,14 @@ export default function LessonDetail() {
 
               {/* Quiz Progress */}
               <div style={{
-                backgroundColor: lightGray,
+                backgroundColor: cardBg2,
                 borderRadius: "20px",
                 padding: "24px"
               }}>
                 <h3 style={{
                   fontSize: "18px",
                   fontWeight: "bold",
-                  color: marbleDarkGray,
+                  color: cardText,
                   marginBottom: "16px",
                   fontFamily: fontHeading
                 }}>
@@ -836,7 +845,7 @@ export default function LessonDetail() {
                         alignItems: "center",
                         gap: "8px",
                         padding: "8px 12px",
-                        backgroundColor: white,
+                        backgroundColor: cardBg,
                         borderRadius: "8px",
                         fontSize: "14px"
                       }}
@@ -850,13 +859,13 @@ export default function LessonDetail() {
                         alignItems: "center",
                         justifyContent: "center",
                         fontSize: "12px",
-                        color: white,
+                        color: cardText,
                         fontWeight: "bold"
                       }}>
                         {index + 1}
                       </div>
                       <span style={{
-                        color: quizAnswers[`q${index}`] !== undefined ? marbleDarkGray : gray,
+                        color: quizAnswers[`q${index}`] !== undefined ? cardText : cardMuted,
                         fontWeight: quizAnswers[`q${index}`] !== undefined ? "500" : "400"
                       }}>
                         Question {index + 1}
@@ -886,13 +895,13 @@ export default function LessonDetail() {
           backdropFilter: "blur(4px)"
         }}>
           <div style={{
-            backgroundColor: white,
+            backgroundColor: cardBg,
             borderRadius: "24px",
             padding: "40px",
             maxWidth: "500px",
             width: "90%",
             textAlign: "center",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.28)",
             animation: "slideIn 0.3s ease-out"
           }}>
             {/* Success Icon */}
@@ -914,7 +923,7 @@ export default function LessonDetail() {
             <h2 style={{
               fontSize: "28px",
               fontWeight: "bold",
-              color: marbleDarkGray,
+              color: cardText,
               marginBottom: "16px",
               fontFamily: fontHeading
             }}>
@@ -933,7 +942,7 @@ export default function LessonDetail() {
 
             {/* Score Details */}
             <div style={{
-              backgroundColor: lightGray,
+              backgroundColor: cardBg2,
               borderRadius: "16px",
               padding: "20px",
               marginBottom: "24px"
@@ -944,8 +953,8 @@ export default function LessonDetail() {
                 alignItems: "center",
                 marginBottom: "12px"
               }}>
-                <span style={{ color: gray }}>Correct Answers:</span>
-                <span style={{ fontWeight: "600", color: marbleDarkGray }}>
+                <span style={{ color: cardMuted }}>Correct Answers:</span>
+                <span style={{ fontWeight: "600", color: cardText }}>
                   {completionData.correctAnswers}/{completionData.totalQuestions}
                 </span>
               </div>
@@ -959,7 +968,7 @@ export default function LessonDetail() {
                     alignItems: "center",
                     marginBottom: "12px"
                   }}>
-                    <span style={{ color: gray }}>XP Earned This Attempt:</span>
+                    <span style={{ color: cardMuted }}>XP Earned This Attempt:</span>
                     <span style={{ fontWeight: "600", color: marbleGold }}>
                       +{completionData.xpEarned} XP
                     </span>
@@ -971,7 +980,7 @@ export default function LessonDetail() {
                     alignItems: "center",
                     marginBottom: "12px"
                   }}>
-                    <span style={{ color: gray }}>Coins Earned This Attempt:</span>
+                    <span style={{ color: cardMuted }}>Coins Earned This Attempt:</span>
                     <span style={{ fontWeight: "600", color: marbleGold }}>
                       +{completionData.coinsEarned} 🪙
                     </span>
@@ -984,8 +993,8 @@ export default function LessonDetail() {
                   alignItems: "center",
                   marginBottom: "12px"
                 }}>
-                  <span style={{ color: gray }}>Rewards Earned:</span>
-                  <span style={{ fontWeight: "600", color: gray }}>
+                  <span style={{ color: cardMuted }}>Rewards Earned:</span>
+                  <span style={{ fontWeight: "600", color: cardMuted }}>
                     No new rewards (already earned maximum)
                   </span>
                 </div>
@@ -998,10 +1007,10 @@ export default function LessonDetail() {
                 alignItems: "center",
                 marginBottom: "12px",
                 paddingTop: "12px",
-                borderTop: `1px solid ${gray}`
+                borderTop: `1px solid ${divider}`
               }}>
-                <span style={{ color: gray }}>Total XP Earned:</span>
-                <span style={{ fontWeight: "600", color: marbleDarkGray }}>
+                <span style={{ color: cardMuted }}>Total XP Earned:</span>
+                <span style={{ fontWeight: "600", color: cardText }}>
                   {completionData.totalXpEarned}/{completionData.totalXpPossible} XP
                 </span>
               </div>
@@ -1012,8 +1021,8 @@ export default function LessonDetail() {
                 alignItems: "center",
                 marginBottom: "12px"
               }}>
-                <span style={{ color: gray }}>Total Coins Earned:</span>
-                <span style={{ fontWeight: "600", color: marbleDarkGray }}>
+                <span style={{ color: cardMuted }}>Total Coins Earned:</span>
+                <span style={{ fontWeight: "600", color: cardText }}>
                   {completionData.totalCoinsEarned}/{completionData.totalCoinsPossible} 🪙
                 </span>
               </div>
@@ -1027,9 +1036,9 @@ export default function LessonDetail() {
                     alignItems: "center",
                     marginBottom: "12px",
                     paddingTop: "12px",
-                    borderTop: `1px solid ${gray}`
+                    borderTop: `1px solid ${divider}`
                   }}>
-                    <span style={{ color: gray }}>XP Remaining:</span>
+                    <span style={{ color: cardMuted }}>XP Remaining:</span>
                     <span style={{ fontWeight: "600", color: marbleGold }}>
                       {completionData.xpRemaining} XP
                     </span>
@@ -1041,7 +1050,7 @@ export default function LessonDetail() {
                     alignItems: "center",
                     marginBottom: "12px"
                   }}>
-                    <span style={{ color: gray }}>Coins Remaining:</span>
+                    <span style={{ color: cardMuted }}>Coins Remaining:</span>
                     <span style={{ fontWeight: "600", color: marbleGold }}>
                       {completionData.coinsRemaining} 🪙
                     </span>
@@ -1088,7 +1097,7 @@ export default function LessonDetail() {
                 onClick={handleBackToLesson}
                 style={{
                   backgroundColor: gray,
-                  color: white,
+                  color: cardText,
                   border: "none",
                   padding: "12px 20px",
                   borderRadius: "12px",
@@ -1106,7 +1115,7 @@ export default function LessonDetail() {
                 onClick={handleRetakeQuiz}
                 style={{
                   backgroundColor: (completionData.xpRemaining > 0 || completionData.coinsRemaining > 0) ? marbleGold : gray,
-                  color: (completionData.xpRemaining > 0 || completionData.coinsRemaining > 0) ? marbleDarkGray : white,
+                  color: (completionData.xpRemaining > 0 || completionData.coinsRemaining > 0) ? marbleDarkGray : cardText,
                   border: "none",
                   padding: "12px 20px",
                   borderRadius: "12px",
@@ -1125,7 +1134,7 @@ export default function LessonDetail() {
                   onClick={handleContinueToNext}
                   style={{
                     backgroundColor: completionData.lessonCompleted ? marbleGold : marbleDarkGray,
-                    color: completionData.lessonCompleted ? marbleDarkGray : white,
+                    color: completionData.lessonCompleted ? marbleDarkGray : cardText,
                     border: "none",
                     padding: "12px 20px",
                     borderRadius: "12px",
