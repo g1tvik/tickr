@@ -36,7 +36,6 @@ export const SuperChart: React.FC<SuperChartProps> = ({
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const candlestickSeriesRef = useRef<any>(null);
-  const initialDataAppliedRef = useRef<boolean>(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
   
   const [isChartReady, setIsChartReady] = useState(false);
@@ -60,7 +59,7 @@ export const SuperChart: React.FC<SuperChartProps> = ({
   } = useChartStore();
 
   // Custom hook for chart data
-  const { chartData, isLoading: dataLoading, error: dataError } = useChartData(
+  const { chartData, isLoading: dataLoading, error: dataError, refetch } = useChartData(
     symbol,
     currentInterval,
     realtime,
@@ -68,138 +67,80 @@ export const SuperChart: React.FC<SuperChartProps> = ({
     dateRange?.end
   );
 
-  // Initialize chart
+  // Keep the latest callbacks in refs so changing their identity never forces a
+  // chart re-creation (passing inline callbacks would otherwise rebuild the chart).
+  const onChartReadyRef = useRef(onChartReady);
+  onChartReadyRef.current = onChartReady;
+
+  // Initialize the chart once per symbol/theme/height. Returns a REAL cleanup so
+  // React — including the StrictMode mount→unmount→mount double-invoke — tears the
+  // chart down and rebuilds it correctly. (The previous version discarded its
+  // cleanup, which under StrictMode could leave the container with no canvas.)
   useEffect(() => {
-    if (!chartContainerRef.current || !symbol) return;
+    const container = chartContainerRef.current;
+    if (!container || !symbol) return;
 
-    const initChart = () => {
-      const container = chartContainerRef.current;
-      if (!container) return;
+    container.style.width = '100%';
+    container.style.height = `${height}px`;
+    const width = Math.max(container.getBoundingClientRect().width, 400);
 
-      // Set container dimensions
-      container.style.width = '100%';
-      container.style.height = `${height}px`;
+    setError(null);
+    let chart: any;
+    try {
+      chart = createChart(container, {
+        width,
+        height,
+        autoSize: false,
+        layout: {
+          background: { color: theme === 'dark' ? '#1a1a1a' : '#ffffff' },
+          textColor: theme === 'dark' ? '#ffffff' : '#000000',
+        },
+        grid: {
+          vertLines: { color: theme === 'dark' ? '#333333' : '#e0e0e0' },
+          horzLines: { color: theme === 'dark' ? '#333333' : '#e0e0e0' },
+        },
+        crosshair: { mode: 1 },
+        rightPriceScale: { borderColor: theme === 'dark' ? '#333333' : '#e0e0e0', visible: true },
+        timeScale: { borderColor: theme === 'dark' ? '#333333' : '#e0e0e0', timeVisible: true, secondsVisible: false },
+      });
+      chartRef.current = chart;
 
-      // Get container dimensions
-      const rect = container.getBoundingClientRect();
-      const containerWidth = Math.max(rect.width, 400);
-      const containerHeight = Math.max(rect.height, height);
+      const candlestickSeries = (chart as any).addSeries(CandlestickSeries, {
+        upColor: '#22c55e',
+        downColor: '#ef4444',
+        borderVisible: false,
+        wickUpColor: '#22c55e',
+        wickDownColor: '#ef4444',
+      });
+      candlestickSeriesRef.current = candlestickSeries;
+      chart.timeScale().fitContent();
+      setIsChartReady(true);
+      onChartReadyRef.current?.(chart);
+    } catch (err) {
+      console.error('Error initializing chart:', err);
+      setError('Failed to initialize chart');
+      return;
+    }
 
-      if (containerWidth === 0) {
-        setTimeout(initChart, 100);
-        return;
-      }
-
-      setError(null);
-
-      try {
-        // Clean up existing chart
-        if (chartRef.current) {
-          try {
-            chartRef.current.remove();
-          } catch (e) {
-            console.warn('Chart cleanup warning:', e);
-          }
-          chartRef.current = null;
-          candlestickSeriesRef.current = null;
-        }
-
-        // Create new chart
-        const chart = createChart(container, {
-          width: containerWidth,
-          height: containerHeight,
-          layout: {
-            background: { color: theme === 'dark' ? '#1a1a1a' : '#ffffff' },
-            textColor: theme === 'dark' ? '#ffffff' : '#000000',
-          },
-          grid: {
-            vertLines: { color: theme === 'dark' ? '#333333' : '#e0e0e0' },
-            horzLines: { color: theme === 'dark' ? '#333333' : '#e0e0e0' },
-          },
-          crosshair: {
-            mode: 1,
-          },
-          rightPriceScale: {
-            borderColor: theme === 'dark' ? '#333333' : '#e0e0e0',
-            visible: true,
-          },
-          timeScale: {
-            borderColor: theme === 'dark' ? '#333333' : '#e0e0e0',
-            timeVisible: true,
-            secondsVisible: false,
-          },
-        });
-
-        chartRef.current = chart;
-
-        // Add candlestick series for v5 API
-        const candlestickSeries = (chart as any).addSeries(CandlestickSeries, {
-          upColor: '#22c55e',
-          downColor: '#ef4444',
-          borderVisible: false,
-          wickUpColor: '#22c55e',
-          wickDownColor: '#ef4444',
-        });
-        candlestickSeriesRef.current = candlestickSeries;
-
-        // Ensure chart is properly configured
-        chart.timeScale().fitContent();
-        chart.priceScale('right').applyOptions({ autoScale: true });
-
-        // Handle window resize
-        const handleResize = () => {
-          if (chartRef.current && chartContainerRef.current) {
-            try {
-              const newRect = chartContainerRef.current.getBoundingClientRect();
-              const newWidth = newRect.width || 800;
-              chartRef.current.applyOptions({
-                width: newWidth,
-              });
-            } catch (e) {
-              console.warn('Resize error:', e);
-            }
-          }
-        };
-
-        window.addEventListener('resize', handleResize);
-
-        // Set chart as ready
-        setIsChartReady(true);
-
-        if (onChartReady) onChartReady(chart);
-
-        return () => {
-          window.removeEventListener('resize', handleResize);
-          if (chartRef.current) {
-            try {
-              chartRef.current.remove();
-            } catch (e) {
-              console.warn('Chart removal warning:', e);
-            }
-            chartRef.current = null;
-            candlestickSeriesRef.current = null;
-          }
-        };
-      } catch (err) {
-        console.error('Error initializing chart:', err);
-        setError('Failed to initialize chart');
-        setIsChartReady(false);
-        
-        if (chartRef.current) {
-          try {
-            chartRef.current.remove();
-          } catch (e) {
-            console.warn('Error cleanup warning:', e);
-          }
-          chartRef.current = null;
-          candlestickSeriesRef.current = null;
-        }
-      }
+    // Keep the chart sized to its container.
+    const handleResize = () => {
+      if (!chartRef.current || !chartContainerRef.current) return;
+      const w = chartContainerRef.current.getBoundingClientRect().width || 800;
+      try { chartRef.current.applyOptions({ width: w }); } catch { /* ignore */ }
     };
+    window.addEventListener('resize', handleResize);
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(handleResize) : null;
+    ro?.observe(container);
 
-    // Start initialization
-    initChart();
-  }, [symbol, theme, height, onChartReady]);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      ro?.disconnect();
+      try { chart.remove(); } catch { /* ignore */ }
+      chartRef.current = null;
+      candlestickSeriesRef.current = null;
+      setIsChartReady(false);
+    };
+  }, [symbol, theme, height]);
 
   // Update chart data
   useEffect(() => {
@@ -284,61 +225,6 @@ export const SuperChart: React.FC<SuperChartProps> = ({
     }
   }, [drawings, onDrawingUpdate]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (chartRef.current) {
-        try {
-          chartRef.current.remove();
-        } catch (e) {
-          console.warn('Unmount cleanup warning:', e);
-        }
-        chartRef.current = null;
-        candlestickSeriesRef.current = null;
-      }
-    };
-  }, []);
-
-  // Ensure initial data is applied once when both chart and data are ready
-  useEffect(() => {
-    if (
-      !initialDataAppliedRef.current &&
-      isChartReady &&
-      candlestickSeriesRef.current &&
-      chartData &&
-      Array.isArray(chartData.candles) &&
-      chartData.candles.length > 0
-    ) {
-      try {
-        const formatted = chartData.candles.map((c: any) => ({
-          time: Math.floor((c.timestamp.toString().length === 13 ? Math.floor(c.timestamp / 1000) : c.timestamp)),
-          open: +c.open,
-          high: +c.high,
-          low: +c.low,
-          close: +c.close,
-        }));
-        requestAnimationFrame(() => {
-          candlestickSeriesRef.current.setData(formatted);
-          if (chartRef.current) {
-            if (visibleRange && visibleRange.from && visibleRange.to) {
-              try {
-                chartRef.current.timeScale().setVisibleRange({ from: visibleRange.from, to: visibleRange.to });
-              } catch {}
-            } else {
-              chartRef.current.timeScale().fitContent();
-            }
-          }
-          initialDataAppliedRef.current = true;
-        });
-      } catch {}
-    }
-  }, [isChartReady, chartData, visibleRange]);
-
-  // Reset initial data flag when inputs change
-  useEffect(() => {
-    initialDataAppliedRef.current = false;
-  }, [symbol, currentInterval, dateRange?.start, dateRange?.end]);
-
   if (!symbol) {
     return (
       <div className="d-flex align-items-center justify-content-center" 
@@ -355,48 +241,11 @@ export const SuperChart: React.FC<SuperChartProps> = ({
     );
   }
 
-  if (dataLoading && !chartData) {
-    return (
-      <div className="d-flex align-items-center justify-content-center flex-column" 
-           style={{ 
-             backgroundColor: lightGray, 
-             borderRadius: '20px', 
-             padding: '24px', 
-             height: height,
-             gap: '16px'
-           }}>
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-        <div style={{ color: gray, fontSize: '14px' }}>
-          Loading chart data...
-        </div>
-      </div>
-    );
-  }
-
-  if (error || dataError) {
-    return (
-      <div className="d-flex align-items-center justify-content-center flex-column" 
-           style={{ 
-             backgroundColor: lightGray, 
-             borderRadius: '20px', 
-             padding: '24px', 
-             height: height,
-             gap: '16px'
-           }}>
-        <div className="text-danger fw-bold">
-          {error || dataError}
-        </div>
-        <button
-          onClick={() => window.location.reload()}
-          className="btn btn-primary btn-sm"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
+  // NOTE: loading and error states are rendered as OVERLAYS inside the main
+  // markup below — never as separate early-returns. Early-returning a different
+  // tree would unmount the chart container div, and the chart-init effect (keyed
+  // on symbol/theme/height) would not re-run to recreate the chart on the
+  // remounted div, leaving the chart blank.
 
   return (
     <div className={`chart-container ${theme === 'dark' ? 'bg-dark' : 'bg-light'}`}
@@ -430,9 +279,13 @@ export const SuperChart: React.FC<SuperChartProps> = ({
         </div>
       </div>
 
-      {/* Chart Container */}
+      {/* Chart Container.
+          IMPORTANT: this div must have NO JSX children — lightweight-charts
+          appends its canvas here imperatively, and React would wipe that canvas
+          on re-render if it were reconciling JSX children of this element.
+          The debug overlay and tooltip are therefore rendered as SIBLINGS. */}
       <div className="position-relative">
-        <div 
+        <div
           ref={chartContainerRef}
           className="chart-engine"
           style={{
@@ -446,25 +299,49 @@ export const SuperChart: React.FC<SuperChartProps> = ({
             position: 'relative',
             display: 'block'
           }}
-        >
-          {/* Debug overlay (hidden by default) */}
-          {showDebugOverlay && (
-            <div style={{
-              position: 'absolute',
-              top: '10px',
-              left: '10px',
-              color: 'white',
-              fontSize: '12px',
-              zIndex: 1000,
-              pointerEvents: 'none',
-              backgroundColor: 'rgba(0,0,0,0.7)',
-              padding: '4px 8px',
-              borderRadius: '4px'
-            }}>
-              Chart: {chartContainerRef.current?.getBoundingClientRect()?.width || 0} x {height}
+        />
+
+        {/* Loading overlay — sits over the (always-mounted) chart container */}
+        {dataLoading && !chartData && (
+          <div className="d-flex align-items-center justify-content-center flex-column"
+               style={{ position: 'absolute', inset: 0, gap: '12px', borderRadius: '12px',
+                        backgroundColor: theme === 'dark' ? 'rgba(26,26,26,0.85)' : 'rgba(255,255,255,0.85)', zIndex: 5 }}>
+            <div className="spinner-border" role="status" style={{ color: marbleGold }}>
+              <span className="visually-hidden">Loading...</span>
             </div>
-          )}
-        </div>
+            <div style={{ color: theme === 'dark' ? lightGray : gray, fontSize: '14px' }}>Loading chart data…</div>
+          </div>
+        )}
+
+        {/* Error overlay */}
+        {(error || dataError) && (
+          <div className="d-flex align-items-center justify-content-center flex-column"
+               style={{ position: 'absolute', inset: 0, gap: '12px', borderRadius: '12px', padding: '24px', textAlign: 'center',
+                        backgroundColor: theme === 'dark' ? 'rgba(26,26,26,0.92)' : 'rgba(255,255,255,0.92)', zIndex: 6 }}>
+            <div style={{ color: '#ef4444', fontWeight: 700 }}>{error || dataError}</div>
+            <button onClick={() => refetch()} className="btn btn-sm" style={{ background: marbleGold, color: marbleDarkGray, fontWeight: 600 }}>
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Debug overlay (hidden by default) — sibling, not a child of the chart div */}
+        {showDebugOverlay && (
+          <div style={{
+            position: 'absolute',
+            top: '10px',
+            left: '10px',
+            color: 'white',
+            fontSize: '12px',
+            zIndex: 1000,
+            pointerEvents: 'none',
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            padding: '4px 8px',
+            borderRadius: '4px'
+          }}>
+            Chart: {chartContainerRef.current?.getBoundingClientRect()?.width || 0} x {height}
+          </div>
+        )}
 
         {/* Tooltip */}
         {tooltipData && (

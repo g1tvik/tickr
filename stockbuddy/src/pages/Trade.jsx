@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import StockTicker from '../components/StockTicker';
 import StockSearch from '../components/StockSearch';
@@ -97,6 +97,19 @@ function Trade() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showOrderConfirmation]);
+
+  // Stable callbacks for SuperChart — passing fresh inline functions would put a
+  // new reference in SuperChart's init effect deps on every render and tear down
+  // / rebuild the chart, leaving the canvas blank.
+  const handleChartReady = useCallback((chart) => {
+    if (isDev) console.log('SuperChart ready:', chart);
+  }, []);
+  const handleChartDataUpdate = useCallback((data) => {
+    if (isDev) console.log('Chart data updated:', data);
+  }, []);
+  const handleDrawingUpdate = useCallback((drawings) => {
+    if (isDev) console.log('Drawings updated:', drawings);
+  }, []);
 
   const quoteIsDemo = isDemoData(selectedStock);
   const chartIsDemo = isDemoData(chartData);
@@ -442,15 +455,9 @@ function Trade() {
                     theme="dark"
                     realtime={false}
                     height={400}
-                    onChartReady={(chart) => {
-                      if (isDev) console.log('SuperChart ready:', chart);
-                    }}
-                    onDataUpdate={(data) => {
-                      if (isDev) console.log('Chart data updated:', data);
-                    }}
-                    onDrawingUpdate={(drawings) => {
-                      if (isDev) console.log('Drawings updated:', drawings);
-                    }}
+                    onChartReady={handleChartReady}
+                    onDataUpdate={handleChartDataUpdate}
+                    onDrawingUpdate={handleDrawingUpdate}
                   />
                 </div>
 
