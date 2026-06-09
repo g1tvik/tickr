@@ -78,58 +78,29 @@ function AppContent() {
     const navbar = document.querySelector('.navbar-color');
     
     if (mainContent && pageTransition) {
-      // Determine page type based on route
-      const isDarkPage = location.pathname === '/trade' || location.pathname === '/ai-coach';
-      if (import.meta.env.DEV) console.log(`App: isDarkPage = ${isDarkPage} for route ${location.pathname}`);
-      
-      // Add appropriate classes
-      if (isDarkPage) {
-        mainContent.classList.add('page-dark');
-        pageTransition.classList.add('page-dark');
-        body.classList.add('page-dark');
-        html.classList.add('page-dark');
-        body.classList.remove('home-shell');
-        html.classList.remove('home-shell');
-        mainContent.classList.remove('page-light');
-        pageTransition.classList.remove('page-light');
-        body.classList.remove('page-light');
-        html.classList.remove('page-light');
-        
-        // Set navbar to dark theme
-        if (navbar) {
-          navbar.classList.add('page-dark');
-          navbar.classList.remove('page-light');
-          setNavbarBackground('var(--color-ink)', { theme: 'dark' });
-          if (import.meta.env.DEV) console.log('App: Setting navbar to dark theme for Trade/AI Coach page');
-        }
-      } else {
-        const isHomePage = location.pathname === '/';
-        // Home uses the lunar dark shell; other non-dark routes remain light.
-        mainContent.classList.remove('page-dark', 'page-light');
-        pageTransition.classList.remove('page-dark', 'page-light');
-        body.classList.remove('page-dark', 'page-light');
-        html.classList.remove('page-dark', 'page-light');
+      // Every inner page now uses the Terminal Editorial dark theme, so the
+      // navbar matches the dark content beneath it. Home is the exception: it
+      // runs its own scroll-driven adaptive navbar (dark hero → light features
+      // → dark footer) via its IntersectionObserver, so we only seed it here.
+      const onHome = location.pathname === '/';
 
-        mainContent.classList.add(isHomePage ? 'page-dark' : 'page-light');
-        pageTransition.classList.add(isHomePage ? 'page-dark' : 'page-light');
-        body.classList.add(isHomePage ? 'page-dark' : 'page-light');
-        html.classList.add(isHomePage ? 'page-dark' : 'page-light');
-        body.classList.toggle('home-shell', isHomePage);
-        html.classList.toggle('home-shell', isHomePage);
+      const setShell = (el, dark) => {
+        if (!el) return;
+        el.classList.toggle('page-dark', dark);
+        el.classList.toggle('page-light', !dark);
+      };
 
-        // Home controls navbar dynamically; avoid forcing light on initial load
-        if (navbar) {
-          navbar.classList.remove('page-dark', 'page-light');
-          navbar.classList.add(isHomePage ? 'page-dark' : 'page-light');
+      // All app shells are dark (Home included — its hero sits on the dark shell).
+      [mainContent, pageTransition, body, html].forEach((el) => setShell(el, true));
+      body.classList.toggle('home-shell', onHome);
+      html.classList.toggle('home-shell', onHome);
 
-          if (isHomePage) {
-            setNavbarBackground('transparent', { theme: 'dark' });
-            if (import.meta.env.DEV) console.log('App: Leaving navbar dark on Home for hero sync');
-          } else {
-            setNavbarBackground('var(--color-gray-100)', { theme: 'light' });
-            if (import.meta.env.DEV) console.log('App: Setting navbar to light theme for non-home light pages');
-          }
-        }
+      if (navbar) {
+        navbar.classList.add('page-dark');
+        navbar.classList.remove('page-light');
+        // Home: transparent so the hero shows through (its observer takes over).
+        // Everything else: solid charcoal matching the page background (--tk-bg).
+        setNavbarBackground(onHome ? 'transparent' : 'var(--tk-bg)', { theme: 'dark' });
       }
     }
   }, [location.pathname, setNavbarBackground]);
