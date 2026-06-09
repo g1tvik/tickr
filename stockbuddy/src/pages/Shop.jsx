@@ -224,6 +224,11 @@ export default function Shop() {
       <style>{`
         .shop-items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
         .shop-balance-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .shop-item-card { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+        .shop-item-card:not(.is-owned):hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(0,0,0,0.42); }
+        @media (prefers-reduced-motion: reduce) {
+          .shop-item-card:hover { transform: none; }
+        }
         @media (max-width: 768px) {
           .shop-items-grid { grid-template-columns: 1fr; }
           .shop-balance-bar { flex-direction: column; align-items: stretch; }
@@ -259,7 +264,8 @@ export default function Shop() {
           
           <h1 style={{
             fontSize: "32px",
-            fontWeight: "bold",
+            fontWeight: "400",
+            letterSpacing: "-0.01em",
             color: cardText,
             fontFamily: fontHeading,
             marginBottom: "8px"
@@ -416,6 +422,7 @@ export default function Shop() {
           {filteredItems.map(item => (
             <div
               key={item.id}
+              className={`shop-item-card${isItemPurchased(item.id) ? ' is-owned' : ''}`}
               style={{
                 backgroundColor: cardBg2,
                 borderRadius: "20px",

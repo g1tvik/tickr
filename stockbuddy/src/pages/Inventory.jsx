@@ -363,6 +363,11 @@ export default function Inventory() {
       {/* Scoped styles: responsive grid collapse (<=768px). */}
       <style>{`
         .inv-items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+        .inv-item-card { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+        .inv-item-card:hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(0,0,0,0.42); }
+        @media (prefers-reduced-motion: reduce) {
+          .inv-item-card:hover { transform: none; }
+        }
         @media (max-width: 768px) {
           .inv-items-grid { grid-template-columns: 1fr; }
         }
@@ -396,7 +401,8 @@ export default function Inventory() {
           
           <h1 style={{
             fontSize: "32px",
-            fontWeight: "bold",
+            fontWeight: "400",
+            letterSpacing: "-0.01em",
             color: cardText,
             fontFamily: fontHeading,
             marginBottom: "8px"
@@ -588,6 +594,7 @@ export default function Inventory() {
               .map((item) => (
               <div
                 key={resolvePurchaseId(item) || `${item.itemId}-${item.purchasedAt}`}
+                className="inv-item-card"
                 style={{
                   backgroundColor: cardBg2,
                   borderRadius: "20px",
