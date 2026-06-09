@@ -478,7 +478,7 @@ function AICoach() {
     }}>
       {/* Scoped styles: responsive grid collapse to a single column on small screens (<=768px). */}
       <style>{`
-        .coach-main-grid { display: grid; grid-template-columns: 1.2fr 400px; gap: 16px; }
+        .coach-main-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) 400px; gap: 16px; }
         .coach-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 8px; }
         .coach-position-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
         @media (max-width: 768px) {
@@ -495,7 +495,8 @@ function AICoach() {
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '16px'
+          gap: '16px',
+          minWidth: 0
         }}>
           {/* Enhanced Scenario Header */}
           <div style={{
@@ -801,7 +802,9 @@ function AICoach() {
             borderRadius: '20px',
             padding: '16px',
             border: `1px solid ${cardBorder}`,
-            boxShadow: cardShadow
+            boxShadow: cardShadow,
+            minWidth: 0,
+            overflow: 'hidden'
           }}>
             <div style={{ marginBottom: '12px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: cardText, margin: 0 }}>
@@ -1277,7 +1280,8 @@ function AICoach() {
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '16px'
+          gap: '16px',
+          minWidth: 0
         }}>
           {/* Chat Window */}
           <CoachChat
