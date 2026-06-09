@@ -39,22 +39,22 @@ const StockTicker = ({ stocks = [] }) => {
         setIsLoading(true);
         setError(null);
         
-        console.log(`[${getTimestamp()}] 🎯 StockTicker: Starting to fetch market data`);
+        console.log(`[${getTimestamp()}] StockTicker: Starting to fetch market data`);
         
         // Use shared cache utility
         const stockData = await fetchStockData(coreStocks);
         
         if (stockData && stockData.length > 0) {
           setMarketStocks(stockData);
-          console.log(`[${getTimestamp()}] 🎯 StockTicker: Successfully loaded ${stockData.length} stocks`);
+          console.log(`[${getTimestamp()}] StockTicker: Successfully loaded ${stockData.length} stocks`);
           setIsVisible(true);
         } else {
           setError('No market data available');
-          console.warn(`[${getTimestamp()}] 🎯 StockTicker: No market data available`);
+          console.warn(`[${getTimestamp()}] StockTicker: No market data available`);
           setIsVisible(true); // Still show the component even if no data
         }
       } catch (error) {
-        console.error(`[${getTimestamp()}] 🎯 StockTicker: Error fetching market data:`, error);
+        console.error(`[${getTimestamp()}] StockTicker: Error fetching market data:`, error);
         setError('Failed to load market data');
         setIsVisible(true); // Show component even on error
       } finally {
@@ -65,7 +65,7 @@ const StockTicker = ({ stocks = [] }) => {
     // Check if we already have cached data - if so, skip initial fetch
     const initialCache = getCachedData();
     if (initialCache && initialCache.length > 0) {
-      console.log(`[${getTimestamp()}] 🎯 StockTicker: Using cached data, skipping initial fetch`);
+      console.log(`[${getTimestamp()}] StockTicker: Using cached data, skipping initial fetch`);
       setMarketStocks(initialCache);
       setIsLoading(false);
       setIsVisible(true);
@@ -76,13 +76,13 @@ const StockTicker = ({ stocks = [] }) => {
 
     // Set up refresh interval for background updates (works for both cached and fresh data)
     const interval = setInterval(() => {
-      console.log(`[${getTimestamp()}] 🎯 StockTicker: Auto-refreshing market data`);
+      console.log(`[${getTimestamp()}] StockTicker: Auto-refreshing market data`);
       fetchMarketData();
     }, CACHE_DURATION);
     
     return () => {
       clearInterval(interval);
-      console.log(`[${getTimestamp()}] 🎯 StockTicker: Cleanup - cleared refresh interval`);
+      console.log(`[${getTimestamp()}] StockTicker: Cleanup - cleared refresh interval`);
     };
   }, []);
 

@@ -826,7 +826,7 @@ export default function Dashboard() {
             <div style={card}>
               <div style={sectionLabel}>weekly lessons</div>
               {userDataLoading
-                ? <Skeleton reduced={reduced} width="100%" height="120px" radius="10px" />
+                ? <Skeleton reduced={reduced} width="100%" height="120px" radius="8px" />
                 : <WeeklyProgressChart userData={userData} />}
             </div>
 

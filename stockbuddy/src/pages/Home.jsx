@@ -29,8 +29,8 @@ const blink = keyframes`
 `;
 
 const dotBlinkGlow = keyframes`
-  0%, 100% { opacity: 1; box-shadow: 0 0 10px rgba(214, 26, 60, 0.7); }
-  50% { opacity: 0.25; box-shadow: 0 0 4px rgba(214, 26, 60, 0.35); }
+  0%, 100% { opacity: 1; box-shadow: 0 0 10px rgba(79, 180, 119, 0.7); }
+  50% { opacity: 0.25; box-shadow: 0 0 4px rgba(79, 180, 119, 0.35); }
 `;
 
 // Starfield texture: small varied stars for a night-sky feel
@@ -351,7 +351,7 @@ const BadgeDot = styled.span`
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #D61A3C;
+  background: #4FB477;
   flex-shrink: 0;
   align-self: center;
   transform: translateY(-0.2px);
@@ -1271,7 +1271,7 @@ function Home({ isLoggedIn }) {
 
   const fmtPrice  = (n) => `$${Number(n).toFixed(2)}`;
   const fmtChange = (n) => `${n >= 0 ? '+' : ''}${Number(n).toFixed(2)}%`;
-  const changeColor = liveChange >= 0 ? '#22A55C' : '#E04848';
+  const changeColor = liveChange >= 0 ? '#4FB477' : '#E0605A';
 
   // ─── AI coach message that fits whatever NVDA is doing right now ──────────
   // Voice: a finance professor explaining the moment. Neutral on direction,
@@ -1553,7 +1553,7 @@ function Home({ isLoggedIn }) {
   return (
     <PageWrapper ref={containerRef}>
       {/* Polka dots: scattered, fade out as you scroll so content clears into view */}
-      <PolkaDotOverlay $opacity={polkaDotOpacity} />
+      {!reduceMotion && <PolkaDotOverlay $opacity={polkaDotOpacity} />}
 
       {/* Heavy decorative motion is skipped entirely when reduced motion is preferred */}
       {!reduceMotion && (

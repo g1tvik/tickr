@@ -657,14 +657,14 @@ export default function Learn() {
                     onClick={() => !isLocked && handleLessonClick(lesson)}
                     onMouseEnter={(e) => {
                       if (!isLocked) {
-                        e.target.style.transform = "translateY(-2px)";
-                        e.target.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+                        e.currentTarget.style.borderColor = tk.goldHair;
+                        e.currentTarget.style.background = tk.raised;
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isLocked) {
-                        e.target.style.transform = "translateY(0)";
-                        e.target.style.boxShadow = "none";
+                        e.currentTarget.style.borderColor = lessonProgress ? tk.goldHair : tk.hair;
+                        e.currentTarget.style.background = tk.inset;
                       }
                     }}
                   >
@@ -737,14 +737,14 @@ export default function Learn() {
                     onClick={() => allLessonsCompleted && canTakeUnitTest.canTake && handleUnitTest(selectedUnit.id)}
                     onMouseEnter={(e) => {
                       if (allLessonsCompleted && canTakeUnitTest.canTake) {
-                        e.target.style.transform = "translateY(-2px)";
-                        e.target.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+                        e.currentTarget.style.borderColor = tk.goldHair;
+                        e.currentTarget.style.background = tk.raised;
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (allLessonsCompleted && canTakeUnitTest.canTake) {
-                        e.target.style.transform = "translateY(0)";
-                        e.target.style.boxShadow = "none";
+                        e.currentTarget.style.borderColor = tk.hair;
+                        e.currentTarget.style.background = tk.inset;
                       }
                     }}
                   >

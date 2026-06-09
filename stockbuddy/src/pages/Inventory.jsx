@@ -357,7 +357,7 @@ export default function Inventory() {
       <style>{`
         .inv-items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
         .inv-item-card { transition: transform 0.18s ease, box-shadow 0.18s ease; }
-        .inv-item-card:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(182,156,96,0.30); }
+        .inv-item-card:hover { transform: translateY(-2px); outline: 1px solid var(--tk-gold-hair); outline-offset: -1px; }
         @media (prefers-reduced-motion: reduce) {
           .inv-item-card:hover { transform: none; }
         }

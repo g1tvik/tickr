@@ -596,22 +596,21 @@ function AICoach() {
             {/* Enhanced Info Cards */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '16px',
-              marginBottom: '20px'
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: 0,
+              marginBottom: '20px',
+              borderTop: `1px solid ${tk.hair}`,
+              borderBottom: `1px solid ${tk.hair}`,
             }}>
               <div style={{
-                backgroundColor: cardBg,
-                borderRadius: tk.rSm,
-                padding: '16px',
-                border: `1px solid ${cardBorder}`,
-                boxShadow: cardShadow
+                padding: '14px 18px',
+                borderLeft: `1px solid ${tk.hair}`,
               }}>
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '8px', 
-                  marginBottom: '8px' 
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px'
                 }}>
                   <Icon name="target" size={14} color={tk.gold} />
                   <span style={{ 
@@ -637,17 +636,14 @@ function AICoach() {
               </div>
 
               <div style={{
-                backgroundColor: cardBg,
-                borderRadius: tk.rSm,
-                padding: '16px',
-                border: `1px solid ${cardBorder}`,
-                boxShadow: cardShadow
+                padding: '14px 18px',
+                borderLeft: `1px solid ${tk.hair}`,
               }}>
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '8px', 
-                  marginBottom: '8px' 
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px'
                 }}>
                   <Icon name="calendar" size={14} color={tk.gold} />
                   <span style={{ 
@@ -672,17 +668,14 @@ function AICoach() {
               </div>
 
               <div style={{
-                backgroundColor: cardBg,
-                borderRadius: tk.rSm,
-                padding: '16px',
-                border: `1px solid ${cardBorder}`,
-                boxShadow: cardShadow
+                padding: '14px 18px',
+                borderLeft: `1px solid ${tk.hair}`,
               }}>
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '8px', 
-                  marginBottom: '8px' 
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px'
                 }}>
                   <Icon name="coin" size={14} color={tk.gold} />
                   <span style={{ 

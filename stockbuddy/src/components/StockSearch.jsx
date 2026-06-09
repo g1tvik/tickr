@@ -263,6 +263,7 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
         {searchTerm && !isLoading && (
           <button
             className="clear-button"
+            aria-label="Clear search"
             onClick={() => {
               setSearchTerm('');
               setSuggestions([]);

@@ -219,44 +219,46 @@ body {
 .btn {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   position: relative;
-  border-radius: 12px;
+  border-radius: 8px;
   font-weight: 600;
 }
 
 .btn-primary,
 .btn.btn-primary {
-  background: var(--color-primary) !important;
-  color: #FFFFFF !important;
+  background: var(--tk-gold) !important;
+  color: #1F1F1F !important;
   border: none !important;
-  box-shadow: 0 1px 3px rgba(42, 69, 128, 0.2);
+  box-shadow: none;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .btn-primary:hover,
 .btn.btn-primary:hover {
-  background: var(--color-primary-hover) !important;
-  color: #FFFFFF !important;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(42, 69, 128, 0.25);
+  background: var(--tk-gold-bright) !important;
+  color: #1F1F1F !important;
+  transform: none;
+  box-shadow: none;
 }
 
 .btn-primary:focus-visible,
 .btn.btn-primary:focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--tk-gold);
   outline-offset: 2px;
 }
 
 .btn-secondary,
 .btn.btn-secondary {
   background: transparent !important;
-  color: var(--color-primary) !important;
-  border: 2px solid var(--color-primary) !important;
+  color: var(--tk-text) !important;
+  border: 1px solid var(--tk-hair-strong) !important;
 }
 
 .btn-secondary:hover,
 .btn.btn-secondary:hover {
-  background: rgba(42, 69, 128, 0.05) !important;
-  color: var(--color-primary) !important;
-  border-color: var(--color-primary) !important;
+  background: rgba(182, 156, 96, 0.10) !important;
+  color: var(--tk-text) !important;
+  border-color: var(--tk-gold-hair) !important;
 }
 
 .btn-tertiary,
