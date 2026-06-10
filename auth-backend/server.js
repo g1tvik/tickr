@@ -158,8 +158,13 @@ async function start() {
     module.exports.storage = storage;
     await storage.init();
   }
+  // Background order engine: fills resting limit/stop/trailing orders, expires
+  // DAY orders at the close, and settles matured T+1 proceeds.
+  app.locals.orderEngine = tradingRoutes.startOrderEngine(storage);
+
   serverInstance = app.listen(PORT, () => {
     console.log(`[${getTimestamp()}] 🚀 Tickr API running on port ${PORT}`);
+    console.log(`[${getTimestamp()}] ⚙️  Order engine: processing resting orders every 5s`);
     console.log(`[${getTimestamp()}] 🗄️  Storage backend: ${storage.kind}${storage.kind === 'file' ? ` (${dataDir})` : ''}`);
     console.log(`[${getTimestamp()}] 📄 Auth logs: ${path.join(logsDir, 'auth.log')}`);
     console.log(`[${getTimestamp()}] 🔗 Health check: http://localhost:${PORT}/health`);

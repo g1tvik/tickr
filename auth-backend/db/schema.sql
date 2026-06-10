@@ -27,6 +27,19 @@ CREATE TABLE IF NOT EXISTS transactions (
 );
 CREATE INDEX IF NOT EXISTS transactions_user_idx ON transactions (user_id, id);
 
+-- Orders: one row per order. `status` is promoted so the engine can scan only
+-- working orders cheaply; full order object lives in `data`.
+CREATE TABLE IF NOT EXISTS orders (
+  id          TEXT PRIMARY KEY,
+  user_id     TEXT NOT NULL,
+  status      TEXT NOT NULL DEFAULT 'pending',
+  data        JSONB NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS orders_user_idx   ON orders (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS orders_status_idx ON orders (status);
+
 CREATE TABLE IF NOT EXISTS waitlist (
   id          TEXT PRIMARY KEY,
   email       TEXT,

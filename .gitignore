@@ -38,11 +38,13 @@ coverage/
 .Trashes
 ehthumbs.db
 Thumbs.db
+desktop.ini
 stockbuddy/NH_Traffic.7z
 stockbuddy/NHPUBLICABRIL.7z
 auth-backend/data/users.json
 auth-backend/data/portfolios.json
 auth-backend/data/transactions.json
+auth-backend/data/orders.json
 auth-backend/data/backups/
 
 Documentation/Codebase.md

@@ -142,6 +142,38 @@ export const api = {
     body: JSON.stringify({ symbol, shares })
   }).then(handleResponse),
 
+  // Realistic order placement — any type / intent / time-in-force.
+  // params: { symbol, qty, intent, type, limitPrice?, stopPrice?, trailType?,
+  //           trailValue?, timeInForce?, extendedHours? }
+  placeOrder: (params) => fetch(`${API_BASE_URL}/trading/orders`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(params)
+  }).then(handleResponse),
+
+  // List orders; pass { status: 'open' } for working orders only.
+  getOrders: (status) => {
+    const qs = status ? `?status=${encodeURIComponent(status)}` : '';
+    return fetch(`${API_BASE_URL}/trading/orders${qs}`, {
+      headers: getAuthHeaders()
+    }).then(handleResponse);
+  },
+
+  cancelOrder: (orderId) => fetch(`${API_BASE_URL}/trading/orders/${orderId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
+  // Account metrics: equity, buying power, margin, settled/unsettled cash, P&L.
+  getAccount: () => fetch(`${API_BASE_URL}/trading/account`, {
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
+  // Market clock + session (holiday aware). No auth required.
+  getClock: () => fetch(`${API_BASE_URL}/trading/clock`, {
+    headers: { 'Content-Type': 'application/json' }
+  }).then(handleResponse),
+
   // Live chart data endpoint
   getLiveChartData: (symbol) => fetch(`${API_BASE_URL}/trading/chart/${symbol}/live`, {
     headers: getAuthHeaders()

@@ -84,6 +84,7 @@ class PostgresStorage {
     await this._q(client, 'DELETE FROM users WHERE id = $1', [id]);
     await this._q(client, 'DELETE FROM portfolios WHERE user_id = $1', [id]);
     await this._q(client, 'DELETE FROM transactions WHERE user_id = $1', [id]);
+    await this._q(client, 'DELETE FROM orders WHERE user_id = $1', [id]);
   }
 
   // ---- Portfolios --------------------------------------------------------
@@ -147,6 +148,47 @@ class PostgresStorage {
       userId,
       JSON.stringify(txn),
     ]);
+  }
+
+  // ---- Orders ------------------------------------------------------------
+  async getUserOrders(userId, client) {
+    const { rows } = await this._q(client, 'SELECT data FROM orders WHERE user_id = $1 ORDER BY created_at DESC', [userId]);
+    return rows.map((r) => r.data);
+  }
+
+  async getOrder(userId, orderId, client) {
+    const { rows } = await this._q(client, 'SELECT data FROM orders WHERE user_id = $1 AND id = $2', [userId, orderId]);
+    return rows[0] ? rows[0].data : null;
+  }
+
+  async getOpenOrders(client) {
+    const { rows } = await this._q(
+      client,
+      "SELECT data FROM orders WHERE status IN ('pending','partially_filled') ORDER BY created_at",
+    );
+    return rows.map((r) => r.data);
+  }
+
+  async addOrder(userId, order, client) {
+    await this._q(
+      client,
+      `INSERT INTO orders (id, user_id, status, data)
+       VALUES ($1, $2, $3, $4::jsonb)
+       ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, data = EXCLUDED.data, updated_at = now()`,
+      [order.id, userId, order.status || 'pending', JSON.stringify(order)]
+    );
+  }
+
+  async updateOrder(userId, orderId, patch, client) {
+    const existing = await this.getOrder(userId, orderId, client);
+    if (!existing) return null;
+    const merged = { ...existing, ...patch, updatedAt: new Date().toISOString() };
+    await this._q(
+      client,
+      'UPDATE orders SET status = $3, data = $4::jsonb, updated_at = now() WHERE user_id = $1 AND id = $2',
+      [userId, orderId, merged.status || 'pending', JSON.stringify(merged)]
+    );
+    return merged;
   }
 
   // ---- Waitlist ----------------------------------------------------------

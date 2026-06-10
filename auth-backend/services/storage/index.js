@@ -30,6 +30,12 @@
  *   getUserTransactions(userId): Promise<Txn[]>
  *   addTransaction(userId, txn): Promise<void>
  *
+ *   getUserOrders(userId): Promise<Order[]>     // newest first
+ *   getOrder(userId, orderId): Promise<Order|null>
+ *   getOpenOrders(): Promise<Order[]>           // working orders across ALL users (engine input)
+ *   addOrder(userId, order): Promise<void>      // order.id + order.status required
+ *   updateOrder(userId, orderId, patch): Promise<Order|null>  // merges patch, bumps updatedAt
+ *
  *   getWaitlist(): Promise<Entry[]>             // saveWaitlist(list) replaces
  *   saveWaitlist(list): Promise<void>
  *   getInvites(): Promise<Invite[]>             // saveInvites(list) replaces

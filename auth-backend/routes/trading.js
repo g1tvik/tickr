@@ -6,6 +6,9 @@ const rateLimit = require('express-rate-limit');
 const Alpaca = require('@alpacahq/alpaca-trade-api');
 const authRoutes = require('./auth');
 const { requireApproved } = require('../middleware/requireApproved');
+const marketHours = require('../services/marketHours');
+const pm = require('../services/portfolioMath');
+const engine = require('../services/orderEngine');
 
 // Reuse shared middleware and helpers
 const authenticateToken = authRoutes.authenticateToken;
@@ -1287,20 +1290,103 @@ function generateLiveCandleData(quote) {
   };
 }
 
-// Order validation schema
-const { z } = require('zod');
+// Engine deps: the storage backend + the local quote fetcher. Shared by the
+// placement path and (via server.js) the background order processor.
+const engineDeps = (req) => ({ storage: req.app.locals.storage, getQuote: getStockQuote });
 
-const orderSchema = z.object({
-  symbol: z.string()
-    .min(1, 'Symbol is required')
-    .max(10, 'Symbol too long')
-    .regex(/^[A-Z]+$/, 'Symbol must be uppercase letters only'),
-  shares: z.number()
-    .positive('Shares must be positive')
-    .max(100000, 'Maximum 100,000 shares per order'),
-  type: z.enum(['market', 'limit']).optional().default('market'),
-  limitPrice: z.number().positive().optional()
-});
+// Load a user's portfolio, normalize legacy shapes, settle any matured T+1
+// proceeds, and persist if settlement changed anything. Returns the canonical pf.
+async function loadPortfolio(storage, userId) {
+  const raw = await storage.getPortfolio(userId);
+  let pf = pm.normalizePortfolio(raw || pm.freshPortfolio());
+  const settled = pm.settleMatured(pf);
+  if (!raw || settled > 0 || raw.cash === undefined) {
+    await storage.savePortfolio(userId, pf);
+  }
+  return pf;
+}
+
+// Fetch quotes for every symbol the portfolio holds (best-effort, parallel).
+async function quotesForPortfolio(pf) {
+  const quotes = {};
+  await Promise.all((pf.positions || []).map(async (p) => {
+    try { quotes[p.symbol] = await getStockQuote(p.symbol); } catch { /* keep last price */ }
+  }));
+  return quotes;
+}
+
+// A user-facing one-liner describing what happened to a placed order.
+function orderMessage(order) {
+  const verb = { buy: 'Buy', sell: 'Sell', sell_short: 'Short', buy_to_cover: 'Cover' }[order.intent] || 'Order';
+  if (order.status === 'filled') {
+    return `${verb} ${order.filledQty} ${order.symbol} filled @ $${Number(order.avgFillPrice).toFixed(2)}`;
+  }
+  if (order.status === 'rejected') return order.rejectReason || 'Order rejected';
+  const kind = order.type === 'market' ? 'Market' : order.type.replace('_', '-');
+  return `${kind} ${verb.toLowerCase()} order for ${order.qty} ${order.symbol} accepted`;
+}
+
+/**
+ * Shared order-placement path used by POST /orders and the /buy /sell wrappers.
+ * Validates + creates the order, persists it, then attempts one immediate fill
+ * against a fresh quote. Anything not marketable right now (limit/stop resting
+ * below/above market, or placed while the eligible session is closed) stays
+ * 'pending' for the background engine to fill.
+ */
+async function placeOrder(req, res, params) {
+  checkTradingAllowed(req);
+  const userId = req.user.userId;
+  const storage = req.app.locals.storage;
+
+  let order;
+  try {
+    order = engine.createOrder(userId, params);
+  } catch (err) {
+    if (err instanceof engine.OrderError) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    throw err;
+  }
+
+  // Fetch the quote up front (network) so the per-user lock stays fast.
+  let quote = null;
+  try { quote = await getStockQuote(order.symbol); } catch { /* may rest without a quote */ }
+
+  const clock = marketHours.getClock();
+
+  // Reject clearly-unaffordable orders that WOULD fill immediately, so the user
+  // gets instant feedback. Resting orders are allowed to wait. The lock inside
+  // attemptFill re-checks authoritatively.
+  if (quote && marketHours.canFillNow(clock, order.extendedHours) && engine.evaluateFill(order, quote).fill) {
+    const pf = await loadPortfolio(storage, userId);
+    const probePrice = engine.evaluateFill(order, quote).price ?? quote.price;
+    const check = pm.validateFill(pf, order.side, order.symbol, order.qty, probePrice);
+    if (!check.ok) {
+      return res.status(400).json({ success: false, message: check.message });
+    }
+  }
+
+  await storage.addOrder(userId, order);
+
+  if (quote) {
+    order = await engine.attemptFill(engineDeps(req), order, quote, clock);
+  }
+
+  const pf = await loadPortfolio(storage, userId);
+  const quotes = quote ? { [order.symbol]: quote, ...(await quotesForPortfolio(pf)) } : await quotesForPortfolio(pf);
+  pm.markToMarket(pf, quotes);
+  const metrics = pm.computeMetrics(pf);
+
+  if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 🧾 ORDER ${order.status}: ${userId} ${order.intent} ${order.qty} ${order.symbol} (${order.type})`);
+
+  return res.json({
+    success: true,
+    order,
+    portfolio: pf,
+    metrics,
+    message: orderMessage(order),
+  });
+}
 
 /**
  * Check if trading is allowed (paper mode only by default)
@@ -1316,240 +1402,103 @@ const checkTradingAllowed = (req) => {
   return true;
 };
 
-// Buy stock
-router.post('/buy', authenticateToken, requireApproved, async (req, res) => {
+// ── Orders ──────────────────────────────────────────────────────────────────
+
+// Place an order of any type / intent / time-in-force. The realistic entry point.
+//   body: { symbol, qty, intent?, side?, type?, limitPrice?, stopPrice?,
+//           trailType?, trailValue?, timeInForce?, extendedHours? }
+router.post('/orders', authenticateToken, requireApproved, async (req, res) => {
   try {
-    // Validate trading is allowed
-    checkTradingAllowed(req);
-    
-    // Validate order
-    const parsed = orderSchema.safeParse({
-      ...req.body,
-      symbol: req.body.symbol?.toUpperCase()
-    });
-    
-    if (!parsed.success) {
-      return res.status(400).json({
-        success: false,
-        message: parsed.error.issues[0]?.message || 'Invalid order'
-      });
-    }
-    
-    const { symbol, shares, type, limitPrice } = parsed.data;
-    const userId = req.user.userId;
-
-    // Get current quote FIRST (network), OUTSIDE the lock
-    const quote = await getStockQuote(symbol);
-    const price = type === 'limit' && limitPrice ? limitPrice : quote.price;
-    const totalCost = price * shares;
-
-    // Mutate balance + positions atomically inside the per-user lock
-    const result = await req.app.locals.storage.withUserLock(userId, async (tx) => {
-      // Read (or init) the portfolio inside the lock
-      let portfolio = await tx.getPortfolio(userId);
-      if (!portfolio) {
-        portfolio = { balance: 10000, positions: [], totalValue: 10000 };
-      }
-
-      // Re-check funds inside the lock
-      if (portfolio.balance < totalCost) {
-        return {
-          error: {
-            status: 400,
-            body: {
-              success: false,
-              message: `Insufficient funds. Need $${totalCost.toFixed(2)}, have $${portfolio.balance.toFixed(2)}`
-            }
-          }
-        };
-      }
-
-      // Execute buy
-      portfolio.balance -= totalCost;
-
-      // Update or create position
-      const existingPosition = portfolio.positions.find(p => p.symbol === symbol);
-      if (existingPosition) {
-        // Backwards compatibility: migrate avgCost to avgPrice if needed
-        const currentAvgPrice = existingPosition.avgPrice ?? existingPosition.avgCost ?? price;
-
-        // Average price calculation
-        const totalShares = existingPosition.shares + shares;
-        const totalValue = (existingPosition.shares * currentAvgPrice) + totalCost;
-        existingPosition.avgPrice = totalValue / totalShares;
-        existingPosition.shares = totalShares;
-        existingPosition.currentPrice = price;
-        existingPosition.change = quote.change || 0;
-        existingPosition.changePercent = quote.changePercent || "0.00";
-
-        // Clean up legacy field if it exists
-        if (existingPosition.avgCost !== undefined) {
-          delete existingPosition.avgCost;
-        }
-      } else {
-        portfolio.positions.push({
-          symbol,
-          shares,
-          avgPrice: price,
-          currentPrice: price,
-          change: quote.change || 0,
-          changePercent: quote.changePercent || "0.00"
-        });
-      }
-
-      // Update total value
-      portfolio.totalValue = portfolio.balance + portfolio.positions.reduce((sum, p) =>
-        sum + (p.shares * p.currentPrice), 0);
-      portfolio.lastUpdated = new Date().toISOString();
-
-      await tx.savePortfolio(userId, portfolio);
-
-      // Record transaction
-      await tx.addTransaction(userId, {
-        id: `tx_${crypto.randomUUID()}`,
-        type: 'buy',
-        symbol,
-        shares,
-        price,
-        total: totalCost,
-        timestamp: new Date().toISOString()
-      });
-
-      return { portfolio };
-    });
-
-    if (result.error) {
-      return res.status(result.error.status).json(result.error.body);
-    }
-
-    if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📈 BUY: ${userId} bought ${shares} ${symbol} @ $${price}`);
-
-    res.json({
-      success: true,
-      message: `Bought ${shares} shares of ${symbol}`,
-      order: { symbol, shares, price, total: totalCost },
-      portfolio: result.portfolio
-    });
+    await placeOrder(req, res, req.body);
   } catch (error) {
-    console.error(`[${getTimestamp()}] Buy error:`, error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Failed to execute buy order'
-    });
+    console.error(`[${getTimestamp()}] Order error:`, error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to place order' });
   }
 });
 
-// Sell stock
+// Back-compat market-order wrappers for older clients — delegate to placeOrder.
+router.post('/buy', authenticateToken, requireApproved, async (req, res) => {
+  try {
+    await placeOrder(req, res, {
+      symbol: req.body.symbol, qty: req.body.shares ?? req.body.qty,
+      intent: 'buy', type: req.body.type || 'market', limitPrice: req.body.limitPrice,
+    });
+  } catch (error) {
+    console.error(`[${getTimestamp()}] Buy error:`, error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to execute buy order' });
+  }
+});
+
 router.post('/sell', authenticateToken, requireApproved, async (req, res) => {
   try {
-    // Validate trading is allowed
-    checkTradingAllowed(req);
-    
-    // Validate order
-    const parsed = orderSchema.safeParse({
-      ...req.body,
-      symbol: req.body.symbol?.toUpperCase()
-    });
-    
-    if (!parsed.success) {
-      return res.status(400).json({
-        success: false,
-        message: parsed.error.issues[0]?.message || 'Invalid order'
-      });
-    }
-    
-    const { symbol, shares, type, limitPrice } = parsed.data;
-    const userId = req.user.userId;
-
-    // Get current quote FIRST (network), OUTSIDE the lock
-    const quote = await getStockQuote(symbol);
-    const price = type === 'limit' && limitPrice ? limitPrice : quote.price;
-    const totalProceeds = price * shares;
-
-    // Mutate balance + positions atomically inside the per-user lock
-    const result = await req.app.locals.storage.withUserLock(userId, async (tx) => {
-      // Read the portfolio inside the lock
-      const portfolio = await tx.getPortfolio(userId);
-
-      if (!portfolio) {
-        return {
-          error: {
-            status: 400,
-            body: { success: false, message: 'No portfolio found' }
-          }
-        };
-      }
-
-      // Re-check holdings inside the lock
-      const position = portfolio.positions.find(p => p.symbol === symbol);
-      if (!position || position.shares < shares) {
-        return {
-          error: {
-            status: 400,
-            body: {
-              success: false,
-              message: `Insufficient shares. Have ${position?.shares || 0} ${symbol}, trying to sell ${shares}`
-            }
-          }
-        };
-      }
-
-      // Backwards compatibility: use avgPrice or legacy avgCost (capture before mutation)
-      const positionAvgPrice = position.avgPrice ?? position.avgCost ?? price;
-
-      // Execute sell
-      portfolio.balance += totalProceeds;
-      position.shares -= shares;
-      position.currentPrice = price;
-      // Update change data from current quote to prevent stale values
-      position.change = quote.change || 0;
-      position.changePercent = quote.changePercent || "0.00";
-
-      // Remove position if fully sold
-      if (position.shares === 0) {
-        portfolio.positions = portfolio.positions.filter(p => p.symbol !== symbol);
-      }
-
-      // Update total value
-      portfolio.totalValue = portfolio.balance + portfolio.positions.reduce((sum, p) =>
-        sum + (p.shares * p.currentPrice), 0);
-      portfolio.lastUpdated = new Date().toISOString();
-
-      await tx.savePortfolio(userId, portfolio);
-
-      // Record transaction
-      await tx.addTransaction(userId, {
-        id: `tx_${crypto.randomUUID()}`,
-        type: 'sell',
-        symbol,
-        shares,
-        price,
-        total: totalProceeds,
-        profit: (price - positionAvgPrice) * shares,
-        timestamp: new Date().toISOString()
-      });
-
-      return { portfolio };
-    });
-
-    if (result.error) {
-      return res.status(result.error.status).json(result.error.body);
-    }
-
-    if (VERBOSE_LOGS) console.log(`[${getTimestamp()}] 📉 SELL: ${userId} sold ${shares} ${symbol} @ $${price}`);
-
-    res.json({
-      success: true,
-      message: `Sold ${shares} shares of ${symbol}`,
-      order: { symbol, shares, price, total: totalProceeds },
-      portfolio: result.portfolio
+    await placeOrder(req, res, {
+      symbol: req.body.symbol, qty: req.body.shares ?? req.body.qty,
+      intent: 'sell', type: req.body.type || 'market', limitPrice: req.body.limitPrice,
     });
   } catch (error) {
     console.error(`[${getTimestamp()}] Sell error:`, error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Failed to execute sell order'
-    });
+    res.status(500).json({ success: false, message: error.message || 'Failed to execute sell order' });
+  }
+});
+
+// List the user's orders. ?status=open returns only working (resting) orders.
+router.get('/orders', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    let orders = (await req.app.locals.storage.getUserOrders(userId)) || [];
+    if (req.query.status === 'open') {
+      orders = orders.filter((o) => engine.OPEN_STATUSES.includes(o.status));
+    }
+    orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    res.json({ success: true, orders });
+  } catch (error) {
+    console.error(`[${getTimestamp()}] List orders error:`, error);
+    res.status(500).json({ success: false, message: 'Failed to load orders' });
+  }
+});
+
+// Cancel a working order.
+router.delete('/orders/:id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const order = await req.app.locals.storage.getOrder(userId, req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    if (!engine.OPEN_STATUSES.includes(order.status)) {
+      return res.status(409).json({ success: false, message: `Order is already ${order.status}` });
+    }
+    const updated = await req.app.locals.storage.updateOrder(userId, req.params.id, { status: 'canceled' });
+    res.json({ success: true, order: updated });
+  } catch (error) {
+    console.error(`[${getTimestamp()}] Cancel order error:`, error);
+    res.status(500).json({ success: false, message: 'Failed to cancel order' });
+  }
+});
+
+// Market clock + session (holiday aware). Cheap; no auth required.
+router.get('/clock', (req, res) => {
+  const clock = marketHours.getClock();
+  res.json({
+    success: true,
+    clock: {
+      ...clock,
+      label: marketHours.sessionLabel(clock),
+      status: clock.isOpen ? 'open' : 'closed', // legacy field the existing UI reads
+    },
+  });
+});
+
+// Account metrics: equity, buying power, margin, settled/unsettled cash, P&L.
+router.get('/account', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const storage = req.app.locals.storage;
+    const pf = await loadPortfolio(storage, userId);
+    pm.markToMarket(pf, await quotesForPortfolio(pf));
+    await storage.savePortfolio(userId, pf); // persist refreshed prices
+    res.json({ success: true, portfolio: pf, metrics: pm.computeMetrics(pf) });
+  } catch (error) {
+    console.error(`[${getTimestamp()}] Account error:`, error);
+    res.status(500).json({ success: false, message: 'Failed to load account' });
   }
 });
 
@@ -1557,56 +1506,22 @@ router.post('/sell', authenticateToken, requireApproved, async (req, res) => {
 router.get('/portfolio', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    let portfolio = await req.app.locals.storage.getPortfolio(userId);
+    const storage = req.app.locals.storage;
 
-    if (!portfolio) {
-      portfolio = await initializePortfolio(req, userId);
-    }
+    // Normalize legacy shapes + settle matured T+1 proceeds.
+    const pf = await loadPortfolio(storage, userId);
 
-    // Fetch current quotes FIRST (network), OUTSIDE the lock
-    const quotesBySymbol = {};
-    for (const position of portfolio.positions) {
-      try {
-        quotesBySymbol[position.symbol] = await getStockQuote(position.symbol);
-      } catch (error) {
-        if (VERBOSE_LOGS) console.warn(`[${getTimestamp()}] Failed to update price for ${position.symbol}`);
-      }
-    }
+    // Refresh prices for held symbols, mark to market, persist.
+    pm.markToMarket(pf, await quotesForPortfolio(pf));
+    await storage.savePortfolio(userId, pf);
 
-    // Apply price updates atomically inside the per-user lock
-    const updatedPortfolio = await req.app.locals.storage.withUserLock(userId, async (tx) => {
-      let pf = await tx.getPortfolio(userId);
-      if (!pf) {
-        pf = { balance: 10000, positions: [], totalValue: 10000 };
-      }
-
-      // Update current prices and change data
-      for (const position of pf.positions) {
-        const quote = quotesBySymbol[position.symbol];
-        if (quote) {
-          position.currentPrice = quote.price;
-          position.change = quote.change || 0;
-          position.changePercent = quote.changePercent || "0.00";
-        }
-
-        // Migrate legacy avgCost to avgPrice if needed
-        if (position.avgCost !== undefined && position.avgPrice === undefined) {
-          position.avgPrice = position.avgCost;
-          delete position.avgCost;
-        }
-      }
-
-      // Recalculate total value
-      pf.totalValue = pf.balance + pf.positions.reduce((sum, p) =>
-        sum + (p.shares * p.currentPrice), 0);
-
-      await tx.savePortfolio(userId, pf);
-      return pf;
-    });
+    const metrics = pm.computeMetrics(pf);
 
     res.json({
       success: true,
-      portfolio: updatedPortfolio
+      // `balance` + `totalValue` kept as aliases so any legacy reader still works.
+      portfolio: { ...pf, balance: metrics.buyingPower, totalValue: metrics.totalValue },
+      metrics,
     });
   } catch (error) {
     console.error(`[${getTimestamp()}] Portfolio error:`, error);
@@ -1734,4 +1649,33 @@ router.get('/autocomplete', searchLimiter, async (req, res) => {
   }
 });
 
+/**
+ * Start the background order processor. Every `intervalMs` it expires stale DAY
+ * orders and tries to fill all working orders against fresh quotes. Returns the
+ * interval handle so the caller can clear it on shutdown.
+ */
+function startOrderEngine(storage, intervalMs = 5000) {
+  const deps = { storage, getQuote: getStockQuote };
+  let running = false;
+  const tick = async () => {
+    if (running) return; // never overlap ticks
+    running = true;
+    try {
+      const r = await engine.processOpenOrders(deps);
+      if (VERBOSE_LOGS && (r.filled || r.expired)) {
+        console.log(`[${getTimestamp()}] ⚙️  Order engine: ${r.filled} filled, ${r.expired} expired (${r.processed} working)`);
+      }
+    } catch (err) {
+      console.error(`[${getTimestamp()}] Order engine tick failed:`, err.message);
+    } finally {
+      running = false;
+    }
+  };
+  const handle = setInterval(tick, intervalMs);
+  if (handle.unref) handle.unref(); // don't keep the process alive on its own
+  return handle;
+}
+
 module.exports = router;
+module.exports.startOrderEngine = startOrderEngine;
+module.exports.getStockQuote = getStockQuote;

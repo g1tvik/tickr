@@ -18,6 +18,7 @@ class FileStorage {
       users: path.join(dataDir, 'users.json'),
       portfolios: path.join(dataDir, 'portfolios.json'),
       transactions: path.join(dataDir, 'transactions.json'),
+      orders: path.join(dataDir, 'orders.json'),
       waitlist: path.join(dataDir, 'waitlist.json'),
       invites: path.join(dataDir, 'invites.json'),
     };
@@ -89,6 +90,9 @@ class FileStorage {
     const txns = this._read(this.files.transactions, {});
     delete txns[id];
     this._write(this.files.transactions, txns);
+    const orders = this._read(this.files.orders, {});
+    delete orders[id];
+    this._write(this.files.orders, orders);
   }
 
   // ---- Portfolios --------------------------------------------------------
@@ -121,6 +125,46 @@ class FileStorage {
     const all = await this.getTransactions();
     (all[userId] = all[userId] || []).push(txn);
     this._write(this.files.transactions, all);
+  }
+
+  // ---- Orders ------------------------------------------------------------
+  async getOrders() {
+    return this._read(this.files.orders, {});
+  }
+  async saveOrders(orders) {
+    this._write(this.files.orders, orders || {});
+  }
+  async getUserOrders(userId) {
+    return (await this.getOrders())[userId] || [];
+  }
+  async getOrder(userId, orderId) {
+    return (await this.getUserOrders(userId)).find((o) => o.id === orderId) || null;
+  }
+  // All orders still working (resting), across every user — the engine's input.
+  async getOpenOrders() {
+    const all = await this.getOrders();
+    const open = [];
+    for (const list of Object.values(all)) {
+      for (const o of list || []) {
+        if (o.status === 'pending' || o.status === 'partially_filled') open.push(o);
+      }
+    }
+    return open;
+  }
+  async addOrder(userId, order) {
+    const all = await this.getOrders();
+    (all[userId] = all[userId] || []).push(order);
+    this._write(this.files.orders, all);
+  }
+  async updateOrder(userId, orderId, patch) {
+    const all = await this.getOrders();
+    const list = all[userId] || [];
+    const idx = list.findIndex((o) => o.id === orderId);
+    if (idx === -1) return null;
+    list[idx] = { ...list[idx], ...patch, updatedAt: new Date().toISOString() };
+    all[userId] = list;
+    this._write(this.files.orders, all);
+    return list[idx];
   }
 
   // ---- Waitlist / Invites ------------------------------------------------
