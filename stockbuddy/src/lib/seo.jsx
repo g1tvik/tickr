@@ -41,10 +41,14 @@ export function setMetaDescription(description) {
  * @param {string} [params.url]
  */
 export function setOGTags({ title, description, image, url }) {
+  // Scrapers don't resolve relative paths — make the image URL absolute,
+  // without double-prefixing an already-absolute URL.
+  const absolutize = (u) =>
+    /^https?:\/\//i.test(u) ? u : `${SITE_URL}${u.startsWith('/') ? '' : '/'}${u}`;
   const tags = {
     'og:title': title,
     'og:description': description || DEFAULT_DESCRIPTION,
-    'og:image': image || `${SITE_URL}/og.png`,
+    'og:image': image ? absolutize(image) : `${SITE_URL}/og.png`,
     'og:url': url || window.location.href
   };
 

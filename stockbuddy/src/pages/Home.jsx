@@ -1008,6 +1008,45 @@ const FooterBottom = styled.div`
 `;
 
 // ============ COMPONENT ============
+// ─── Parallax math ──────────────────────────────────────────────────────────
+// Shared by first paint and the rAF scroll writer so the two can never drift.
+// Driving these via refs (not React state) means scrolling the landing page
+// never re-renders the whole tree — only a few inline styles get written.
+const CASCADE_ELEMENTS = [
+  { x: 5, size: 8, speed: 0.8, delay: 0 },
+  { x: 15, size: 6, speed: 1.2, delay: 0.1 },
+  { x: 25, size: 10, speed: 0.6, delay: 0.2 },
+  { x: 35, size: 5, speed: 1.4, delay: 0.05 },
+  { x: 45, size: 7, speed: 0.9, delay: 0.15 },
+  { x: 55, size: 9, speed: 1.1, delay: 0.25 },
+  { x: 65, size: 6, speed: 0.7, delay: 0.08 },
+  { x: 75, size: 8, speed: 1.3, delay: 0.18 },
+  { x: 85, size: 5, speed: 1.0, delay: 0.12 },
+  { x: 95, size: 7, speed: 0.85, delay: 0.22 },
+  { x: 10, size: 4, speed: 1.5, delay: 0.3 },
+  { x: 30, size: 6, speed: 0.75, delay: 0.35 },
+  { x: 50, size: 8, speed: 1.15, delay: 0.02 },
+  { x: 70, size: 5, speed: 0.95, delay: 0.28 },
+  { x: 90, size: 7, speed: 1.25, delay: 0.07 },
+];
+
+const heroParallax = (scrollProgress) => ({
+  contentTransform: `translateY(${scrollProgress * 100}px)`,
+  contentOpacity: Math.max(1 - scrollProgress * 1.5, 0),
+  previewTransform: `translateY(${scrollProgress * 60}px)`,
+  previewOpacity: Math.max(1 - scrollProgress * 1.4, 0),
+});
+
+const polkaOpacityFor = (scrollY) => Math.max(0, 0.16 - scrollY / 420);
+
+const cascadeStyleFor = (el, scrollY, wh) => {
+  const fallDistance = (scrollY * el.speed + el.delay * 1000) % (wh + 200);
+  const opacity =
+    fallDistance < 100 ? fallDistance / 100 :
+    fallDistance > wh ? Math.max(0, 1 - (fallDistance - wh) / 200) : 0.4;
+  return { top: fallDistance - 100, opacity: opacity * 0.5, rotate: scrollY * el.speed * 0.5 };
+};
+
 function Home({ isLoggedIn }) {
   useSEO(SEO_CONFIG.home);
   const reduceMotion = useReducedMotion();
@@ -1020,7 +1059,10 @@ function Home({ isLoggedIn }) {
   const cursorRingRef = useRef(null);
   const cursorPos = useRef({ x: 0, y: 0 });
   const cursorTarget = useRef({ x: 0, y: 0 });
-  const [scrollY, setScrollY] = useState(0);
+  const heroContentRef = useRef(null);
+  const heroPreviewRef = useRef(null);
+  const polkaDotRef = useRef(null);
+  const cascadeRefs = useRef([]);
   const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 800);
   const [cursorHovering, setCursorHovering] = useState(false);
   const BADGE_FULL_TEXT = "now in beta • live paper trading";
@@ -1237,30 +1279,50 @@ function Home({ isLoggedIn }) {
   // When reduced motion is preferred we still track the resize (so layout stays
   // correct) but freeze scrollY at 0 so the page renders static.
   useEffect(() => {
+    // Write parallax styles straight to the DOM refs — no setState, so a scroll
+    // frame costs a few style writes instead of a full landing-tree re-render.
+    const applyScroll = (y) => {
+      const wh = window.innerHeight;
+      const p = heroParallax(Math.min(y / wh, 1));
+      if (heroContentRef.current) {
+        heroContentRef.current.style.transform = p.contentTransform;
+        heroContentRef.current.style.opacity = p.contentOpacity;
+      }
+      if (heroPreviewRef.current) {
+        heroPreviewRef.current.style.transform = p.previewTransform;
+        heroPreviewRef.current.style.opacity = p.previewOpacity;
+      }
+      if (polkaDotRef.current) {
+        polkaDotRef.current.style.opacity = polkaOpacityFor(y);
+      }
+      for (let i = 0; i < CASCADE_ELEMENTS.length; i++) {
+        const node = cascadeRefs.current[i];
+        if (!node) continue;
+        const c = cascadeStyleFor(CASCADE_ELEMENTS[i], y, wh);
+        node.style.top = `${c.top}px`;
+        node.style.opacity = c.opacity;
+        node.style.transform = `rotate(${c.rotate}deg)`;
+      }
+    };
+
     const handleResize = () => {
       setWindowHeight(window.innerHeight);
+      applyScroll(reduceMotion ? 0 : window.scrollY);
     };
     window.addEventListener('resize', handleResize);
 
     if (reduceMotion) {
-      setScrollY(0);
-      return () => {
-        window.removeEventListener('resize', handleResize);
-      };
+      applyScroll(0); // static — scroll frozen at 0
+      return () => window.removeEventListener('resize', handleResize);
     }
 
     let rafId;
     const handleScroll = () => {
       cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => {
-        setScrollY(window.scrollY);
-      });
+      rafId = requestAnimationFrame(() => applyScroll(window.scrollY));
     };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
-
-    // Initial call
-    handleScroll();
+    applyScroll(window.scrollY); // initial
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
@@ -1307,35 +1369,14 @@ function Home({ isLoggedIn }) {
     };
   }, [setNavbarBackground]);
 
-  // Calculate scroll progress (0 to 1) for different sections
-  // Hero fades over first screen
-  const scrollProgress = Math.min(scrollY / windowHeight, 1);
-
-  // Cascading elements data - different sizes, positions, and speeds
-  const cascadeElements = [
-    { x: 5, size: 8, speed: 0.8, delay: 0 },
-    { x: 15, size: 6, speed: 1.2, delay: 0.1 },
-    { x: 25, size: 10, speed: 0.6, delay: 0.2 },
-    { x: 35, size: 5, speed: 1.4, delay: 0.05 },
-    { x: 45, size: 7, speed: 0.9, delay: 0.15 },
-    { x: 55, size: 9, speed: 1.1, delay: 0.25 },
-    { x: 65, size: 6, speed: 0.7, delay: 0.08 },
-    { x: 75, size: 8, speed: 1.3, delay: 0.18 },
-    { x: 85, size: 5, speed: 1.0, delay: 0.12 },
-    { x: 95, size: 7, speed: 0.85, delay: 0.22 },
-    { x: 10, size: 4, speed: 1.5, delay: 0.3 },
-    { x: 30, size: 6, speed: 0.75, delay: 0.35 },
-    { x: 50, size: 8, speed: 1.15, delay: 0.02 },
-    { x: 70, size: 5, speed: 0.95, delay: 0.28 },
-    { x: 90, size: 7, speed: 1.25, delay: 0.07 },
-  ];
-
-  const polkaDotOpacity = Math.max(0, 0.16 - scrollY / 420);
+  // Initial (scroll = 0) parallax values for first paint; the rAF effect above
+  // takes over and writes every subsequent frame directly to the refs.
+  const initialHero = heroParallax(0);
 
   return (
     <PageWrapper ref={containerRef}>
       {/* Polka dots: scattered, fade out as you scroll so content clears into view */}
-      {!reduceMotion && <PolkaDotOverlay $opacity={polkaDotOpacity} />}
+      {!reduceMotion && <PolkaDotOverlay ref={polkaDotRef} $opacity={polkaOpacityFor(0)} />}
 
       {/* Heavy decorative motion is skipped entirely when reduced motion is preferred */}
       {!reduceMotion && (
@@ -1349,25 +1390,21 @@ function Home({ isLoggedIn }) {
 
           {/* ============ CASCADING ELEMENTS ============ */}
           <CascadeContainer>
-            {cascadeElements.map((el, i) => {
-              // Calculate Y position based on scroll - creates falling effect
-              const fallDistance = (scrollY * el.speed + el.delay * 1000) % (windowHeight + 200);
-              const opacity = fallDistance < 100 ? fallDistance / 100 :
-                             fallDistance > windowHeight ? Math.max(0, 1 - (fallDistance - windowHeight) / 200) :
-                             0.4;
-
+            {CASCADE_ELEMENTS.map((el, i) => {
+              const c = cascadeStyleFor(el, 0, windowHeight); // initial; rAF updates via ref
               return (
                 <CascadeElement
                   key={i}
+                  ref={(node) => { cascadeRefs.current[i] = node; }}
                   style={{
                     left: `${el.x}%`,
-                    top: `${fallDistance - 100}px`,
+                    top: `${c.top}px`,
                     width: `${el.size}px`,
                     height: `${el.size}px`,
                     borderRadius: '50%',
                     background: marbleGold,
-                    opacity: opacity * 0.5,
-                    transform: `rotate(${scrollY * el.speed * 0.5}deg)`
+                    opacity: c.opacity,
+                    transform: 'rotate(0deg)'
                   }}
                 />
               );
@@ -1395,9 +1432,9 @@ function Home({ isLoggedIn }) {
         )}
 
         {/* Hero Content */}
-        <HeroContent style={{
-          transform: `translateY(${scrollProgress * 100}px)`,
-          opacity: Math.max(1 - scrollProgress * 1.5, 0)
+        <HeroContent ref={heroContentRef} style={{
+          transform: initialHero.contentTransform,
+          opacity: initialHero.contentOpacity
         }}>
           <Badge>
             <BadgeText $blink={badgeBlinking}>
@@ -1437,9 +1474,9 @@ function Home({ isLoggedIn }) {
         </HeroContent>
 
         {/* ============ HERO PREVIEW (one flat hairline panel) ============ */}
-        <HeroPreviewWrap style={{
-          transform: `translateY(${scrollProgress * 60}px)`,
-          opacity: Math.max(1 - scrollProgress * 1.4, 0),
+        <HeroPreviewWrap ref={heroPreviewRef} style={{
+          transform: initialHero.previewTransform,
+          opacity: initialHero.previewOpacity,
         }}>
           <PreviewPanel>
             <ChartCard>

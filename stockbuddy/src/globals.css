@@ -4,7 +4,8 @@
 /* Hero fonts */
 @font-face {
   font-family: 'Creato Display';
-  src: url('/fonts/CreatoDisplay-Medium.otf') format('opentype');
+  src: url('/fonts/CreatoDisplay-Medium.woff2') format('woff2'),
+       url('/fonts/CreatoDisplay-Medium.otf') format('opentype');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -12,7 +13,8 @@
 
 @font-face {
   font-family: 'Poetsen One';
-  src: url('/fonts/PoetsenOne-Regular.ttf') format('truetype');
+  src: url('/fonts/PoetsenOne-Regular.woff2') format('woff2'),
+       url('/fonts/PoetsenOne-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
