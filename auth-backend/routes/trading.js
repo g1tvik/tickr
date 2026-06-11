@@ -104,9 +104,14 @@ const initializePortfolio = async (req, userId) => {
 // Cache for company names to reduce API calls (Map for capped insertion-order eviction)
 const companyNameCache = new Map();
 
+// Per-symbol quote cache to coalesce rapid repeat REST quote lookups (Map for capped insertion-order eviction)
+const quoteCache = new Map();
+const QUOTE_CACHE_TTL = 5000; // 5 seconds
+
 // Cache for search results to improve performance (Map for capped insertion-order eviction)
 const searchCache = new Map();
 const SEARCH_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const SEARCH_RESULT_CACHE_DURATION = 30000; // 30 seconds
 
 // Cache for Alpaca assets to avoid repeated API calls
 let alpacaAssetsCache = {
@@ -607,6 +612,12 @@ const getStockQuoteFromREST = async (symbol) => {
       return generateDemoQuote(symbol);
     }
 
+    // Serve a fresh cached quote to coalesce rapid repeat lookups for the same symbol
+    const cachedQuote = quoteCache.get(symbol);
+    if (cachedQuote && (Date.now() - cachedQuote.t) < QUOTE_CACHE_TTL) {
+      return cachedQuote.q;
+    }
+
     const headers = {
       'APCA-API-KEY-ID': process.env.ALPACA_API_KEY,
       'APCA-API-SECRET-KEY': process.env.ALPACA_SECRET_KEY
@@ -690,7 +701,7 @@ const getStockQuoteFromREST = async (symbol) => {
     // Get company name from Alpaca API
     const companyName = await getCompanyName(symbol);
       
-    return {
+    const q = {
       symbol: symbol.toUpperCase(),
       name: companyName,
       price: currentPrice,
@@ -702,6 +713,9 @@ const getStockQuoteFromREST = async (symbol) => {
       hasHistoricalData: change !== null,
       hasVolumeData: dailyVolume !== null
     };
+    quoteCache.set(symbol, { q, t: Date.now() });
+    enforceCacheCap(quoteCache);
+    return q;
   } catch (error) {
     console.error(`[${getTimestamp()}] ❌ Error in getStockQuoteFromREST for ${symbol}:`, error.message);
     throw error; // Re-throw to be handled by the route handler
@@ -1591,8 +1605,22 @@ router.get('/search', searchLimiter, async (req, res) => {
       });
     }
 
+    // Quick cached lookup for repeated identical searches
+    const cacheKey = `search_${query.toLowerCase()}`;
+    const now = Date.now();
+    const cachedEntry = searchCache.get(cacheKey);
+    if (cachedEntry && (now - cachedEntry.timestamp) < SEARCH_RESULT_CACHE_DURATION) {
+      return res.json({
+        success: true,
+        results: cachedEntry.data
+      });
+    }
+
     const results = await searchStocks(query);
-    
+
+    searchCache.set(cacheKey, { data: results, timestamp: now });
+    enforceCacheCap(searchCache);
+
     res.json({
       success: true,
       results

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import "../globals.css";
 import { useNavigate } from "react-router-dom";
 import { fontBody } from '../fontPalette';
@@ -125,10 +125,8 @@ const XPBar = ({ levelInfo }) => {
 
 // ─── Weekly Progress Chart ────────────────────────────────────────────────────
 const WeeklyProgressChart = ({ userData }) => {
-  const [weeklyData, setWeeklyData] = useState([]);
-
-  useEffect(() => {
-    if (!userData?.learningProgress?.lessonAttempts) return;
+  const weeklyData = useMemo(() => {
+    if (!userData?.learningProgress?.lessonAttempts) return [];
 
     const last7Days = [];
     const today = new Date();
@@ -151,7 +149,7 @@ const WeeklyProgressChart = ({ userData }) => {
         lessons: lessonsCompleted,
       });
     }
-    setWeeklyData(last7Days);
+    return last7Days;
   }, [userData]);
 
   const maxLessons = Math.max(...weeklyData.map(d => d.lessons), 1);
@@ -183,17 +181,15 @@ const WeeklyProgressChart = ({ userData }) => {
 
 // ─── Trading Milestones ───────────────────────────────────────────────────────
 const TradingMilestones = ({ userData, portfolio }) => {
-  const [milestones, setMilestones] = useState([]);
-
-  useEffect(() => {
-    if (!userData || !portfolio) return;
+  const milestones = useMemo(() => {
+    if (!userData || !portfolio) return [];
 
     const completedLessons = userData.learningProgress?.completedLessons || [];
     const transactions = userData.transactions || [];
     const hasPositions = portfolio.positions && portfolio.positions.length > 0;
     const totalReturn = portfolio.totalReturn || 0;
 
-    const milestoneData = [
+    return [
       { id: 'first_lesson',   title: 'First Lesson',          xp: 25,  status: completedLessons.length > 0 ? 'completed' : 'locked',              desc: 'Complete your first lesson' },
       { id: 'first_trade',    title: 'First Trade',           xp: 50,  status: transactions.length > 0 ? 'completed' : 'locked',                  desc: 'Buy your first stock' },
       { id: 'diversified',    title: 'Diversified',           xp: 75,  status: hasPositions && portfolio.positions.length >= 2 ? 'completed' : hasPositions ? 'current' : 'locked', desc: 'Hold 2+ stocks' },
@@ -201,7 +197,6 @@ const TradingMilestones = ({ userData, portfolio }) => {
       { id: 'risk_mgmt',      title: 'Risk Manager',          xp: 150, status: completedLessons.includes(16) || completedLessons.includes(17) ? 'completed' : completedLessons.length >= 10 ? 'current' : 'locked', desc: 'Risk management lessons' },
       { id: 'advanced_trader', title: 'Advanced Trader',      xp: 200, status: completedLessons.length >= 20 ? 'completed' : completedLessons.length >= 15 ? 'current' : 'locked', desc: '20+ lessons complete' },
     ];
-    setMilestones(milestoneData);
   }, [userData, portfolio]);
 
   return (
@@ -245,10 +240,8 @@ const TradingMilestones = ({ userData, portfolio }) => {
 
 // ─── Recent Activity ──────────────────────────────────────────────────────────
 const RecentActivity = ({ userData, portfolio }) => {
-  const [activities, setActivities] = useState([]);
-
-  useEffect(() => {
-    if (!userData) return;
+  const activities = useMemo(() => {
+    if (!userData) return [];
     const list = [];
 
     if (userData.learningProgress?.lessonAttempts) {
@@ -269,7 +262,7 @@ const RecentActivity = ({ userData, portfolio }) => {
     }
 
     list.sort((a, b) => b.timestamp - a.timestamp);
-    setActivities(list.slice(0, 6));
+    return list.slice(0, 6);
   }, [userData, portfolio]);
 
   const ago = (ts) => {
@@ -464,21 +457,24 @@ const AllocationBar = ({ segments, reduced }) => {
 // The dashboard centerpiece: big portfolio value, a color-coded return chip, the
 // allocation bar + legend, and a cash / return / holdings metric strip.
 const PortfolioHero = ({ portfolio, loading, error, reduced, fmt, fmtPct, changeColor, onRefresh, onTrade }) => {
-  const positions = (portfolio?.positions || []).filter(p => num(p.currentValue, 0) > 0);
-  const holdingsValue = positions.reduce((s, p) => s + num(p.currentValue, 0), 0);
-  const cash = num(portfolio?.cash, 0);
-  const denom = holdingsValue + cash;
+  const { withPct, holdingsValue } = useMemo(() => {
+    const positions = (portfolio?.positions || []).filter(p => num(p.currentValue, 0) > 0);
+    const holdingsValue = positions.reduce((s, p) => s + num(p.currentValue, 0), 0);
+    const cash = num(portfolio?.cash, 0);
+    const denom = holdingsValue + cash;
 
-  // Top 5 holdings by value; everything smaller folds into a single "Other".
-  const sorted = [...positions].sort((a, b) => num(b.currentValue, 0) - num(a.currentValue, 0));
-  const segments = [];
-  sorted.slice(0, 5).forEach((p, i) =>
-    segments.push({ key: p.symbol, label: p.symbol, value: num(p.currentValue, 0), color: ALLOC_COLORS[i % ALLOC_COLORS.length] })
-  );
-  const restValue = sorted.slice(5).reduce((s, p) => s + num(p.currentValue, 0), 0);
-  if (restValue > 0) segments.push({ key: '__other', label: 'Other', value: restValue, color: ALLOC_COLORS[5] });
-  if (cash > 0) segments.push({ key: '__cash', label: 'Cash', value: cash, color: CASH_COLOR });
-  const withPct = denom > 0 ? segments.map(s => ({ ...s, pct: (s.value / denom) * 100 })) : [];
+    // Top 5 holdings by value; everything smaller folds into a single "Other".
+    const sorted = [...positions].sort((a, b) => num(b.currentValue, 0) - num(a.currentValue, 0));
+    const segments = [];
+    sorted.slice(0, 5).forEach((p, i) =>
+      segments.push({ key: p.symbol, label: p.symbol, value: num(p.currentValue, 0), color: ALLOC_COLORS[i % ALLOC_COLORS.length] })
+    );
+    const restValue = sorted.slice(5).reduce((s, p) => s + num(p.currentValue, 0), 0);
+    if (restValue > 0) segments.push({ key: '__other', label: 'Other', value: restValue, color: ALLOC_COLORS[5] });
+    if (cash > 0) segments.push({ key: '__cash', label: 'Cash', value: cash, color: CASH_COLOR });
+    const withPct = denom > 0 ? segments.map(s => ({ ...s, pct: (s.value / denom) * 100 })) : [];
+    return { withPct, holdingsValue };
+  }, [portfolio]);
 
   const ret = num(portfolio?.totalReturn, 0);
   const up = ret >= 0;
@@ -644,7 +640,7 @@ export default function Dashboard() {
   const displayName   = userProfile?.name || currentUser?.username || 'there';
   const displayUser   = userProfile?.username || currentUser?.username || '';
   const learningProg  = userData?.learningProgress || { xp: 0, coins: 0 };
-  const levelInfo     = getLevelProgress(learningProg.xp);
+  const levelInfo     = useMemo(() => getLevelProgress(learningProg.xp), [learningProg.xp]);
 
   const dailyGoalCalc = () => {
     const today = new Date().toDateString();
@@ -656,7 +652,7 @@ export default function Dashboard() {
     const pct = goal > 0 ? Math.round(Math.min((done / goal) * 100, 100)) : 0;
     return { completed: done, total: goal, pct };
   };
-  const dg = dailyGoalCalc();
+  const dg = useMemo(() => dailyGoalCalc(), [learningProg, learningPreferences]);
 
   return (
     <div style={{ minHeight: '100vh', background: BG, padding: '32px 24px', fontFamily: fontBody }}>

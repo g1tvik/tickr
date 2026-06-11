@@ -1003,7 +1003,7 @@ const FooterBottom = styled.div`
     margin: 0;
   }
   .disclaimer {
-    color: ${tk.faint};
+    color: ${tk.muted};
   }
 `;
 

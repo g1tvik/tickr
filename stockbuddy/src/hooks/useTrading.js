@@ -164,14 +164,23 @@ export const useTrading = () => {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    const id = setInterval(() => {
+    const tick = () => {
+      if (document.hidden) return;
       loadAccount();
       loadOpenOrders();
       loadClock();
       loadTransactions();
       updateSelectedStockPrice();
-    }, SYNC_MS);
-    return () => clearInterval(id);
+    };
+    const id = setInterval(tick, SYNC_MS);
+    const onVisibilityChange = () => {
+      if (!document.hidden) tick();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [isAuthenticated, loadAccount, loadOpenOrders, loadClock, loadTransactions, updateSelectedStockPrice]);
 
   // ── Actions ────────────────────────────────────────────────────────────────

@@ -513,7 +513,9 @@ export default function Learn() {
         })}
 
         {/* Final Test Section */}
-        {progress?.unitProgress === 100 && (
+        {progress?.unitProgress === 100 && (() => {
+          const ft = progressManager.canTakeFinalTest();
+          return (
           <div style={{
             ...panel,
             borderColor: tk.goldHair,
@@ -553,27 +555,28 @@ export default function Learn() {
             </p>
             <button
               onClick={handleFinalTest}
-              disabled={!progressManager.canTakeFinalTest().canTake && !progressManager.canTakeFinalTest().needsUnlock}
+              disabled={!ft.canTake && !ft.needsUnlock}
               style={{
-                ...((progressManager.canTakeFinalTest().canTake || progressManager.canTakeFinalTest().needsUnlock) ? btnPrimary : btnGhost),
+                ...((ft.canTake || ft.needsUnlock) ? btnPrimary : btnGhost),
                 padding: "11px 22px",
                 fontSize: "14px",
-                cursor: (progressManager.canTakeFinalTest().canTake || progressManager.canTakeFinalTest().needsUnlock) ? "pointer" : "not-allowed",
-                opacity: (progressManager.canTakeFinalTest().canTake || progressManager.canTakeFinalTest().needsUnlock) ? 1 : 0.5,
+                cursor: (ft.canTake || ft.needsUnlock) ? "pointer" : "not-allowed",
+                opacity: (ft.canTake || ft.needsUnlock) ? 1 : 0.5,
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "7px",
               }}
             >
-              {progressManager.canTakeFinalTest().canTake
+              {ft.canTake
                 ? "Take final test"
-                : progressManager.canTakeFinalTest().needsUnlock
-                ? <>Unlock <Icon name="coin" size={14} /> <span style={mono}>{progressManager.canTakeFinalTest().unlockCost}</span></>
-                : progressManager.canTakeFinalTest().message
+                : ft.needsUnlock
+                ? <>Unlock <Icon name="coin" size={14} /> <span style={mono}>{ft.unlockCost}</span></>
+                : ft.message
               }
             </button>
           </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Lessons Modal */}

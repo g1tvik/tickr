@@ -200,16 +200,19 @@ async function attemptFill(deps, order, quote, clock = getClock(), now = new Dat
   if (!OPEN_STATUSES.includes(order.status)) return order;
 
   // Keep trailing stops tracking even when we can't fill yet (during sessions).
+  let trailChanged = false;
   if (order.type === 'trailing_stop' && canFillNow(clock, order.extendedHours)) {
+    const prevStop = order.stopPrice, prevHwm = order.hwm;
     updateTrailing(order, quote?.price);
+    trailChanged = order.stopPrice !== prevStop || order.hwm !== prevHwm;
   }
 
   if (!canFillNow(clock, order.extendedHours)) return order;
 
   const decision = evaluateFill(order, quote);
   if (!decision.fill) {
-    // Persist any trailing-stop drift so it survives restarts.
-    if (order.type === 'trailing_stop') {
+    // Persist any trailing-stop drift so it survives restarts (only when it actually moved).
+    if (order.type === 'trailing_stop' && trailChanged) {
       await deps.storage.updateOrder(order.userId, order.id, { stopPrice: order.stopPrice, hwm: order.hwm });
     }
     return order;

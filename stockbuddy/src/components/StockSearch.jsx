@@ -15,6 +15,8 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
   const searchTimeoutRef = useRef(null);
   const inputRef = useRef(null);
   const suggestionsRef = useRef(null);
+  // Client-side autocomplete cache: key = query.toLowerCase().trim() -> results
+  const searchCacheRef = useRef(new Map());
 
   // Preload mechanism to warm up the cache
   useEffect(() => {
@@ -53,6 +55,17 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
         return;
       }
 
+      // Serve from client-side cache when available
+      const cacheKey = query.toLowerCase().trim();
+      const cache = searchCacheRef.current;
+      if (cache.has(cacheKey)) {
+        setSuggestions(cache.get(cacheKey));
+        setShowSuggestions(true);
+        setIsLoading(false);
+        setError(null);
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
 
@@ -61,6 +74,11 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
         if (response.success) {
           setSuggestions(response.results);
           setShowSuggestions(true); // Show suggestions when results arrive
+          // Cache successful results with a soft cap (evict oldest beyond 50)
+          cache.set(cacheKey, response.results);
+          if (cache.size > 50) {
+            cache.delete(cache.keys().next().value);
+          }
         } else {
           setError('Failed to search stocks');
           setSuggestions([]);
@@ -134,35 +152,10 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
   };
 
   // Handle suggestion selection
-  const handleSuggestionSelect = async (suggestion) => {
-    try {
-      // Get full quote data for the selected stock
-      const response = await api.getStockQuote(suggestion.symbol);
-      if (response.success) {
-        onStockSelect(response.quote);
-      } else {
-        // Fallback to suggestion data if quote fails
-        onStockSelect({
-          symbol: suggestion.symbol,
-          name: suggestion.name,
-          price: null,
-          change: null,
-          changePercent: null,
-          volume: null
-        });
-      }
-    } catch (error) {
-      console.error('Error getting stock quote:', error);
-      // Fallback to suggestion data
-      onStockSelect({
-        symbol: suggestion.symbol,
-        name: suggestion.name,
-        price: null,
-        change: null,
-        changePercent: null,
-        volume: null
-      });
-    }
+  const handleSuggestionSelect = (suggestion) => {
+    // The suggestion already carries symbol + name; useTrading.handleStockSelect
+    // re-fetches the fresh quote, so avoid a wasteful double round-trip here.
+    onStockSelect(suggestion);
 
     // Reset search state
     setSearchTerm('');

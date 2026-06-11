@@ -231,13 +231,6 @@ function Trade() {
       document.body.style.setProperty('--scrollbar-track-bg', 'var(--marbleDarkGray)', 'important');
     };
     updateBackground();
-    const onScroll = () => updateBackground();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    document.addEventListener('touchmove', onScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      document.removeEventListener('touchmove', onScroll);
-    };
   }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadChartData = async (symbol, tf) => {
@@ -278,7 +271,7 @@ function Trade() {
     return (
       <div className="page-dark" style={{ minHeight: '100vh', backgroundColor: marbleDarkGray, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: fontBody }}>
         <div style={{ textAlign: 'center', maxWidth: '400px' }}>
-          <div style={{ ...heading, fontSize: '24px', color: 'var(--trade-text, #F4F1E9)', marginBottom: '12px' }}>{error || 'Sign in required'}</div>
+          <h1 style={{ ...heading, fontSize: '24px', color: 'var(--trade-text, #F4F1E9)', margin: '0 0 12px' }}>{error || 'Sign in required'}</h1>
           <div style={{ fontSize: '16px', color: 'var(--trade-text-muted, #b8b4a8)' }}>Please sign in to access the trading features.</div>
         </div>
       </div>
@@ -289,6 +282,7 @@ function Trade() {
 
   return (
     <div className="page-dark trade-page">
+      <h1 className="visually-hidden">Paper Trading</h1>
       <div className="trade-grid">
         {/* ════════ Main column ════════ */}
         <div className="trade-col">

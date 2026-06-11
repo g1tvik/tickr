@@ -1,24 +1,24 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate, Navigate } from "react-router-dom";
 import NavBar from "./components/NavBar";
 import PageTransition from "./components/PageTransition";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Home from "./pages/Home";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/Signup";
-import Dashboard from './pages/Dashboard';
-import Trade from './pages/Trade';
-import Learn from './pages/Learn';
-import Settings from './pages/Settings';
-import LessonDetail from "./pages/LessonDetail";
-import AICoach from './pages/AICoach';
-import Shop from './pages/Shop';
-import Inventory from './pages/Inventory';
-import ArticleReader from './components/ArticleReader';
-import Waitlist from './pages/Waitlist';
-import NotFound from './pages/NotFound';
-import About from './pages/About';
-import Profile from './pages/Profile';
+const SignIn = lazy(() => import("./pages/SignIn"));
+const SignUp = lazy(() => import("./pages/Signup"));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Trade = lazy(() => import('./pages/Trade'));
+const Learn = lazy(() => import('./pages/Learn'));
+const Settings = lazy(() => import('./pages/Settings'));
+const LessonDetail = lazy(() => import("./pages/LessonDetail"));
+const AICoach = lazy(() => import('./pages/AICoach'));
+const Shop = lazy(() => import('./pages/Shop'));
+const Inventory = lazy(() => import('./pages/Inventory'));
+const ArticleReader = lazy(() => import('./components/ArticleReader'));
+const Waitlist = lazy(() => import('./pages/Waitlist'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+const About = lazy(() => import('./pages/About'));
+const Profile = lazy(() => import('./pages/Profile'));
 import Protected from './routes/Protected';
 import { NavbarProvider, useNavbar } from './context/NavbarContext';
 import { isAuthenticated } from './services/api';
@@ -122,6 +122,7 @@ function AppContent() {
       <main className="main-content">
         <PageTransition isVisible={!isTransitioning}>
           <div className="page-content">
+            <Suspense fallback={<div className="d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
             <Routes location={currentLocation || location}>
               {/* In lockdown mode, only waitlist is accessible */}
               {LOCKDOWN ? (
@@ -195,6 +196,7 @@ function AppContent() {
                 </>
               )}
             </Routes>
+            </Suspense>
           </div>
         </PageTransition>
       </main>

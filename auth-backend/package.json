@@ -17,7 +17,6 @@
   "license": "ISC",
   "dependencies": {
     "@alpacahq/alpaca-trade-api": "^3.0.2",
-    "@google/genai": "^1.29.0",
     "axios": "^1.11.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
@@ -30,7 +29,6 @@
     "nodemailer": "^7.0.5",
     "pg": "^8.21.0",
     "rotating-file-stream": "^3.1.1",
-    "ws": "^8.19.0",
     "zod": "^4.1.13"
   },
   "devDependencies": {

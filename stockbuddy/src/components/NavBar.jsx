@@ -115,7 +115,7 @@ function NavBar({ isLoggedIn, setIsLoggedIn, navbarTheme = 'light' }) {
   const logoSrc = navbarTheme === 'light' ? '/logo.png' : '/marbleWhitelogo.png';
 
   return (
-    <nav className={`navbar navbar-expand-lg navbar-color ${themeClass} px-3`}>
+    <nav aria-label="Primary" className={`navbar navbar-expand-lg navbar-color ${themeClass} px-3`}>
       {/* Logo */}
       <div className="navbar-left">
         <Link className="navbar-brand" to="/" onClick={closeMobile}>

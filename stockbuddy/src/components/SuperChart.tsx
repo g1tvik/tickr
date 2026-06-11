@@ -20,7 +20,7 @@ export interface SuperChartProps {
   dateRange?: { start: string; end: string };
 }
 
-export const SuperChart: React.FC<SuperChartProps> = ({
+export const SuperChart = React.memo(function SuperChart({
   symbol,
   initialInterval = '1d',
   theme = 'dark',
@@ -32,7 +32,7 @@ export const SuperChart: React.FC<SuperChartProps> = ({
   showDebugOverlay = false,
   visibleRange,
   dateRange
-}) => {
+}: SuperChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const candlestickSeriesRef = useRef<any>(null);
@@ -388,4 +388,4 @@ export const SuperChart: React.FC<SuperChartProps> = ({
       </div>
     </div>
   );
-};
+});
