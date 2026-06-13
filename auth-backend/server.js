@@ -12,6 +12,7 @@ const aiCoachRoutes = require('./routes/ai-coach');
 const shopRoutes = require('./routes/shop');
 const waitlistRoutes = require('./routes/waitlist');
 const inviteRoutes = require('./routes/invites');
+const progressRoutes = require('./routes/progress');
 const { createStorage } = require('./services/storage');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const { validateEnv } = require('./middleware/validateEnv');
@@ -135,6 +136,7 @@ app.use('/api/ai-coach', aiCoachRoutes);
 app.use('/api/shop', shopRoutes);
 app.use('/api/waitlist', waitlistRoutes);
 app.use('/api/invites', inviteRoutes);
+app.use('/api/progress', progressRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

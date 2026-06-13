@@ -115,268 +115,59 @@ class ProgressManager {
     };
   }
 
-  // Record lesson attempt
-  async recordLessonAttempt(lessonId) {
-    const progress = await this.getProgress();
-    
-    if (!progress.lessonAttempts[lessonId]) {
-      progress.lessonAttempts[lessonId] = { attempts: 0, completed: false, bestScore: 0 };
+  // Sync local progress from a server response that carries the canonical
+  // learningProgress (every /api/progress endpoint returns it).
+  syncFromServer(response) {
+    if (response && response.learningProgress) {
+      this.progress = response.learningProgress;
+      this.isInitialized = true;
     }
-    
-    progress.lessonAttempts[lessonId].attempts += 1;
-    await this.saveProgress();
   }
 
-  // Complete lesson with progressive reward system
+  // Complete lesson — rewards are computed and persisted SERVER-side
+  // (/api/progress/lesson-complete): XP/coins are server-owned currency, and
+  // any active shop boosters are applied + consumed there. Returns the same
+  // shape the UI has always consumed (xpEarned, coinsEarned, remaining, ...).
   async completeLesson(lessonId, score) {
-    const progress = await this.getProgress();
-    
-    // Record attempt
-    if (!progress.lessonAttempts[lessonId]) {
-      progress.lessonAttempts[lessonId] = { attempts: 0, completed: false, bestScore: 0 };
-    }
-    
-    progress.lessonAttempts[lessonId].attempts += 1;
-    progress.lessonAttempts[lessonId].bestScore = Math.max(progress.lessonAttempts[lessonId].bestScore, score);
-    
-    // Ensure arrays and objects are properly initialized
-    if (!Array.isArray(progress.completedLessons)) {
-      progress.completedLessons = [];
-    }
-    if (!progress.lessonRewards) {
-      progress.lessonRewards = {};
-    }
-    if (!progress.lessonEarnedRewards) {
-      progress.lessonEarnedRewards = {};
-    }
-    
-    // Initialize earned rewards for this lesson if not exists
-    if (!progress.lessonEarnedRewards[lessonId]) {
-      progress.lessonEarnedRewards[lessonId] = { xp: 0, coins: 0 };
-    }
-    
-    // Find lesson to get total possible rewards
-    const lesson = this.findLesson(lessonId);
-    if (!lesson) {
-      return {
-        lessonCompleted: false,
-        xpEarned: 0,
-        coinsEarned: 0,
-        totalXpPossible: 0,
-        totalCoinsPossible: 0,
-        xpRemaining: 0,
-        coinsRemaining: 0,
-        rewardAlreadyGiven: false
-      };
-    }
-    
-    const totalXpPossible = lesson.xp;
-    const totalCoinsPossible = lesson.coins;
-    
-    // Calculate rewards for this attempt based on score
-    const xpForThisAttempt = Math.floor(totalXpPossible * (score / 100));
-    const coinsForThisAttempt = Math.floor(totalCoinsPossible * (score / 100));
-    
-    // Calculate how much more can be earned (don't exceed total possible)
-    const currentXpEarned = progress.lessonEarnedRewards[lessonId].xp;
-    const currentCoinsEarned = progress.lessonEarnedRewards[lessonId].coins;
-    
-    const xpToAdd = Math.max(0, xpForThisAttempt - currentXpEarned);
-    const coinsToAdd = Math.max(0, coinsForThisAttempt - currentCoinsEarned);
-    
-
-    
-    // Add rewards to user's total
-    progress.xp += xpToAdd;
-    progress.coins += coinsToAdd;
-    
-    // Update earned rewards for this lesson
-    progress.lessonEarnedRewards[lessonId].xp = Math.max(currentXpEarned, xpForThisAttempt);
-    progress.lessonEarnedRewards[lessonId].coins = Math.max(currentCoinsEarned, coinsForThisAttempt);
-    
-    // Check if lesson is being completed for the first time
-    const lessonCompleted = !progress.completedLessons.includes(lessonId);
-    
-    if (lessonCompleted) {
-      progress.completedLessons.push(lessonId);
-      progress.lessonAttempts[lessonId].completed = true;
-      progress.lessonAttempts[lessonId].lastAttempt = new Date().toISOString();
-    } else {
-      // Record attempt timestamp even if not completed
-      progress.lessonAttempts[lessonId].lastAttempt = new Date().toISOString();
-    }
-    
-    // Mark lesson as fully rewarded if 100% achieved
-    if (score >= 100) {
-      progress.lessonRewards[lessonId] = true;
-    }
-    
-    await this.saveProgress();
-    
-    // Calculate remaining rewards
-    const xpRemaining = Math.max(0, totalXpPossible - progress.lessonEarnedRewards[lessonId].xp);
-    const coinsRemaining = Math.max(0, totalCoinsPossible - progress.lessonEarnedRewards[lessonId].coins);
-    
-    return {
-      lessonCompleted,
-      xpEarned: xpToAdd,
-      coinsEarned: coinsToAdd,
-      totalXpPossible,
-      totalCoinsPossible,
-      xpRemaining,
-      coinsRemaining,
-      rewardAlreadyGiven: progress.lessonRewards[lessonId] || false,
-      totalXpEarned: progress.lessonEarnedRewards[lessonId].xp,
-      totalCoinsEarned: progress.lessonEarnedRewards[lessonId].coins
-    };
+    await this.getProgress();
+    const response = await api.completeLesson(lessonId, score);
+    this.syncFromServer(response);
+    return response;
   }
 
-  // Take unit test with improved limits
+  // Take unit test — gates (all lessons complete, 3/day + 3 total attempts),
+  // rewards, and booster application are all enforced server-side.
   async takeUnitTest(unitId, score) {
-    const progress = await this.getProgress();
-    
-    // Check if all lessons in unit are completed
-    const unit = this.findUnit(unitId);
-    if (!unit) return { success: false, message: 'Unit not found' };
-    
-    // Ensure arrays are properly initialized
-    if (!Array.isArray(progress.completedLessons)) {
-      progress.completedLessons = [];
-    }
-    if (!Array.isArray(progress.completedUnitTests)) {
-      progress.completedUnitTests = [];
-    }
-    if (!progress.unitTestAttempts) {
-      progress.unitTestAttempts = {};
-    }
-    
-    const allLessonsCompleted = unit.lessons.every(lesson => 
-      progress.completedLessons.includes(lesson.id)
-    );
-    
-    if (!allLessonsCompleted) {
-      return { success: false, message: 'Complete all lessons in this unit first' };
-    }
-    
-    // Check daily attempts (3 per day)
-    const today = new Date().toDateString();
-    const dailyAttempts = progress.unitTestAttempts[`${unitId}_${today}`] || 0;
-    if (dailyAttempts >= 3) {
-      return { success: false, message: 'No attempts left for today (3 per day limit)' };
-    }
-    
-    // Check total attempts (3 total)
-    const totalAttempts = progress.unitTestAttempts[`${unitId}_total`] || 0;
-    if (totalAttempts >= 3) {
-      return { success: false, message: 'No attempts left for this unit test (3 total limit)' };
-    }
-    
-    // Record attempts
-    progress.unitTestAttempts[`${unitId}_${today}`] = dailyAttempts + 1;
-    progress.unitTestAttempts[`${unitId}_total`] = totalAttempts + 1;
-    
-    // Award XP and coins based on score (one-time only)
-    const unitTestCompleted = progress.completedUnitTests.includes(unitId);
-    const xpEarned = unitTestCompleted ? 0 : Math.floor(unit.unitTest.xp * (score / 100));
-    const coinsEarned = unitTestCompleted ? 0 : Math.floor(unit.unitTest.coins * (score / 100));
-    
-    if (!unitTestCompleted) {
-      progress.xp += xpEarned;
-      progress.coins += coinsEarned;
-    }
-    
-    // Mark unit test as completed if score is good enough (e.g., 70%+)
-    if (score >= 70 && !progress.completedUnitTests.includes(unitId)) {
-      progress.completedUnitTests.push(unitId);
-    }
-    
-    await this.saveProgress();
-    
-    return {
-      success: true,
-      xpEarned,
-      coinsEarned,
-      unitCompleted: progress.completedUnitTests.includes(unitId),
-      attemptsLeft: Math.max(0, 3 - (totalAttempts + 1)),
-      dailyAttemptsLeft: Math.max(0, 3 - (dailyAttempts + 1))
-    };
+    await this.getProgress();
+    const response = await api.takeUnitTest(unitId, score);
+    this.syncFromServer(response);
+    return response;
   }
 
-  // Unlock final test with coins
+  // Unlock final test — the coin deduction happens server-side.
   async unlockFinalTest() {
-    const progress = await this.getProgress();
-    
-    if (progress.finalTestUnlocked) {
-      return { success: false, message: 'Final test is already unlocked' };
-    }
-    
-    const unlockCost = lessonStructure.finalTest.unlockCost;
-    if (progress.coins < unlockCost) {
-      return { success: false, message: `Not enough coins. Need ${unlockCost} coins to unlock.` };
-    }
-    
-    progress.coins -= unlockCost;
-    progress.finalTestUnlocked = true;
-    await this.saveProgress();
-    
-    return { success: true, message: 'Final test unlocked!' };
+    await this.getProgress();
+    const response = await api.unlockFinalTest();
+    this.syncFromServer(response);
+    return response;
   }
 
-  // Take final test
+  // Take final test — gated and awarded server-side (once per day).
   async takeFinalTest(score) {
-    const progress = await this.getProgress();
-    
-    // Ensure arrays are properly initialized
-    if (!Array.isArray(progress.completedUnitTests)) {
-      progress.completedUnitTests = [];
-    }
-    
-    // Check if all unit tests are completed
-    const allUnitsCompleted = lessonStructure.units.every(unit =>
-      progress.completedUnitTests.includes(unit.id)
-    );
-    
-    if (!allUnitsCompleted) {
-      return { success: false, message: 'Complete all unit tests first' };
-    }
-    
-    // Check if final test is unlocked
-    if (!progress.finalTestUnlocked) {
-      return { success: false, message: 'Final test must be unlocked with coins first' };
-    }
-    
-    // Check if already completed today
-    const today = new Date().toDateString();
-    if (progress.finalTestLastAttempt === today) {
-      return { success: false, message: 'You can only take the final test once per day' };
-    }
-    
-    // Record attempt
-    progress.finalTestLastAttempt = today;
-    
-    // Award XP and coins based on score (one-time only)
-    const finalTestCompleted = progress.finalTestCompleted;
-    const xpEarned = finalTestCompleted ? 0 : Math.floor(lessonStructure.finalTest.xp * (score / 100));
-    const coinsEarned = finalTestCompleted ? 0 : Math.floor(lessonStructure.finalTest.coins * (score / 100));
-    
-    if (!finalTestCompleted) {
-      progress.xp += xpEarned;
-      progress.coins += coinsEarned;
-    }
-    
-    // Mark as completed if score is good enough
-    if (score >= 70) {
-      progress.finalTestCompleted = true;
-    }
-    
-    await this.saveProgress();
-    
-    return {
-      success: true,
-      xpEarned,
-      coinsEarned,
-      finalCompleted: progress.finalTestCompleted
-    };
+    await this.getProgress();
+    const response = await api.takeFinalTest(score);
+    this.syncFromServer(response);
+    return response;
+  }
+
+  // Skip a lesson with a shop skip token: consumes one token server-side and
+  // marks the lesson complete with ZERO rewards (tokens unlock progression,
+  // not currency).
+  async skipLesson(lessonId) {
+    await this.getProgress();
+    const response = await api.skipLesson(lessonId);
+    this.syncFromServer(response);
+    return response;
   }
 
   // Check if can take unit test

@@ -10,7 +10,8 @@
     "reset-data:backup": "node scripts/reset-data.js --backup",
     "reset-data:force": "node scripts/reset-data.js --force",
     "db:setup": "node scripts/db-setup.js",
-    "db:setup:import": "node scripts/db-setup.js --import"
+    "db:setup:import": "node scripts/db-setup.js --import",
+    "generate:rewards": "node scripts/generate-lesson-rewards.mjs"
   },
   "keywords": [],
   "author": "",

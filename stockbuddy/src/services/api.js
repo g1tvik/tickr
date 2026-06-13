@@ -187,21 +187,9 @@ export const api = {
     headers: getAuthHeaders()
   }).then(handleResponse),
 
-  // User progress endpoints (for lessons and quizzes)
-  getUserProgress: () => fetch(`${API_BASE_URL}/user/progress`, {
-    headers: getAuthHeaders()
-  }).then(handleResponse),
-
-  completeLesson: (lessonId) => fetch(`${API_BASE_URL}/lessons/${lessonId}/complete`, {
-    method: 'POST',
-    headers: getAuthHeaders()
-  }).then(handleResponse),
-
-  submitQuiz: (lessonId, answers) => fetch(`${API_BASE_URL}/quizzes/${lessonId}/submit`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ answers })
-  }).then(handleResponse),
+  // (Older /user/progress, /lessons/:id/complete and /quizzes endpoints were
+  // removed: they had no backend routes and no callers — lesson/test rewards
+  // now flow through the /progress endpoints below.)
 
   // Settings endpoints
   updateProfile: (profileData) => fetch(`${API_BASE_URL}/auth/profile`, {
@@ -299,6 +287,39 @@ export const api = {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(data)
+  }).then(handleResponse),
+
+  // Progress endpoints — the server-side reward path. XP/coins are server-owned
+  // currency: these endpoints compute and persist rewards (applying any active
+  // shop boosters); /auth/user-data deliberately ignores client-sent amounts.
+  completeLesson: (lessonId, score) => fetch(`${API_BASE_URL}/progress/lesson-complete`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ lessonId, score })
+  }).then(handleResponse),
+
+  takeUnitTest: (unitId, score) => fetch(`${API_BASE_URL}/progress/unit-test`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ unitId, score })
+  }).then(handleResponse),
+
+  takeFinalTest: (score) => fetch(`${API_BASE_URL}/progress/final-test`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ score })
+  }).then(handleResponse),
+
+  unlockFinalTest: () => fetch(`${API_BASE_URL}/progress/unlock-final-test`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({})
+  }).then(handleResponse),
+
+  skipLesson: (lessonId) => fetch(`${API_BASE_URL}/progress/skip-lesson`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ lessonId })
   }).then(handleResponse),
 
   // Test endpoint to add coins for testing

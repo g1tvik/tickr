@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { lessonStructure } from '../data/lessonStructure';
 import progressManager from '../utils/progressManager';
+import { api } from '../services/api';
 import { fontBody } from '../fontPalette';
 import { useSEO } from '../lib/seo';
 import tk, { label, mono, panel, inset, heading, btnPrimary, btnGhost, tag } from '../theme/terminal';
@@ -30,6 +31,8 @@ export default function LessonDetail() {
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [completionData, setCompletionData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [skipTokens, setSkipTokens] = useState(0);
+  const [skipping, setSkipping] = useState(false);
 
   // Set the page title/meta to the current lesson once it loads
   useSEO({
@@ -67,6 +70,14 @@ export default function LessonDetail() {
         // Load progress
         const lessonProgress = await progressManager.getLessonProgress(foundLesson.id);
         setProgress(lessonProgress);
+
+        // Skip tokens (shop utility): offered for incomplete lessons below.
+        try {
+          const userData = await api.getUserData();
+          setSkipTokens(userData?.skipTokens || 0);
+        } catch {
+          setSkipTokens(0);
+        }
       } else {
         navigate('/learn');
       }
@@ -122,10 +133,17 @@ export default function LessonDetail() {
     const score = (correctAnswers / lesson.quiz.questions.length) * 100;
     
     try {
-      // Record the attempt and complete the lesson
-      await progressManager.recordLessonAttempt(lesson.id);
+      // Complete the lesson — rewards are computed/persisted server-side, with
+      // any active boosters applied there (boostsApplied reports them).
       const result = await progressManager.completeLesson(lesson.id, score);
-      
+
+      if (Array.isArray(result.boostsApplied) && result.boostsApplied.length > 0) {
+        const labels = result.boostsApplied.map((b) =>
+          `${b.multiplier}x ${b.type === 'xp_multiplier' ? 'XP' : 'coin'} booster applied`
+        );
+        toast(labels.join('\n'), { title: 'Booster active' });
+      }
+
       // Set completion data for the modal
       setCompletionData({
         score: score.toFixed(1),
@@ -153,6 +171,27 @@ export default function LessonDetail() {
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error submitting quiz:', error);
       toast('Failed to submit quiz. Please try again.', { variant: 'error' });
+    }
+  };
+
+  // Spend a shop skip token: the server consumes the token and marks the
+  // lesson complete with zero rewards (progression only, no currency).
+  const handleSkipLesson = async () => {
+    try {
+      setSkipping(true);
+      const result = await progressManager.skipLesson(lesson.id);
+      if (result.success) {
+        setSkipTokens(result.skipTokens);
+        toast(`Lesson skipped — ${result.skipTokens} skip ${result.skipTokens === 1 ? 'token' : 'tokens'} left`);
+        navigate('/learn', { state: { refresh: true } });
+      } else {
+        toast(result.message || 'Could not skip this lesson.', { variant: 'error' });
+      }
+    } catch (error) {
+      if (import.meta.env.DEV) console.error('Error skipping lesson:', error);
+      toast('Could not skip this lesson. Please try again.', { variant: 'error' });
+    } finally {
+      setSkipping(false);
     }
   };
 
@@ -242,26 +281,55 @@ export default function LessonDetail() {
           maxWidth: "1200px",
           margin: "0 auto"
         }}>
-          <button
-            onClick={() => navigate('/learn')}
-            style={{
-              backgroundColor: "transparent",
-              border: "none",
-              color: cardMuted,
-              fontFamily: fontBody,
-              fontSize: "13px",
-              fontWeight: 600,
-              letterSpacing: "0.04em",
-              cursor: "pointer",
-              marginBottom: "18px",
-              padding: 0,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "7px"
-            }}
-          >
-            <Icon name="arrow-left" size={14} /> Back to Learn
-          </button>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "12px",
+            marginBottom: "18px",
+            flexWrap: "wrap"
+          }}>
+            <button
+              onClick={() => navigate('/learn')}
+              style={{
+                backgroundColor: "transparent",
+                border: "none",
+                color: cardMuted,
+                fontFamily: fontBody,
+                fontSize: "13px",
+                fontWeight: 600,
+                letterSpacing: "0.04em",
+                cursor: "pointer",
+                padding: 0,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "7px"
+              }}
+            >
+              <Icon name="arrow-left" size={14} /> Back to Learn
+            </button>
+
+            {/* Skip with a shop token — only offered while the lesson is incomplete. */}
+            {skipTokens > 0 && progress && !progress.completed && (
+              <button
+                onClick={handleSkipLesson}
+                disabled={skipping}
+                style={{
+                  ...btnGhost,
+                  padding: "8px 14px",
+                  fontSize: "12px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "7px",
+                  cursor: skipping ? "not-allowed" : "pointer",
+                  opacity: skipping ? 0.6 : 1
+                }}
+              >
+                <Icon name="skip-forward" size={13} />
+                {skipping ? 'Skipping...' : `Skip with token (${skipTokens})`}
+              </button>
+            )}
+          </div>
 
           <h1 style={{
             ...heading,
