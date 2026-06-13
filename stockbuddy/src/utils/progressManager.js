@@ -507,8 +507,9 @@ class ProgressManager {
     await this.saveProgress();
   }
 
-  // Test the new reward system (for debugging)
+  // Test the new reward system (for debugging) — no-op outside dev builds
   async testRewardSystem(lessonId) {
+    if (!import.meta.env.DEV) return;
     console.log('=== Testing Reward System ===');
     
     // Test 1: First attempt with 66% score

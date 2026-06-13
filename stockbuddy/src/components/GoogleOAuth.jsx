@@ -6,8 +6,10 @@ const GoogleOAuth = ({ setIsLoggedIn, onError }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('🔍 GoogleOAuth component mounted');
-    console.log('🔍 Client ID from env:', import.meta.env.VITE_GOOGLE_CLIENT_ID);
+    if (import.meta.env.DEV) {
+      console.log('[GoogleOAuth] component mounted');
+      console.log('[GoogleOAuth] Client ID from env:', import.meta.env.VITE_GOOGLE_CLIENT_ID);
+    }
     
     // Load Google OAuth script
     const script = document.createElement('script');
@@ -17,15 +19,15 @@ const GoogleOAuth = ({ setIsLoggedIn, onError }) => {
     document.head.appendChild(script);
 
     script.onload = () => {
-      console.log('✅ Google script loaded successfully');
+      if (import.meta.env.DEV) console.log('[GoogleOAuth] Google script loaded successfully');
       if (window.google) {
-        console.log('✅ Google object available');
-        
+        if (import.meta.env.DEV) console.log('[GoogleOAuth] Google object available');
+
         const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-        console.log('🔍 Using client ID:', clientId);
-        
+        if (import.meta.env.DEV) console.log('[GoogleOAuth] Using client ID:', clientId);
+
         if (!clientId || clientId === 'your_google_client_id_here') {
-          console.error('❌ No valid Google Client ID found. Please set VITE_GOOGLE_CLIENT_ID in your .env file');
+          if (import.meta.env.DEV) console.error('[GoogleOAuth] No valid Google Client ID found. Please set VITE_GOOGLE_CLIENT_ID in your .env file');
           onError('Google sign-in not configured. Please contact support.');
           return;
         }
@@ -38,10 +40,10 @@ const GoogleOAuth = ({ setIsLoggedIn, onError }) => {
             cancel_on_tap_outside: true,
           });
 
-          console.log('✅ Google GSI initialized successfully');
+          if (import.meta.env.DEV) console.log('[GoogleOAuth] Google GSI initialized successfully');
 
           const buttonElement = document.getElementById('google-signin-button');
-          console.log('🔍 Button element found:', !!buttonElement);
+          if (import.meta.env.DEV) console.log('[GoogleOAuth] Button element found:', !!buttonElement);
 
           if (buttonElement) {
             window.google.accounts.id.renderButton(
@@ -55,22 +57,22 @@ const GoogleOAuth = ({ setIsLoggedIn, onError }) => {
                 height: '48px'
               }
             );
-            console.log('✅ Google sign-in button rendered');
+            if (import.meta.env.DEV) console.log('[GoogleOAuth] Google sign-in button rendered');
           } else {
-            console.error('❌ Button element not found');
+            if (import.meta.env.DEV) console.error('[GoogleOAuth] Button element not found');
           }
         } catch (error) {
-          console.error('❌ Error initializing Google GSI:', error);
+          if (import.meta.env.DEV) console.error('[GoogleOAuth] Error initializing Google GSI:', error);
           onError('Failed to initialize Google sign-in');
         }
       } else {
-        console.error('❌ Google object not available after script load');
+        if (import.meta.env.DEV) console.error('[GoogleOAuth] Google object not available after script load');
         onError('Google sign-in not available');
       }
     };
 
     script.onerror = () => {
-      console.error('❌ Failed to load Google script');
+      if (import.meta.env.DEV) console.error('[GoogleOAuth] Failed to load Google script');
       onError('Failed to load Google sign-in');
     };
 
@@ -83,7 +85,7 @@ const GoogleOAuth = ({ setIsLoggedIn, onError }) => {
   }, []);
 
   const handleCredentialResponse = async (response) => {
-    console.log('🔍 Google credential response received');
+    if (import.meta.env.DEV) console.log('[GoogleOAuth] Google credential response received');
     try {
       const result = await api.googleLogin(response.credential);
       
@@ -95,7 +97,7 @@ const GoogleOAuth = ({ setIsLoggedIn, onError }) => {
         onError(result.message || 'Google login failed');
       }
     } catch (error) {
-      console.error('Google login error:', error);
+      if (import.meta.env.DEV) console.error('[GoogleOAuth] Google login error:', error);
       onError('Google login failed. Please try again.');
     }
   };

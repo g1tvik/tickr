@@ -3,7 +3,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001
 // Helper function to handle API responses
 const handleResponse = async (response) => {
   const clearTokenAndRedirect = (reason) => {
-    console.warn(reason);
+    if (import.meta.env.DEV) console.warn(reason);
     localStorage.removeItem('token');
     window.location.href = '/signin';
   };
@@ -41,7 +41,7 @@ const getAuthHeaders = () => {
   // Check if authenticated (this will clear expired tokens)
   if (!isAuthenticated()) {
     // Don't throw error here, let the handleResponse function handle the redirect
-    console.warn('No valid authentication token found');
+    if (import.meta.env.DEV) console.warn('No valid authentication token found');
   }
   
   const token = localStorage.getItem('token');
@@ -331,14 +331,14 @@ export const isAuthenticated = () => {
     
     // Check if token is expired (exp is in seconds, Date.now() is in milliseconds)
     if (exp && exp * 1000 < Date.now()) {
-      console.warn('Token has expired, clearing...');
+      if (import.meta.env.DEV) console.warn('Token has expired, clearing...');
       localStorage.removeItem('token');
       return false;
     }
-    
+
     return true;
   } catch (error) {
-    console.error('Error checking token validity:', error);
+    if (import.meta.env.DEV) console.error('Error checking token validity:', error);
     localStorage.removeItem('token');
     return false;
   }
@@ -363,7 +363,7 @@ export const getCurrentUser = () => {
       username: payload.username
     };
   } catch (error) {
-    console.error('Error decoding token:', error);
+    if (import.meta.env.DEV) console.error('Error decoding token:', error);
     localStorage.removeItem('token');
     return null;
   }

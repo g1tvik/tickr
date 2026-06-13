@@ -68,7 +68,7 @@ export const useTrading = () => {
         setError(null);
       }
     } catch (err) {
-      console.error('Error loading account:', err);
+      if (import.meta.env.DEV) console.error('Error loading account:', err);
     }
   }, []);
 
@@ -77,7 +77,7 @@ export const useTrading = () => {
       const res = await api.getOrders('open');
       if (res.success) setOpenOrders(res.orders || []);
     } catch (err) {
-      console.error('Error loading open orders:', err);
+      if (import.meta.env.DEV) console.error('Error loading open orders:', err);
     }
   }, []);
 
@@ -86,7 +86,7 @@ export const useTrading = () => {
       const res = await api.getOrders();
       if (res.success) setOrderHistory(res.orders || []);
     } catch (err) {
-      console.error('Error loading order history:', err);
+      if (import.meta.env.DEV) console.error('Error loading order history:', err);
     }
   }, []);
 
@@ -95,7 +95,7 @@ export const useTrading = () => {
       const res = await api.getTransactions();
       if (res.success) setTransactions(res.transactions || []);
     } catch (err) {
-      console.error('Error loading transactions:', err);
+      if (import.meta.env.DEV) console.error('Error loading transactions:', err);
     }
   }, []);
 
@@ -107,7 +107,7 @@ export const useTrading = () => {
         setLastUpdate(new Date());
       }
     } catch (err) {
-      console.error('Error loading market data:', err);
+      if (import.meta.env.DEV) console.error('Error loading market data:', err);
       setError(handleApiError(err, 'Failed to load market data. Please check your connection.'));
     }
   }, []);
@@ -117,7 +117,7 @@ export const useTrading = () => {
       const res = await api.getClock();
       if (res.success) setClock(res.clock);
     } catch (err) {
-      console.error('Error loading market clock:', err);
+      if (import.meta.env.DEV) console.error('Error loading market clock:', err);
     }
   }, []);
 
@@ -131,7 +131,7 @@ export const useTrading = () => {
         setLastUpdate(new Date());
       }
     } catch (err) {
-      console.error('Error updating stock price:', err);
+      if (import.meta.env.DEV) console.error('Error updating stock price:', err);
     }
   }, []);
 
@@ -191,7 +191,7 @@ export const useTrading = () => {
       const res = await api.getStockQuote(stock.symbol);
       setSelectedStock(res.success ? res.quote : stock);
     } catch (err) {
-      console.error('Error getting stock quote:', err);
+      if (import.meta.env.DEV) console.error('Error getting stock quote:', err);
       setSelectedStock(stock);
     } finally {
       setIsLoading(false);
@@ -241,7 +241,7 @@ export const useTrading = () => {
         setError(res.message || 'Order failed');
       }
     } catch (err) {
-      console.error('Error placing order:', err);
+      if (import.meta.env.DEV) console.error('Error placing order:', err);
       setError(handleApiError(err, 'Failed to place order. Please try again.'));
     } finally {
       setIsLoading(false);
@@ -256,7 +256,7 @@ export const useTrading = () => {
         loadOrderHistory();
       }
     } catch (err) {
-      console.error('Error canceling order:', err);
+      if (import.meta.env.DEV) console.error('Error canceling order:', err);
       setError(handleApiError(err, 'Failed to cancel order.'));
     }
   }, [loadOrderHistory]);
