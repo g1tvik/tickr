@@ -47,7 +47,81 @@ function ensureLearningProgress(user) {
   if (!lp.lessonAttempts || typeof lp.lessonAttempts !== 'object') lp.lessonAttempts = {};
   if (!lp.lessonRewards || typeof lp.lessonRewards !== 'object') lp.lessonRewards = {};
   if (!lp.lessonEarnedRewards || typeof lp.lessonEarnedRewards !== 'object') lp.lessonEarnedRewards = {};
+  if (typeof lp.currentStreak !== 'number') lp.currentStreak = 0;
+  if (typeof lp.longestStreak !== 'number') lp.longestStreak = 0;
+  if (lp.lastActivityDate === undefined) lp.lastActivityDate = null;
   return lp;
+}
+
+/** Server-local calendar date as YYYY-MM-DD (matches the toDateString()-based
+ *  daily limits elsewhere: all "days" are server-local days). */
+function localYmd(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Whole days from one YYYY-MM-DD to another (DST-safe via UTC noon). */
+function dayDiff(fromYmd, toYmd) {
+  const atNoon = (s) => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10), 12);
+  return Math.round((atNoon(toYmd) - atNoon(fromYmd)) / 86400000);
+}
+
+/**
+ * Record a day of learning activity and maintain the streak. Called from the
+ * award events (lesson complete, unit test, final test) — the first such event
+ * each server-local day extends or restarts the streak.
+ *
+ * Missed days are covered by shop streak freezes (user.streakFreezes), one per
+ * missed day, consumed automatically — matching the shop item's promise
+ * ("protect your streak even if you miss lessons"). If there aren't enough
+ * freezes for the whole gap, the streak resets to 1 and no freezes are spent.
+ *
+ * Mutates user (learningProgress.currentStreak/longestStreak/lastActivityDate
+ * and user.streakFreezes).
+ */
+function recordDailyActivity(user, now = new Date()) {
+  const lp = ensureLearningProgress(user);
+  const today = localYmd(now);
+  const last = lp.lastActivityDate;
+  let extendedToday = false;
+  let freezesUsed = 0;
+
+  if (last !== today) {
+    if (!last) {
+      lp.currentStreak = 1;
+      extendedToday = true;
+    } else {
+      const diff = dayDiff(last, today);
+      if (diff === 1) {
+        lp.currentStreak = (lp.currentStreak || 0) + 1;
+        extendedToday = true;
+      } else if (diff > 1) {
+        const missed = diff - 1;
+        if ((user.streakFreezes || 0) >= missed) {
+          user.streakFreezes -= missed;
+          freezesUsed = missed;
+          lp.currentStreak = (lp.currentStreak || 0) + 1;
+        } else {
+          lp.currentStreak = 1;
+        }
+        extendedToday = true;
+      } else {
+        // diff <= 0: clock moved backwards (TZ/DST edge) — keep the streak,
+        // just make sure today still counts.
+        lp.currentStreak = Math.max(1, lp.currentStreak || 0);
+      }
+    }
+    lp.lastActivityDate = today;
+  }
+
+  if ((lp.currentStreak || 0) > (lp.longestStreak || 0)) lp.longestStreak = lp.currentStreak;
+
+  return {
+    current: lp.currentStreak,
+    longest: lp.longestStreak,
+    extendedToday,
+    freezesUsed,
+    streakFreezesLeft: user.streakFreezes || 0,
+  };
 }
 
 /**
@@ -115,4 +189,6 @@ module.exports = {
   allUnitIds,
   ensureLearningProgress,
   applyActiveBoosters,
+  recordDailyActivity,
+  localYmd,
 };

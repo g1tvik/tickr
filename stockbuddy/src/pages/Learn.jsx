@@ -209,6 +209,13 @@ export default function Learn() {
           { title: `${testType === 'unit' ? 'Unit' : 'Final'} test complete`, duration: 7000 }
         );
 
+        // First learning activity of the day extends (or restarts) the streak.
+        if (result.streak?.extendedToday) {
+          const f = result.streak.freezesUsed;
+          const freezeNote = f > 0 ? `\n${f} streak freeze${f === 1 ? '' : 's'} covered your missed day${f === 1 ? '' : 's'}` : '';
+          toast(`${result.streak.current}-day streak${freezeNote}`, { title: 'Streak' });
+        }
+
         // Reload progress
         await loadProgress();
 

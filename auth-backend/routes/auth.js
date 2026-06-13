@@ -136,9 +136,10 @@ const learningProgressSchema = z
     unitTestAttempts: z.record(z.string(), z.any()).optional(),
     lessonAttempts: z.record(z.string(), z.any()).optional(),
     dailyGoal: z.number().int().optional(),
-    streak: z.number().int().optional(),
   })
-  // Drop unknown/extra fields (including any client-supplied coins/xp) entirely.
+  // Drop unknown/extra fields entirely — including client-supplied coins/xp
+  // AND the streak fields (currentStreak/longestStreak/lastActivityDate),
+  // which are server-owned and maintained by the /api/progress award path.
   .strip();
 
 // purchasedItems: the shop endpoints own purchases/effects, but the frontend

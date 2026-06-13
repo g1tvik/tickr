@@ -197,6 +197,71 @@ describe('Progress routes', () => {
     expect(sameDay.body.message).toMatch(/once per day/i);
   });
 
+  describe('streaks', () => {
+    // Server-local YYYY-MM-DD, matching services/learningRewards.localYmd.
+    const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const daysAgo = (n) => {
+      const d = new Date();
+      d.setDate(d.getDate() - n);
+      return ymd(d);
+    };
+    // Lesson 1 is already fully rewarded by earlier tests, so completing it
+    // again awards nothing — a pure "activity" event for streak purposes.
+    const doActivity = () => post('lesson-complete', { lessonId: 1, score: 50 });
+    const seedStreak = (fields, freezes) => mutateUser((u) => {
+      Object.assign(u.learningProgress, fields);
+      if (freezes !== undefined) u.streakFreezes = freezes;
+    });
+
+    it('first activity starts a 1-day streak; same-day repeats do not double-count', async () => {
+      await seedStreak({ currentStreak: 0, longestStreak: 0, lastActivityDate: null });
+
+      const first = await doActivity();
+      expect(first.body.streak).toMatchObject({ current: 1, extendedToday: true, freezesUsed: 0 });
+
+      const sameDay = await doActivity();
+      expect(sameDay.body.streak).toMatchObject({ current: 1, extendedToday: false });
+    });
+
+    it('activity on consecutive days extends the streak', async () => {
+      await seedStreak({ currentStreak: 3, longestStreak: 3, lastActivityDate: daysAgo(1) });
+      const res = await doActivity();
+      expect(res.body.streak).toMatchObject({ current: 4, longest: 4, extendedToday: true, freezesUsed: 0 });
+    });
+
+    it('a missed day is covered by consuming a streak freeze', async () => {
+      await seedStreak({ currentStreak: 5, longestStreak: 5, lastActivityDate: daysAgo(2) }, 2); // 1 missed day
+      const res = await doActivity();
+      expect(res.body.streak).toMatchObject({ current: 6, freezesUsed: 1, streakFreezesLeft: 1 });
+      const user = await getUser();
+      expect(user.streakFreezes).toBe(1);
+    });
+
+    it('too few freezes for the gap resets the streak without spending them', async () => {
+      await seedStreak({ currentStreak: 6, longestStreak: 6, lastActivityDate: daysAgo(4) }, 1); // 3 missed days
+      const res = await doActivity();
+      expect(res.body.streak).toMatchObject({ current: 1, freezesUsed: 0, longest: 6 }); // longest preserved
+      const user = await getUser();
+      expect(user.streakFreezes).toBe(1); // not partially spent
+    });
+
+    it('streak fields are server-owned: client writes via /user-data are ignored', async () => {
+      const before = await getUser();
+      const real = before.learningProgress.currentStreak;
+
+      await request(app)
+        .post('/api/auth/user-data')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ learningProgress: { currentStreak: 999, longestStreak: 999, lastActivityDate: '2099-01-01', streak: 999 } })
+        .expect(200);
+
+      const after = await getUser();
+      expect(after.learningProgress.currentStreak).toBe(real);
+      expect(after.learningProgress.longestStreak).not.toBe(999);
+      expect(after.learningProgress.lastActivityDate).not.toBe('2099-01-01');
+    });
+  });
+
   it('skip-lesson consumes a token and completes the lesson with zero rewards', async () => {
     const broke = await post('skip-lesson', { lessonId: 6 });
     expect(broke.body.success).toBe(false);

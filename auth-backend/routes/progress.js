@@ -91,6 +91,9 @@ router.post('/lesson-complete', authenticateToken, requireApproved, async (req, 
       }
       if (score >= 100) lp.lessonRewards[lessonId] = true;
 
+      // Any lesson attempt counts as today's learning activity for the streak.
+      const streak = rewards.recordDailyActivity(user, now);
+
       await tx.saveUser(user);
 
       return {
@@ -108,6 +111,7 @@ router.post('/lesson-complete', authenticateToken, requireApproved, async (req, 
           rewardAlreadyGiven: lp.lessonRewards[lessonId] || false,
           totalXpEarned: earned.xp,
           totalCoinsEarned: earned.coins,
+          streak,
           ...progressPayload(user),
         },
       };
@@ -170,6 +174,9 @@ router.post('/unit-test', authenticateToken, requireApproved, async (req, res) =
         lp.completedUnitTests.push(unitId);
       }
 
+      // A unit-test attempt counts as today's learning activity for the streak.
+      const streak = rewards.recordDailyActivity(user, now);
+
       await tx.saveUser(user);
 
       return {
@@ -182,6 +189,7 @@ router.post('/unit-test', authenticateToken, requireApproved, async (req, res) =
           unitCompleted: lp.completedUnitTests.includes(unitId),
           attemptsLeft: Math.max(0, 3 - (totalAttempts + 1)),
           dailyAttemptsLeft: Math.max(0, 3 - (dailyAttempts + 1)),
+          streak,
           ...progressPayload(user),
         },
       };
@@ -269,6 +277,9 @@ router.post('/final-test', authenticateToken, requireApproved, async (req, res) 
 
       if (score >= 70) lp.finalTestCompleted = true;
 
+      // A final-test attempt counts as today's learning activity for the streak.
+      const streak = rewards.recordDailyActivity(user, now);
+
       await tx.saveUser(user);
 
       return {
@@ -279,6 +290,7 @@ router.post('/final-test', authenticateToken, requireApproved, async (req, res) 
           coinsEarned: boosted.coins,
           boostsApplied: boosted.applied,
           finalCompleted: lp.finalTestCompleted,
+          streak,
           ...progressPayload(user),
         },
       };

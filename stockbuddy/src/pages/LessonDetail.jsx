@@ -144,6 +144,13 @@ export default function LessonDetail() {
         toast(labels.join('\n'), { title: 'Booster active' });
       }
 
+      // First learning activity of the day extends (or restarts) the streak.
+      if (result.streak?.extendedToday) {
+        const f = result.streak.freezesUsed;
+        const freezeNote = f > 0 ? `\n${f} streak freeze${f === 1 ? '' : 's'} covered your missed day${f === 1 ? '' : 's'}` : '';
+        toast(`${result.streak.current}-day streak${freezeNote}`, { title: 'Streak' });
+      }
+
       // Set completion data for the modal
       setCompletionData({
         score: score.toFixed(1),
