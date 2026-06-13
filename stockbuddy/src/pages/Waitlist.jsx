@@ -3,7 +3,7 @@
  * Collects email/name to join the waitlist.
  */
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useUser } from '../store/user';
 import { tk } from '../theme/terminal';
@@ -326,13 +326,13 @@ export default function Waitlist() {
         <Footer>
           <p>
             By joining, you agree to our{' '}
-            <a href="/terms" target="_blank">Terms</a> and{' '}
-            <a href="/privacy" target="_blank">Privacy Policy</a>.
+            <Link to="/terms" target="_blank" rel="noopener noreferrer">Terms</Link> and{' '}
+            <Link to="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</Link>.
           </p>
           {!user && (
             <p style={{ marginTop: '12px' }}>
               Already have an account?{' '}
-              <a href="/signin">Sign in</a>
+              <Link to="/signin">Sign in</Link>
             </p>
           )}
         </Footer>

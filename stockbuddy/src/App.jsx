@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate, Navig
 import NavBar from "./components/NavBar";
 import PageTransition from "./components/PageTransition";
 import ErrorBoundary from "./components/ErrorBoundary";
+import SiteFooter from "./components/SiteFooter";
 import Home from "./pages/Home";
 const SignIn = lazy(() => import("./pages/SignIn"));
 const SignUp = lazy(() => import("./pages/Signup"));
@@ -29,6 +30,10 @@ import { isAuthenticated } from './services/api';
 import { useUser } from './store/user';
 
 const LOCKDOWN = import.meta.env.VITE_LOCKDOWN === 'true';
+// Routes that stay reachable in lockdown: the waitlist itself plus the legal
+// pages — the waitlist form asks users to agree to Terms/Privacy, so those
+// must be readable even while everything else is gated.
+const LOCKDOWN_ALLOWED = ['/waitlist', '/privacy', '/terms', '/disclaimer'];
 
 function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -50,8 +55,8 @@ function AppContent() {
         await fetchUser();
       }
       
-      // In lockdown mode, only allow /waitlist - redirect everything else
-      if (LOCKDOWN && location.pathname !== '/waitlist') {
+      // In lockdown mode, only allow the waitlist + legal pages - redirect everything else
+      if (LOCKDOWN && !LOCKDOWN_ALLOWED.includes(location.pathname)) {
         if (import.meta.env.DEV) console.log('Lockdown mode: redirecting to waitlist');
         navigate('/waitlist', { replace: true });
         return;
@@ -129,10 +134,13 @@ function AppContent() {
           <div className="page-content">
             <Suspense fallback={<div className="d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>
             <Routes location={currentLocation || location}>
-              {/* In lockdown mode, only waitlist is accessible */}
+              {/* In lockdown mode, only the waitlist + legal pages are accessible */}
               {LOCKDOWN ? (
                 <>
                   <Route path="/waitlist" element={<Waitlist />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/disclaimer" element={<Disclaimer />} />
                   <Route path="*" element={<Navigate to="/waitlist" replace />} />
                 </>
               ) : (
@@ -208,6 +216,8 @@ function AppContent() {
           </div>
         </PageTransition>
       </main>
+      {/* Home renders its own full editorial footer; lockdown shows none. */}
+      {!LOCKDOWN && !isHomePage && <SiteFooter />}
     </div>
   );
 }

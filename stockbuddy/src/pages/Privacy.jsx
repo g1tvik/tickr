@@ -93,7 +93,7 @@ export default function Privacy() {
       <Section>
         <H2><span className="idx">06</span> Your choices &amp; rights</H2>
         <UL>
-          <li><strong>Access &amp; export</strong> — you can export your data from <Link to="/settings">Settings</Link>.</li>
+          <li><strong>Access &amp; export</strong> — after signing in, you can export your data from <Link to="/settings">Settings</Link>.</li>
           <li><strong>Correction</strong> — update your profile information at any time.</li>
           <li><strong>Deletion</strong> — request account deletion from Settings or by emailing us.</li>
           <li><strong>Email</strong> — opt out of non-essential email via the unsubscribe link or your preferences.</li>
