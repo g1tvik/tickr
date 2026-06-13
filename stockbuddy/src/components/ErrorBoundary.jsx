@@ -1,94 +1,116 @@
 /**
  * Error Boundary component
- * Catches React rendering errors and displays fallback UI.
+ * Catches React rendering errors and displays a fallback UI styled with the
+ * Terminal Editorial system (flat hairline panel on charcoal, gold accents).
  */
 import React from 'react';
 import styled from 'styled-components';
+import tk from '../theme/terminal';
+import Icon from './Icon';
 
 const Container = styled.div`
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: ${tk.bg};
   padding: 20px;
 `;
 
 const Card = styled.div`
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
+  background: ${tk.surface};
+  border: 1px solid ${tk.hair};
+  border-top: 2px solid ${tk.goldHair};
+  border-radius: ${tk.r}px;
   padding: 40px;
   max-width: 500px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  color: ${tk.text};
+  font-family: ${tk.fontBody};
 `;
 
-const Icon = styled.div`
-  font-size: 4rem;
-  margin-bottom: 20px;
+const IconWell = styled.div`
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 18px;
+  border: 1px solid rgba(224, 96, 90, 0.4);
+  border-radius: ${tk.rSm}px;
+  display: grid;
+  place-items: center;
+  color: ${tk.down};
 `;
 
 const Title = styled.h1`
-  color: #333;
-  font-size: 1.75rem;
+  font-family: ${tk.fontHeading};
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: ${tk.text};
+  font-size: 1.6rem;
   margin-bottom: 12px;
 `;
 
 const Message = styled.p`
-  color: #666;
+  color: ${tk.muted};
   line-height: 1.6;
+  font-size: 0.95rem;
   margin-bottom: 24px;
 `;
 
 const Button = styled.button`
-  padding: 14px 28px;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
+  padding: 11px 22px;
+  border: 1px solid ${tk.gold};
+  border-radius: ${tk.rSm}px;
+  font-family: ${tk.fontBody};
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  margin: 0 8px;
-  
+  background: ${tk.gold};
+  color: ${tk.inset};
+  margin: 0 6px;
+  transition: background 0.15s ease, color 0.15s ease;
+
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    background: ${tk.goldBright};
+    border-color: ${tk.goldBright};
   }
 `;
 
 const SecondaryButton = styled(Button)`
-  background: #f0f0f0;
-  color: #333;
-  
+  background: transparent;
+  border-color: ${tk.hairStrong};
+  color: ${tk.text};
+
   &:hover {
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    background: transparent;
+    border-color: ${tk.goldHair};
+    color: ${tk.goldBright};
   }
 `;
 
 const Details = styled.details`
   margin-top: 24px;
   text-align: left;
-  
+
   summary {
     cursor: pointer;
-    color: #666;
-    font-size: 0.9rem;
-    
+    color: ${tk.muted};
+    font-size: 0.85rem;
+
     &:hover {
-      color: #333;
+      color: ${tk.text};
     }
   }
-  
+
   pre {
-    background: #f5f5f5;
+    background: ${tk.inset};
+    border: 1px solid ${tk.hair};
     padding: 16px;
-    border-radius: 8px;
+    border-radius: ${tk.rSm}px;
     overflow-x: auto;
-    font-size: 0.75rem;
-    color: #c7254e;
+    font-family: ${tk.fontMono};
+    font-size: 0.72rem;
+    color: ${tk.down};
     margin-top: 12px;
   }
 `;
@@ -105,9 +127,9 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     this.setState({ errorInfo });
-    
+
     // Log error to console (could send to error reporting service)
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    if (import.meta.env.DEV) console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
   handleReload = () => {
@@ -123,13 +145,15 @@ class ErrorBoundary extends React.Component {
       return (
         <Container>
           <Card>
-            <Icon>😵</Icon>
+            <IconWell>
+              <Icon name="alert" size={20} />
+            </IconWell>
             <Title>Something went wrong</Title>
             <Message>
-              We encountered an unexpected error. Don't worry, your data is safe. 
+              We encountered an unexpected error. Don't worry, your data is safe.
               Try refreshing the page or go back to the home page.
             </Message>
-            
+
             <div>
               <Button onClick={this.handleReload}>
                 Refresh Page
@@ -138,7 +162,7 @@ class ErrorBoundary extends React.Component {
                 Go Home
               </SecondaryButton>
             </div>
-            
+
             {import.meta.env.DEV && this.state.error && (
               <Details>
                 <summary>Technical details</summary>
@@ -158,4 +182,3 @@ class ErrorBoundary extends React.Component {
 }
 
 export default ErrorBoundary;
-

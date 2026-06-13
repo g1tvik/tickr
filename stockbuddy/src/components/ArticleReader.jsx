@@ -252,7 +252,7 @@ const ArticleReader = () => {
             src={article.featuredImage}
             alt={article.title}
             ratio="3/2"
-            rounded={12}
+            rounded={8}
           />
         </div>
       )}

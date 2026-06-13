@@ -55,16 +55,16 @@ const sendGoalReminder = async (userEmail, userName, dailyGoal, completedToday) 
     const mailOptions = {
       from: '"StockBuddy" <noreply@stockbuddy.com>',
       to: userEmail,
-      subject: '📚 Your Daily Learning Goal Reminder',
+      subject: 'Your daily learning goal reminder',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; text-align: center;">
-            <h1 style="margin: 0; font-size: 28px;">📚 StockBuddy</h1>
+            <h1 style="margin: 0; font-size: 28px;">StockBuddy</h1>
             <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Your Daily Learning Reminder</p>
           </div>
           
           <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin-top: 20px;">
-            <h2 style="color: #333; margin-bottom: 20px;">Hello ${userName}! 👋</h2>
+            <h2 style="color: #333; margin-bottom: 20px;">Hello ${userName}!</h2>
             
             <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #667eea;">
               <h3 style="color: #333; margin-top: 0;">Today's Progress</h3>
@@ -90,12 +90,12 @@ const sendGoalReminder = async (userEmail, userName, dailyGoal, completedToday) 
             
             ${remaining > 0 ? `
               <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-                <h4 style="margin: 0 0 10px 0; color: #856404;">🎯 Keep Going!</h4>
+                <h4 style="margin: 0 0 10px 0; color: #856404;">Keep going</h4>
                 <p style="margin: 0; color: #856404;">You're ${remaining} lesson${remaining > 1 ? 's' : ''} away from your daily goal. Don't give up!</p>
               </div>
             ` : `
               <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-                <h4 style="margin: 0 0 10px 0; color: #155724;">🎉 Congratulations!</h4>
+                <h4 style="margin: 0 0 10px 0; color: #155724;">Congratulations</h4>
                 <p style="margin: 0; color: #155724;">You've completed your daily goal! Great job!</p>
               </div>
             `}
@@ -141,16 +141,16 @@ const sendWelcomeEmail = async (userEmail, userName) => {
     const mailOptions = {
       from: '"StockBuddy" <noreply@stockbuddy.com>',
       to: userEmail,
-      subject: '🎉 Welcome to StockBuddy!',
+      subject: 'Welcome to StockBuddy',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; text-align: center;">
-            <h1 style="margin: 0; font-size: 28px;">🎉 Welcome to StockBuddy!</h1>
+            <h1 style="margin: 0; font-size: 28px;">Welcome to StockBuddy</h1>
             <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Your journey to financial literacy starts here</p>
           </div>
           
           <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin-top: 20px;">
-            <h2 style="color: #333; margin-bottom: 20px;">Hello ${userName}! 👋</h2>
+            <h2 style="color: #333; margin-bottom: 20px;">Hello ${userName}!</h2>
             
             <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
               Welcome to StockBuddy! We're excited to help you learn about stock trading and investing in a safe, educational environment.
@@ -159,11 +159,11 @@ const sendWelcomeEmail = async (userEmail, userName) => {
             <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
               <h3 style="color: #333; margin-top: 0;">What you can do:</h3>
               <ul style="color: #666; line-height: 1.8;">
-                <li>📚 Learn through interactive lessons</li>
-                <li>📊 Practice with paper trading</li>
-                <li>🎯 Set and track daily learning goals</li>
-                <li>🏆 Earn XP and unlock achievements</li>
-                <li>💰 Build a virtual portfolio</li>
+                <li>Learn through interactive lessons</li>
+                <li>Practice with paper trading</li>
+                <li>Set and track daily learning goals</li>
+                <li>Earn XP and unlock achievements</li>
+                <li>Build a virtual portfolio</li>
               </ul>
             </div>
             
@@ -210,16 +210,16 @@ const sendWaitlistConfirmation = async (userEmail, userName) => {
     const mailOptions = {
       from: '"Tickr" <noreply@tickr.app>',
       to: userEmail,
-      subject: "📋 You're on the Tickr waitlist!",
+      subject: "You're on the tickr waitlist",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 30px; border-radius: 10px; text-align: center;">
-            <h1 style="margin: 0; font-size: 28px;">📋 You're on the List!</h1>
+            <h1 style="margin: 0; font-size: 28px;">You're on the list</h1>
             <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Tickr Early Access Waitlist</p>
           </div>
           
           <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin-top: 20px;">
-            <h2 style="color: #333; margin-bottom: 20px;">Hey ${userName}! 👋</h2>
+            <h2 style="color: #333; margin-bottom: 20px;">Hey ${userName}!</h2>
             
             <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
               Thanks for joining the Tickr waitlist! We're building something special for aspiring traders and investors, and you'll be among the first to experience it.
@@ -230,7 +230,7 @@ const sendWaitlistConfirmation = async (userEmail, userName) => {
               <ul style="color: #666; line-height: 1.8; margin: 0; padding-left: 20px;">
                 <li>We'll review your application</li>
                 <li>You'll receive an invite when it's your turn</li>
-                <li>Early users get special perks! 🎁</li>
+                <li>Early users get special perks</li>
               </ul>
             </div>
             
@@ -277,16 +277,16 @@ const sendInviteEmail = async (userEmail, inviteToken) => {
     const mailOptions = {
       from: '"Tickr" <noreply@tickr.app>',
       to: userEmail,
-      subject: "🎉 Your Tickr invite is here!",
+      subject: "Your tickr invite is here",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; text-align: center;">
-            <h1 style="margin: 0; font-size: 28px;">🎉 You're In!</h1>
+            <h1 style="margin: 0; font-size: 28px;">You're in</h1>
             <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Your Tickr Early Access Invite</p>
           </div>
           
           <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin-top: 20px;">
-            <h2 style="color: #333; margin-bottom: 20px;">Welcome to Tickr! 🚀</h2>
+            <h2 style="color: #333; margin-bottom: 20px;">Welcome to Tickr!</h2>
             
             <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
               Great news! You've been selected for early access to Tickr. Click the button below to activate your account and start your trading journey.

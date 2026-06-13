@@ -17,7 +17,7 @@ import React, { useState } from 'react';
  *   src        - path under /public (or any URL). Omit to show the placeholder.
  *   alt        - required for accessibility.
  *   ratio      - CSS aspect-ratio string, e.g. "16/9", "1", "4/3". Default "16/9".
- *   rounded    - border radius (number px or CSS string). Default 16.
+ *   rounded    - border radius (number px or CSS string). Default 8.
  *   objectFit  - 'cover' | 'contain'. Default 'cover'.
  *   label      - text shown on the placeholder (defaults to alt).
  *   className, style - passed through to the wrapper.
@@ -26,7 +26,7 @@ export default function AppImage({
   src,
   alt = '',
   ratio = '16/9',
-  rounded = 16,
+  rounded = 8,
   objectFit = 'cover',
   label,
   className = '',
