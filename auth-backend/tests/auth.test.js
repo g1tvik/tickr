@@ -77,3 +77,81 @@ describe('Health check', () => {
     expect(response.body.port).toBeDefined();
   });
 });
+
+describe('POST /api/auth/change-password', () => {
+  // Register a single user (auth endpoints are rate-limited, so we avoid a
+  // per-test register). The happy-path test restores the original password so
+  // the negative tests below can keep using it.
+  let token;
+  const password = 'Password123!';
+  const email = `pwtest-${Date.now()}-${Math.floor(Math.random() * 10000)}@example.com`;
+  const username = `pwuser${Math.floor(Math.random() * 100000)}`;
+
+  beforeAll(async () => {
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ email, password, name: 'Pw Test', username })
+      .expect(200);
+    token = reg.body.token;
+  });
+
+  const change = (body, tok = token) =>
+    request(app)
+      .post('/api/auth/change-password')
+      .set('Authorization', `Bearer ${tok}`)
+      .send(body);
+
+  it('changes the password and lets the user log in with the new one', async () => {
+    const newPassword = 'NewPassword456!';
+    const res = await change({ currentPassword: password, newPassword });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+
+    // Old password no longer works…
+    await request(app)
+      .post('/api/auth/login')
+      .send({ emailOrUsername: email, password })
+      .expect(401);
+
+    // …new one does.
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ emailOrUsername: email, password: newPassword })
+      .expect(200);
+    expect(login.body.success).toBe(true);
+
+    // Restore the original so the remaining tests' `password` stays valid.
+    await change({ currentPassword: newPassword, newPassword: password }).expect(200);
+  });
+
+  it('rejects an incorrect current password', async () => {
+    const res = await change({ currentPassword: 'WrongPass1!', newPassword: 'NewPassword456!' });
+    expect(res.status).toBe(401);
+    expect(res.body.message).toMatch(/current password is incorrect/i);
+  });
+
+  it('rejects a weak new password', async () => {
+    const res = await change({ currentPassword: password, newPassword: 'weak' });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/at least 8 characters/i);
+  });
+
+  it('rejects reusing the current password', async () => {
+    const res = await change({ currentPassword: password, newPassword: password });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/different/i);
+  });
+
+  it('requires both fields', async () => {
+    const res = await change({ currentPassword: password });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/required/i);
+  });
+
+  it('requires authentication', async () => {
+    const res = await request(app)
+      .post('/api/auth/change-password')
+      .send({ currentPassword: password, newPassword: 'NewPassword456!' });
+    expect(res.status).toBe(401);
+  });
+});

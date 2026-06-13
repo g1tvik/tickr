@@ -229,6 +229,12 @@ export const api = {
     headers: getAuthHeaders()
   }).then(handleResponse),
 
+  changePassword: (currentPassword, newPassword) => fetch(`${API_BASE_URL}/auth/change-password`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ currentPassword, newPassword })
+  }).then(handleResponse),
+
   deleteAccount: () => fetch(`${API_BASE_URL}/auth/account`, {
     method: 'DELETE',
     headers: getAuthHeaders()

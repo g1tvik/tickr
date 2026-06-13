@@ -1033,6 +1033,86 @@ router.post('/reset-progress', accountMutationLimiter, async (req, res) => {
   }
 });
 
+// Change password (for password-based accounts; Google-only accounts have none)
+router.post('/change-password', accountMutationLimiter, async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const storage = storageOf(req);
+    const user = await storage.getUserById(decoded.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const { currentPassword, newPassword } = req.body || {};
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current and new password are required'
+      });
+    }
+
+    // Accounts created via Google OAuth have no local password to verify.
+    if (!user.password) {
+      return res.status(400).json({
+        success: false,
+        message: 'This account uses Google sign-in and has no password to change'
+      });
+    }
+
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    if (!validatePasswordComplexity(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters and include a lowercase letter, an uppercase letter, a number, and a symbol'
+      });
+    }
+
+    // Reject a no-op change so "changed" always means the secret actually rotated.
+    const isSameAsCurrent = await bcrypt.compare(newPassword, user.password);
+    if (isSameAsCurrent) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be different from your current password'
+      });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await storage.saveUser(user);
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to change password'
+    });
+  }
+});
+
 // Delete account
 router.delete('/account', accountMutationLimiter, async (req, res) => {
   try {
