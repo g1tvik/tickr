@@ -1408,9 +1408,12 @@ async function placeOrder(req, res, params) {
 const checkTradingAllowed = (req) => {
   const alpacaEnv = req.app.locals.alpacaEnv || 'paper';
   if (alpacaEnv === 'live') {
-    // Extra safety: require explicit confirmation for live trading
-    if (process.env.ALLOW_LIVE_TRADING !== 'true') {
-      throw new Error('Live trading is disabled. Set ALLOW_LIVE_TRADING=true to enable.');
+    // Extra safety: require explicit confirmation for live trading.
+    // CONFIRM_LIVE_TRADING is the documented variable everywhere else
+    // (.env.example, validateEnv, README, SECURITY.md); the code previously
+    // checked ALLOW_LIVE_TRADING, silently ignoring the documented setting.
+    if (process.env.CONFIRM_LIVE_TRADING !== 'true') {
+      throw new Error('Live trading is disabled. Set CONFIRM_LIVE_TRADING=true to enable.');
     }
   }
   return true;
