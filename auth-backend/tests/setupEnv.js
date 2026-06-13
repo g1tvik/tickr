@@ -6,6 +6,12 @@ const tempDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tickr-auth-backend-da
 const tempLogDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tickr-auth-backend-logs-'));
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'test';
+// Force file storage for the test suite. server.js runs dotenv.config() at
+// require time, which would otherwise load a real DATABASE_URL from .env and
+// point storage at Postgres (which isn't running in CI/local tests). dotenv
+// never overrides an already-defined key, so seeding it empty here wins, and an
+// empty string is falsy in the storage selector → FileStorage(DATA_DIR).
+process.env.DATABASE_URL = '';
 process.env.DATA_DIR = tempDataDir;
 process.env.AUTH_LOG_DIR = tempLogDir;
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
