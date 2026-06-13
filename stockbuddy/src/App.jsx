@@ -121,8 +121,9 @@ function AppContent() {
 
   return (
     <div className={`app-container${isHomePage ? ' app-container-home' : ''}`}>
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       {!LOCKDOWN && <NavBar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} navbarTheme={navbarTheme} />}
-      <main className="main-content">
+      <main className="main-content" id="main-content" tabIndex={-1}>
         <PageTransition isVisible={!isTransitioning}>
           <div className="page-content">
             <Suspense fallback={<div className="d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>}>

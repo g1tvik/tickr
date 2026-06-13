@@ -55,7 +55,11 @@ describe('Shop page', () => {
       expect(screen.getByRole('heading', { name: /Shop/i })).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/500 Coins/)).toBeInTheDocument();
+    // Balance renders the mono number and its unit as separate nodes
+    // (Terminal Editorial: numbers are the hero, label is a sibling).
+    const coinUnit = screen.getByText('coins');
+    expect(coinUnit).toBeInTheDocument();
+    expect(coinUnit.parentElement).toHaveTextContent('500');
     expect(screen.getByText('Test Booster')).toBeInTheDocument();
     expect(mockApi.getShopItems).toHaveBeenCalled();
     expect(mockApi.getPurchases).toHaveBeenCalled();

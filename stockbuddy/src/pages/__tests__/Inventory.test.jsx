@@ -30,7 +30,8 @@ describe('Inventory page', () => {
     });
 
     // The value and label live in sibling divs inside a shared stat group.
-    const skipTokensStat = screen.getByText('Skip Tokens').closest('div').parentElement;
+    // Labels render in lower case and are upper-cased via CSS (small-caps).
+    const skipTokensStat = screen.getByText(/skip tokens/i).closest('div').parentElement;
     expect(skipTokensStat).toHaveTextContent('2');
     expect(screen.getByText(/150/)).toBeInTheDocument();
   });

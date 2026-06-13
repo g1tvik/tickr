@@ -4,6 +4,7 @@ import { api, logout } from '../services/api';
 import { useSEO } from '../lib/seo';
 import tk, { label, mono, panel, inset, heading, btnPrimary, btnGhost, tag } from '../theme/terminal';
 import Icon from '../components/Icon';
+import useModalA11y from '../hooks/useModalA11y';
 
 const Settings = () => {
   useSEO({ title: 'Settings' });
@@ -33,6 +34,7 @@ const Settings = () => {
   const [showPreferences, setShowPreferences] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   // Form states
   const [editForm, setEditForm] = useState({
@@ -44,6 +46,19 @@ const Settings = () => {
     dailyGoal: 3,
     notifications: true
   });
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordError, setPasswordError] = useState('');
+
+  // Accessible-dialog refs (focus trap + Escape-to-close + scroll lock).
+  const editProfileRef = useModalA11y(showEditProfile, () => setShowEditProfile(false));
+  const changePasswordRef = useModalA11y(showChangePassword, () => setShowChangePassword(false));
+  const preferencesRef = useModalA11y(showPreferences, () => setShowPreferences(false));
+  const deleteConfirmRef = useModalA11y(showDeleteConfirm, () => setShowDeleteConfirm(false));
+  const resetConfirmRef = useModalA11y(showResetConfirm, () => setShowResetConfirm(false));
 
   useEffect(() => {
     // Check if user is authenticated
@@ -172,6 +187,56 @@ const Settings = () => {
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error resetting progress:', error);
       alert('Failed to reset progress. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openChangePassword = () => {
+    setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    setPasswordError('');
+    setShowChangePassword(true);
+  };
+
+  const handleChangePassword = async () => {
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+    setPasswordError('');
+
+    // Client-side guards mirror the server so users get instant feedback.
+    if (!currentPassword || !newPassword) {
+      setPasswordError('Please fill in every field.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New password and confirmation do not match.');
+      return;
+    }
+    // Same complexity rule the backend enforces.
+    const complex = newPassword.length >= 8
+      && /[a-z]/.test(newPassword) && /[A-Z]/.test(newPassword)
+      && /[0-9]/.test(newPassword) && /[^a-zA-Z0-9]/.test(newPassword);
+    if (!complex) {
+      setPasswordError('Password must be at least 8 characters and include a lowercase letter, an uppercase letter, a number, and a symbol.');
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setPasswordError('New password must be different from your current password.');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const response = await api.changePassword(currentPassword, newPassword);
+      if (response.success) {
+        setShowChangePassword(false);
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        alert('Password changed successfully!');
+      } else {
+        setPasswordError(response.message || 'Failed to change password.');
+      }
+    } catch (error) {
+      if (import.meta.env.DEV) console.error('Error changing password:', error);
+      setPasswordError(error.message || 'Failed to change password. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -495,8 +560,20 @@ const Settings = () => {
 
           <div>
               <div style={dataRow}>
-                <span style={label}>Two-Factor Auth</span>
-                <span style={{ ...tag, color: tk.muted, borderColor: tk.hairStrong }}>Coming soon</span>
+                <span style={label}>Password</span>
+                <button
+                  onClick={openChangePassword}
+                  style={{
+                    ...btnGhost,
+                    padding: '7px 14px',
+                    fontSize: 12,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6
+                  }}
+                >
+                  <Icon name="lock" size={13} /> Change
+                </button>
               </div>
               <div style={dataRow}>
                 <span style={label}>Last Login</span>
@@ -577,8 +654,8 @@ const Settings = () => {
       {/* Edit Profile Modal */}
       {showEditProfile && (
         <div style={overlay}>
-          <div style={modalCard}>
-            <h3 style={{
+          <div style={modalCard} ref={editProfileRef} role="dialog" aria-modal="true" aria-labelledby="edit-profile-title">
+            <h3 id="edit-profile-title" style={{
               ...heading,
               fontSize: 20,
               marginBottom: 4
@@ -651,11 +728,92 @@ const Settings = () => {
         </div>
       )}
 
+      {/* Change Password Modal */}
+      {showChangePassword && (
+        <div style={overlay}>
+          <div style={modalCard} ref={changePasswordRef} role="dialog" aria-modal="true" aria-labelledby="change-password-title">
+            <h3 id="change-password-title" style={{ ...heading, fontSize: 20, marginBottom: 4 }}>
+              Change Password
+            </h3>
+            <div style={{ height: 1, background: tk.hair, margin: '14px 0 20px' }} />
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={fieldLabel}>Current Password</label>
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={passwordForm.currentPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                style={fieldInput}
+              />
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={fieldLabel}>New Password</label>
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                style={fieldInput}
+              />
+            </div>
+
+            <div style={{ marginBottom: passwordError ? 14 : 24 }}>
+              <label style={fieldLabel}>Confirm New Password</label>
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                style={fieldInput}
+              />
+            </div>
+
+            {passwordError && (
+              <div style={{
+                fontSize: 12.5,
+                color: tk.down,
+                lineHeight: 1.5,
+                marginBottom: 20,
+                display: 'flex',
+                gap: 7,
+                alignItems: 'flex-start'
+              }}>
+                <Icon name="alert" size={14} color={tk.down} />
+                <span>{passwordError}</span>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowChangePassword(false)}
+                style={{ ...btnGhost, padding: '10px 18px' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleChangePassword}
+                disabled={saving}
+                style={{
+                  ...btnPrimary,
+                  padding: '10px 18px',
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  opacity: saving ? 0.6 : 1
+                }}
+              >
+                {saving ? 'Saving...' : 'Update Password'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Learning Preferences Modal */}
       {showPreferences && (
         <div style={overlay}>
-          <div style={modalCard}>
-            <h3 style={{
+          <div style={modalCard} ref={preferencesRef} role="dialog" aria-modal="true" aria-labelledby="preferences-title">
+            <h3 id="preferences-title" style={{
               ...heading,
               fontSize: 20,
               marginBottom: 4
@@ -728,7 +886,7 @@ const Settings = () => {
       {/* Delete Account Confirmation Modal */}
       {showDeleteConfirm && (
         <div style={overlay}>
-          <div style={{ ...modalCard, textAlign: 'center' }}>
+          <div style={{ ...modalCard, textAlign: 'center' }} ref={deleteConfirmRef} role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
             <div style={{
               width: 48,
               height: 48,
@@ -742,7 +900,7 @@ const Settings = () => {
               <Icon name="alert" size={20} />
             </div>
 
-            <h3 style={{
+            <h3 id="delete-account-title" style={{
               ...heading,
               fontSize: 20,
               marginBottom: 12
@@ -792,7 +950,7 @@ const Settings = () => {
       {/* Reset Progress Confirmation Modal */}
       {showResetConfirm && (
         <div style={overlay}>
-          <div style={{ ...modalCard, textAlign: 'center' }}>
+          <div style={{ ...modalCard, textAlign: 'center' }} ref={resetConfirmRef} role="dialog" aria-modal="true" aria-labelledby="reset-progress-title">
             <div style={{
               width: 48,
               height: 48,
@@ -806,7 +964,7 @@ const Settings = () => {
               <Icon name="alert" size={20} />
             </div>
 
-            <h3 style={{
+            <h3 id="reset-progress-title" style={{
               ...heading,
               fontSize: 20,
               marginBottom: 12

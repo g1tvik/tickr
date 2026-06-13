@@ -1,6 +1,32 @@
 /* Import minimal Bootstrap utilities */
 @import "bootstrap/dist/css/bootstrap.min.css";
 
+/* ============ Skip-to-content link (keyboard a11y) ============ */
+/* Visually hidden until focused, then pinned top-left so keyboard users can
+   jump past the nav straight to <main id="main-content">. */
+.skip-link {
+  position: fixed;
+  top: 0;
+  left: 0;
+  transform: translateY(-120%);
+  z-index: 2000;
+  margin: 8px;
+  padding: 10px 16px;
+  background: #262626;
+  color: #F4F1E9;
+  border: 1px solid #B69C60;
+  border-radius: 5px;
+  font-family: 'Creato Display', system-ui, sans-serif;
+  font-size: 14px;
+  text-decoration: none;
+  transition: transform 0.15s ease;
+}
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid #E6C87A;
+  outline-offset: 2px;
+}
+
 /* Hero fonts */
 @font-face {
   font-family: 'Creato Display';
