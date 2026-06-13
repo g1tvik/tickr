@@ -20,10 +20,12 @@
  * Active booster effects (xp_multiplier / coin_multiplier from the shop) are
  * applied and consumed here — see services/learningRewards.applyActiveBoosters.
  *
- * Gate failures return 200 { success:false, message } (the UI shows these
- * messages verbatim); malformed input returns 400.
+ * Gate failures return 200 { success:false, message, learningProgress } (the UI
+ * shows the message verbatim and keeps its cached progress fresh); malformed
+ * input returns 400.
  */
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const authRoutes = require('./auth');
 const { requireApproved } = require('../middleware/requireApproved');
 const rewards = require('../services/learningRewards');
@@ -31,6 +33,19 @@ const rewards = require('../services/learningRewards');
 const router = express.Router();
 const authenticateToken = authRoutes.authenticateToken;
 const storageOf = (req) => req.app.locals.storage;
+
+// Defense-in-depth on the reward surface. Per-lesson caps + per-user locks
+// already make farming impossible, but a tight limiter blocks bursty
+// enumeration/abuse before it reaches the storage layer. (The global 120/min
+// limiter still applies on top.)
+const rewardLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  // Generous in tests (one IP fires the whole suite); tight in real use.
+  max: process.env.NODE_ENV === 'test' ? 100000 : 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests — slow down a moment.' },
+});
 
 const isScore = (n) => typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= 100;
 
@@ -40,7 +55,7 @@ function progressPayload(user) {
 }
 
 // ── POST /lesson-complete { lessonId, score } ───────────────────────────────
-router.post('/lesson-complete', authenticateToken, requireApproved, async (req, res) => {
+router.post('/lesson-complete', rewardLimiter, authenticateToken, requireApproved, async (req, res) => {
   try {
     const lessonId = Number(req.body?.lessonId);
     const score = Number(req.body?.score);
@@ -125,7 +140,7 @@ router.post('/lesson-complete', authenticateToken, requireApproved, async (req, 
 });
 
 // ── POST /unit-test { unitId, score } ───────────────────────────────────────
-router.post('/unit-test', authenticateToken, requireApproved, async (req, res) => {
+router.post('/unit-test', rewardLimiter, authenticateToken, requireApproved, async (req, res) => {
   try {
     const unitId = Number(req.body?.unitId);
     const score = Number(req.body?.score);
@@ -144,7 +159,7 @@ router.post('/unit-test', authenticateToken, requireApproved, async (req, res) =
 
       const allLessonsCompleted = unit.lessonIds.every((id) => lp.completedLessons.includes(id));
       if (!allLessonsCompleted) {
-        return { status: 200, body: { success: false, message: 'Complete all lessons in this unit first' } };
+        return { status: 200, body: { success: false, message: 'Complete all lessons in this unit first', ...progressPayload(user) } };
       }
 
       // Attempt limits — same keys the frontend has always stored.
@@ -154,10 +169,10 @@ router.post('/unit-test', authenticateToken, requireApproved, async (req, res) =
       const dailyAttempts = lp.unitTestAttempts[dailyKey] || 0;
       const totalAttempts = lp.unitTestAttempts[totalKey] || 0;
       if (dailyAttempts >= 3) {
-        return { status: 200, body: { success: false, message: 'No attempts left for today (3 per day limit)' } };
+        return { status: 200, body: { success: false, message: 'No attempts left for today (3 per day limit)', ...progressPayload(user) } };
       }
       if (totalAttempts >= 3) {
-        return { status: 200, body: { success: false, message: 'No attempts left for this unit test (3 total limit)' } };
+        return { status: 200, body: { success: false, message: 'No attempts left for this unit test (3 total limit)', ...progressPayload(user) } };
       }
       lp.unitTestAttempts[dailyKey] = dailyAttempts + 1;
       lp.unitTestAttempts[totalKey] = totalAttempts + 1;
@@ -203,7 +218,7 @@ router.post('/unit-test', authenticateToken, requireApproved, async (req, res) =
 });
 
 // ── POST /unlock-final-test ─────────────────────────────────────────────────
-router.post('/unlock-final-test', authenticateToken, requireApproved, async (req, res) => {
+router.post('/unlock-final-test', rewardLimiter, authenticateToken, requireApproved, async (req, res) => {
   try {
     const storage = storageOf(req);
     const result = await storage.withUserLock(req.user.userId, async (tx) => {
@@ -212,13 +227,13 @@ router.post('/unlock-final-test', authenticateToken, requireApproved, async (req
 
       const lp = rewards.ensureLearningProgress(user);
       if (lp.finalTestUnlocked) {
-        return { status: 200, body: { success: false, message: 'Final test is already unlocked' } };
+        return { status: 200, body: { success: false, message: 'Final test is already unlocked', ...progressPayload(user) } };
       }
       const unlockCost = rewards.finalTest.unlockCost;
       if (lp.coins < unlockCost) {
         return {
           status: 200,
-          body: { success: false, message: `Not enough coins. Need ${unlockCost} coins to unlock.` },
+          body: { success: false, message: `Not enough coins. Need ${unlockCost} coins to unlock.`, ...progressPayload(user) },
         };
       }
 
@@ -240,7 +255,7 @@ router.post('/unlock-final-test', authenticateToken, requireApproved, async (req
 });
 
 // ── POST /final-test { score } ──────────────────────────────────────────────
-router.post('/final-test', authenticateToken, requireApproved, async (req, res) => {
+router.post('/final-test', rewardLimiter, authenticateToken, requireApproved, async (req, res) => {
   try {
     const score = Number(req.body?.score);
     if (!isScore(score)) {
@@ -257,14 +272,14 @@ router.post('/final-test', authenticateToken, requireApproved, async (req, res) 
 
       const allUnitsCompleted = rewards.allUnitIds.every((id) => lp.completedUnitTests.includes(id));
       if (!allUnitsCompleted) {
-        return { status: 200, body: { success: false, message: 'Complete all unit tests first' } };
+        return { status: 200, body: { success: false, message: 'Complete all unit tests first', ...progressPayload(user) } };
       }
       if (!lp.finalTestUnlocked) {
-        return { status: 200, body: { success: false, message: 'Final test must be unlocked with coins first' } };
+        return { status: 200, body: { success: false, message: 'Final test must be unlocked with coins first', ...progressPayload(user) } };
       }
       const today = now.toDateString();
       if (lp.finalTestLastAttempt === today) {
-        return { status: 200, body: { success: false, message: 'You can only take the final test once per day' } };
+        return { status: 200, body: { success: false, message: 'You can only take the final test once per day', ...progressPayload(user) } };
       }
       lp.finalTestLastAttempt = today;
 
@@ -304,7 +319,7 @@ router.post('/final-test', authenticateToken, requireApproved, async (req, res) 
 });
 
 // ── POST /skip-lesson { lessonId } ──────────────────────────────────────────
-router.post('/skip-lesson', authenticateToken, requireApproved, async (req, res) => {
+router.post('/skip-lesson', rewardLimiter, authenticateToken, requireApproved, async (req, res) => {
   try {
     const lessonId = Number(req.body?.lessonId);
     if (!rewards.getLesson(lessonId)) {
@@ -318,10 +333,10 @@ router.post('/skip-lesson', authenticateToken, requireApproved, async (req, res)
 
       const lp = rewards.ensureLearningProgress(user);
       if (lp.completedLessons.includes(lessonId)) {
-        return { status: 200, body: { success: false, message: 'Lesson already completed' } };
+        return { status: 200, body: { success: false, message: 'Lesson already completed', ...progressPayload(user) } };
       }
       if (!(user.skipTokens > 0)) {
-        return { status: 200, body: { success: false, message: 'No skip tokens — get one from the shop' } };
+        return { status: 200, body: { success: false, message: 'No skip tokens — get one from the shop', ...progressPayload(user) } };
       }
 
       user.skipTokens -= 1;

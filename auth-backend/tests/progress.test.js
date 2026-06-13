@@ -160,6 +160,16 @@ describe('Progress routes', () => {
     expect(fourth.body.message).toMatch(/no attempts left/i);
   });
 
+  it('gate-failure responses still carry canonical learningProgress', async () => {
+    // unit-test on a not-yet-eligible unit fails its gate but must echo
+    // learningProgress so the client cache stays fresh.
+    const res = await post('unit-test', { unitId: 5, score: 90 });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(false);
+    expect(res.body.learningProgress).toBeDefined();
+    expect(typeof res.body.learningProgress.xp).toBe('number');
+  });
+
   it('final test: gated, coin-unlocked, once per day, one-time award', async () => {
     const gated = await post('final-test', { score: 90 });
     expect(gated.body.success).toBe(false);

@@ -10,6 +10,11 @@ const authenticateToken = authRoutes.authenticateToken;
 // Cap the per-user decision history so the user blob stays bounded.
 const MAX_SAVED_DECISIONS = 50;
 
+// Bound the length of client-supplied text we persist (keeps the user blob
+// small and limits the blast radius of any future HTML-rendering of this data —
+// it is currently rendered only as React text nodes).
+const clampText = (v, max) => (typeof v === 'string' ? v.slice(0, max) : v == null ? null : String(v).slice(0, max));
+
 /**
  * Persist a summary of an analyzed decision onto the user (newest first,
  * capped). Best-effort: a persistence failure must never fail the analysis
@@ -25,9 +30,14 @@ async function saveDecision(req, { scenarioId, scenarioTitle, decision, analysis
       user.coachDecisions.unshift({
         id: `dec_${crypto.randomUUID()}`,
         scenarioId: scenarioId ?? null,
-        scenarioTitle: scenarioTitle || null,
+        scenarioTitle: clampText(scenarioTitle, 200),
         decision: decision
-          ? { type: decision.type, price: decision.price, shares: decision.shares, reasoning: decision.reasoning }
+          ? {
+              type: clampText(decision.type, 20),
+              price: decision.price,
+              shares: decision.shares,
+              reasoning: clampText(decision.reasoning, 1000),
+            }
           : null,
         totalScore: analysis?.totalScore ?? null,
         breakdown: analysis?.breakdown ?? null,

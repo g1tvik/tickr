@@ -302,7 +302,10 @@ function Trade() {
             </div>
 
             <div className="trade-account__hero">
-              <div className="trade-account__net">
+              <div
+                className="trade-account__net"
+                title={`Net liquidation is your account equity — what you'd have if you closed every position right now${m.accountType === 'margin' ? '. A margin account lends you up to an equal amount on top, so your buying power is about 2× this.' : '.'}`}
+              >
                 <div className="trade-stat__label">Net Liquidation</div>
                 {initialLoading
                   ? <div className="trade-skeleton trade-skeleton--amount" />
@@ -315,13 +318,15 @@ function Trade() {
               </div>
               <div className="trade-account__metrics">
                 {[
-                  { k: 'Buying Power', v: fmtUsd(buyingPower) },
-                  { k: 'Cash', v: fmtUsd(m.cash ?? 0), sub: m.unsettledCash ? `${fmtUsd(m.settledCash ?? 0)} settled` : null },
-                  { k: 'Unrealized P&L', v: fmtSigned(m.unrealizedPnl ?? 0), tone: (m.unrealizedPnl ?? 0) >= 0 ? 'up' : 'down' },
-                  { k: 'Realized P&L', v: fmtSigned(m.realizedPnl ?? 0), tone: (m.realizedPnl ?? 0) >= 0 ? 'up' : 'down' },
-                  { k: 'Margin Used', v: fmtUsd(m.marginUsed ?? 0), sub: m.marginLoan ? `${fmtUsd(m.marginLoan)} loan` : null },
+                  { k: 'Buying Power', v: fmtUsd(buyingPower), hint: m.accountType === 'margin'
+                      ? 'How much stock you can buy. On a Reg-T margin account this is ~2× your equity — the broker lends the rest (50% initial margin), so it exceeds your cash by design.'
+                      : 'How much stock you can buy, limited to your settled cash.' },
+                  { k: 'Cash', v: fmtUsd(m.cash ?? 0), sub: m.unsettledCash ? `${fmtUsd(m.settledCash ?? 0)} settled` : null, hint: 'Cash in the account. Proceeds from a sale settle T+1 before they count as settled cash.' },
+                  { k: 'Unrealized P&L', v: fmtSigned(m.unrealizedPnl ?? 0), tone: (m.unrealizedPnl ?? 0) >= 0 ? 'up' : 'down', hint: 'Paper gain/loss on positions you still hold, at current prices.' },
+                  { k: 'Realized P&L', v: fmtSigned(m.realizedPnl ?? 0), tone: (m.realizedPnl ?? 0) >= 0 ? 'up' : 'down', hint: 'Locked-in gain/loss from positions you have already closed.' },
+                  { k: 'Margin Used', v: fmtUsd(m.marginUsed ?? 0), sub: m.marginLoan ? `${fmtUsd(m.marginLoan)} loan` : null, hint: 'Equity currently tied up as collateral for open positions.' },
                 ].map((s) => (
-                  <div className="trade-metric" key={s.k}>
+                  <div className="trade-metric" key={s.k} title={s.hint}>
                     <div className="trade-stat__label">{s.k}</div>
                     {initialLoading
                       ? <div className="trade-skeleton trade-skeleton--row" style={{ marginBottom: 0 }} />
