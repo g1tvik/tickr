@@ -19,6 +19,9 @@ const Waitlist = lazy(() => import('./pages/Waitlist'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const About = lazy(() => import('./pages/About'));
 const Profile = lazy(() => import('./pages/Profile'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const Terms = lazy(() => import('./pages/Terms'));
+const Disclaimer = lazy(() => import('./pages/Disclaimer'));
 import Protected from './routes/Protected';
 import { NavbarProvider, useNavbar } from './context/NavbarContext';
 import { isAuthenticated } from './services/api';
@@ -138,7 +141,10 @@ function AppContent() {
                   <Route path="/signup" element={<SignUp setIsLoggedIn={setIsLoggedIn} />} />
                   <Route path="/waitlist" element={<Waitlist />} />
                   <Route path="/about" element={<About />} />
-                  
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/disclaimer" element={<Disclaimer />} />
+
                   {/* Protected routes */}
                   <Route path="/dashboard" element={
                     <Protected>

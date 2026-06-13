@@ -1755,16 +1755,16 @@ function Home({ isLoggedIn }) {
             <FooterCol aria-label="Legal">
               <h4>Legal</h4>
               <ul>
-                {/* TODO: link to dedicated /privacy and /terms routes once they exist */}
-                <li><Link to="/about">Privacy</Link></li>
-                <li><Link to="/about">Terms</Link></li>
+                <li><Link to="/privacy">Privacy</Link></li>
+                <li><Link to="/terms">Terms</Link></li>
+                <li><Link to="/disclaimer">Disclaimer</Link></li>
               </ul>
             </FooterCol>
           </FooterGrid>
 
           <FooterBottom>
             <p>© <Num>{new Date().getFullYear()}</Num> tickr. Learn responsibly.</p>
-            <p className="disclaimer">Paper trading only — not investment advice.</p>
+            <p className="disclaimer"><Link to="/disclaimer">Paper trading only — not investment advice.</Link></p>
           </FooterBottom>
         </FooterInner>
       </Footer>
