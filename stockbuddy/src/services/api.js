@@ -289,6 +289,10 @@ export const api = {
     body: JSON.stringify(data)
   }).then(handleResponse),
 
+  getCoachDecisions: () => fetch(`${API_BASE_URL}/ai-coach/decisions`, {
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
   // Progress endpoints — the server-side reward path. XP/coins are server-owned
   // currency: these endpoints compute and persist rewards (applying any active
   // shop boosters); /auth/user-data deliberately ignores client-sent amounts.

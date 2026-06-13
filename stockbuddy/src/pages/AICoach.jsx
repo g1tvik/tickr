@@ -166,6 +166,7 @@ function AICoach() {
   const [showDetails, setShowDetails] = useState(false);
   const [showPLCalculation, setShowPLCalculation] = useState(false);
   const [showSharesCalculation, setShowSharesCalculation] = useState(false);
+  const [pastDecisions, setPastDecisions] = useState([]);
   const didBounceScenarioRef = useRef(false);
   const bounceInProgressRef = useRef(false);
   const bounceAltIndexRef = useRef(1);
@@ -316,6 +317,21 @@ function AICoach() {
 
   // Chat sending is now handled by the CoachChat component via the hook
 
+  // Past analyzed decisions — persisted server-side by /ai-coach/analyze.
+  const loadPastDecisions = async () => {
+    try {
+      const res = await api.getCoachDecisions();
+      if (res.success) setPastDecisions(res.decisions || []);
+    } catch {
+      // Transient/auth failure — the history panel simply stays hidden.
+    }
+  };
+
+  useEffect(() => {
+    loadPastDecisions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleOrderSubmit = async () => {
     if (!orderType || !orderPrice || !orderReasoning.trim()) return;
 
@@ -351,7 +367,10 @@ function AICoach() {
       const result = await api.analyzeDecision({
           userDecisions: [decision],
           scenario: scenario.scenario,
-          optimalStrategy: scenario.scenario.optimalStrategy
+          optimalStrategy: scenario.scenario.optimalStrategy,
+          // Persisted with the decision so history entries are identifiable.
+          scenarioId: scenario.id,
+          scenarioTitle: scenario.title
       });
       
       if (result.success) {
@@ -418,6 +437,7 @@ function AICoach() {
         });
         // Only mark as completed if analysis succeeded
         setScenarioCompleted(true);
+        loadPastDecisions(); // the analyze endpoint just persisted this attempt
       } else {
         addMessage({
           type: 'ai',
@@ -1314,6 +1334,67 @@ function AICoach() {
               </div>
             )}
           </div>
+
+          {/* Past attempts — analyzed decisions persisted by the coach */}
+          {pastDecisions.length > 0 && (
+            <div style={{
+              backgroundColor: cardBg2,
+              borderRadius: tk.r,
+              padding: '16px',
+              border: `1px solid ${cardBorder}`
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                marginBottom: '14px'
+              }}>
+                <Icon name="trophy" size={15} color={tk.gold} />
+                <span style={label}>Past attempts</span>
+                <span style={{ flex: 1, height: 1, background: tk.hair }} />
+                <span style={{ ...mono, fontSize: 11, color: cardMuted }}>{pastDecisions.length}</span>
+              </div>
+
+              {pastDecisions.slice(0, 5).map((d) => {
+                const score = typeof d.totalScore === 'number' ? d.totalScore : null;
+                const scoreColor = score == null ? cardMuted : score >= 70 ? tk.up : score >= 40 ? tk.warn : tk.down;
+                return (
+                  <div key={d.id} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 10,
+                    padding: '9px 0',
+                    borderBottom: `1px solid ${tk.hair}`
+                  }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        color: cardText,
+                        fontFamily: fontBody,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {d.scenarioTitle || 'Scenario'}
+                        {d.decision?.type && (
+                          <span style={{ ...tag, marginLeft: 8, fontSize: 9.5 }}>{d.decision.type}</span>
+                        )}
+                      </div>
+                      <div style={{ ...mono, fontSize: 10.5, color: cardMuted, marginTop: 3 }}>
+                        {d.createdAt ? new Date(d.createdAt).toLocaleDateString() : ''}
+                        {d.demo ? ' · demo' : ''}
+                      </div>
+                    </div>
+                    <div style={{ ...mono, fontSize: 15, fontWeight: 600, color: scoreColor, flexShrink: 0 }}>
+                      {score == null ? '—' : `${score}/100`}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

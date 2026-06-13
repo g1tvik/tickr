@@ -12,6 +12,9 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'test';
 // never overrides an already-defined key, so seeding it empty here wins, and an
 // empty string is falsy in the storage selector → FileStorage(DATA_DIR).
 process.env.DATABASE_URL = '';
+// Likewise force the AI coach into its offline demo path: a real GEMINI_API_KEY
+// in .env would make /analyze tests call the live Gemini API (slow, flaky, $).
+process.env.GEMINI_API_KEY = '';
 process.env.DATA_DIR = tempDataDir;
 process.env.AUTH_LOG_DIR = tempLogDir;
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';

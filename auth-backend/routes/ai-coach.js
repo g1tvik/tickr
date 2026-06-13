@@ -1,6 +1,47 @@
 const express = require('express');
 const axios = require('axios');
+const crypto = require('crypto');
+const authRoutes = require('./auth');
+const { requireApproved } = require('../middleware/requireApproved');
 const router = express.Router();
+
+const authenticateToken = authRoutes.authenticateToken;
+
+// Cap the per-user decision history so the user blob stays bounded.
+const MAX_SAVED_DECISIONS = 50;
+
+/**
+ * Persist a summary of an analyzed decision onto the user (newest first,
+ * capped). Best-effort: a persistence failure must never fail the analysis
+ * response the user is waiting on.
+ */
+async function saveDecision(req, { scenarioId, scenarioTitle, decision, analysis, demo }) {
+  try {
+    const storage = req.app.locals.storage;
+    await storage.withUserLock(req.user.userId, async (tx) => {
+      const user = await tx.getUserById(req.user.userId);
+      if (!user) return;
+      if (!Array.isArray(user.coachDecisions)) user.coachDecisions = [];
+      user.coachDecisions.unshift({
+        id: `dec_${crypto.randomUUID()}`,
+        scenarioId: scenarioId ?? null,
+        scenarioTitle: scenarioTitle || null,
+        decision: decision
+          ? { type: decision.type, price: decision.price, shares: decision.shares, reasoning: decision.reasoning }
+          : null,
+        totalScore: analysis?.totalScore ?? null,
+        breakdown: analysis?.breakdown ?? null,
+        summary: analysis?.coaching?.overall || null,
+        demo: Boolean(demo),
+        createdAt: new Date().toISOString(),
+      });
+      user.coachDecisions = user.coachDecisions.slice(0, MAX_SAVED_DECISIONS);
+      await tx.saveUser(user);
+    });
+  } catch (error) {
+    console.error('[AI-ANALYZE] Failed to persist decision:', error.message);
+  }
+}
 
 // Provider helpers
 const hasGemini = !!process.env.GEMINI_API_KEY;
@@ -407,10 +448,11 @@ router.post('/chat', async (req, res) => {
     }
 });
 
-// AI Coach endpoint for real AI analysis
-router.post('/analyze', async (req, res) => {
+// AI Coach endpoint for real AI analysis. Authenticated: the analyzed decision
+// is persisted to the user's coach history (see GET /decisions below).
+router.post('/analyze', authenticateToken, requireApproved, async (req, res) => {
   try {
-    const { userDecisions, scenario, optimalStrategy } = req.body;
+    const { userDecisions, scenario, optimalStrategy, scenarioId, scenarioTitle } = req.body;
 
     if (hasGemini) {
       const content = await callGemini({
@@ -492,11 +534,26 @@ router.post('/analyze', async (req, res) => {
       parsed.coaching.riskManagement = parsed.coaching.riskManagement || 'Always consider your risk-reward ratio.';
       parsed.coaching.nextSteps = Array.isArray(parsed.coaching.nextSteps) ? parsed.coaching.nextSteps : ['Review the scenario details', 'Try another trade'];
       
+      await saveDecision(req, {
+        scenarioId,
+        scenarioTitle: scenarioTitle || scenario?.title,
+        decision: Array.isArray(userDecisions) ? userDecisions[0] : null,
+        analysis: parsed,
+        demo: false,
+      });
       return res.json({ success: true, analysis: parsed });
     }
 
     // No Gemini key configured → graceful demo analysis so the feature still works.
-    return res.json({ success: true, analysis: demoAnalysis(userDecisions, scenario), demo: true });
+    const demo = demoAnalysis(userDecisions, scenario);
+    await saveDecision(req, {
+      scenarioId,
+      scenarioTitle: scenarioTitle || scenario?.title,
+      decision: Array.isArray(userDecisions) ? userDecisions[0] : null,
+      analysis: demo,
+      demo: true,
+    });
+    return res.json({ success: true, analysis: demo, demo: true });
   } catch (error) {
     console.error('[AI-ANALYZE] Error:', error?.response?.data || error.message);
     
@@ -523,6 +580,22 @@ router.post('/analyze', async (req, res) => {
       analyzeErrorResponse.details = error.message;
     }
     res.status(statusCode).json(analyzeErrorResponse);
+  }
+});
+
+// Past analyzed decisions for the signed-in user (newest first, capped at
+// MAX_SAVED_DECISIONS by the persist step).
+router.get('/decisions', authenticateToken, async (req, res) => {
+  try {
+    const storage = req.app.locals.storage;
+    const user = await storage.getUserById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    res.json({ success: true, decisions: Array.isArray(user.coachDecisions) ? user.coachDecisions : [] });
+  } catch (error) {
+    console.error('[AI-COACH] decisions error:', error);
+    res.status(500).json({ success: false, message: 'Failed to load decision history' });
   }
 });
 
