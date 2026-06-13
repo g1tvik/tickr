@@ -48,12 +48,14 @@ export default function Shop() {
       if (import.meta.env.DEV) {
         console.log('Shop: Items received:', itemsResponse.items?.length || 0);
         console.log('Shop: Purchases received:', purchasesResponse.purchases?.length || 0);
-        console.log('Shop: User coins:', userDataResponse.user?.learningProgress?.coins || 0);
+        console.log('Shop: User coins:', userDataResponse.learningProgress?.coins || 0);
       }
 
       setShopItems(itemsResponse.items || []);
       setPurchasedItems(purchasesResponse.purchases || []);
-      setUserCoins(userDataResponse.user?.learningProgress?.coins || 0);
+      // /auth/user-data returns learningProgress at the top level (no `user`
+      // wrapper) — reading .user here made the balance render as 0 forever.
+      setUserCoins(userDataResponse.learningProgress?.coins || 0);
     } catch (err) {
       if (import.meta.env.DEV) console.error('Shop: Error fetching data:', err);
       setError(err.message || 'Failed to load shop data');

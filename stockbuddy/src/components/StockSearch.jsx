@@ -23,15 +23,15 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
     // Preload a common search to warm up the backend cache
     const preloadSearch = async () => {
       try {
-        // First warm up the backend cache
-        await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api'}/trading/health`);
-        console.log('Backend cache warmed up');
-        
+        // First warm up the backend cache (health endpoint lives at the server root, not under /api)
+        await fetch(`${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api').replace(/\/api\/?$/, '')}/health`);
+        if (import.meta.env.DEV) console.log('Backend cache warmed up');
+
         // Then preload a common search
         await api.searchStocksAutocomplete('AAPL');
-        console.log('Preloaded search cache');
+        if (import.meta.env.DEV) console.log('Preloaded search cache');
       } catch (error) {
-        console.warn('Preload failed:', error);
+        if (import.meta.env.DEV) console.warn('Preload failed:', error);
       }
     };
     
@@ -85,7 +85,7 @@ const StockSearch = ({ onStockSelect, placeholder = "Search by symbol or company
           setShowSuggestions(false);
         }
       } catch (error) {
-        console.error('Error searching stocks:', error);
+        if (import.meta.env.DEV) console.error('Error searching stocks:', error);
         setError('Failed to search stocks. Please try again.');
         setSuggestions([]);
         setShowSuggestions(false);

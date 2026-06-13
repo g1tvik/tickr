@@ -24,11 +24,12 @@ const mockApi = vi.hoisted(() => ({
     ]
   }),
   getPurchases: vi.fn().mockResolvedValue({ purchases: [] }),
+  // Mirrors the real /auth/user-data response: learningProgress is at the TOP
+  // level (no `user` wrapper) — keep this in sync with auth-backend/routes/auth.js.
   getUserData: vi.fn().mockResolvedValue({
-    user: {
-      learningProgress: {
-        coins: 500
-      }
+    success: true,
+    learningProgress: {
+      coins: 500
     }
   }),
   purchaseItem: vi.fn(),
