@@ -9,10 +9,10 @@ const pm = require('../services/portfolioMath');
 const PRICED = (price) => ({ price });
 
 describe('portfolioMath — shape & helpers', () => {
-  it('freshPortfolio starts with the documented defaults', () => {
+  it('freshPortfolio starts as a starting-cash CASH account', () => {
     const pf = pm.freshPortfolio();
     expect(pf.cash).toBe(pm.STARTING_CASH);
-    expect(pf.accountType).toBe('margin');
+    expect(pf.accountType).toBe('cash');
     expect(pf.positions).toEqual([]);
     expect(pf.pendingSettlements).toEqual([]);
     expect(pf.realizedPnl).toBe(0);
@@ -27,14 +27,24 @@ describe('portfolioMath — shape & helpers', () => {
     expect(pf.balance).toBeUndefined();
     expect(pf.positions[0].avgPrice).toBe(100);
     expect(pf.positions[0].avgCost).toBeUndefined();
-    expect(pf.accountType).toBe('margin');
+    expect(pf.accountType).toBe('cash');
   });
 
-  it('normalizePortfolio defaults an empty object to a starting-cash margin account', () => {
+  it('normalizePortfolio defaults an empty object to a starting-cash cash account', () => {
     const pf = pm.normalizePortfolio({});
     expect(pf.cash).toBe(pm.STARTING_CASH);
+    expect(pf.accountType).toBe('cash');
     expect(pf.realizedPnl).toBe(0);
     expect(Array.isArray(pf.positions)).toBe(true);
+  });
+
+  it('heals an idle margin account down to cash, but preserves margin in use', () => {
+    // No short, no loan → healed to cash.
+    expect(pm.normalizePortfolio({ accountType: 'margin', cash: 10000, positions: [] }).accountType).toBe('cash');
+    // Holds a short → genuinely using margin, kept.
+    expect(pm.normalizePortfolio({ accountType: 'margin', cash: 12000, positions: [{ symbol: 'X', shares: -5, avgPrice: 100 }] }).accountType).toBe('margin');
+    // Negative cash (margin loan) → kept.
+    expect(pm.normalizePortfolio({ accountType: 'margin', cash: -2000, positions: [{ symbol: 'X', shares: 50, avgPrice: 100 }] }).accountType).toBe('margin');
   });
 
   it('settledCash is derived as cash minus unsettled proceeds', () => {
@@ -47,12 +57,18 @@ describe('portfolioMath — shape & helpers', () => {
 });
 
 describe('portfolioMath — computeMetrics', () => {
-  it('fresh account: equity = cash, margin buying power = 2x equity', () => {
+  it('fresh cash account: equity = cash, buying power = settled cash', () => {
     const m = pm.computeMetrics(pm.freshPortfolio());
     expect(m.equity).toBe(10000);
-    expect(m.buyingPower).toBe(20000);
+    expect(m.buyingPower).toBe(10000);
     expect(m.longMarketValue).toBe(0);
     expect(m.shortMarketValue).toBe(0);
+  });
+
+  it('a margin account still gets 2x buying power', () => {
+    const pf = pm.freshPortfolio();
+    pf.accountType = 'margin';
+    expect(pm.computeMetrics(pf).buyingPower).toBe(20000);
   });
 
   it('long position marks to market and reports unrealized P&L', () => {
@@ -153,20 +169,19 @@ describe('portfolioMath — applyFill (shorts & flips)', () => {
 
 describe('portfolioMath — validateFill (buying power)', () => {
   it('rejects a buy that exceeds buying power', () => {
-    const pf = pm.freshPortfolio(); // BP 20000
-    const ok = pm.validateFill(pf, 'buy', 'AAPL', 1000, 100); // req 50000 (50%)
+    const pf = pm.freshPortfolio(); // cash BP 10000
+    const ok = pm.validateFill(pf, 'buy', 'AAPL', 1000, 100); // req 100000 (full notional)
     expect(ok.ok).toBe(false);
     expect(ok.message).toMatch(/buying power/i);
   });
 
-  it('allows a buy within margin buying power', () => {
+  it('allows a buy within cash buying power', () => {
     const pf = pm.freshPortfolio();
-    expect(pm.validateFill(pf, 'buy', 'AAPL', 100, 100).ok).toBe(true); // req 5000
+    expect(pm.validateFill(pf, 'buy', 'AAPL', 50, 100).ok).toBe(true); // req 5000 <= 10000
   });
 
-  it('blocks shorting in a cash account', () => {
+  it('blocks shorting in a cash account (the default)', () => {
     const pf = pm.freshPortfolio();
-    pf.accountType = 'cash';
     const res = pm.validateFill(pf, 'sell', 'TSLA', 10, 100);
     expect(res.ok).toBe(false);
     expect(res.message).toMatch(/margin account/i);

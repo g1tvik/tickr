@@ -152,6 +152,9 @@ function Trade() {
   const dayPnl = enrichedPositions.reduce((s, p) => s + (p.dayPnl || 0), 0);
   const equity = m.equity ?? (portfolio?.totalValue ?? 0);
   const buyingPower = m.buyingPower ?? (portfolio?.balance ?? 0);
+  // Shorting (sell_short / buy_to_cover) requires a margin account; a cash
+  // account only buys and sells what it holds. Default to cash when unknown.
+  const isMargin = m.accountType === 'margin';
 
   // ── Order-ticket math ────────────────────────────────────────────────────────
   const im = INTENT_META[intent] || INTENT_META.buy;
@@ -195,12 +198,14 @@ function Trade() {
   const setSharesSafe = (n) => setShares(String(Math.max(1, Math.floor(n) || 1)));
   const applyPct = (pct) => { if (maxShares > 0) setSharesSafe(Math.max(1, Math.floor(maxShares * pct))); };
 
-  // Keep intent valid as holdings change.
+  // Keep intent valid as holdings / account type change.
   useEffect(() => {
     if (intent === 'sell' && !canSell) setIntent('buy');
     if (intent === 'buy_to_cover' && !canCover) setIntent('buy');
+    // A cash account can't short or cover — fall back to a plain buy.
+    if (!isMargin && (intent === 'sell_short' || intent === 'buy_to_cover')) setIntent('buy');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedStock?.symbol, canSell, canCover]);
+  }, [selectedStock?.symbol, canSell, canCover, isMargin]);
 
   // Market orders can't be extended-hours.
   useEffect(() => {
@@ -293,7 +298,7 @@ function Trade() {
               <div className="trade-account__title">
                 <Icon name="trending-up" size={18} color={tk.gold} />
                 <span>Paper trading</span>
-                <span className="trade-acct-badge">{(m.accountType || 'margin') === 'margin' ? 'Margin' : 'Cash'}</span>
+                <span className="trade-acct-badge">{isMargin ? 'Margin' : 'Cash'}</span>
               </div>
               <span className={`trade-session trade-session--${sessionTone}`}>
                 <span className="trade-session__dot" />
@@ -429,9 +434,11 @@ function Trade() {
                     </div>
                   )}
 
-                  {/* Intent segmented control */}
+                  {/* Intent segmented control — short/cover only on margin accounts */}
                   <div className="trade-intent" role="group" aria-label="Order action">
-                    {Object.entries(INTENT_META).map(([key, meta]) => {
+                    {Object.entries(INTENT_META)
+                      .filter(([key]) => isMargin || (key !== 'sell_short' && key !== 'buy_to_cover'))
+                      .map(([key, meta]) => {
                       const disabled = (key === 'sell' && !canSell) || (key === 'buy_to_cover' && !canCover);
                       return (
                         <button key={key} type="button" disabled={disabled}

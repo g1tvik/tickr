@@ -193,8 +193,8 @@ describe('orderEngine — attemptFill', () => {
   });
 
   it('rejects a fill that fails buying-power validation', async () => {
-    const storage = makeFakeStorage(pm.freshPortfolio()); // BP 20000
-    const order = oe.createOrder('u1', { symbol: 'AAPL', qty: 1000 }, OPEN_CLOCK); // needs 50000
+    const storage = makeFakeStorage(pm.freshPortfolio()); // cash BP 10000
+    const order = oe.createOrder('u1', { symbol: 'AAPL', qty: 1000 }, OPEN_CLOCK); // needs 100000
     storage.orders.set(order.id, order);
 
     const updated = await oe.attemptFill({ storage }, order, { price: 100 }, OPEN_CLOCK, NOW);

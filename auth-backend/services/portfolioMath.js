@@ -5,6 +5,10 @@
  * code paths. Mirrors how a Reg-T margin account behaves at brokers like
  * Webull / thinkorswim paper.
  *
+ * New paper accounts default to CASH (buying power = settled cash, no shorting);
+ * margin (2x buying power + shorting) is supported but currently only reached by
+ * legacy data that still has open shorts/loans — see normalizePortfolio.
+ *
  * Canonical portfolio shape:
  * {
  *   accountType: 'margin' | 'cash',     // margin enables shorting + 2x buying power
@@ -31,7 +35,7 @@ function normalizePortfolio(pf) {
   // Legacy field migration: balance -> cash
   if (p.cash === undefined) p.cash = p.balance ?? STARTING_CASH;
   delete p.balance;
-  if (!['margin', 'cash'].includes(p.accountType)) p.accountType = 'margin';
+  if (!['margin', 'cash'].includes(p.accountType)) p.accountType = 'cash';
   if (!Array.isArray(p.pendingSettlements)) p.pendingSettlements = [];
   if (!Array.isArray(p.positions)) p.positions = [];
   if (typeof p.realizedPnl !== 'number') p.realizedPnl = 0;
@@ -42,13 +46,22 @@ function normalizePortfolio(pf) {
     const { avgCost, ...rest } = pos;
     return { ...rest, shares, avgPrice, currentPrice: pos.currentPrice ?? avgPrice };
   });
+  // Transitional migration: the paper account defaults to CASH (buying power =
+  // settled cash, no shorting). Until a margin opt-in exists, heal any existing
+  // margin account that isn't actually using margin — no short position and no
+  // margin loan (negative cash) — down to cash. Accounts genuinely on margin
+  // keep it until they flatten, then heal on the next load.
+  if (p.accountType === 'margin') {
+    const usingMargin = p.positions.some((pos) => pos.shares < 0) || p.cash < 0;
+    if (!usingMargin) p.accountType = 'cash';
+  }
   if (!p.createdAt) p.createdAt = new Date().toISOString();
   return p;
 }
 
 function freshPortfolio() {
   return {
-    accountType: 'margin',
+    accountType: 'cash',
     cash: STARTING_CASH,
     pendingSettlements: [],
     positions: [],
