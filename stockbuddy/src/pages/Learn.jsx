@@ -5,11 +5,13 @@ import progressManager from '../utils/progressManager';
 import { useSEO, SEO_CONFIG } from '../lib/seo';
 import tk, { label, mono, panel, inset, heading, btnPrimary, btnGhost, tag } from '../theme/terminal';
 import Icon from '../components/Icon';
+import { useToast } from '../context/ToastContext';
 
 export default function Learn() {
   useSEO(SEO_CONFIG.learn);
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   const [showLessonsModal, setShowLessonsModal] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [showUnitTest, setShowUnitTest] = useState(false);
@@ -169,16 +171,16 @@ export default function Learn() {
     try {
       const result = await progressManager.unlockFinalTest();
       if (result.success) {
-        alert(result.message);
+        toast(result.message, { title: 'Final test unlocked' });
         await loadProgress();
         setShowUnlockModal(false);
         setShowFinalTest(true);
       } else {
-        alert(result.message);
+        toast(result.message, { variant: 'error' });
       }
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error unlocking final test:', error);
-      alert('Failed to unlock final test. Please try again.');
+      toast('Failed to unlock final test. Please try again.', { variant: 'error' });
     }
   };
 
@@ -202,21 +204,24 @@ export default function Learn() {
       }
       
       if (result.success) {
-        alert(`${testType === 'unit' ? 'Unit' : 'Final'} test completed! Score: ${score.toFixed(1)}%\nXP Earned: ${result.xpEarned}\nCoins Earned: ${result.coinsEarned}`);
-        
+        toast(
+          `Score ${score.toFixed(1)}%\nXP earned: ${result.xpEarned}\nCoins earned: ${result.coinsEarned}`,
+          { title: `${testType === 'unit' ? 'Unit' : 'Final'} test complete`, duration: 7000 }
+        );
+
         // Reload progress
         await loadProgress();
-        
+
         // Close modals
         setShowUnitTest(false);
         setShowFinalTest(false);
         setSelectedUnit(null);
       } else {
-        alert(result.message);
+        toast(result.message, { variant: 'error' });
       }
     } catch (error) {
       if (import.meta.env.DEV) console.error('Test submission error:', error);
-      alert('Failed to submit test. Please try again.');
+      toast('Failed to submit test. Please try again.', { variant: 'error' });
     }
   };
 

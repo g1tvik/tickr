@@ -5,10 +5,12 @@ import { useSEO } from '../lib/seo';
 import tk, { label, mono, panel, inset, heading, btnPrimary, btnGhost, tag } from '../theme/terminal';
 import Icon from '../components/Icon';
 import useModalA11y from '../hooks/useModalA11y';
+import { useToast } from '../context/ToastContext';
 
 const Settings = () => {
   useSEO({ title: 'Settings' });
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [userProfile, setUserProfile] = useState(null);
   const [learningPreferences, setLearningPreferences] = useState({
     dailyGoal: 3,
@@ -119,11 +121,11 @@ const Settings = () => {
       if (response.success) {
         setUserProfile(response.user);
         setShowEditProfile(false);
-        alert('Profile updated successfully!');
+        toast('Profile updated');
       }
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error updating profile:', error);
-      alert('Failed to update profile. Please try again.');
+      toast('Failed to update profile. Please try again.', { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -142,13 +144,13 @@ const Settings = () => {
         setLearningPreferences(saved);
         setPreferencesForm(saved);
         setShowPreferences(false);
-        alert('Learning preferences updated successfully!');
+        toast('Learning preferences updated');
       } else {
-        alert('Failed to update preferences. Please try again.');
+        toast('Failed to update preferences. Please try again.', { variant: 'error' });
       }
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error updating preferences:', error);
-      alert('Failed to update preferences. Please try again.');
+      toast('Failed to update preferences. Please try again.', { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -167,10 +169,10 @@ const Settings = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      alert('Data exported successfully!');
+      toast('Data exported — check your downloads');
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error exporting data:', error);
-      alert('Failed to export data. Please try again.');
+      toast('Failed to export data. Please try again.', { variant: 'error' });
     }
   };
 
@@ -180,13 +182,13 @@ const Settings = () => {
       const response = await api.resetProgress();
       if (response.success) {
         setShowResetConfirm(false);
-        alert('Learning progress reset successfully!');
+        toast('Learning progress reset');
         // Refresh user data
         fetchUserData();
       }
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error resetting progress:', error);
-      alert('Failed to reset progress. Please try again.');
+      toast('Failed to reset progress. Please try again.', { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -230,7 +232,7 @@ const Settings = () => {
       if (response.success) {
         setShowChangePassword(false);
         setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-        alert('Password changed successfully!');
+        toast('Password changed');
       } else {
         setPasswordError(response.message || 'Failed to change password.');
       }
@@ -248,12 +250,12 @@ const Settings = () => {
       const response = await api.deleteAccount();
       if (response.success) {
         setShowDeleteConfirm(false);
-        alert('Account deleted successfully!');
+        toast('Account deleted');
         logout();
       }
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error deleting account:', error);
-      alert('Failed to delete account. Please try again.');
+      toast('Failed to delete account. Please try again.', { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -264,11 +266,11 @@ const Settings = () => {
       setSaving(true);
       const response = await api.sendGoalReminder();
       if (response.success) {
-        alert('Goal reminder email sent successfully! Check your inbox.');
+        toast('Goal reminder sent — check your inbox');
       }
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error sending reminder:', error);
-      alert('Failed to send reminder. Please try again.');
+      toast('Failed to send reminder. Please try again.', { variant: 'error' });
     } finally {
       setSaving(false);
     }

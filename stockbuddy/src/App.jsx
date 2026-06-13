@@ -24,6 +24,7 @@ const Terms = lazy(() => import('./pages/Terms'));
 const Disclaimer = lazy(() => import('./pages/Disclaimer'));
 import Protected from './routes/Protected';
 import { NavbarProvider, useNavbar } from './context/NavbarContext';
+import { ToastProvider } from './context/ToastContext';
 import { isAuthenticated } from './services/api';
 import { useUser } from './store/user';
 
@@ -216,7 +217,9 @@ function App() {
     <ErrorBoundary>
       <Router>
         <NavbarProvider>
-          <AppContent />
+          <ToastProvider>
+            <AppContent />
+          </ToastProvider>
         </NavbarProvider>
       </Router>
     </ErrorBoundary>

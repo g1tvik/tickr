@@ -6,8 +6,10 @@ import { fontBody } from '../fontPalette';
 import { useSEO } from '../lib/seo';
 import tk, { label, mono, panel, inset, heading, btnPrimary, btnGhost, tag } from '../theme/terminal';
 import Icon from '../components/Icon';
+import { useToast } from '../context/ToastContext';
 
 export default function LessonDetail() {
+  const { toast } = useToast();
   // Terminal Editorial palette (charcoal ramp + brand gold).
   const pageBg = tk.bg;
   const cardBg = tk.raised;
@@ -150,7 +152,7 @@ export default function LessonDetail() {
       setShowCompletionModal(true);
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error submitting quiz:', error);
-      alert('Failed to submit quiz. Please try again.');
+      toast('Failed to submit quiz. Please try again.', { variant: 'error' });
     }
   };
 
